@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.workbench.texteditor.rulerColumns">
+      <column
+            class="live_py.LiveCodingResultsRuler"
+            enabled="true"
+            global="true"
+            id="live-py.live-results"
+            includeInMenu="true"
+            name="Live Coding Results">
+         <placement
+               gravity="1.0">
+         </placement>
+      </column>
+   </extension>
+
+</plugin>

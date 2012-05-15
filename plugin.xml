@@ -13,6 +13,9 @@
          <placement
                gravity="1.0">
          </placement>
+         <targetClass
+               class="org.eclipse.ui.texteditor.AbstractDecoratedTextEditor">
+         </targetClass>
       </column>
    </extension>
 

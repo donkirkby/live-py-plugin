@@ -73,5 +73,59 @@ a = [9, 2, [3, 8]] """
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_log(self):
+        # SETUP
+        code = """\
+i = 1
+i += 1
+"""
+        expected_log = """\
+1: call None
+1: line None
+1: i = 1
+2: line None
+2: i = 2
+2: return None""".splitlines()
+        tracer = CodeTracer()
+
+        # EXEC
+        tracer.trace_code(code)
+        log = tracer.log
+
+        # VERIFY        
+        self.assertEqual(expected_log, log)
+        
+    def test_loop_conditional(self):
+        # SETUP
+        code = """\
+for i in range(3):
+    if i == 1:
+        c = 5
+c = 2
+"""
+        expected_report = """\
+i = 0 | i = 1 | i = 2 | 
+      |       |       | 
+      | c = 5 | 
+c = 2 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
 if __name__ == '__main__':
     unittest.main()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

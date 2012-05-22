@@ -115,17 +115,33 @@ c = 2 """
 
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_function(self):
+        # SETUP
+        code = """\
+def foo(x):
+    a = x
+    b = x + 1
+    return b
+
+m = 2
+n = foo(m)
+"""
+        expected_report = """\
+x = 2 
+a = 2 
+b = 3 
+return 3 
+
+m = 2 
+n = 3 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
 
 if __name__ == '__main__':
     unittest.main()
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    

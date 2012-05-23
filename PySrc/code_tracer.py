@@ -49,10 +49,22 @@ class CodeTracer(object):
 
 
     def _log_event(self, frame, event, arg):
-        self._log_message("%d: %s %r" % (frame.f_lineno, event, arg))
+        if event == 'exception':
+            message = self._format_exception(arg)
+        else:
+            message = repr(arg)
+        self._log_message("%d: %s %s" % (frame.f_lineno, event, message))
 
     def _log_message(self, message):
         self.log.append(message)
+
+
+    def _format_exception(self, arg):
+        exception_type, value = arg[:2]
+        message = exception_type.__name__
+        if value:
+            message += ' ' + str(value)
+        return message
 
     def dump_frame(self, frame, event, arg):
         if event == 'call':
@@ -69,6 +81,10 @@ class CodeTracer(object):
             
         self._log_event(frame, event, arg)
         
+        if event == 'exception':
+            message = self._format_exception(arg) + ' '
+            self._add_line_message(frame.f_lineno - 1, message)
+        
         if event == 'return':
             if arg is not None:
                 line_index = frame.f_lineno - 1
@@ -82,11 +98,15 @@ class CodeTracer(object):
     
     def trace_code(self, code):
         original_trace = sys.gettrace()
-        
-        sys.settrace(self.dump_frame)
-        exec code in dict(), dict()
-        
-        sys.settrace(original_trace)
+        try:
+            try:
+                sys.settrace(self.dump_frame)
+                exec code in dict(), dict()
+            
+            finally:
+                sys.settrace(original_trace)
+        except Exception:
+            pass # should have been recorded in log and report.
         return '\n'.join(self.report)
     
 if __name__ == '__main__':

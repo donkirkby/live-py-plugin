@@ -142,6 +142,31 @@ n = 3 """
 
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_runtime_error(self):
+        # SETUP
+        code = """\
+x = 2
+x = 1/0
+"""
+        expected_report = """\
+x = 2 
+ZeroDivisionError integer division or modulo by zero """
+        expected_log = """\
+1: call None
+1: line None
+1: x = 2
+2: line None
+2: exception ZeroDivisionError integer division or modulo by zero
+2: return None"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_log.splitlines(), tracer.log)
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
 
 if __name__ == '__main__':
     unittest.main()

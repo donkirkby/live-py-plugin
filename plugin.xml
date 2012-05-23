@@ -14,7 +14,7 @@
                gravity="1.0">
          </placement>
          <targetClass
-               class="org.eclipse.ui.texteditor.AbstractDecoratedTextEditor">
+               class="org.python.pydev.editor.PyEdit">
          </targetClass>
       </column>
    </extension>

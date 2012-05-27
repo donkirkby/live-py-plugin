@@ -24,6 +24,7 @@ class CodeTracer(object):
         
         for k, v in frame.f_locals.iteritems():
             is_ignored = (isinstance(v, types.FunctionType) or
+                          isinstance(v, types.TypeType) or
                           k == '__builtins__')
             if self.locals.get(k) != v and not is_ignored:
                 message = "%s = %r " % (k, v)
@@ -68,7 +69,7 @@ class CodeTracer(object):
         return message
 
     def dump_frame(self, frame, event, arg):
-        if frame.f_code.co_filename != '<string>':
+        if frame.f_globals.get('__name__') is not None:
             return self.dump_frame
 #        self._log_message('not skipping on filename ' + repr(frame.f_code.co_filename))
         

@@ -23,8 +23,9 @@ class CodeTracer(object):
         """
         
         for k, v in frame.f_locals.iteritems():
-            is_function = isinstance(v, types.FunctionType)
-            if self.locals.get(k) != v and not is_function:
+            is_ignored = (isinstance(v, types.FunctionType) or
+                          k == '__builtins__')
+            if self.locals.get(k) != v and not is_ignored:
                 message = "%s = %r " % (k, v)
                 self._add_line_message(line_index, message)
                 self._log_message("%d: %s = %r" % (self.previous_line, k, v))
@@ -67,6 +68,10 @@ class CodeTracer(object):
         return message
 
     def dump_frame(self, frame, event, arg):
+        if frame.f_code.co_filename != '<string>':
+            return self.dump_frame
+#        self._log_message('not skipping on filename ' + repr(frame.f_code.co_filename))
+        
         if event == 'call':
             self._log_event(frame, event, arg)
 #            line_index = frame.f_lineno - 1
@@ -101,7 +106,7 @@ class CodeTracer(object):
         try:
             try:
                 sys.settrace(self.dump_frame)
-                exec code in dict(), dict()
+                exec code in dict()
             
             finally:
                 sys.settrace(original_trace)

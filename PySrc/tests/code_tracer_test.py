@@ -3,6 +3,12 @@ from code_tracer import CodeTracer
 
 class CodeTracerTest(unittest.TestCase):
 
+# Other things to test:
+# multiline variable value.
+# calling a second function
+# imports
+# making print work?
+
     def test_empty(self):
         # EXEC
         report = CodeTracer().trace_code("")
@@ -141,6 +147,54 @@ n = 3 """
         report = tracer.trace_code(code)
 
         # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_chained_function(self):
+        # SETUP
+        code = """\
+def foo(x):
+    return x + 10
+    
+def bar(y):
+    return foo(y) - 2
+
+n = bar(3)
+"""
+        expected_report = """\
+x = 3 
+return 13 
+
+y = 3 
+return 11 
+
+n = 11 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def ignore_test_import(self):
+        # SETUP
+        code = """\
+from decimal import Decimal
+
+n = Decimal('10')
+"""
+        expected_report = """\
+
+
+n = Decimal('10') """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual([], tracer.log)
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
     def test_runtime_error(self):

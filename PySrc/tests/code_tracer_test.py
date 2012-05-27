@@ -222,5 +222,29 @@ ZeroDivisionError integer division or modulo by zero """
         self.assertEqual(expected_log.splitlines(), tracer.log)
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_compile_error(self):
+        # SETUP
+        code = """\
+n = 1
+
+if n > 0:
+n -= 1
+"""
+        expected_report = """\
+
+
+
+IndentationError: expected an indented block """
+        expected_log = """\
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_log.splitlines(), tracer.log)
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
 if __name__ == '__main__':
     unittest.main()

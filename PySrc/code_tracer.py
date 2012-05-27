@@ -1,5 +1,6 @@
 import copy
 import sys
+import traceback
 import types
 
 class CodeTracer(object):
@@ -9,7 +10,7 @@ class CodeTracer(object):
         self.log = parent.log if parent else []
         self.locals = dict()
         self.parent = parent
-
+        self.exception = None
 
     def _add_line_message(self, line_index, message):
         while line_index >= len(self.report):
@@ -88,6 +89,9 @@ class CodeTracer(object):
         self._log_event(frame, event, arg)
         
         if event == 'exception':
+            self.exception = arg
+            if self.parent:
+                self.parent.exception = arg
             message = self._format_exception(arg) + ' '
             self._add_line_message(frame.f_lineno - 1, message)
         
@@ -111,8 +115,19 @@ class CodeTracer(object):
             
             finally:
                 sys.settrace(original_trace)
-        except Exception:
-            pass # should have been recorded in log and report.
+        except:
+            if self.exception is not None:
+                pass # it should have been recorded in log and report.
+            else:
+                exc_info = sys.exc_info()
+                try:
+                    etype, value = exc_info[:2]
+                    messages = traceback.format_exception_only(etype, value)
+                    self._add_line_message(
+                        value.lineno - 1, 
+                        messages[-1].strip() + ' ')
+                finally:
+                    del exc_info # prevents circular reference
         return '\n'.join(self.report)
     
 if __name__ == '__main__':

@@ -77,8 +77,8 @@ y = 'continue' | """
     def test_separate_scopes(self):
         # SETUP
         expected_report = """\
-x = 'child' | x = 'child again'
- 
+x = 'child' | x = 'child again' 
+
 y = 'main' """
         
         # EXEC

@@ -1,5 +1,6 @@
-from ast import (copy_location, parse, Attribute, Call, Expr, Load, Name, Num, 
-                 NodeTransformer, Str)
+from ast import (fix_missing_locations, iter_fields, parse, AST, Attribute, Call, Expr, Load, 
+                 Name, 
+                 NodeTransformer, Num, Str, Subscript)
 import sys
 
 from report_builder import ReportBuilder
@@ -11,31 +12,93 @@ class TraceAssignments(NodeTransformer):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
         for target in existing_node.targets:
-            #name, value, linenumber
-            args = [copy_location(Str(s=target.id), target),
-                    copy_location(Name(id=target.id, ctx=Load()), target),
-                    copy_location(Num(n=target.lineno, lineno=5, col_offset=31), 
-                                  target)]
-            context_name = copy_location(Name(id=CONTEXT_NAME, ctx=Load()),
-                                         target)
-            function = copy_location(Attribute(value=context_name,
-                                               attr='assign', 
-                                               ctx=Load()),
-                                     target)
-            new_nodes.append(copy_location(Expr(value=copy_location(Call(func=function, 
-                                                            args=args, 
-                                                            keywords=[], 
-                                                            starargs=None, 
-                                                            kwargs=None),
-                                                      target)),
-                                           target))
+            new_nodes.append(self._trace_assignment(target))
+                
         return new_nodes
+    
+    def visit_AugAssign(self, node):
+        existing_node = self.generic_visit(node)
+        new_nodes = [existing_node]
+        new_nodes.append(self._trace_assignment(existing_node.target))
+        return new_nodes
+    
+    def _find_line_numbers(self, node, line_numbers):
+        """ Populates a set containing all line numbers used by the node and its
+        descendants.
+        
+        line_numbers is a set that all the line numbers will be added to."""
+        line_number = getattr(node, 'lineno', None)
+        if line_number is not None:
+            line_numbers.add(line_number)
+        for _, value in iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, AST):
+                        self._find_line_numbers(item, line_numbers)
+            elif isinstance(value, AST):
+                self._find_line_numbers(value, line_numbers)
+        
+    
+    def visit_For(self, node):
+        new_node = self.generic_visit(node)
+        
+        line_numbers = set()
+        self._find_line_numbers(new_node, line_numbers)
+        new_node.body.insert(0, 
+                             self._trace_assignment(new_node.target))
+        args = [Num(n=min(line_numbers)),
+                Num(n=max(line_numbers))]
+        new_node.body.insert(0,
+                             self._create_context_call('start_block', 
+                                                       args, 
+                                                       new_node))
+        new_node.body.append(self._create_context_call('end_block', 
+                                                       [], 
+                                                       new_node))
+        return new_node
+
+    def _trace_assignment(self, target):
+        if isinstance(target, Name):
+            args = [Str(s=target.id), 
+                    Name(id=target.id, ctx=Load()),
+                    Num(n=target.lineno)]
+        elif isinstance(target, Subscript):
+            subtarget = target
+            while isinstance(subtarget, Subscript):
+                subtarget = subtarget.value
+            args = [Str(s=subtarget.id),
+                    Name(id=subtarget.id, ctx=Load()),
+                    Num(n=target.lineno)]
+            
+#                Subscript(value=Name(id='a', ctx=Load()), 
+#                          slice=Index(value=Num(n=0)), 
+#                          ctx=Store())
+
+#Subscript(value=Name(id='a', ctx=Load(), lineno=2, col_offset=0), 
+#          slice=Index(value=Num(n=0, lineno=2, col_offset=2)), 
+#          ctx=Store(), lineno=2, col_offset=0)
+
+        #name, value, linenumber
+        return self._create_context_call('assign', args, target)
+        
+    def _create_context_call(self, function_name, args, old_node):
+        context_name = Name(id=CONTEXT_NAME, ctx=Load())
+        function = Attribute(value=context_name,
+                             attr=function_name,
+                             ctx=Load())
+        call = Call(func=function,
+                    args=args,
+                    keywords=[],
+                    starargs=None,
+                    kwargs=None)
+        return Expr(value=call)
 
 class CodeTracer(object):
     def trace_code(self, code):
         tree = parse(code)
         
         new_tree = TraceAssignments().visit(tree)
+        fix_missing_locations(new_tree)
         
 #        print ast.dump(new_tree)
 #        for s in new_tree.body:
@@ -45,7 +108,7 @@ class CodeTracer(object):
         
         builder = ReportBuilder()
         builder.start_block(1, 1000)
-        env = {'__live_coding_context__': builder}
+        env = {CONTEXT_NAME: builder}
         
         exec code in env
         

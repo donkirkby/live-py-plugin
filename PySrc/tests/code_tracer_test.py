@@ -30,7 +30,7 @@ i = 1 """
         # VERIFY        
         self.assertEqual(report, expected_report)
 
-    def ignore_increment(self):
+    def test_increment(self):
         # SETUP
         code = """\
 i = 1
@@ -45,7 +45,7 @@ i = 2 """
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
-    def ignore_loop(self):
+    def test_loop(self):
         # SETUP
         code = """\
 i = 1
@@ -54,15 +54,15 @@ for j in range(3):
 """
         expected_report = """\
 i = 1 
-j = 0 | j = 1 | j = 2 | 
-      | i = 2 | i = 4 | """
+j = 0 | j = 1 | j = 2 
+i = 1 | i = 2 | i = 4 """
         # EXEC
         report = CodeTracer().trace_code(code)
 
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
-    def ignore_mutable(self):
+    def test_mutable(self):
         # SETUP
         code = """\
 a = [1, 2, [3, 4]]
@@ -79,29 +79,7 @@ a = [9, 2, [3, 8]] """
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
-    def ignore_log(self):
-        # SETUP
-        code = """\
-i = 1
-i += 1
-"""
-        expected_log = """\
-1: call None
-1: line None
-1: i = 1
-2: line None
-2: i = 2
-2: return None""".splitlines()
-        tracer = CodeTracer()
-
-        # EXEC
-        tracer.trace_code(code)
-        log = tracer.log
-
-        # VERIFY        
-        self.assertEqual(expected_log, log)
-        
-    def ignore_loop_conditional(self):
+    def test_loop_conditional(self):
         # SETUP
         code = """\
 for i in range(3):
@@ -110,8 +88,8 @@ for i in range(3):
 c = 2
 """
         expected_report = """\
-i = 0 | i = 1 | i = 2 | 
-      |       |       | 
+i = 0 | i = 1 | i = 2 
+      |       | 
       | c = 5 | 
 c = 2 """
         tracer = CodeTracer()
@@ -147,6 +125,7 @@ n = 3 """
         report = tracer.trace_code(code)
 
         # VERIFY
+        self.assertEqual([], tracer.log)
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
     def ignore_chained_function(self):
@@ -168,6 +147,31 @@ y = 3
 return 11 
 
 n = 11 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def ignore_function_called_twice(self):
+        # SETUP
+        code = """\
+def foo():
+    x = 2
+    return x + 10
+
+n = foo()
+r = foo()
+"""
+        expected_report = """\
+          | 
+x = 2     | x = 2
+return 12 | return 12 
+
+n = 12 
+r = 12 """
         tracer = CodeTracer()
         
         # EXEC

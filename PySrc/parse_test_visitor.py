@@ -14,12 +14,9 @@ class PrintAssignments(ast.NodeTransformer):
         return [existing_node, ast.copy_location(print_node, existing_node)]
 
 code = """\
-def foo(x):
-    y = x + 5
-    __live_coding_context__.append(y)
-    return y
-__live_coding_context__.append(23)
-z = foo(3)
+a = [1, 2, [3, 4]]
+a[0] = 9
+a[2][1] = 8
 """
 
 tree = ast.parse(code)
@@ -35,7 +32,7 @@ new_tree = tree
 
 print ast.dump(new_tree)
 for s in new_tree.body:
-    print '    ' + ast.dump(s, include_attributes=True)
+    print '    ' + ast.dump(s)
 
 code = compile(new_tree, '<string>', 'exec')
 

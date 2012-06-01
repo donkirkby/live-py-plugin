@@ -147,6 +147,7 @@ n = 3 """
         report = tracer.trace_code(code)
 
         # VERIFY
+        self.assertEqual([], tracer.log)
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
     def test_chained_function(self):
@@ -168,6 +169,31 @@ y = 3
 return 11 
 
 n = 11 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def ignore_function_called_twice(self):
+        # SETUP
+        code = """\
+def foo():
+    x = 2
+    return x + 10
+
+n = foo()
+r = foo()
+"""
+        expected_report = """\
+          | 
+x = 2     | x = 2
+return 12 | return 12 
+
+n = 12 
+r = 12 """
         tracer = CodeTracer()
         
         # EXEC

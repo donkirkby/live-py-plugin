@@ -23,9 +23,9 @@ class ReportBuilder(object):
         line_index = line_number - 1
         self.messages[line_index] += '%s = %r ' % (name, value)
     
-    def add_message(self, message):
-        line_index = self.previous_line - 1
-        self.messages[line_index] += message + ' '
+    def return_value(self, value, line_number):
+        line_index = line_number - 1
+        self.messages[line_index] += 'return %r ' % value
     
     def report(self):
         return '\n'.join(self.messages)

@@ -100,7 +100,7 @@ c = 2 """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
-    def ignore_function(self):
+    def test_function(self):
         # SETUP
         code = """\
 def foo(x):
@@ -125,7 +125,29 @@ n = 3 """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual([], tracer.log)
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_return_subscript(self):
+        # SETUP
+        code = """\
+def foo(x):
+    a = [x, 3]
+    return a[1]
+
+n = foo(2)
+"""
+        expected_report = """\
+x = 2 
+a = [2, 3] 
+return 3 
+
+n = 3 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
     def ignore_chained_function(self):

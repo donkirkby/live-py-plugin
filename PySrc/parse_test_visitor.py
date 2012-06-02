@@ -14,10 +14,11 @@ class PrintAssignments(ast.NodeTransformer):
         return [existing_node, ast.copy_location(print_node, existing_node)]
 
 code = """\
-a = [1, 2, [3, 4]]
-a[0] = 9
-a[2][1] = 8
-"""
+def foo(x):
+    a = [x, 3]
+    return a[1]
+
+n = foo(2)"""
 
 tree = ast.parse(code)
 

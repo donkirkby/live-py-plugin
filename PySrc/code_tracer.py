@@ -56,8 +56,38 @@ class TraceAssignments(NodeTransformer):
                                                        [], 
                                                        new_node))
         return new_node
+    
+    def visit_FunctionDef(self, node):
+        new_node = self.generic_visit(node)
+        
+        line_numbers = set()
+        self._find_line_numbers(new_node, line_numbers)
+        
+        # trace function parameter values
+        argument_count = 0
+        for target in new_node.args.args:
+            new_node.body.insert(argument_count, 
+                                 self._trace_assignment(target))
+            argument_count += 1
 
+        args = [Num(n=min(line_numbers)),
+                Num(n=max(line_numbers))]
+        new_node.body.insert(0,
+                             self._create_context_call('start_block', 
+                                                       args, 
+                                                       new_node))
+        new_node.body.append(self._create_context_call('end_block', 
+                                                       [], 
+                                                       new_node))
+        return new_node
+    
+    def visit_Return(self, node):
+        existing_node = self.generic_visit(node)
+        
+        return [self._trace_return(existing_node.value), existing_node]
+    
     def _trace_assignment(self, target):
+        #name, value, line number
         if isinstance(target, Name):
             args = [Str(s=target.id), 
                     Name(id=target.id, ctx=Load()),
@@ -70,16 +100,18 @@ class TraceAssignments(NodeTransformer):
                     Name(id=subtarget.id, ctx=Load()),
                     Num(n=target.lineno)]
             
-#                Subscript(value=Name(id='a', ctx=Load()), 
-#                          slice=Index(value=Num(n=0)), 
-#                          ctx=Store())
-
-#Subscript(value=Name(id='a', ctx=Load(), lineno=2, col_offset=0), 
-#          slice=Index(value=Num(n=0, lineno=2, col_offset=2)), 
-#          ctx=Store(), lineno=2, col_offset=0)
-
-        #name, value, linenumber
         return self._create_context_call('assign', args, target)
+        
+    def _trace_return(self, value):
+        #name, value, line number
+        if isinstance(value, Name):
+            args = [Name(id=value.id, ctx=Load()),
+                    Num(n=value.lineno)]
+        elif isinstance(value, Subscript):
+            args = [value,
+                    Num(n=value.lineno)]
+            
+        return self._create_context_call('return_value', args, value)
         
     def _create_context_call(self, function_name, args, old_node):
         context_name = Name(id=CONTEXT_NAME, ctx=Load())
@@ -100,10 +132,6 @@ class CodeTracer(object):
         new_tree = TraceAssignments().visit(tree)
         fix_missing_locations(new_tree)
         
-#        print ast.dump(new_tree)
-#        for s in new_tree.body:
-#            print '    ' + ast.dump(s, include_attributes=True)
-        
         code = compile(new_tree, '<string>', 'exec')
         
         builder = ReportBuilder()
@@ -112,7 +140,7 @@ class CodeTracer(object):
         
         exec code in env
         
-        return builder.report().strip('\n')
+        return builder.report()
     
 if __name__ == '__main__':
     code = sys.stdin.read()

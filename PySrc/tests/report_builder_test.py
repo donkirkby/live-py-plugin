@@ -3,7 +3,7 @@ import unittest
 from report_builder import ReportBuilder
 
 class ReportBuilderTest(unittest.TestCase):
-    def test_message(self):
+    def test_assign(self):
         # SETUP
         expected_report = """\
 
@@ -14,6 +14,23 @@ x = 5
         builder = ReportBuilder()
         builder.start_block(1, 3)
         builder.assign(name='x', value=5, line_number=2)
+        builder.end_block()
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_return(self):
+        # SETUP
+        expected_report = """\
+
+return 'bob' 
+"""
+        
+        # EXEC
+        builder = ReportBuilder()
+        builder.start_block(1, 3)
+        builder.return_value(value='bob', line_number=2)
         builder.end_block()
         report = builder.report()
         

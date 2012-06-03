@@ -81,6 +81,27 @@ y = 'continue' | """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_nested_blocks(self):
+        # SETUP
+        expected_report = """\
+x = 'first' | x = 'second' 
+            | y = 1 | y = 2 """
+        
+        # EXEC
+        builder = ReportBuilder()
+        builder.start_block(1, 2)
+        builder.assign(name='x', value='first', line_number=1)
+        builder.start_block(1, 2)
+        builder.assign(name='x', value='second', line_number=1)
+        builder.start_block(2, 2)
+        builder.assign(name='y', value=1, line_number=2)
+        builder.start_block(2, 2)
+        builder.assign(name='y', value=2, line_number=2)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_separate_scopes(self):
         # SETUP
         expected_report = """\

@@ -1,8 +1,6 @@
-from ast import (fix_missing_locations, iter_fields, parse, Assign, 
-                 AST, Attribute, 
-                 BinOp, Call, Expr, Load, 
-                 Name, 
-                 NodeTransformer, Num, Return, Store, Str, Subscript)
+from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
+                 Attribute, Call, Expr, Load, Name, NodeTransformer, Num, 
+                 Return, Store, Str, Subscript)
 import sys
 
 from report_builder import ReportBuilder
@@ -50,6 +48,17 @@ class TraceAssignments(NodeTransformer):
         self._find_line_numbers(new_node, line_numbers)
         new_node.body.insert(0, 
                              self._trace_assignment(new_node.target))
+        args = [Num(n=min(line_numbers)),
+                Num(n=max(line_numbers))]
+        new_node.body.insert(0,
+                             self._create_context_call('start_block', args))
+        return new_node
+    
+    def visit_While(self, node):
+        new_node = self.generic_visit(node)
+        
+        line_numbers = set()
+        self._find_line_numbers(new_node, line_numbers)
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
         new_node.body.insert(0,
@@ -115,15 +124,22 @@ class TraceAssignments(NodeTransformer):
         return Expr(value=call)
 
 class CodeTracer(object):
-    def trace_code(self, code):
-        builder = ReportBuilder()
+    def __init__(self):
+        self.message_limit = 1000
+        
+    def trace_code(self, source):
+        builder = ReportBuilder(self.message_limit)
 
         try:
-            tree = parse(code)
+            tree = parse(source)
         
-            new_tree = TraceAssignments().visit(tree)
+            visitor = TraceAssignments()
+            new_tree = visitor.visit(tree)
+            line_numbers = set()
+            visitor._find_line_numbers(new_tree, line_numbers)
             fix_missing_locations(new_tree)
-            
+            fixed_line_numbers = set()
+            visitor._find_line_numbers(new_tree, fixed_line_numbers)
             code = compile(new_tree, '<string>', 'exec')
             
             env = {CONTEXT_NAME: builder}
@@ -131,14 +147,17 @@ class CodeTracer(object):
             exec code in env
         except SyntaxError, ex:
             messages = traceback.format_exception_only(type(ex), ex)
-            builder.add_message(messages[-1].strip(), ex.lineno)
+            builder.add_message(messages[-1].strip() + ' ', ex.lineno)
         except:
             exc_info = sys.exc_info()
             try:
                 etype, value, tb = exc_info
                 messages = traceback.format_exception_only(etype, value)
+                builder.message_limit = None # make sure we don't hit limit
                 line_number = tb.tb_next.tb_frame.f_lineno
-                builder.add_message(messages[-1].strip(), line_number)
+                if builder.limited_line_number is not None:
+                    line_number = builder.limited_line_number
+                builder.add_message(messages[-1].strip() + ' ', line_number)
             finally:
                 del tb
                 del exc_info # prevents circular reference

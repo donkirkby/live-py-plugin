@@ -62,6 +62,27 @@ i = 1 | i = 2 | i = 4 """
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_nested_loop(self):
+        # SETUP
+        code = """\
+n = 0
+for i in range(2):
+    n += i
+    for j in range(3):
+        n += j
+"""
+        expected_report = """\
+n = 0 
+i = 0                 | i = 1 
+n = 0                 | n = 4 
+j = 0 | j = 1 | j = 2 | j = 0 | j = 1 | j = 2 
+n = 0 | n = 1 | n = 3 | n = 4 | n = 5 | n = 7 """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_mutable(self):
         # SETUP
         code = """\
@@ -231,7 +252,7 @@ x = 1/0
 """
         expected_report = """\
 x = 2 
-ZeroDivisionError: integer division or modulo by zero"""
+ZeroDivisionError: integer division or modulo by zero """
         tracer = CodeTracer()
         
         # EXEC
@@ -252,13 +273,34 @@ n -= 1
 
 
 
-IndentationError: expected an indented block"""
+IndentationError: expected an indented block """
         tracer = CodeTracer()
         
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_infinite_loop(self):
+        # SETUP
+        code = """\
+n = 0
+while True:
+    n += 1
+"""
+        expected_report = """\
+n = 0 
+      |       | 
+n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
+        tracer = CodeTracer()
+        tracer.message_limit = 3
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
 if __name__ == '__main__':

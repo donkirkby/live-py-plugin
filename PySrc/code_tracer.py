@@ -1,11 +1,15 @@
-from ast import (fix_missing_locations, iter_fields, parse, AST, Attribute, Call, Expr, Load, 
+from ast import (fix_missing_locations, iter_fields, parse, Assign, 
+                 AST, Attribute, 
+                 BinOp, Call, Expr, Load, 
                  Name, 
-                 NodeTransformer, Num, Str, Subscript)
+                 NodeTransformer, Num, Return, Store, Str, Subscript)
 import sys
 
 from report_builder import ReportBuilder
+import traceback
 
 CONTEXT_NAME = '__live_coding_context__'
+RESULT_NAME = '__live_coding_result__'
 
 class TraceAssignments(NodeTransformer):
     def visit_Assign(self, node):
@@ -49,12 +53,7 @@ class TraceAssignments(NodeTransformer):
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
         new_node.body.insert(0,
-                             self._create_context_call('start_block', 
-                                                       args, 
-                                                       new_node))
-        new_node.body.append(self._create_context_call('end_block', 
-                                                       [], 
-                                                       new_node))
+                             self._create_context_call('start_block', args))
         return new_node
     
     def visit_FunctionDef(self, node):
@@ -73,18 +72,19 @@ class TraceAssignments(NodeTransformer):
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
         new_node.body.insert(0,
-                             self._create_context_call('start_block', 
-                                                       args, 
-                                                       new_node))
-        new_node.body.append(self._create_context_call('end_block', 
-                                                       [], 
-                                                       new_node))
+                             self._create_context_call('start_block', args))
         return new_node
     
     def visit_Return(self, node):
         existing_node = self.generic_visit(node)
+        value = existing_node.value
         
-        return [self._trace_return(existing_node.value), existing_node]
+        return [Assign(targets=[Name(id=RESULT_NAME, ctx=Store())],
+                       value=value),
+                self._create_context_call('return_value', 
+                                          [Name(id=RESULT_NAME, ctx=Load()),
+                                           Num(n=existing_node.lineno)]),
+                Return(value=Name(id=RESULT_NAME, ctx=Load()))]
     
     def _trace_assignment(self, target):
         #name, value, line number
@@ -100,20 +100,9 @@ class TraceAssignments(NodeTransformer):
                     Name(id=subtarget.id, ctx=Load()),
                     Num(n=target.lineno)]
             
-        return self._create_context_call('assign', args, target)
+        return self._create_context_call('assign', args)
         
-    def _trace_return(self, value):
-        #name, value, line number
-        if isinstance(value, Name):
-            args = [Name(id=value.id, ctx=Load()),
-                    Num(n=value.lineno)]
-        elif isinstance(value, Subscript):
-            args = [value,
-                    Num(n=value.lineno)]
-            
-        return self._create_context_call('return_value', args, value)
-        
-    def _create_context_call(self, function_name, args, old_node):
+    def _create_context_call(self, function_name, args):
         context_name = Name(id=CONTEXT_NAME, ctx=Load())
         function = Attribute(value=context_name,
                              attr=function_name,
@@ -127,19 +116,33 @@ class TraceAssignments(NodeTransformer):
 
 class CodeTracer(object):
     def trace_code(self, code):
-        tree = parse(code)
-        
-        new_tree = TraceAssignments().visit(tree)
-        fix_missing_locations(new_tree)
-        
-        code = compile(new_tree, '<string>', 'exec')
-        
         builder = ReportBuilder()
-        builder.start_block(1, 1000)
-        env = {CONTEXT_NAME: builder}
+
+        try:
+            tree = parse(code)
         
-        exec code in env
+            new_tree = TraceAssignments().visit(tree)
+            fix_missing_locations(new_tree)
+            
+            code = compile(new_tree, '<string>', 'exec')
+            
+            env = {CONTEXT_NAME: builder}
         
+            exec code in env
+        except SyntaxError, ex:
+            messages = traceback.format_exception_only(type(ex), ex)
+            builder.add_message(messages[-1].strip(), ex.lineno)
+        except:
+            exc_info = sys.exc_info()
+            try:
+                etype, value, tb = exc_info
+                messages = traceback.format_exception_only(etype, value)
+                line_number = tb.tb_next.tb_frame.f_lineno
+                builder.add_message(messages[-1].strip(), line_number)
+            finally:
+                del tb
+                del exc_info # prevents circular reference
+                
         return builder.report()
     
 if __name__ == '__main__':

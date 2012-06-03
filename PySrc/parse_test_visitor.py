@@ -15,8 +15,8 @@ class PrintAssignments(ast.NodeTransformer):
 
 code = """\
 def foo(x):
-    a = [x, 3]
-    return a[1]
+    __bar__ = x + 2
+    return __bar__
 
 n = foo(2)"""
 

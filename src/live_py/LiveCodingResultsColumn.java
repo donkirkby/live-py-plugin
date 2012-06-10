@@ -73,11 +73,14 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		width = Math.min(width, MAX_WIDTH);
+		int textWidth = 
+				cachedTextViewer.getTextWidget().getParent().getSize().x;
+		int maxWidth = Math.max(textWidth / 20, MAX_WIDTH);
+		width = Math.min(width, maxWidth);
 		for (int j = 0; j < results.size(); j++) {
 			String line = results.get(j);
-			if (line.length() > MAX_WIDTH) {
-				line = line.substring(0, MAX_WIDTH);
+			if (line.length() > width) {
+				line = line.substring(0, width);
 			}
 			results.set(j, String.format("%1$-" + width + "s", line));
 		}

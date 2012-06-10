@@ -29,6 +29,9 @@ class ReportBuilder(object):
         self.messages[line_number - 1] += message
 
     def assign(self, name, value, line_number):
+        if (isinstance(value, object) and 
+            value.__class__.__repr__ == object.__repr__):
+            return
         self.add_message('%s = %r ' % (name, value), line_number)
     
     def return_value(self, value, line_number):

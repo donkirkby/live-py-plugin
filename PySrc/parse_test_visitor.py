@@ -14,9 +14,11 @@ class PrintAssignments(ast.NodeTransformer):
         return [existing_node, ast.copy_location(print_node, existing_node)]
 
 code = """\
-n = 0
-while True:
-    n += 1
+class Dog(object):
+    pass
+
+dog = Dog()
+dog.name = "Spot"
 """
 
 tree = ast.parse(code)

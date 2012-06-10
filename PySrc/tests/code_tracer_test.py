@@ -261,6 +261,27 @@ ZeroDivisionError: integer division or modulo by zero """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_unwinding_exceptions(self):
+        # SETUP
+        code = """\
+def foo(n):
+    return n/0
+
+x = foo(5)
+"""
+        expected_report = """\
+n = 5 
+ZeroDivisionError: integer division or modulo by zero 
+
+ZeroDivisionError: integer division or modulo by zero """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_compile_error(self):
         # SETUP
         code = """\
@@ -282,7 +303,7 @@ IndentationError: expected an indented block """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
-    def test_infinite_loop(self):
+    def ignore_infinite_loop(self):
         # SETUP
         code = """\
 n = 0
@@ -293,6 +314,56 @@ while True:
 n = 0 
       |       | 
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
+        tracer = CodeTracer()
+        tracer.message_limit = 3
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_set_attribute(self):
+        # SETUP
+        code = """\
+class Dog(object):
+    pass
+
+dog = Dog()
+dog.name = "Spot"
+"""
+        expected_report = """\
+
+
+
+
+dog.name = 'Spot' """
+        tracer = CodeTracer()
+        tracer.message_limit = 3
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_module_name(self):
+        # SETUP
+        code = """\
+def foo(x):
+    return x + 3
+
+if __name__ == '__live_coding__':
+    y = foo(10)
+"""
+        expected_report = """\
+x = 10 
+return 13 
+
+
+y = 13 """
         tracer = CodeTracer()
         tracer.message_limit = 3
         

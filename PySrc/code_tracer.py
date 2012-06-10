@@ -8,14 +8,17 @@ import traceback
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
+PSEUDO_FILENAME = '<live coding source>'
 
 class TraceAssignments(NodeTransformer):
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
         for target in existing_node.targets:
-            new_nodes.append(self._trace_assignment(target))
-                
+            trace = self._trace_assignment(target)
+            if trace:
+                new_nodes.append(trace)
+
         return new_nodes
     
     def visit_AugAssign(self, node):
@@ -108,6 +111,14 @@ class TraceAssignments(NodeTransformer):
             args = [Str(s=subtarget.id),
                     Name(id=subtarget.id, ctx=Load()),
                     Num(n=target.lineno)]
+        elif isinstance(target, Attribute):
+            args = [Str(s='%s.%s' % (target.value.id, target.attr)),
+                    Attribute(value=target.value, 
+                              attr=target.attr, 
+                              ctx=Load()),
+                    Num(n=target.lineno)]
+        else:
+            return None
             
         return self._create_context_call('assign', args)
         
@@ -140,9 +151,9 @@ class CodeTracer(object):
             fix_missing_locations(new_tree)
             fixed_line_numbers = set()
             visitor._find_line_numbers(new_tree, fixed_line_numbers)
-            code = compile(new_tree, '<string>', 'exec')
+            code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
-            env = {CONTEXT_NAME: builder}
+            env = {CONTEXT_NAME: builder, '__name__': '__live_coding__'}
         
             exec code in env
         except SyntaxError, ex:
@@ -151,13 +162,14 @@ class CodeTracer(object):
         except:
             exc_info = sys.exc_info()
             try:
+                builder.message_limit = None # make sure we don't hit limit
                 etype, value, tb = exc_info
                 messages = traceback.format_exception_only(etype, value)
-                builder.message_limit = None # make sure we don't hit limit
-                line_number = tb.tb_next.tb_frame.f_lineno
-                if builder.limited_line_number is not None:
-                    line_number = builder.limited_line_number
-                builder.add_message(messages[-1].strip() + ' ', line_number)
+                message = messages[-1].strip() + ' '
+                entries = traceback.extract_tb(tb)
+                for filename, line_number, _, _ in entries:
+                    if filename == PSEUDO_FILENAME:
+                        builder.add_message(message, line_number)
             finally:
                 del tb
                 del exc_info # prevents circular reference

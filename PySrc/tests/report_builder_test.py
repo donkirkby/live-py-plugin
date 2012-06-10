@@ -18,6 +18,20 @@ x = 5
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_assign_object_without_repr(self):
+        # SETUP
+        expected_report = ''
+        class class_without_repr(object):
+            pass
+        
+        # EXEC
+        builder = ReportBuilder()
+        builder.assign(name='x', value=class_without_repr(), line_number=2)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_return(self):
         # SETUP
         expected_report = """\

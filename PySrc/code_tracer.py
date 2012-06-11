@@ -11,6 +11,19 @@ RESULT_NAME = '__live_coding_result__'
 PSEUDO_FILENAME = '<live coding source>'
 
 class TraceAssignments(NodeTransformer):
+    def visit(self, node):
+        new_node = super(TraceAssignments, self).visit(node)
+        body = getattr(new_node, 'body', None)
+        if body is not None:
+            previous_line_number = getattr(new_node, 'lineno', None)
+            for statement in body:
+                line_number = getattr(statement, 'lineno', None)
+                if line_number is None and previous_line_number is not None:
+                    statement.lineno = previous_line_number
+                else:
+                    previous_line_number = line_number
+        return new_node
+        
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
@@ -42,7 +55,6 @@ class TraceAssignments(NodeTransformer):
                         self._find_line_numbers(item, line_numbers)
             elif isinstance(value, AST):
                 self._find_line_numbers(value, line_numbers)
-        
     
     def visit_For(self, node):
         new_node = self.generic_visit(node)
@@ -162,6 +174,7 @@ class CodeTracer(object):
         except:
             exc_info = sys.exc_info()
             try:
+                is_reported = False
                 builder.message_limit = None # make sure we don't hit limit
                 etype, value, tb = exc_info
                 messages = traceback.format_exception_only(etype, value)
@@ -170,6 +183,9 @@ class CodeTracer(object):
                 for filename, line_number, _, _ in entries:
                     if filename == PSEUDO_FILENAME:
                         builder.add_message(message, line_number)
+                        is_reported = True
+                if not is_reported:
+                    builder.add_message(message, 1)
             finally:
                 del tb
                 del exc_info # prevents circular reference

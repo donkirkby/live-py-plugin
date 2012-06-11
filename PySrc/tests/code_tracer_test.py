@@ -303,7 +303,7 @@ IndentationError: expected an indented block """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
-    def ignore_infinite_loop(self):
+    def test_infinite_loop(self):
         # SETUP
         code = """\
 n = 0

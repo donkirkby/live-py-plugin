@@ -35,8 +35,8 @@ Working Features
 - runtime exceptions
 - infinite loops halted.
 
-Bugs
-----
+Known Bugs
+----------
 None right now.
 
 To do

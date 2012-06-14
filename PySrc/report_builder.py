@@ -3,7 +3,6 @@ class ReportBuilder(object):
         self.messages = []
         self.message_count = 0
         self.message_limit = message_limit
-        self.limited_line_number = None
         
     def start_block(self, first_line, last_line):
         self._check_line_count(last_line)
@@ -18,21 +17,28 @@ class ReportBuilder(object):
             for line_index in line_indexes:
                 message = self.messages[line_index]
                 self.messages[line_index] = message.ljust(max_width) + '| '
-    
-    def add_message(self, message, line_number):
-        if      (self.message_limit is not None and 
-                 self.message_count >= self.message_limit):
-            self.limited_line_number = line_number
+        else:
+            self._increment_message_count()
+
+    def _increment_message_count(self):
+        if (self.message_limit is not None and self.message_count >= self.message_limit):
             raise RuntimeError('live coding message limit exceeded')
-        self._check_line_count(line_number)
         self.message_count += 1
+
+    def add_message(self, message, line_number):
+        self._increment_message_count()
+        self._check_line_count(line_number)
         self.messages[line_number - 1] += message
 
+    def _should_display(self, value):
+        if not isinstance(value, object):
+            return True
+        repr_method = getattr(value.__class__, '__repr__', None)
+        return repr_method not in (None, object.__repr__)
+    
     def assign(self, name, value, line_number):
-        if (isinstance(value, object) and 
-            value.__class__.__repr__ == object.__repr__):
-            return
-        self.add_message('%s = %r ' % (name, value), line_number)
+        if (self._should_display(value)):
+            self.add_message('%s = %r ' % (name, value), line_number)
     
     def return_value(self, value, line_number):
         self.add_message('return %r ' % value, line_number)

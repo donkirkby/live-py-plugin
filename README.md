@@ -35,14 +35,9 @@ Working Features
 - runtime exceptions
 - infinite loops halted.
 
-Known Bugs
-----------
-None right now.
-
 To do
 -----
-- Any error currently blanks out the results, should just show previous result
-with error marker.
+- Any syntax error currently blanks out the results, should just show previous result with error marker.
 - Figure out how to scroll horizontally.
 - Move ruler to right side.
 

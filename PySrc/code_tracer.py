@@ -81,6 +81,9 @@ class TraceAssignments(NodeTransformer):
         return new_node
     
     def visit_FunctionDef(self, node):
+        if node.name == '__repr__':
+            return node
+        
         new_node = self.generic_visit(node)
         
         line_numbers = set()
@@ -89,6 +92,8 @@ class TraceAssignments(NodeTransformer):
         # trace function parameter values
         argument_count = 0
         for target in new_node.args.args:
+            if isinstance(target, Name) and target.id == 'self':
+                continue
             new_node.body.insert(argument_count, 
                                  self._trace_assignment(target))
             argument_count += 1

@@ -315,6 +315,24 @@ n = 0
       |       | 
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
+        tracer.message_limit = 4
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_infinite_loop_pass(self):
+        # SETUP
+        code = """\
+while True:
+    pass
+"""
+        expected_report = """\
+RuntimeError: live coding message limit exceeded """
+        tracer = CodeTracer()
         tracer.message_limit = 3
         
         # EXEC
@@ -340,7 +358,62 @@ dog.name = "Spot"
 
 dog.name = 'Spot' """
         tracer = CodeTracer()
-        tracer.message_limit = 3
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_old_class(self):
+        # SETUP
+        code = """\
+class Dog():
+    pass
+
+dog = Dog()
+dog.name = "Spot"
+"""
+        expected_report = """\
+
+
+
+
+dog.name = 'Spot' """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_repr(self):
+        # SETUP
+        code = """\
+class Dog(object):
+    def __init__(self, name):
+        self.name = name
+    
+    def __repr__(self):
+        return 'Dog(%r)' % self.name
+
+dog = Dog('Spot')
+animal = dog
+"""
+        expected_report = """\
+
+name = 'Spot' 
+self.name = 'Spot' 
+
+
+
+
+dog = Dog('Spot') 
+animal = Dog('Spot') """
+        tracer = CodeTracer()
         
         # EXEC
         report = tracer.trace_code(code)
@@ -365,7 +438,6 @@ return 13
 
 y = 13 """
         tracer = CodeTracer()
-        tracer.message_limit = 3
         
         # EXEC
         report = tracer.trace_code(code)

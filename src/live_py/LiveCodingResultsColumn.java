@@ -42,7 +42,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		String text = cachedTextViewer.getDocument().get();
 		String[] arguments = new String[] {"python", findScript()};
 		Runtime runtime = Runtime.getRuntime();
-		width = 0;
+		width = 5;
 		try {
 			Process process = runtime.exec(arguments);
 			BufferedWriter writer = new BufferedWriter(

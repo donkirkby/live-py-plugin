@@ -21,7 +21,7 @@ import org.osgi.framework.Bundle;
 public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private ITextViewer cachedTextViewer;
 	private ArrayList<String> results;
-	private final int MAX_WIDTH = 40;
+	private final int MAX_WIDTH = 60;
 	private int width;
 
 	@Override
@@ -40,12 +40,9 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	@Override
 	protected int computeNumberOfDigits() {
 		String text = cachedTextViewer.getDocument().get();
-		String[] arguments = new String[2];
-		int i = 0;
-		arguments[i++] = "python";
-		arguments[i++] = findScript();
+		String[] arguments = new String[] {"python", findScript()};
 		Runtime runtime = Runtime.getRuntime();
-		width = 5;
+		width = 0;
 		try {
 			Process process = runtime.exec(arguments);
 			BufferedWriter writer = new BufferedWriter(
@@ -70,13 +67,11 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 				writer.close();
 				reader.close();
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		} catch (Exception e) {
+			results.clear();
+			results.add(e.getMessage());
 		}
-		int textWidth = 
-				cachedTextViewer.getTextWidget().getParent().getSize().x;
-		int maxWidth = Math.max(textWidth / 20, MAX_WIDTH);
-		width = Math.min(width, maxWidth);
+		width = Math.min(width, MAX_WIDTH);
 		for (int j = 0; j < results.size(); j++) {
 			String line = results.get(j);
 			if (line.length() > width) {
@@ -96,6 +91,10 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			URL bundleURL = FileLocator.find(bundle, path, null);
 			URL fileURL;
 			fileURL = FileLocator.toFileURL(bundleURL);
+			Path path2 = new Path("PySrc/report_builder.py");
+			URL bundle2URL = FileLocator.find(bundle, path2, null);
+			URL fileURL2;
+			fileURL2 = FileLocator.toFileURL(bundle2URL);
 			return fileURL.getPath();
 		} catch (IOException e) {
 			throw new RuntimeException(e);

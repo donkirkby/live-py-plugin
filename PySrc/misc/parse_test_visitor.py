@@ -1,3 +1,7 @@
+""" This isn't part of the project, just a helper script for dumping syntax
+trees from code snippets.
+"""
+
 import ast
 
 class PrintAssignments(ast.NodeTransformer):

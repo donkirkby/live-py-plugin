@@ -1,5 +1,8 @@
-from ast import (dump, fix_missing_locations, parse, AST,
-                 Call, Expr, Load, Name)
+""" This isn't part of the project, just a test case for reproducing what
+seems to be a bug in Python.
+"""
+
+from ast import (dump, parse, AST, Call, Expr, Load, Name)
 
 def iter_fields(node):
     """

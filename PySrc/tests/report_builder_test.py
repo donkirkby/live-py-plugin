@@ -47,6 +47,45 @@ return 'bob'
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_call(self):
+        # SETUP
+        expected_report = """\
+
+a = [1, 2] 
+"""
+        expected_result = 23
+        
+        # EXEC
+        builder = ReportBuilder()
+        result = builder.record_call(name='a', 
+                                     display_before='[2, 1]',
+                                     result=expected_result, 
+                                     display_after='[1, 2]', 
+                                     line_number=2)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertEqual(expected_result, result)
+
+    def test_call_no_change(self):
+        # SETUP
+        expected_report = ""
+        expected_result = 23
+        
+        # EXEC
+        builder = ReportBuilder()
+        result = builder.record_call(name='a', 
+                                     display_before='[1, 2]',
+                                     result=expected_result, 
+                                     display_after='[1, 2]', 
+                                     line_number=2)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertEqual(expected_result, result)
+
     def test_multiple_lines(self):
         # SETUP
         expected_report = """\

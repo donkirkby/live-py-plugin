@@ -100,6 +100,22 @@ a = [9, 2, [3, 8]] """
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_method_call(self):
+        # SETUP
+        code = """\
+a = [2, 1]
+a.sort()
+a.sort()
+"""
+        expected_report = """\
+a = [2, 1] 
+a = [1, 2] """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_loop_conditional(self):
         # SETUP
         code = """\

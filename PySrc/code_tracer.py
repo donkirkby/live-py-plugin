@@ -24,6 +24,27 @@ class TraceAssignments(NodeTransformer):
                     previous_line_number = line_number
         return new_node
         
+    def visit_Call(self, node):
+        existing_node = self.generic_visit(node)
+        if not isinstance(existing_node.func, Attribute):
+            return existing_node
+        
+        args = [Str(s=existing_node.func.value.id),
+                Call(func=Name(id='repr', ctx=Load()),
+                     args=[existing_node.func.value],
+                     keywords=[],
+                     starargs=None,
+                     kwargs=None),
+                existing_node,
+                Call(func=Name(id='repr', ctx=Load()),
+                     args=[existing_node.func.value],
+                     keywords=[],
+                     starargs=None,
+                     kwargs=None),
+                Num(n=existing_node.lineno)]
+        new_node = self._create_bare_context_call('record_call', args)
+        return new_node
+
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
@@ -140,16 +161,18 @@ class TraceAssignments(NodeTransformer):
         return self._create_context_call('assign', args)
         
     def _create_context_call(self, function_name, args):
+        return Expr(value=self._create_bare_context_call(function_name, args))
+        
+    def _create_bare_context_call(self, function_name, args):
         context_name = Name(id=CONTEXT_NAME, ctx=Load())
         function = Attribute(value=context_name,
                              attr=function_name,
                              ctx=Load())
-        call = Call(func=function,
+        return Call(func=function,
                     args=args,
                     keywords=[],
                     starargs=None,
                     kwargs=None)
-        return Expr(value=call)
 
 class CodeTracer(object):
     def __init__(self):

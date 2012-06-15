@@ -42,6 +42,16 @@ class ReportBuilder(object):
     
     def return_value(self, value, line_number):
         self.add_message('return %r ' % value, line_number)
+        
+    def record_call(self, 
+                    name, 
+                    display_before, 
+                    result, 
+                    display_after, 
+                    line_number):
+        if display_before != display_after:
+            self.add_message('%s = %s ' % (name, display_after), line_number)
+        return result
     
     def report(self):
         return '\n'.join(self.messages)

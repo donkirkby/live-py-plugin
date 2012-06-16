@@ -5,6 +5,7 @@ from report_builder import ReportBuilder
 class ReportBuilderTest(unittest.TestCase):
     def test_assign(self):
         # SETUP
+        expected_value = 5
         expected_report = """\
 
 x = 5 
@@ -12,11 +13,12 @@ x = 5
         
         # EXEC
         builder = ReportBuilder()
-        builder.assign(name='x', value=5, line_number=2)
+        value = builder.assign(name='x', value=expected_value, line_number=2)
         report = builder.report()
         
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertEqual(expected_value, value)
 
     def test_assign_object_without_repr(self):
         # SETUP
@@ -34,6 +36,7 @@ x = 5
 
     def test_return(self):
         # SETUP
+        expected_value = 'bob'
         expected_report = """\
 
 return 'bob' 
@@ -41,11 +44,12 @@ return 'bob'
         
         # EXEC
         builder = ReportBuilder()
-        builder.return_value(value='bob', line_number=2)
+        value = builder.return_value(value=expected_value, line_number=2)
         report = builder.report()
         
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertEqual(expected_value, value)
 
     def test_multiple_lines(self):
         # SETUP

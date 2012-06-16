@@ -3,12 +3,6 @@ from code_tracer import CodeTracer
 
 class CodeTracerTest(unittest.TestCase):
 
-# Other things to test:
-# multiline variable value.
-# calling a second function
-# imports
-# making print work?
-
     def test_empty(self):
         # EXEC
         report = CodeTracer().trace_code("")
@@ -94,6 +88,21 @@ a[2][1] = 8
 a = [1, 2, [3, 4]] 
 a = [9, 2, [3, 4]] 
 a = [9, 2, [3, 8]] """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def ignore_method_call(self):
+        # SETUP
+        code = """\
+a = [1, 2]
+a.append(3)
+"""
+        expected_report = """\
+a = [1, 2] 
+a = [1, 2, 3] """
         # EXEC
         report = CodeTracer().trace_code(code)
 

@@ -39,9 +39,11 @@ class ReportBuilder(object):
     def assign(self, name, value, line_number):
         if (self._should_display(value)):
             self.add_message('%s = %r ' % (name, value), line_number)
+        return value
     
     def return_value(self, value, line_number):
         self.add_message('return %r ' % value, line_number)
+        return value
     
     def report(self):
         return '\n'.join(self.messages)

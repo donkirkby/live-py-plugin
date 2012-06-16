@@ -163,11 +163,8 @@ class CodeTracer(object):
         
             visitor = TraceAssignments()
             new_tree = visitor.visit(tree)
-            line_numbers = set()
-            visitor._find_line_numbers(new_tree, line_numbers)
             fix_missing_locations(new_tree)
-            fixed_line_numbers = set()
-            visitor._find_line_numbers(new_tree, fixed_line_numbers)
+            
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
             env = {CONTEXT_NAME: builder, '__name__': '__live_coding__'}

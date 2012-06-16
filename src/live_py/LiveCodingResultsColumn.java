@@ -9,12 +9,20 @@ import java.net.URL;
 import java.util.ArrayList;
 
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.part.FileEditorInput;
 import org.osgi.framework.Bundle;
 
 
@@ -23,6 +31,8 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private ArrayList<String> results;
 	private final int MAX_WIDTH = 60;
 	private int width;
+	private String[] scriptArguments;
+	private String[] environment;
 
 	@Override
 	public Control createControl(CompositeRuler parentRuler,
@@ -39,12 +49,14 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	
 	@Override
 	protected int computeNumberOfDigits() {
+		
+		checkEnvironment();
+		checkArguments();
 		String text = cachedTextViewer.getDocument().get();
-		String[] arguments = new String[] {"python", findScript()};
 		Runtime runtime = Runtime.getRuntime();
 		width = 5;
 		try {
-			Process process = runtime.exec(arguments);
+			Process process = runtime.exec(scriptArguments, environment);
 			BufferedWriter writer = new BufferedWriter(
 					new OutputStreamWriter(process.getOutputStream()));
 			BufferedReader reader = new BufferedReader(
@@ -82,9 +94,40 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		
 		return width;
 	}
+
+	private void checkEnvironment() {
+		if (environment != null)
+		{
+			return;
+		}
+			
+		IWorkbench workbench = PlatformUI.getWorkbench();
+		IWorkbenchWindow window = 
+				workbench == null ? null : workbench.getActiveWorkbenchWindow();
+		IWorkbenchPage activePage = 
+				window == null ? null : window.getActivePage();
+		
+		IEditorPart editor = 
+				activePage == null ? null : activePage.getActiveEditor();
+		IEditorInput input = 
+				editor == null ? null : editor.getEditorInput();
+		IPath path = input instanceof FileEditorInput 
+				? ((FileEditorInput)input).getPath()
+				: null;
+		if (path != null)
+		{
+			String pythonPath = String.format(
+					"PYTHONPATH=%1$s", 
+					path.removeLastSegments(1));
+			environment = new String[] {pythonPath};
+		}
+	}
 	
-	private String findScript()
-	{
+	private void checkArguments() {
+		if (scriptArguments != null)
+		{
+			return;
+		}
 		try {
 			Bundle bundle = Activator.getDefault().getBundle();
 			Path path = new Path("PySrc/code_tracer.py");
@@ -93,9 +136,8 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			fileURL = FileLocator.toFileURL(bundleURL);
 			Path path2 = new Path("PySrc/report_builder.py");
 			URL bundle2URL = FileLocator.find(bundle, path2, null);
-			URL fileURL2;
-			fileURL2 = FileLocator.toFileURL(bundle2URL);
-			return fileURL.getPath();
+			FileLocator.toFileURL(bundle2URL);
+			scriptArguments = new String[] {"python", fileURL.getPath()};
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

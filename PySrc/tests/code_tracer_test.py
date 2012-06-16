@@ -94,15 +94,16 @@ a = [9, 2, [3, 8]] """
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
-    def ignore_method_call(self):
+    def test_method_call(self):
         # SETUP
         code = """\
-a = [1, 2]
-a.append(3)
+a = [2, 1]
+a.sort()
+a.sort() # second call makes no change, nothing printed
 """
         expected_report = """\
-a = [1, 2] 
-a = [1, 2, 3] """
+a = [2, 1] 
+a = [1, 2] """
         # EXEC
         report = CodeTracer().trace_code(code)
 

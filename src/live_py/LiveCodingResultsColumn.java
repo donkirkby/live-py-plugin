@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
@@ -27,10 +29,13 @@ import org.osgi.framework.Bundle;
 
 
 public class LiveCodingResultsColumn extends LineNumberRulerColumn {
+	private static final String COMMAND_PATTERN = "^\\s*#\\s*echo\\s+";
 	private ITextViewer cachedTextViewer;
 	private ArrayList<String> results;
 	private final int MAX_WIDTH = 60;
 	private int width;
+	private int fixedWidth;
+	private int scroll;
 	private String[] scriptArguments;
 	private String[] environment;
 
@@ -49,10 +54,15 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	
 	@Override
 	protected int computeNumberOfDigits() {
-		
+		String text = cachedTextViewer.getDocument().get();
+		if ( ! isActive(text))
+		{
+			results.clear();
+			width = 0;
+			return width;
+		}
 		checkEnvironment();
 		checkArguments();
-		String text = cachedTextViewer.getDocument().get();
 		Runtime runtime = Runtime.getRuntime();
 		width = 5;
 		try {
@@ -72,7 +82,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 					line = reader.readLine();
 					if (line != null) {
 						results.add(line);
-						width = Math.max(width, line.length());
+						width = Math.max(width, line.length() - scroll);
 					}
 				} while (line != null);
 			} finally {
@@ -83,16 +93,42 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			results.clear();
 			results.add(e.getMessage());
 		}
-		width = Math.min(width, MAX_WIDTH);
+		width = fixedWidth > 0 ? fixedWidth : Math.min(width, MAX_WIDTH);
 		for (int j = 0; j < results.size(); j++) {
 			String line = results.get(j);
-			if (line.length() > width) {
-				line = line.substring(0, width);
-			}
+			line = line.substring(
+					Math.min(scroll, line.length()),
+					Math.min(scroll + width, line.length()));
 			results.set(j, String.format("%1$-" + width + "s", line));
 		}
 		
 		return width;
+	}
+
+	private boolean isActive(String text) {
+		Pattern activate = Pattern.compile(
+				COMMAND_PATTERN + "on\\s*$", 
+				Pattern.MULTILINE);
+		if ( ! activate.matcher(text).find())
+		{
+			return false;
+		}
+		
+		fixedWidth = readSetting("width", text);
+		scroll = readSetting("scroll", text);
+		return true;
+	}
+
+	private int readSetting(String settingName, String text) {
+		Pattern settingPattern = Pattern.compile(
+				COMMAND_PATTERN + settingName + "\\s+(\\d+)\\s*$",
+				Pattern.MULTILINE);
+		Matcher matcher = settingPattern.matcher(text);
+		int setting = 
+				matcher.find() 
+				? Integer.parseInt(matcher.group(1)) 
+				: 0;
+		return setting;
 	}
 
 	private void checkEnvironment() {
@@ -134,10 +170,12 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			URL bundleURL = FileLocator.find(bundle, path, null);
 			URL fileURL;
 			fileURL = FileLocator.toFileURL(bundleURL);
+			scriptArguments = new String[] {"python", fileURL.getPath()};
+			
+			// Also get the path to report builder to unpack it from the bundle.
 			Path path2 = new Path("PySrc/report_builder.py");
 			URL bundle2URL = FileLocator.find(bundle, path2, null);
 			FileLocator.toFileURL(bundle2URL);
-			scriptArguments = new String[] {"python", fileURL.getPath()};
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -109,6 +109,29 @@ a = [1, 2] """
 
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
+    
+    def test_nested_method_call(self):
+        # SETUP
+        code = """\
+class Foo(object):
+    pass
+
+f = Foo()
+f.items = []
+f.items.append(2)
+"""
+        expected_report = """\
+
+
+
+
+f.items = [] 
+f.items = [2] """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
 
     def test_loop_conditional(self):
         # SETUP

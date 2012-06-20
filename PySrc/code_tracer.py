@@ -26,10 +26,17 @@ class TraceAssignments(NodeTransformer):
         
     def visit_Call(self, node):
         existing_node = self.generic_visit(node)
-        if not isinstance(existing_node.func, Attribute):
-            return existing_node
+        value_node = existing_node.func
         
-        args = [Str(s=existing_node.func.value.id),
+        names = []
+        while isinstance(value_node, Attribute):
+            names.insert(0, value_node.attr)
+            value_node = value_node.value
+        if not names:
+            return existing_node
+        names.insert(0, value_node.id)
+        
+        args = [Str(s='.'.join(names[0:-1])),
                 Call(func=Name(id='repr', ctx=Load()),
                      args=[existing_node.func.value],
                      keywords=[],

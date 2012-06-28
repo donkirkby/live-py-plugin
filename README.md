@@ -2,6 +2,7 @@ live-py-plugin
 ==============
 
 Live coding in Python implemented as an Eclipse plug in.
+To see how it works, watch the [demo video][video] or read the [blog post][blog].
 
 Installing
 ----------
@@ -47,3 +48,5 @@ To do
 
 [pydev]: http://pydev.org/download.html
 [downloads]: https://github.com/donkirkby/live-py-plugin/downloads
+[video]: http://www.youtube.com/watch?v=ZrbIVMdChDQ
+[blog]: http://donkirkby.blogspot.ca/2012/06/live-coding-in-python.html

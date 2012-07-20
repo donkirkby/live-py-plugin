@@ -231,6 +231,21 @@ n = 11 """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
+    def test_call_on_literal(self):
+        # SETUP
+        code = """\
+s = 'abc'.replace('a', 'A')
+"""
+        expected_report = """\
+s = 'Abc' """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
     def test_function_called_twice(self):
         # SETUP
         code = """\
@@ -478,6 +493,76 @@ y = 13 """
         # VERIFY
         self.maxDiff = None
         self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_encode_single(self):
+        # SETUP
+        original = "single line"
+        expected = original
+        tracer = CodeTracer()
+        
+        # EXEC
+        encoded = tracer.encode(original)
+        decoded = tracer.decode(encoded)
+        
+        # VERIFY
+        self.assertEqual(expected, encoded)
+        self.assertEqual(original, decoded)
+        
+    def test_encode_percent(self):
+        # SETUP
+        original = "80% of everything"
+        expected = "80%25 of everything"
+        tracer = CodeTracer()
+        
+        # EXEC
+        encoded = tracer.encode(original)
+        decoded = tracer.decode(encoded)
+        
+        # VERIFY
+        self.assertEqual(expected, encoded)
+        self.assertEqual(original, decoded)
+        
+    def test_encode_multiline(self):
+        # SETUP
+        original = "first\nsecond"
+        expected = "first%0asecond"
+        tracer = CodeTracer()
+        
+        # EXEC
+        encoded = tracer.encode(original)
+        decoded = tracer.decode(encoded)
+        
+        # VERIFY
+        self.assertEqual(expected, encoded)
+        self.assertEqual(original, decoded)
+        
+    def test_encode_windows_multiline(self):
+        # SETUP
+        original = "first\r\nsecond"
+        expected = "first%0d%0asecond"
+        tracer = CodeTracer()
+        
+        # EXEC
+        encoded = tracer.encode(original)
+        decoded = tracer.decode(encoded)
+        
+        # VERIFY
+        self.assertEqual(expected, encoded)
+        self.assertEqual(original, decoded)
+        
+    def test_encode_both(self):
+        # SETUP
+        original = "80% of everything\nis crap"
+        expected = "80%25 of everything%0ais crap"
+        tracer = CodeTracer()
+        
+        # EXEC
+        encoded = tracer.encode(original)
+        decoded = tracer.decode(encoded)
+        
+        # VERIFY
+        self.assertEqual(expected, encoded)
+        self.assertEqual(original, decoded)
 
 if __name__ == '__main__':
     unittest.main()

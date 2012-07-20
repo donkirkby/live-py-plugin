@@ -32,7 +32,7 @@ class TraceAssignments(NodeTransformer):
         while isinstance(value_node, Attribute):
             names.insert(0, value_node.attr)
             value_node = value_node.value
-        if not names:
+        if not names or not hasattr(value_node, 'id'):
             return existing_node
         names.insert(0, value_node.id)
         
@@ -184,6 +184,8 @@ class TraceAssignments(NodeTransformer):
 class CodeTracer(object):
     def __init__(self):
         self.message_limit = 1000
+        self.keepalive = False
+        self.environment = {}
         
     def trace_code(self, source):
         builder = ReportBuilder(self.message_limit)
@@ -197,9 +199,12 @@ class CodeTracer(object):
             
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
-            env = {CONTEXT_NAME: builder, '__name__': '__live_coding__'}
+            if not self.keepalive:
+                self.environment = {}
+            self.environment[CONTEXT_NAME] = builder
+            self.environment['__name__'] = '__live_coding__'
         
-            exec code in env
+            exec code in self.environment
         except SyntaxError, ex:
             messages = traceback.format_exception_only(type(ex), ex)
             builder.add_message(messages[-1].strip() + ' ', ex.lineno)
@@ -224,7 +229,30 @@ class CodeTracer(object):
                 
         return builder.report()
     
-if __name__ == '__main__':
-    code = sys.stdin.read()
+    def encode(self, source):
+        return source.replace('%', 
+                              '%25').replace('\r', 
+                                             '%0d').replace('\n', 
+                                                            '%0a')
     
-    print CodeTracer().trace_code(code)
+    def decode(self, encoded):
+        return encoded.replace('%0a', 
+                               '\n').replace('%0d',
+                                             '\r').replace('%25', 
+                                                           '%')
+    
+if __name__ == '__main__':
+    tracer = CodeTracer()
+    if '-k' in sys.argv:
+        line = ''
+        tracer.keepalive = True
+        while not line is None:
+            line = sys.stdin.readline()
+            if not line is None:
+                code = tracer.decode(line)
+                print tracer.encode(tracer.trace_code(code))
+                sys.stdout.flush()
+    else:
+        code = sys.stdin.read()
+        
+        print tracer.trace_code(code)

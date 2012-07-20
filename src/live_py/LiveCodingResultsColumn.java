@@ -5,6 +5,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -36,8 +38,11 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private int width;
 	private int fixedWidth;
 	private int scroll;
-	private String[] scriptArguments;
+	private boolean isKeepAlive;
+	private String scriptPath;
 	private String[] environment;
+	private PrintWriter processWriter;
+	private BufferedReader processReader;
 
 	@Override
 	public Control createControl(CompositeRuler parentRuler,
@@ -61,33 +66,43 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			width = 0;
 			return width;
 		}
-		checkEnvironment();
-		checkArguments();
-		Runtime runtime = Runtime.getRuntime();
-		width = 5;
 		try {
-			Process process = runtime.exec(scriptArguments, environment);
-			BufferedWriter writer = new BufferedWriter(
-					new OutputStreamWriter(process.getOutputStream()));
-			BufferedReader reader = new BufferedReader(
-					new InputStreamReader(process.getInputStream()));
-			
+			width = 5;
+			if (processWriter != null && ! isKeepAlive) {
+				releaseProcess();
+			}
+			if (processWriter == null) {
+				launchProcess();
+			}
 			try {
-				writer.write(text);
-				writer.close();
+				if (isKeepAlive)
+				{
+					String encoded = encode(text);
+					processWriter.println(encoded);
+					processWriter.flush();
+				}
+				else
+				{
+					processWriter.write(text);
+					processWriter.close();
+				}
 				
 				results.clear();
-				String line;
-				do {
-					line = reader.readLine();
-					if (line != null) {
-						results.add(line);
-						width = Math.max(width, line.length() - scroll);
-					}
-				} while (line != null);
+				if (isKeepAlive)
+				{
+					String resultText = decode(processReader.readLine());
+					loadResults(
+							new BufferedReader(new StringReader(resultText)));
+				}
+				else
+				{
+					loadResults(processReader);
+				}
 			} finally {
-				writer.close();
-				reader.close();
+				if ( ! isKeepAlive)
+				{
+					releaseProcess();
+				}
 			}
 		} catch (Exception e) {
 			results.clear();
@@ -105,6 +120,53 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		return width;
 	}
 
+	private void loadResults(BufferedReader reader) throws IOException {
+		String line;
+		do {
+			line = reader.readLine();
+			if (line != null) {
+				results.add(line);
+				width = Math.max(width, line.length() - scroll);
+			}
+		} while (line != null);
+	}
+
+	private void releaseProcess() throws IOException {
+		processWriter.close();
+		processReader.close();
+		processWriter = null;
+		processReader = null;
+	}
+
+	private void launchProcess() throws IOException {
+		checkEnvironment();
+		checkScriptPath();
+		Runtime runtime = Runtime.getRuntime();
+		String[] arguments =
+				isKeepAlive
+				? new String[] {"python", scriptPath, "-k"}
+				: new String[] {"python", scriptPath};
+		Process process = runtime.exec(arguments, environment);
+		processWriter = new PrintWriter(new BufferedWriter(
+				new OutputStreamWriter(process.getOutputStream())));
+		processReader = new BufferedReader(
+				new InputStreamReader(process.getInputStream()));
+	}
+	
+	private String encode(String source) {
+		return source
+				.replace("%", "%25")
+				.replace("\r", "%0d")
+				.replace("\n", "%0a");
+	}
+	
+	private String decode(String source) {
+		return source
+				.replace("%0a", "\n")
+				.replace("%0d", "\r")
+				.replace("%25", "%");
+	}
+
 	private boolean isActive(String text) {
 		Pattern activate = Pattern.compile(
 				COMMAND_PATTERN + "on\\s*$", 
@@ -116,7 +178,15 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		
 		fixedWidth = readSetting("width", text);
 		scroll = readSetting("scroll", text);
+		isKeepAlive = readKeepAlive(text);
 		return true;
+	}
+
+	private boolean readKeepAlive(String text) {
+		Pattern pattern = Pattern.compile(
+				COMMAND_PATTERN + "keepalive\\s*$", 
+				Pattern.MULTILINE);
+		return pattern.matcher(text).find();
 	}
 
 	private int readSetting(String settingName, String text) {
@@ -159,8 +229,8 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		}
 	}
 	
-	private void checkArguments() {
-		if (scriptArguments != null)
+	private void checkScriptPath() {
+		if (scriptPath != null)
 		{
 			return;
 		}
@@ -170,7 +240,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			URL bundleURL = FileLocator.find(bundle, path, null);
 			URL fileURL;
 			fileURL = FileLocator.toFileURL(bundleURL);
-			scriptArguments = new String[] {"python", fileURL.getPath()};
+			scriptPath = fileURL.getPath();
 			
 			// Also get the path to report builder to unpack it from the bundle.
 			Path path2 = new Path("PySrc/report_builder.py");

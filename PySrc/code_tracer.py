@@ -207,7 +207,7 @@ class CodeTracer(object):
             exec code in self.environment
         except SyntaxError, ex:
             messages = traceback.format_exception_only(type(ex), ex)
-            builder.add_message(messages[-1].strip() + ' ', ex.lineno)
+            builder.add_message('%s (line: %s)' % (messages[-1].strip() ,ex.lineno), ex.lineno)
         except:
             exc_info = sys.exc_info()
             try:
@@ -254,5 +254,6 @@ if __name__ == '__main__':
                 sys.stdout.flush()
     else:
         code = sys.stdin.read()
-        
+        code = code.strip().replace('\r\n', '\n').replace('\r', '\n') + '\n'
+
         print tracer.trace_code(code)

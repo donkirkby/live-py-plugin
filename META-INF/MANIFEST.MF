@@ -7,7 +7,9 @@ Bundle-Activator: live_py.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.ui.workbench.texteditor,
- org.eclipse.ui.ide
+ org.eclipse.ui.ide,
+ org.python.pydev,
+ org.python.pydev.core
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: org.eclipse.jface.text,

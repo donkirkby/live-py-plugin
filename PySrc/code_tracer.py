@@ -1,6 +1,7 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
                  Attribute, Call, Expr, Load, Name, NodeTransformer, Num, 
                  Return, Store, Str, Subscript)
+from turtle import Turtle
 import sys
 
 from report_builder import ReportBuilder
@@ -243,15 +244,24 @@ class CodeTracer(object):
     
 if __name__ == '__main__':
     tracer = CodeTracer()
+    t = None
+    if '-t' in sys.argv:
+        t = Turtle()
+        tracer.environment['turtle'] = t
     if '-k' in sys.argv:
         line = ''
         tracer.keepalive = True
         while not line is None:
             line = sys.stdin.readline()
             if not line is None:
+                if t:
+                    t.tracer(100000)
+                    t.reset()
                 code = tracer.decode(line)
                 print tracer.encode(tracer.trace_code(code))
                 sys.stdout.flush()
+                if t:
+                    t.tracer(1)
     else:
         code = sys.stdin.read()
         

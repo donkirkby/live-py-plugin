@@ -39,6 +39,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private int fixedWidth;
 	private int scroll;
 	private boolean isKeepAlive;
+	private boolean isTurtle;
 	private String scriptPath;
 	private String[] environment;
 	private PrintWriter processWriter;
@@ -90,7 +91,11 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 				results.clear();
 				if (isKeepAlive)
 				{
-					String resultText = decode(processReader.readLine());
+					String line = processReader.readLine();
+					String resultText = 
+							line == null
+							? "No results returned."
+							: decode(line);
 					loadResults(
 							new BufferedReader(new StringReader(resultText)));
 				}
@@ -106,7 +111,11 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			}
 		} catch (Exception e) {
 			results.clear();
-			results.add(e.getMessage());
+			String message = e.getMessage();
+			if (message == null) {
+				message = e.toString();
+			}
+			results.add(message);
 		}
 		width = fixedWidth > 0 ? fixedWidth : Math.min(width, MAX_WIDTH);
 		for (int j = 0; j < results.size(); j++) {
@@ -142,11 +151,18 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		checkEnvironment();
 		checkScriptPath();
 		Runtime runtime = Runtime.getRuntime();
-		String[] arguments =
-				isKeepAlive
-				? new String[] {"python", scriptPath, "-k"}
-				: new String[] {"python", scriptPath};
-		Process process = runtime.exec(arguments, environment);
+		ArrayList<String> arguments = new ArrayList<String>();
+		arguments.add("python");
+		arguments.add(scriptPath);
+		if (isKeepAlive) {
+			arguments.add("-k");
+		}
+		if (isTurtle) {
+			arguments.add("-t");
+		}
+		Process process = runtime.exec(
+				(String[])arguments.toArray(new String[arguments.size()]), 
+				environment);
 		processWriter = new PrintWriter(new BufferedWriter(
 				new OutputStreamWriter(process.getOutputStream())));
 		processReader = new BufferedReader(
@@ -168,23 +184,21 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	}
 
 	private boolean isActive(String text) {
-		Pattern activate = Pattern.compile(
-				COMMAND_PATTERN + "on\\s*$", 
-				Pattern.MULTILINE);
-		if ( ! activate.matcher(text).find())
+		if ( ! readFlag("on", text))
 		{
 			return false;
 		}
 		
 		fixedWidth = readSetting("width", text);
 		scroll = readSetting("scroll", text);
-		isKeepAlive = readKeepAlive(text);
+		isTurtle = readFlag("turtle", text);
+		isKeepAlive = isTurtle || readFlag("keepalive", text);
 		return true;
 	}
 
-	private boolean readKeepAlive(String text) {
+	private boolean readFlag(String name, String text) {
 		Pattern pattern = Pattern.compile(
-				COMMAND_PATTERN + "keepalive\\s*$", 
+				COMMAND_PATTERN + name + "\\s*$", 
 				Pattern.MULTILINE);
 		return pattern.matcher(text).find();
 	}

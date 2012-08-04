@@ -2,18 +2,23 @@ live-py-plugin
 ==============
 
 Live coding in Python implemented as an Eclipse plug in.
-To see how it works, watch the [demo video][video] or read the [blog post][blog].
+
+To see how it works, watch the [demo video][video] or read the 
+[blog post][blog].
 
 Installing
 ----------
 
 1. Install the [PyDev plugin][pydev] and Eclipse if you don't already have them.
-2. Download the latest version of the live-py plugin jar file from the [downloads page][downloads].
-3. Copy the plugin jar file to Eclipse's dropins folder. On my workstation I was able to do that in two different ways.
+2. Download the latest version of the live-py plugin jar file from the 
+   [downloads page][downloads].
+3. Copy the plugin jar file to Eclipse's dropins folder. On my workstation I 
+   was able to do that in two different ways.
     1. Copy it to the system-wide Eclipse installation.
     
              sudo cp live-py_1.0.0.201206132143.jar /usr/lib/eclipse/dropins/
-    2. Copy it to your `.eclipse` folder in your home directory. This doesn't require sudo permission.
+    2. Copy it to your `.eclipse` folder in your home directory. This doesn't 
+       require sudo permission.
        
              mkdir ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
              cp live-py_1.0.0.201206132219.jar \
@@ -22,7 +27,9 @@ Installing
 5. Open any Python file, and add a comment like this:
 
         # echo on
-   You should see an extra column next to the line numbers that shows the results of any code that runs. It may be less distracting to turn off the line numbers.
+   You should see an extra column next to the line numbers that shows the 
+   results of any code that runs. It may be less distracting to turn off the 
+   line numbers.
 
 Uninstalling
 ------------
@@ -42,9 +49,18 @@ Working Features
 To do
 -----
 - print statements don't work.
-- Any syntax error currently blanks out the results, should just show previous result with error marker.
+- Any syntax error currently blanks out the results, should just show previous 
+result with error marker.
 - Figure out how to add a horizontal scroll bar.
 - Move ruler to right side.
+
+Creating an Install Package
+---------------------------
+1. Open live-py/plugin.xml, and increment the Version field.
+2. Click the Export Wizard in the bottom right corner.
+3. Change the destination to Directory, and click Finish.
+4. Go to the directory you chose, and find the .jar file. You can distribute
+   that as your install package.
 
 [pydev]: http://pydev.org/download.html
 [downloads]: https://github.com/donkirkby/live-py-plugin/downloads

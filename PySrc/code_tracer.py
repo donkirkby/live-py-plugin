@@ -264,5 +264,6 @@ if __name__ == '__main__':
                     t.tracer(1)
     else:
         code = sys.stdin.read()
-        
+        code = code.strip().replace('\r\n', '\n').replace('\r', '\n') + '\n'
+
         print tracer.trace_code(code)

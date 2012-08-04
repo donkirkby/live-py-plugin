@@ -2,37 +2,42 @@ package live_py;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.part.FileEditorInput;
-import org.osgi.framework.Bundle;
+import org.python.pydev.core.MisconfigurationException;
+import org.python.pydev.core.REF;
+import org.python.pydev.core.Tuple;
+import org.python.pydev.core.bundle.BundleUtils;
+import org.python.pydev.core.log.Log;
+import org.python.pydev.editor.PyEdit;
+import org.python.pydev.editor.codefolding.PySourceViewer;
+import org.python.pydev.plugin.nature.PythonNature;
+import org.python.pydev.runners.UniversalRunner;
+import org.python.pydev.runners.UniversalRunner.AbstractRunner;
 
 
 public class LiveCodingResultsColumn extends LineNumberRulerColumn {
+	/**
+	 * Making it true will print some debug info to stdout.
+	 */
+	private final static boolean DEBUG = false;
+	
 	private static final String COMMAND_PATTERN = "^\\s*#\\s*echo\\s+";
-	private ITextViewer cachedTextViewer;
+	private PyEdit pyEdit;
 	private ArrayList<String> results;
 	private final int MAX_WIDTH = 60;
 	private int width;
@@ -40,15 +45,20 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private int scroll;
 	private boolean isKeepAlive;
 	private boolean isTurtle;
-	private String scriptPath;
-	private String[] environment;
+	private File scriptPath;
 	private PrintWriter processWriter;
 	private BufferedReader processReader;
 
 	@Override
 	public Control createControl(CompositeRuler parentRuler,
 			Composite parentControl) {
-		cachedTextViewer= parentRuler.getTextViewer();
+		ITextViewer textViewer = parentRuler.getTextViewer();
+		if(textViewer instanceof PySourceViewer){
+			pyEdit= ((PySourceViewer) textViewer).getEdit();
+		}else if(DEBUG){
+			System.out.println("Editor found is not PyEdit: "+textViewer);
+			
+		}
 		results = new ArrayList<String>();
 		return super.createControl(parentRuler, parentControl);
 	}
@@ -60,7 +70,10 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	
 	@Override
 	protected int computeNumberOfDigits() {
-		String text = cachedTextViewer.getDocument().get();
+		if(pyEdit == null){
+			return 0;
+		}
+		String text = pyEdit.getDocument().get();
 		if ( ! isActive(text))
 		{
 			results.clear();
@@ -81,11 +94,18 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 					String encoded = encode(text);
 					processWriter.println(encoded);
 					processWriter.flush();
+					if(DEBUG){
+						System.out.println("Keep alive writing: "+encoded);
+					}
+
 				}
 				else
 				{
 					processWriter.write(text);
 					processWriter.close();
+					if(DEBUG){
+						System.out.println("Writing (no keep alive): "+text);
+					}
 				}
 				
 				results.clear();
@@ -96,6 +116,9 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 							line == null
 							? "No results returned."
 							: decode(line);
+					if(DEBUG){
+						System.out.println("Keep alive read: "+resultText);
+					}
 					loadResults(
 							new BufferedReader(new StringReader(resultText)));
 				}
@@ -133,6 +156,10 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		String line;
 		do {
 			line = reader.readLine();
+			if(DEBUG){
+				System.out.println("load results line: "+line);
+			}
+
 			if (line != null) {
 				results.add(line);
 				width = Math.max(width, line.length() - scroll);
@@ -148,25 +175,48 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	}
 
 	private void launchProcess() throws IOException {
-		checkEnvironment();
 		checkScriptPath();
-		Runtime runtime = Runtime.getRuntime();
-		ArrayList<String> arguments = new ArrayList<String>();
-		arguments.add("python");
-		arguments.add(scriptPath);
+		if(pyEdit == null){
+			return;
+		}
+		PythonNature nature;
+		try {
+			nature = (PythonNature) pyEdit.getPythonNature();
+		} catch (MisconfigurationException e) {
+			Log.log(e);
+			return;
+		}
+		AbstractRunner runner = UniversalRunner.getRunner(nature);
+		ArrayList<String> argumentList = new ArrayList<String>();
 		if (isKeepAlive) {
-			arguments.add("-k");
+			argumentList.add("-k");
 		}
 		if (isTurtle) {
-			arguments.add("-t");
+			argumentList.add("-t");
 		}
-		Process process = runtime.exec(
-				(String[])arguments.toArray(new String[arguments.size()]), 
-				environment);
-		processWriter = new PrintWriter(new BufferedWriter(
-				new OutputStreamWriter(process.getOutputStream())));
-		processReader = new BufferedReader(
-				new InputStreamReader(process.getInputStream()));
+		String[] arguments = 
+				(String[])argumentList.toArray(new String[argumentList.size()]);
+		File editorFile = pyEdit.getEditorFile();
+		Tuple<Process, String> tuple = runner.createProcess(
+				REF.getFileAbsolutePath(scriptPath), 
+				arguments, 
+				editorFile.getParentFile(), 
+				null);
+		if(tuple.o1 != null){
+			if(DEBUG){
+				System.out.println("Launched: "+tuple.o2);
+			}
+			Process process = tuple.o1;
+			processWriter = new PrintWriter(new BufferedWriter(
+					new OutputStreamWriter(process.getOutputStream())));
+			processReader = new BufferedReader(
+					new InputStreamReader(process.getInputStream()));
+		}else{
+			if(DEBUG){
+				System.out.println("Unable to make launch.");
+			}
+		}
+		
 	}
 	
 	private String encode(String source) {
@@ -215,53 +265,17 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		return setting;
 	}
 
-	private void checkEnvironment() {
-		if (environment != null)
-		{
-			return;
-		}
-			
-		IWorkbench workbench = PlatformUI.getWorkbench();
-		IWorkbenchWindow window = 
-				workbench == null ? null : workbench.getActiveWorkbenchWindow();
-		IWorkbenchPage activePage = 
-				window == null ? null : window.getActivePage();
-		
-		IEditorPart editor = 
-				activePage == null ? null : activePage.getActiveEditor();
-		IEditorInput input = 
-				editor == null ? null : editor.getEditorInput();
-		IPath path = input instanceof FileEditorInput 
-				? ((FileEditorInput)input).getPath()
-				: null;
-		if (path != null)
-		{
-			String pythonPath = String.format(
-					"PYTHONPATH=%1$s", 
-					path.removeLastSegments(1));
-			environment = new String[] {pythonPath};
-		}
-	}
 	
 	private void checkScriptPath() {
 		if (scriptPath != null)
 		{
 			return;
 		}
-		try {
-			Bundle bundle = Activator.getDefault().getBundle();
-			Path path = new Path("PySrc/code_tracer.py");
-			URL bundleURL = FileLocator.find(bundle, path, null);
-			URL fileURL;
-			fileURL = FileLocator.toFileURL(bundleURL);
-			scriptPath = fileURL.getPath();
-			
-			// Also get the path to report builder to unpack it from the bundle.
-			Path path2 = new Path("PySrc/report_builder.py");
-			URL bundle2URL = FileLocator.find(bundle, path2, null);
-			FileLocator.toFileURL(bundle2URL);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		scriptPath = BundleUtils.getRelative(
+				new Path("PySrc/code_tracer.py"),
+				Activator.getDefault().getBundle());
+		if(DEBUG){
+			System.out.println("Script path: "+scriptPath);
 		}
 	}
 }

@@ -200,12 +200,8 @@ class CodeTracer(object):
             
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
-            if not self.keepalive:
-                self.environment = {}
-            self.environment[CONTEXT_NAME] = builder
-            self.environment['__name__'] = '__live_coding__'
-        
-            exec code in self.environment
+            env = {CONTEXT_NAME: builder, '__name__': '__live_coding__'}        
+            exec code in env
         except SyntaxError, ex:
             messages = traceback.format_exception_only(type(ex), ex)
             builder.add_message(messages[-1].strip() + ' ', ex.lineno)
@@ -230,40 +226,6 @@ class CodeTracer(object):
                 
         return builder.report()
     
-    def encode(self, source):
-        return source.replace('%', 
-                              '%25').replace('\r', 
-                                             '%0d').replace('\n', 
-                                                            '%0a')
-    
-    def decode(self, encoded):
-        return encoded.replace('%0a', 
-                               '\n').replace('%0d',
-                                             '\r').replace('%25', 
-                                                           '%')
-    
 if __name__ == '__main__':
-    tracer = CodeTracer()
-    t = None
-    if '-t' in sys.argv:
-        t = Turtle()
-        tracer.environment['turtle'] = t
-    if '-k' in sys.argv:
-        line = ''
-        tracer.keepalive = True
-        while not line is None:
-            line = sys.stdin.readline()
-            if not line is None:
-                if t:
-                    t.tracer(100000)
-                    t.reset()
-                code = tracer.decode(line)
-                print tracer.encode(tracer.trace_code(code))
-                sys.stdout.flush()
-                if t:
-                    t.tracer(1)
-    else:
-        code = sys.stdin.read()
-        code = code.strip().replace('\r\n', '\n').replace('\r', '\n') + '\n'
-
-        print tracer.trace_code(code)
+    code = sys.stdin.read()
+    print CodeTracer().trace_code(code)

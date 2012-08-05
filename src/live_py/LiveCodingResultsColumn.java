@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.python.pydev.core.MisconfigurationException;
@@ -43,11 +44,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private int width;
 	private int fixedWidth;
 	private int scroll;
-	private boolean isKeepAlive;
-	private boolean isTurtle;
 	private File scriptPath;
-	private PrintWriter processWriter;
-	private BufferedReader processReader;
 
 	@Override
 	public Control createControl(CompositeRuler parentRuler,
@@ -80,57 +77,25 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			width = 0;
 			return width;
 		}
+		width = 5;
 		try {
-			width = 5;
-			if (processWriter != null && ! isKeepAlive) {
-				releaseProcess();
-			}
-			if (processWriter == null) {
-				launchProcess();
-			}
+			Process process = launchProcess();
+			PrintWriter writer = new PrintWriter(new BufferedWriter(
+					new OutputStreamWriter(process.getOutputStream())));
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(process.getInputStream()));
 			try {
-				if (isKeepAlive)
-				{
-					String encoded = encode(text);
-					processWriter.println(encoded);
-					processWriter.flush();
-					if(DEBUG){
-						System.out.println("Keep alive writing: "+encoded);
-					}
-
-				}
-				else
-				{
-					processWriter.write(text);
-					processWriter.close();
-					if(DEBUG){
-						System.out.println("Writing (no keep alive): "+text);
-					}
+				writer.write(text);
+				writer.close();
+				if(DEBUG){
+					System.out.println("Writing: "+text);
 				}
 				
 				results.clear();
-				if (isKeepAlive)
-				{
-					String line = processReader.readLine();
-					String resultText = 
-							line == null
-							? "No results returned."
-							: decode(line);
-					if(DEBUG){
-						System.out.println("Keep alive read: "+resultText);
-					}
-					loadResults(
-							new BufferedReader(new StringReader(resultText)));
-				}
-				else
-				{
-					loadResults(processReader);
-				}
+				loadResults(reader);
 			} finally {
-				if ( ! isKeepAlive)
-				{
-					releaseProcess();
-				}
+				writer.close();
+				reader.close();
 			}
 		} catch (Exception e) {
 			results.clear();
@@ -167,33 +132,20 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		} while (line != null);
 	}
 
-	private void releaseProcess() throws IOException {
-		processWriter.close();
-		processReader.close();
-		processWriter = null;
-		processReader = null;
-	}
-
-	private void launchProcess() throws IOException {
+	private Process launchProcess() throws IOException {
 		checkScriptPath();
 		if(pyEdit == null){
-			return;
+			return null;
 		}
 		PythonNature nature;
 		try {
 			nature = (PythonNature) pyEdit.getPythonNature();
 		} catch (MisconfigurationException e) {
 			Log.log(e);
-			return;
+			return null;
 		}
 		AbstractRunner runner = UniversalRunner.getRunner(nature);
 		ArrayList<String> argumentList = new ArrayList<String>();
-		if (isKeepAlive) {
-			argumentList.add("-k");
-		}
-		if (isTurtle) {
-			argumentList.add("-t");
-		}
 		String[] arguments = 
 				(String[])argumentList.toArray(new String[argumentList.size()]);
 		File editorFile = pyEdit.getEditorFile();
@@ -207,30 +159,12 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 				System.out.println("Launched: "+tuple.o2);
 			}
 			Process process = tuple.o1;
-			processWriter = new PrintWriter(new BufferedWriter(
-					new OutputStreamWriter(process.getOutputStream())));
-			processReader = new BufferedReader(
-					new InputStreamReader(process.getInputStream()));
-		}else{
-			if(DEBUG){
-				System.out.println("Unable to make launch.");
-			}
+			return process;
 		}
-		
-	}
-	
-	private String encode(String source) {
-		return source
-				.replace("%", "%25")
-				.replace("\r", "%0d")
-				.replace("\n", "%0a");
-	}
-	
-	private String decode(String source) {
-		return source
-				.replace("%0a", "\n")
-				.replace("%0d", "\r")
-				.replace("%25", "%");
+		if(DEBUG){
+			System.out.println("Unable to make launch.");
+		}
+		return null;
 	}
 
 	private boolean isActive(String text) {
@@ -241,8 +175,6 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		
 		fixedWidth = readSetting("width", text);
 		scroll = readSetting("scroll", text);
-		isTurtle = readFlag("turtle", text);
-		isKeepAlive = isTurtle || readFlag("keepalive", text);
 		return true;
 	}
 

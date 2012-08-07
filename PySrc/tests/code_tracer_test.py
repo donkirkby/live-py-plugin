@@ -535,6 +535,22 @@ x = 11 """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
+    def test_trace_canvas(self):
+        # SETUP
+        code = """\
+x = 100
+y = 50
+__live_canvas__.create_line(x, y, x+10, y+10)
+"""
+        expected_report = """\
+x = 100 
+y = 50 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
         
     def test_canvas(self):
         # SETUP

@@ -42,7 +42,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private static final String COMMAND_PATTERN = "^\\s*#\\s*echo\\s+";
 	private PyEdit pyEdit;
 	private ArrayList<String> results;
-	private boolean isDrawing;
+	private boolean isCanvasOn;
 	private final int MAX_WIDTH = 60;
 	private int width;
 	private int fixedWidth;
@@ -65,35 +65,65 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			
 			@Override
 			public void paintControl(PaintEvent e) {
-				GC gc = e.gc;
-				drawResult(gc);
+				if (isCanvasOn) {
+					GC gc = e.gc;
+					drawResult(gc);
+				}
 			}
 		});
 		return control;
 	}
 	
 	private void drawResult(GC gc) {
-//		gc.drawLine(0, 0, 100, 100);
+		Pattern linePattern = Pattern.compile(
+				"^\\s*(\\w+)\\s*\\(([^\\)]*)\\)\\s*$");
+		// Clear the drawing
+		gc.fillRectangle(gc.getDevice().getBounds());
+		
+		// Execute the drawing commands
+		for (String command : results) {
+			Matcher matcher = linePattern.matcher(command);
+			if (matcher.matches()) {
+				String[] argStrings = matcher.group(2).split("\\s*,\\s*");
+				int[] args = new int[argStrings.length];
+				for (int i = 0; i < argStrings.length; i++) {
+					args[i] = Integer.parseInt(argStrings[i]);
+				}
+				if (matcher.group(1).equals("create_line")) {
+					gc.drawLine(args[0], args[1], args[2], args[3]);
+				}
+				else if (matcher.group(1).equals("create_rectangle")) {
+					gc.drawRectangle(
+							args[0], 
+							args[1], 
+							args[2]-args[0], 
+							args[3]-args[1]);
+				}
+
+			}
+		}
 	}
 
 	@Override
 	protected String createDisplayString(int line) {
-		return line < results.size() ? results.get(line) : "";
+		return line < results.size() && ! isCanvasOn ? results.get(line) : "";
 	}
 	
     @Override
     public void redraw() {
-        // TODO Auto-generated method stub
-        super.redraw();
-        GC gc= new GC(getControl());
-        try
-        {
-            drawResult(gc);
-        }
-        finally
-        {
-            gc.dispose();
-        }
+    	if ( ! isCanvasOn) {
+    		super.redraw();
+		} else {
+			GC gc= new GC(getControl());
+			try
+			{
+				drawResult(gc);
+			}
+			finally
+			{
+				gc.dispose();
+			}
+		}
     }
 	
 	@Override
@@ -177,6 +207,9 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		}
 		AbstractRunner runner = UniversalRunner.getRunner(nature);
 		ArrayList<String> argumentList = new ArrayList<String>();
+		if (isCanvasOn) {
+			argumentList.add("-c");
+		}
 		String[] arguments = 
 				(String[])argumentList.toArray(new String[argumentList.size()]);
 		File editorFile = pyEdit.getEditorFile();
@@ -206,6 +239,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		
 		fixedWidth = readSetting("width", text);
 		scroll = readSetting("scroll", text);
+		isCanvasOn = readFlag("canvas", text);
 		return true;
 	}
 
@@ -236,6 +270,12 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		}
 		scriptPath = BundleUtils.getRelative(
 				new Path("PySrc/code_tracer.py"),
+				Activator.getDefault().getBundle());
+		BundleUtils.getRelative(
+				new Path("PySrc/report_builder.py"),
+				Activator.getDefault().getBundle());
+		BundleUtils.getRelative(
+				new Path("PySrc/canvas.py"),
 				Activator.getDefault().getBundle());
 		if(DEBUG){
 			System.out.println("Script path: "+scriptPath);

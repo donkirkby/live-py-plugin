@@ -9,7 +9,9 @@ import traceback
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
+CANVAS_NAME = '__live_canvas__'
 PSEUDO_FILENAME = '<live coding source>'
+MODULE_NAME = '__live_coding__'
 
 class TraceAssignments(NodeTransformer):
     def visit(self, node):
@@ -220,7 +222,7 @@ class CodeTracer(object):
         
     def trace_canvas(self, source):
         canvas = Canvas()
-        env = {'__name__': '__live_coding__', '__live_canvas__': canvas}
+        env = {'__name__': MODULE_NAME, CANVAS_NAME: canvas}
         exec source in env
         
         return '\n'.join(canvas.report)
@@ -237,7 +239,9 @@ class CodeTracer(object):
             
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
-            env = {CONTEXT_NAME: builder, '__name__': '__live_coding__'}        
+            env = {CONTEXT_NAME: builder, 
+                   '__name__': MODULE_NAME,
+                   CANVAS_NAME: Canvas()}        
             exec code in env
         except SyntaxError, ex:
             messages = traceback.format_exception_only(type(ex), ex)
@@ -268,7 +272,6 @@ class CodeTracer(object):
 if __name__ == '__main__':
     code = sys.stdin.read()
     if '-c' in sys.argv:
-        #canvas mode
-        pass
+        print CodeTracer().trace_canvas(code)
     else:
         print CodeTracer().trace_code(code)

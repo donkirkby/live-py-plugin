@@ -16,6 +16,8 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -40,6 +42,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private static final String COMMAND_PATTERN = "^\\s*#\\s*echo\\s+";
 	private PyEdit pyEdit;
 	private ArrayList<String> results;
+	private boolean isDrawing;
 	private final int MAX_WIDTH = 60;
 	private int width;
 	private int fixedWidth;
@@ -57,13 +60,41 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			
 		}
 		results = new ArrayList<String>();
-		return super.createControl(parentRuler, parentControl);
+		Control control = super.createControl(parentRuler, parentControl);
+		control.addPaintListener(new PaintListener() {
+			
+			@Override
+			public void paintControl(PaintEvent e) {
+				GC gc = e.gc;
+				drawResult(gc);
+			}
+		});
+		return control;
 	}
 	
+	private void drawResult(GC gc) {
+//		gc.drawLine(0, 0, 100, 100);
+	}
+
 	@Override
 	protected String createDisplayString(int line) {
 		return line < results.size() ? results.get(line) : "";
 	}
+	
+    @Override
+    public void redraw() {
+        // TODO Auto-generated method stub
+        super.redraw();
+        GC gc= new GC(getControl());
+        try
+        {
+            drawResult(gc);
+        }
+        finally
+        {
+            gc.dispose();
+        }
+    }
 	
 	@Override
 	protected int computeNumberOfDigits() {

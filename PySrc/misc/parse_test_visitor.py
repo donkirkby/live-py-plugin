@@ -18,11 +18,10 @@ class PrintAssignments(ast.NodeTransformer):
         return [existing_node, ast.copy_location(print_node, existing_node)]
 
 code = """\
-class Dog(object):
-    pass
-
-dog = Dog()
-dog.name = "Spot"
+f = (lambda n,
+            x: (n + 
+                x))
+x = f(10)
 """
 
 tree = ast.parse(code)
@@ -38,7 +37,7 @@ new_tree = tree
 
 print ast.dump(new_tree)
 for s in new_tree.body:
-    print '    ' + ast.dump(s)
+    print '    ' + ast.dump(s, include_attributes=True)
 
 code = compile(new_tree, '<string>', 'exec')
 

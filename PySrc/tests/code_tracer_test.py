@@ -414,6 +414,31 @@ dog.name = 'Spot' """
         self.maxDiff = None
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
+    def test_set_attribute_item(self):
+        # SETUP
+        code = """\
+class Shelf(object):
+    pass
+
+shelf = Shelf()
+shelf.counts = {}
+shelf.counts[2] = 3
+"""
+        expected_report = """\
+
+
+
+
+shelf.counts = {} 
+shelf.counts = {2: 3} """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
     def test_old_class(self):
         # SETUP
         code = """\
@@ -492,6 +517,39 @@ y = 13 """
 
         # VERIFY
         self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+    def test_lambda(self):
+        # SETUP
+        code = """\
+f = lambda n: n + 1
+x = f(10)
+"""
+        expected_report = """\
+n = 10 
+x = 11 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
+        
+    def test_canvas(self):
+        # SETUP
+        code = """\
+__live_canvas__.create_line(0, 1, 100, 101)
+"""
+        expected_report = """\
+create_line(0, 1, 100, 101)
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_canvas(code)
+
+        # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
 if __name__ == '__main__':

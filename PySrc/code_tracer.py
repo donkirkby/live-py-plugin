@@ -1,9 +1,9 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
-                 Attribute, Call, Expr, Load, Name, NodeTransformer, Num, 
-                 Return, Store, Str, Subscript)
-from turtle import Turtle
+                 Attribute, Call, Expr, Index, Load, Name, NodeTransformer, Num, 
+                 Return, Store, Str, Subscript, Tuple)
 import sys
 
+from canvas import Canvas
 from report_builder import ReportBuilder
 import traceback
 
@@ -17,9 +17,16 @@ class TraceAssignments(NodeTransformer):
         body = getattr(new_node, 'body', None)
         if body is not None:
             previous_line_number = getattr(new_node, 'lineno', None)
-            for statement in body:
+            try:
+                statements = iter(body)
+            except TypeError:
+                # body doesn't contain statements
+                statements = []
+            for statement in statements:
                 line_number = getattr(statement, 'lineno', None)
-                if line_number is None and previous_line_number is not None:
+                if (line_number is None and 
+                    statement is not None and
+                    previous_line_number is not None):
                     statement.lineno = previous_line_number
                 else:
                     previous_line_number = line_number
@@ -132,6 +139,34 @@ class TraceAssignments(NodeTransformer):
         new_node.body.insert(0,
                              self._create_context_call('start_block', args))
         return new_node
+
+    def visit_Lambda(self, node):
+        """ Instrument a lambda expression by displaying the parameter values.
+        
+        We create calls to trace assignment to each argument, then wrap them
+        all in a tuple together with the original expression, and pull the
+        original expression out of the tuple.
+        """
+        
+        new_node = self.generic_visit(node)
+        
+        line_numbers = set()
+        self._find_line_numbers(new_node, line_numbers)
+        
+        # trace lambda argument values
+        calls = [getattr(self._trace_assignment(target), 'value', None)
+                 for target in new_node.args.args
+                 if getattr(target, 'id', 'self') != 'self']
+
+        args = [Num(n=min(line_numbers)),
+                Num(n=max(line_numbers))]
+        calls.insert(0, self._create_context_call('start_block', args).value)
+        calls.append(new_node.body)
+        new_node.body = Subscript(value=Tuple(elts=calls,
+                                              ctx=Load()),
+                                  slice=Index(value=Num(n=-1)),
+                                  ctx=Load())
+        return new_node
     
     def visit_Return(self, node):
         existing_node = self.generic_visit(node)
@@ -151,12 +186,7 @@ class TraceAssignments(NodeTransformer):
                     Name(id=target.id, ctx=Load()),
                     Num(n=target.lineno)]
         elif isinstance(target, Subscript):
-            subtarget = target
-            while isinstance(subtarget, Subscript):
-                subtarget = subtarget.value
-            args = [Str(s=subtarget.id),
-                    Name(id=subtarget.id, ctx=Load()),
-                    Num(n=target.lineno)]
+            return self._trace_assignment(target.value)
         elif isinstance(target, Attribute):
             args = [Str(s='%s.%s' % (target.value.id, target.attr)),
                     Attribute(value=target.value, 
@@ -187,6 +217,13 @@ class CodeTracer(object):
         self.message_limit = 1000
         self.keepalive = False
         self.environment = {}
+        
+    def trace_canvas(self, source):
+        canvas = Canvas()
+        env = {'__name__': '__live_coding__', '__live_canvas__': canvas}
+        exec source in env
+        
+        return '\n'.join(canvas.report)
         
     def trace_code(self, source):
         builder = ReportBuilder(self.message_limit)
@@ -220,6 +257,8 @@ class CodeTracer(object):
                         is_reported = True
                 if not is_reported:
                     builder.add_message(message, 1)
+#                    print '=== Unexpected Exception in tracing code ==='
+#                    traceback.print_exception(etype, value, tb)
             finally:
                 del tb
                 del exc_info # prevents circular reference
@@ -228,4 +267,8 @@ class CodeTracer(object):
     
 if __name__ == '__main__':
     code = sys.stdin.read()
-    print CodeTracer().trace_code(code)
+    if '-c' in sys.argv:
+        #canvas mode
+        pass
+    else:
+        print CodeTracer().trace_code(code)

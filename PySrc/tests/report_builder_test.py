@@ -34,6 +34,19 @@ x = 5
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_assign_function(self):
+        # SETUP
+        expected_report = ''
+        f = lambda n: n + 1
+        
+        # EXEC
+        builder = ReportBuilder()
+        builder.assign(name='f', value=f, line_number=2)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_return(self):
         # SETUP
         expected_value = 'bob'

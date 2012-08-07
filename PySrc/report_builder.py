@@ -30,14 +30,9 @@ class ReportBuilder(object):
         self._check_line_count(line_number)
         self.messages[line_number - 1] += message
 
-    def _should_display(self, value):
-        if not isinstance(value, object):
-            return True
-        repr_method = getattr(value.__class__, '__repr__', None)
-        return repr_method not in (None, object.__repr__)
-    
     def assign(self, name, value, line_number):
-        if (self._should_display(value)):
+        display = repr(value)
+        if not display.startswith('<'):
             self.add_message('%s = %r ' % (name, value), line_number)
         return value
     

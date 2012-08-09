@@ -18,6 +18,9 @@ import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
@@ -73,6 +76,17 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 					GC gc = e.gc;
 					drawResult(gc);
 				}
+			}
+		});
+		control.addMouseMoveListener(new MouseMoveListener() {
+			
+			@Override
+			public void mouseMove(MouseEvent e) {
+				System.out.println(String.format(
+						"move %1$d, %2$d: %3$d", 
+						e.x, 
+						e.y, 
+						e.stateMask));
 			}
 		});
 		return control;
@@ -142,7 +156,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			width = 0;
 			return width;
 		}
-		width = 5;
+		width = isCanvasOn ? MAX_WIDTH : 5;
 		try {
 			Process process = launchProcess();
 			PrintWriter writer = new PrintWriter(new BufferedWriter(
@@ -170,18 +184,18 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			}
 			results.add(message);
 		}
-	    if ( pyEdit instanceof ITextEditor ) {
-	        final ITextEditor editor = (ITextEditor)pyEdit;
-	        ISelection sel = editor.getSelectionProvider().getSelection();
-	        if ( sel instanceof TextSelection ) {
-	            final TextSelection textSel = (TextSelection)sel;
-	            results.set(0, textSel.getText());
+//	    if ( pyEdit instanceof ITextEditor ) {
+//	        final ITextEditor editor = (ITextEditor)pyEdit;
+//	        ISelection sel = editor.getSelectionProvider().getSelection();
+//	        if ( sel instanceof TextSelection ) {
+//	            final TextSelection textSel = (TextSelection)sel;
+//	            results.set(0, textSel.getText());
 //	            String newText = "/*" + textSel.getText() + "*/";
 //	            doc.replace( textSel.getOffset(), textSel.getLength(), newText );
-	        }
- 	    }
+//	        }
+// 	    }
 		width = fixedWidth > 0 ? fixedWidth : Math.min(width, MAX_WIDTH);
-		for (int j = 0; j < results.size(); j++) {
+		for (int j = 0; j < results.size() && ! isCanvasOn; j++) {
 			String line = results.get(j);
 			line = line.substring(
 					Math.min(scroll, line.length()),

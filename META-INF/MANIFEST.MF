@@ -9,7 +9,8 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.ui.ide,
  org.python.pydev,
- org.python.pydev.core
+ org.python.pydev.core,
+ org.eclipse.ui.editors;bundle-version="3.7.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: org.eclipse.jface.text,

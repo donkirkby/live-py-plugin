@@ -9,9 +9,14 @@ public class ValueSlider {
 	boolean isSliding;
 	private int startValue;
 	
-	public ValueSlider(ValueSource source, Rectangle bounds) {
+	public ValueSlider(
+			ValueSource source, 
+			int x, 
+			int y, 
+			int width,
+			int height) {
 		this.source = source;
-		this.bounds = bounds;
+		this.bounds = new Rectangle(x, y, width, height);
 	}
 
 	public void update(int x, int y, boolean isPressed) {

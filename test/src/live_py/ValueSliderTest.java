@@ -2,7 +2,6 @@ package live_py;
 
 import junit.framework.Assert;
 
-import org.eclipse.swt.graphics.Rectangle;
 import org.junit.Test;
 
 public class ValueSliderTest {
@@ -13,10 +12,13 @@ public class ValueSliderTest {
 		ValueSourceStub source = new ValueSourceStub();
 		source.replaceSelectedText("100");
 		
-		Rectangle bounds = new Rectangle(0, 0, 100, 100);
-		
+		int x = 0;
+		int y = 0;
+		int width = 100;
+		int height = 100;
+
 		// EXEC
-		ValueSlider slider = new ValueSlider(source, bounds);
+		ValueSlider slider = new ValueSlider(source, x, y, width, height);
 		
 		// arguments are: x, y, isPressed
 		slider.update(0, 50, true); // start slide

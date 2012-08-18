@@ -12,24 +12,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextViewer;
-import org.eclipse.jface.text.TextSelection;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.swt.events.DragDetectEvent;
-import org.eclipse.swt.events.DragDetectListener;
 import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.ui.texteditor.IDocumentProvider;
-import org.eclipse.ui.texteditor.ITextEditor;
 import org.python.pydev.core.MisconfigurationException;
 import org.python.pydev.core.REF;
 import org.python.pydev.core.Tuple;
@@ -78,17 +70,6 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 					GC gc = e.gc;
 					drawResult(gc);
 				}
-			}
-		});
-		control.addMouseMoveListener(new MouseMoveListener() {
-			
-			@Override
-			public void mouseMove(MouseEvent e) {
-				System.out.println(String.format(
-						"move %1$d, %2$d: %3$d", 
-						e.x, 
-						e.y, 
-						e.stateMask));
 			}
 		});
 		return control;
@@ -186,16 +167,6 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 			}
 			results.add(message);
 		}
-//	    if ( pyEdit instanceof ITextEditor ) {
-//	        final ITextEditor editor = (ITextEditor)pyEdit;
-//	        ISelection sel = editor.getSelectionProvider().getSelection();
-//	        if ( sel instanceof TextSelection ) {
-//	            final TextSelection textSel = (TextSelection)sel;
-//	            results.set(0, textSel.getText());
-//	            String newText = "/*" + textSel.getText() + "*/";
-//	            doc.replace( textSel.getOffset(), textSel.getLength(), newText );
-//	        }
-// 	    }
 		width = fixedWidth > 0 ? fixedWidth : Math.min(width, MAX_WIDTH);
 		for (int j = 0; j < results.size() && ! isCanvasOn; j++) {
 			String line = results.get(j);

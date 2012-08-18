@@ -215,17 +215,17 @@ class TraceAssignments(NodeTransformer):
                     kwargs=None)
 
 class CodeTracer(object):
-    def __init__(self):
+    def __init__(self, canvas=None):
         self.message_limit = 1000
         self.keepalive = False
         self.environment = {}
+        self.canvas = canvas if canvas else Canvas()
         
     def trace_canvas(self, source):
-        canvas = Canvas()
-        env = {'__name__': MODULE_NAME, CANVAS_NAME: canvas}
+        env = {'__name__': MODULE_NAME, CANVAS_NAME: self.canvas}
         exec source in env
         
-        return '\n'.join(canvas.report)
+        return '\n'.join(self.canvas.report)
         
     def trace_code(self, source):
         builder = ReportBuilder(self.message_limit)
@@ -241,7 +241,7 @@ class CodeTracer(object):
             
             env = {CONTEXT_NAME: builder, 
                    '__name__': MODULE_NAME,
-                   CANVAS_NAME: Canvas()}        
+                   CANVAS_NAME: self.canvas}        
             exec code in env
         except SyntaxError, ex:
             messages = traceback.format_exception_only(type(ex), ex)
@@ -270,8 +270,28 @@ class CodeTracer(object):
         return builder.report()
     
 if __name__ == '__main__':
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Trace Python code.')
+    parser.add_argument('-w', 
+                        '--width', 
+                        type=int,
+                        default=800,
+                        help='width of the canvas in pixels')
+    parser.add_argument('-t', 
+                        '--height', 
+                        type=int,
+                        default=600,
+                        help='height of the canvas in pixels')
+    parser.add_argument('-c', 
+                        '--canvas', 
+                        action='store_true', 
+                        help='Is the canvas on? If not, do a standard trace.')
+    
+    args = parser.parse_args()
     code = sys.stdin.read()
-    if '-c' in sys.argv:
-        print CodeTracer().trace_canvas(code)
+    canvas = Canvas(args.width, args.height)
+    if args.canvas:
+        print CodeTracer(canvas).trace_canvas(code)
     else:
-        print CodeTracer().trace_code(code)
+        print CodeTracer(canvas).trace_code(code)

@@ -15,11 +15,10 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseMoveListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.python.pydev.core.MisconfigurationException;
@@ -38,7 +37,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	/**
 	 * Making it true will print some debug info to stdout.
 	 */
-	private final static boolean DEBUG = false;
+	private final static boolean DEBUG = true;
 	
 	private static final String COMMAND_PATTERN = "^\\s*#\\s*echo\\s+";
 	private PyEdit pyEdit;
@@ -146,6 +145,8 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 					new OutputStreamWriter(process.getOutputStream())));
 			BufferedReader reader = new BufferedReader(
 					new InputStreamReader(process.getInputStream()));
+			BufferedReader errorReader = new BufferedReader(
+					new InputStreamReader(process.getErrorStream()));
 			try {
 				writer.write(text);
 				writer.close();
@@ -155,9 +156,20 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 				
 				results.clear();
 				loadResults(reader);
+				if (DEBUG) {
+					String line;
+					do
+					{
+						line = errorReader.readLine();
+						if (line != null) {
+							System.out.println(line);
+						}
+					} while (line != null);
+				}
 			} finally {
 				writer.close();
 				reader.close();
+				errorReader.close();
 			}
 		} catch (Exception e) {
 			results.clear();
@@ -211,6 +223,11 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		if (isCanvasOn) {
 			argumentList.add("-c");
 		}
+		Rectangle bounds = getControl().getBounds();
+		argumentList.add("-w");
+		argumentList.add(Integer.toString(bounds.width));
+		argumentList.add("-t");
+		argumentList.add(Integer.toString(bounds.height));
 		String[] arguments = 
 				(String[])argumentList.toArray(new String[argumentList.size()]);
 		File editorFile = pyEdit.getEditorFile();

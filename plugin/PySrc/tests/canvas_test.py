@@ -38,5 +38,18 @@ create_rectangle(5, 10, 500, 1000)"""
                 "Canvas instance has no attribute 'create_wirple'"):
             canvas.create_wirple(1, 'floop')
 
+    def test_bounds(self):
+        # SETUP
+        expected_width = 800
+        expected_height = 600
+        # EXEC
+        canvas = Canvas(expected_width, expected_height)
+        width = canvas.cget('width')
+        height = canvas.cget('height')
+        
+        # VERIFY
+        self.assertEqual(expected_width, width)
+        self.assertEqual(expected_height, height)
+
 if __name__ == '__main__':
     unittest.main()

@@ -300,6 +300,9 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		BundleUtils.getRelative(
 				new Path("PySrc/canvas.py"),
 				Activator.getDefault().getBundle());
+		BundleUtils.getRelative(
+				new Path("PySrc/mock_turtle.py"),
+				Activator.getDefault().getBundle());
 		if(DEBUG){
 			System.out.println("Script path: "+scriptPath);
 		}

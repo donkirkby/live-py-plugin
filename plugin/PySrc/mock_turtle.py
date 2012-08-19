@@ -3,12 +3,22 @@ from turtle import TNavigator, TPen
 from canvas import Canvas
 
 class MockTurtle(TNavigator, TPen):
-    def __init__(self, canvas=None):
+    def __init__(self, x=0, y=0, heading=0, canvas=None):
         TNavigator.__init__(self)
         TPen.__init__(self)
         self.canvas = canvas if canvas else Canvas()
-        self.__xoff = canvas.cget('width')/2
-        self.__yoff = canvas.cget('height')/2
+        self.__xoff = self.canvas.cget('width')/2
+        self.__yoff = self.canvas.cget('height')/2
+        if x or y:
+            self.setx(x)
+            self.sety(y)
+        self.setheading(heading)
+    
+    def __repr__(self):
+        x = round(self.xcor())
+        y = round(self.ycor())
+        h = round(self.heading())
+        return 'MockTurtle(%d, %d, %d)' % (x, y, h)
         
     def _goto(self, end):
         start = self._position
@@ -28,4 +38,3 @@ class MockTurtle(TNavigator, TPen):
 
     def window_height(self):
         return self.canvas.cget('height')
-    

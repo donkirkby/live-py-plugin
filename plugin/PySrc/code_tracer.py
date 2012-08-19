@@ -301,7 +301,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     code = sys.stdin.read()
     canvas = Canvas(args.width, args.height)
-    turtle = MockTurtle(canvas)
+    turtle = MockTurtle(canvas=canvas)
     tracer = CodeTracer(turtle)
     if args.turtle:
         print tracer.trace_turtle(code)

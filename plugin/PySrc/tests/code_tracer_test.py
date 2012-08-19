@@ -568,5 +568,21 @@ create_line(0, 1, 100, 101)
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
+    def test_turtle(self):
+        # SETUP
+        code = """\
+__live_turtle__.forward(100)
+"""
+        expected_report = """\
+create_line(0, 0, 100, 0)
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_turtle(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
 if __name__ == '__main__':
     unittest.main()

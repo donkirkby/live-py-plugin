@@ -43,6 +43,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private PyEdit pyEdit;
 	private ArrayList<String> results;
 	private boolean isCanvasOn;
+	private boolean isTurtleOn;
 	private final int MAX_WIDTH = 60;
 	private int width;
 	private int fixedWidth;
@@ -220,13 +221,16 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		}
 		AbstractRunner runner = UniversalRunner.getRunner(nature);
 		ArrayList<String> argumentList = new ArrayList<String>();
-		if (isCanvasOn) {
+		if (isTurtleOn) {
+			argumentList.add("-t");
+		}
+		else if (isCanvasOn) {
 			argumentList.add("-c");
 		}
 		Rectangle bounds = getControl().getBounds();
-		argumentList.add("-w");
+		argumentList.add("-x");
 		argumentList.add(Integer.toString(bounds.width));
-		argumentList.add("-t");
+		argumentList.add("-y");
 		argumentList.add(Integer.toString(bounds.height));
 		String[] arguments = 
 				(String[])argumentList.toArray(new String[argumentList.size()]);
@@ -257,7 +261,8 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		
 		fixedWidth = readSetting("width", text);
 		scroll = readSetting("scroll", text);
-		isCanvasOn = readFlag("canvas", text);
+		isTurtleOn = readFlag("turtle", text);
+		isCanvasOn = isTurtleOn || readFlag("canvas", text);
 		return true;
 	}
 

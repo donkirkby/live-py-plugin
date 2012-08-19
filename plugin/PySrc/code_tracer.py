@@ -2,14 +2,16 @@ from ast import (fix_missing_locations, iter_fields, parse, Assign, AST,
                  Attribute, Call, Expr, Index, Load, Name, NodeTransformer, Num, 
                  Return, Store, Str, Subscript, Tuple)
 import sys
+import traceback
 
 from canvas import Canvas
+from mock_turtle import MockTurtle
 from report_builder import ReportBuilder
-import traceback
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
 CANVAS_NAME = '__live_canvas__'
+TURTLE_NAME = '__live_turtle__'
 PSEUDO_FILENAME = '<live coding source>'
 MODULE_NAME = '__live_coding__'
 
@@ -215,17 +217,23 @@ class TraceAssignments(NodeTransformer):
                     kwargs=None)
 
 class CodeTracer(object):
-    def __init__(self, canvas=None):
+    def __init__(self, turtle=None):
         self.message_limit = 1000
         self.keepalive = False
-        self.environment = {}
-        self.canvas = canvas if canvas else Canvas()
+        self.turtle = turtle if turtle else MockTurtle()
+        self.environment = {'__name__': MODULE_NAME, 
+                            CANVAS_NAME: self.turtle.canvas, 
+                            TURTLE_NAME: self.turtle}
         
     def trace_canvas(self, source):
-        env = {'__name__': MODULE_NAME, CANVAS_NAME: self.canvas}
-        exec source in env
+        exec source in self.environment
         
-        return '\n'.join(self.canvas.report)
+        return '\n'.join(self.turtle.canvas.report)
+        
+    def trace_turtle(self, source):
+        exec source in self.environment
+        
+        return '\n'.join(self.turtle.report)
         
     def trace_code(self, source):
         builder = ReportBuilder(self.message_limit)
@@ -239,10 +247,8 @@ class CodeTracer(object):
             
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
-            env = {CONTEXT_NAME: builder, 
-                   '__name__': MODULE_NAME,
-                   CANVAS_NAME: self.canvas}        
-            exec code in env
+            self.environment[CONTEXT_NAME] = builder
+            exec code in self.environment
         except SyntaxError, ex:
             messages = traceback.format_exception_only(type(ex), ex)
             builder.add_message(messages[-1].strip() + ' ', ex.lineno)
@@ -273,12 +279,12 @@ if __name__ == '__main__':
     import argparse
     
     parser = argparse.ArgumentParser(description='Trace Python code.')
-    parser.add_argument('-w', 
+    parser.add_argument('-x', 
                         '--width', 
                         type=int,
                         default=800,
                         help='width of the canvas in pixels')
-    parser.add_argument('-t', 
+    parser.add_argument('-y', 
                         '--height', 
                         type=int,
                         default=600,
@@ -287,11 +293,19 @@ if __name__ == '__main__':
                         '--canvas', 
                         action='store_true', 
                         help='Is the canvas on? If not, do a standard trace.')
+    parser.add_argument('-t', 
+                        '--turtle', 
+                        action='store_true', 
+                        help='Is the turtle on? If not, do a standard trace.')
     
     args = parser.parse_args()
     code = sys.stdin.read()
     canvas = Canvas(args.width, args.height)
-    if args.canvas:
-        print CodeTracer(canvas).trace_canvas(code)
+    turtle = MockTurtle(canvas)
+    tracer = CodeTracer(turtle)
+    if args.turtle:
+        print tracer.trace_turtle(code)
+    elif args.canvas:
+        print tracer.trace_canvas(code)
     else:
-        print CodeTracer(canvas).trace_code(code)
+        print tracer.trace_code(code)

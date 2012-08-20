@@ -181,6 +181,27 @@ n = 3 """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
+    def test_empty_return(self):
+        # SETUP
+        code = """\
+def foo(x):
+    return
+
+n = foo(10)
+"""
+        expected_report = """\
+x = 10 
+return None 
+
+n = None """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
     def test_return_subscript(self):
         # SETUP
         code = """\

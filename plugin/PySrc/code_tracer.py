@@ -175,6 +175,8 @@ class TraceAssignments(NodeTransformer):
     def visit_Return(self, node):
         existing_node = self.generic_visit(node)
         value = existing_node.value
+        if value is None:
+            value = Name(id='None', ctx=Load())
         
         return [Assign(targets=[Name(id=RESULT_NAME, ctx=Store())],
                        value=value),

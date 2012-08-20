@@ -30,6 +30,25 @@ class MockTurtleTest(unittest.TestCase):
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
+    def test_penup(self):
+        # SETUP
+        expected_report = """\
+create_line(0, 0, 100, 0)
+create_line(150, 0, 350, 0)"""
+        
+        # EXEC
+        t = MockTurtle()
+        t.fd(100)
+        t.penup()
+        t.fd(50)
+        t.pendown()
+        t.fd(200)
+        t.
+        report = t.report
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
     def test_bounds(self):
         # SETUP
         expected_width = 800

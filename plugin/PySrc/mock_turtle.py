@@ -22,10 +22,11 @@ class MockTurtle(TNavigator, TPen):
         
     def _goto(self, end):
         start = self._position
-        self.canvas.create_line(int(start[0]) + self.__xoff, 
-                                -int(start[1]) + self.__yoff, 
-                                int(end[0]) + self.__xoff, 
-                                -int(end[1]) + self.__yoff)
+        if self._drawing:
+            self.canvas.create_line(int(round(start[0])) + self.__xoff, 
+                                    -int(round(start[1])) + self.__yoff, 
+                                    int(round(end[0])) + self.__xoff, 
+                                    -int(round(end[1])) + self.__yoff)
         self._position = end
     
     def __getattr__(self, name):

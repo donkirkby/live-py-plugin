@@ -579,7 +579,11 @@ y = 50 """
 __live_canvas__.create_line(0, 1, 100, 101)
 """
         expected_report = """\
-create_line(0, 1, 100, 101)
+create_line
+    0
+    1
+    100
+    101
 """
         tracer = CodeTracer()
         
@@ -595,7 +599,11 @@ create_line(0, 1, 100, 101)
 __live_turtle__.forward(100)
 """
         expected_report = """\
-create_line(0, 0, 100, 0)
+create_line
+    0
+    0
+    100
+    0
 """
         tracer = CodeTracer()
         

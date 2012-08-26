@@ -1,6 +1,7 @@
 from turtle import TNavigator, TPen
 
 from canvas import Canvas
+from argparse import ArgumentError
 
 class MockTurtle(TNavigator, TPen):
     def __init__(self, x=0, y=0, heading=0, canvas=None):
@@ -21,12 +22,14 @@ class MockTurtle(TNavigator, TPen):
         return 'MockTurtle(%d, %d, %d)' % (x, y, h)
         
     def _goto(self, end):
-        start = self._position
+        xstart = self.xcor()
+        ystart = self.ycor()
+        xend, yend = end
         if self._drawing:
-            self.canvas.create_line(int(round(start[0])) + self.__xoff, 
-                                    -int(round(start[1])) + self.__yoff, 
-                                    int(round(end[0])) + self.__xoff, 
-                                    -int(round(end[1])) + self.__yoff)
+            self.canvas.create_line(xstart + self.__xoff, 
+                                    -ystart + self.__yoff, 
+                                    xend + self.__xoff, 
+                                    -yend + self.__yoff)
         self._position = end
     
     def __getattr__(self, name):
@@ -39,3 +42,19 @@ class MockTurtle(TNavigator, TPen):
 
     def window_height(self):
         return self.canvas.cget('height')
+
+    def write(self, arg, move=False, align="left", font=("Arial", 8, "normal")):
+        if move:
+            raise ArgumentError('move', 'Parameter is not supported.')
+        if align == 'left':
+            anchor = 'SW'
+        elif align == 'center':
+            anchor = 'S'
+        elif align == 'right':
+            anchor = 'SE'
+        self.canvas.create_text(self.xcor() + self.__xoff, 
+                                -self.ycor() + self.__yoff,
+                                text=str(arg),
+                                anchor=anchor,
+                                font=font)
+        

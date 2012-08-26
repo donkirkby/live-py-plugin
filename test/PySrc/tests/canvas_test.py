@@ -5,7 +5,12 @@ class CanvasTest(unittest.TestCase):
 
     def test_create_line(self):
         # SETUP
-        expected_report = "create_line(1, 2, 100, 200)"
+        expected_report = """\
+create_line
+    1
+    2
+    100
+    200"""
         
         # EXEC
         canvas = Canvas()
@@ -18,8 +23,16 @@ class CanvasTest(unittest.TestCase):
     def test_multiple_calls(self):
         # SETUP
         expected_report = """\
-create_line(1, 2, 100, 200)
-create_rectangle(5, 10, 500, 1000)"""
+create_line
+    1
+    2
+    100
+    200
+create_rectangle
+    5
+    10
+    500
+    1000"""
         
         # EXEC
         canvas = Canvas()
@@ -50,6 +63,28 @@ create_rectangle(5, 10, 500, 1000)"""
         # VERIFY
         self.assertEqual(expected_width, width)
         self.assertEqual(expected_height, height)
+
+    def test_create_text(self):
+        # SETUP
+        expected_report = """\
+create_text
+    100
+    200
+    text='foo'
+    font=('Arial', 8, 'normal')
+    anchor='S'"""
+        
+        # EXEC
+        canvas = Canvas()
+        canvas.create_text(100, 
+                           200, 
+                           text='foo', 
+                           font=('Arial', 8, 'normal'),
+                           anchor='S')
+        report = canvas.report
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
 
 if __name__ == '__main__':
     unittest.main()

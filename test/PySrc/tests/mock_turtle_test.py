@@ -7,7 +7,12 @@ class MockTurtleTest(unittest.TestCase):
 
     def test_forward(self):
         # SETUP
-        expected_report = "create_line(0, 0, 100, 0)"
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0"""
         
         # EXEC
         t = MockTurtle()
@@ -19,7 +24,12 @@ class MockTurtleTest(unittest.TestCase):
 
     def test_right(self):
         # SETUP
-        expected_report = "create_line(0, 0, 0, 100)"
+        expected_report = """\
+create_line
+    0
+    0
+    0
+    100"""
         
         # EXEC
         t = MockTurtle()
@@ -33,8 +43,16 @@ class MockTurtleTest(unittest.TestCase):
     def test_penup(self):
         # SETUP
         expected_report = """\
-create_line(0, 0, 100, 0)
-create_line(150, 0, 350, 0)"""
+create_line
+    0
+    0
+    100
+    0
+create_line
+    150
+    0
+    350
+    0"""
         
         # EXEC
         t = MockTurtle()
@@ -43,7 +61,6 @@ create_line(150, 0, 350, 0)"""
         t.fd(50)
         t.pendown()
         t.fd(200)
-        t.
         report = t.report
         
         # VERIFY
@@ -65,7 +82,12 @@ create_line(150, 0, 350, 0)"""
 
     def test_offset(self):
         # SETUP
-        expected_report = "create_line(400, 300, 500, 300)"
+        expected_report = """\
+create_line
+    400
+    300
+    500
+    300"""
         
         # EXEC
         t = MockTurtle(canvas=Canvas(800, 600))
@@ -88,3 +110,27 @@ create_line(150, 0, 350, 0)"""
         
         # VERIFY
         self.assertEqual(expected_text, text)
+
+    def test_write(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+create_text
+    100
+    0
+    text='Bob'
+    font=('Arial', 8, 'normal')
+    anchor='SW'"""
+        
+        # EXEC
+        t = MockTurtle()
+        t.fd(100)
+        t.write('Bob')
+        report = t.report
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)

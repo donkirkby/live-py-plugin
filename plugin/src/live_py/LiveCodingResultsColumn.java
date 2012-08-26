@@ -15,9 +15,11 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.LineNumberRulerColumn;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -42,6 +44,7 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	private static final String COMMAND_PATTERN = "^\\s*#\\s*echo\\s+";
 	private PyEdit pyEdit;
 	private ArrayList<String> results;
+	private ArrayList<CanvasCommand> canvasCommands;
 	private boolean isCanvasOn;
 	private boolean isTurtleOn;
 	private final int MAX_WIDTH = 60;
@@ -76,31 +79,42 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 	}
 	
 	private void drawResult(GC gc) {
-		Pattern linePattern = Pattern.compile(
-				"^\\s*(\\w+)\\s*\\(([^\\)]*)\\)\\s*$");
 		// Clear the drawing
 		gc.fillRectangle(gc.getDevice().getBounds());
 		
+		if (canvasCommands == null) {
+			return;
+		}
 		// Execute the drawing commands
-		for (String command : results) {
-			Matcher matcher = linePattern.matcher(command);
-			if (matcher.matches()) {
-				String[] argStrings = matcher.group(2).split("\\s*,\\s*");
-				int[] args = new int[argStrings.length];
-				for (int i = 0; i < argStrings.length; i++) {
-					args[i] = Integer.parseInt(argStrings[i]);
+		for (CanvasCommand command : canvasCommands) {
+			String method = command.getName();
+			if (method.equals("create_line")) {
+				gc.drawLine(
+						command.getCoordinate(0),
+						command.getCoordinate(1),
+						command.getCoordinate(2),
+						command.getCoordinate(3));
+			}
+			else if (method.equals("create_rectangle")) {
+				gc.drawRectangle(
+						command.getCoordinate(0),
+						command.getCoordinate(1),
+						command.getCoordinate(2) - command.getCoordinate(0),
+						command.getCoordinate(3) - command.getCoordinate(1));
+			}
+			else if (method.equals("create_text")) {
+				Point size = gc.textExtent(command.getOption("text"));
+				int x = command.getCoordinate(0);
+				int y = command.getCoordinate(1);
+				if ("S".equals(command.getOption("anchor"))) {
+					x -= size.x/2;
+					y -= size.y;
 				}
-				if (matcher.group(1).equals("create_line")) {
-					gc.drawLine(args[0], args[1], args[2], args[3]);
-				}
-				else if (matcher.group(1).equals("create_rectangle")) {
-					gc.drawRectangle(
-							args[0], 
-							args[1], 
-							args[2]-args[0], 
-							args[3]-args[1]);
-				}
-
+				gc.drawText(
+						command.getOption("text"), 
+						x, 
+						y,
+						SWT.DRAW_TRANSPARENT);
 			}
 		}
 	}
@@ -156,7 +170,12 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 				}
 				
 				results.clear();
-				loadResults(reader);
+				if (isCanvasOn) {
+					loadCanvasCommands(reader);
+				}
+				else {
+					loadResults(reader);
+				}
 				if (DEBUG) {
 					String line;
 					do
@@ -190,6 +209,19 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 		}
 		
 		return width;
+	}
+
+	private void loadCanvasCommands(BufferedReader reader) {
+		canvasCommands = new ArrayList<CanvasCommand>();
+		CanvasReader canvasReader = new CanvasReader(reader);
+		CanvasCommand command;
+		do {
+			command = canvasReader.read();
+
+			if (command != null) {
+				canvasCommands.add(command);
+			}
+		} while (command != null);
 	}
 
 	private void loadResults(BufferedReader reader) throws IOException {

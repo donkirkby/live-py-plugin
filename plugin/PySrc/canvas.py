@@ -8,13 +8,16 @@ class Canvas:
                                                      *args, 
                                                      **kwargs)
 
-        method_names = ('create_line', 'create_rectangle')
+        method_names = ('create_line', 'create_rectangle', 'create_text')
         for method_name in method_names:
             self.__dict__[method_name] = make_call(method_name)
         
     def call(self, method_name, *args, **kwargs):
-        self.report.append("%s(%s)" % (method_name, 
-                                       ', '.join([str(x) for x in args])))
+        self.report.append(method_name)
+        for arg in args:
+            self.report.append("    %r" % int(round(arg)))
+        for name, value in kwargs.iteritems():
+            self.report.append("    %s=%r" % (name, value))
     
     def cget(self, option):
         return self.options[option]

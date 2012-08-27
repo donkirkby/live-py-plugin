@@ -18,6 +18,7 @@ import org.eclipse.jface.text.source.LineNumberRulerColumn;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
@@ -103,18 +104,38 @@ public class LiveCodingResultsColumn extends LineNumberRulerColumn {
 						command.getCoordinate(3) - command.getCoordinate(1));
 			}
 			else if (method.equals("create_text")) {
-				Point size = gc.textExtent(command.getOption("text"));
+				Font oldFont = gc.getFont();
+				gc.setFont(command.getFontOption(gc.getDevice(), "font"));
+				String text = command.getOption("text");
+				Point size = gc.textExtent(text);
 				int x = command.getCoordinate(0);
 				int y = command.getCoordinate(1);
-				if ("S".equals(command.getOption("anchor"))) {
-					x -= size.x/2;
+				String anchor = command.getOption("anchor");
+				anchor = anchor == null ? "center" : anchor;
+				if (anchor.startsWith("s")) {
 					y -= size.y;
 				}
+				else if (anchor.startsWith("n")) {
+					// defaults to top
+				}
+				else {
+					y -= size.y/2;
+				}
+				if (anchor.endsWith("e")) {
+					x -= size.x;
+				}
+				else if (anchor.endsWith("w")) {
+					// defaults to left side
+				}
+				else {
+					x -= size.x/2;
+				}
 				gc.drawText(
-						command.getOption("text"), 
+						text, 
 						x, 
 						y,
 						SWT.DRAW_TRANSPARENT);
+				gc.setFont(oldFont);
 			}
 		}
 	}

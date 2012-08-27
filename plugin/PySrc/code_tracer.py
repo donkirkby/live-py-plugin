@@ -224,13 +224,13 @@ class CodeTracer(object):
         self.keepalive = False
         self.turtle = turtle if turtle else MockTurtle()
         self.environment = {'__name__': MODULE_NAME, 
-                            CANVAS_NAME: self.turtle.canvas, 
+                            CANVAS_NAME: self.turtle.screen.cv, 
                             TURTLE_NAME: self.turtle}
         
     def trace_canvas(self, source):
         exec source in self.environment
         
-        return '\n'.join(self.turtle.canvas.report)
+        return '\n'.join(self.turtle.screen.cv.report)
         
     def trace_turtle(self, source):
         exec source in self.environment

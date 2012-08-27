@@ -2,6 +2,12 @@ package live_py;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Device;
+import org.eclipse.swt.graphics.Font;
 
 public class CanvasCommand {
 	private String name;
@@ -32,5 +38,29 @@ public class CanvasCommand {
 	}
 	public int getCoordinate(int index) {
 		return coordinates.get(index);
+	}
+	public Font getFontOption(Device device, String name) {
+		String value = options.get(name);
+		if (value == null) {
+			return null;
+		}
+		Pattern pattern = Pattern.compile("\\('([^']+)', (\\d+), '([^']+)'\\)");
+		Matcher matcher = pattern.matcher(value);
+		if ( ! matcher.matches()) {
+			return null;
+		}
+		String fontName = matcher.group(1);
+		int size = Integer.parseInt(matcher.group(2));
+		String[] styleNames = matcher.group(3).split(" ");
+		int style = SWT.NORMAL;
+		for (String styleName : styleNames) {
+			if (styleName.equals("bold")) {
+				style += SWT.BOLD;
+			}
+			else if (styleName.equals("italic")) {
+				style += SWT.ITALIC;
+			}
+		}
+		return new Font(device, fontName, size, style);
 	}
 }

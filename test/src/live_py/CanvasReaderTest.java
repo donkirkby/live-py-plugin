@@ -5,11 +5,14 @@ import java.io.StringReader;
 
 import junit.framework.Assert;
 
+import org.eclipse.swt.graphics.Device;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.junit.Test;
 
 public class CanvasReaderTest {
 
-	//@Test
+	@Test
 	public void onlyXAndY() {
 		// SETUP
 		String input = "create_line\n    100\n    200\n    110\n    210\n";
@@ -49,5 +52,25 @@ public class CanvasReaderTest {
 		Assert.assertNotNull("first command should be valid", command1);
 		Assert.assertEquals("anchor", "SW", command1.getOption("anchor"));
 		Assert.assertNull("no second command expected", command2);
+	}
+	
+	@Test
+	public void fontOption() {
+		// SETUP
+		String input = "create_line\n    font=('Arial', 8, 'normal')\n";
+		BufferedReader reader = new BufferedReader(new StringReader(input));
+		Device device = null; // null is OK for test.
+		
+		// EXEC
+		CanvasReader canvasReader = new CanvasReader(reader);
+		CanvasCommand command = canvasReader.read();
+		Font font = command.getFontOption(device, "font");
+		
+		// VERIFY
+		Assert.assertNotNull("font should be valid", font);
+		FontData[] entries = font.getFontData();
+		Assert.assertEquals("number of font entries", 1, entries.length);
+		FontData fontData = entries[0];
+		Assert.assertEquals("font name", "Arial", fontData.getName());
 	}
 }

@@ -72,7 +72,7 @@ create_text
     200
     text='foo'
     font=('Arial', 8, 'normal')
-    anchor='S'"""
+    anchor='s'"""
         
         # EXEC
         canvas = Canvas()
@@ -80,7 +80,7 @@ create_text
                            200, 
                            text='foo', 
                            font=('Arial', 8, 'normal'),
-                           anchor='S')
+                           anchor='s')
         report = canvas.report
         
         # VERIFY

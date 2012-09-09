@@ -124,7 +124,7 @@ create_text
     0
     text='Bob'
     font=('Arial', 8, 'normal')
-    anchor='SW'"""
+    anchor='sw'"""
         
         # EXEC
         t = MockTurtle()

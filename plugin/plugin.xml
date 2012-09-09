@@ -18,5 +18,11 @@
          </targetClass>
       </column>
    </extension>
+   <extension
+         point="org.python.pydev.pydev_pyedit_listener">
+      <pyedit_listener_participant
+            class="live_py.AddComposite">
+      </pyedit_listener_participant>
+   </extension>
 
 </plugin>

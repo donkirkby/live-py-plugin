@@ -291,23 +291,17 @@ if __name__ == '__main__':
                         type=int,
                         default=600,
                         help='height of the canvas in pixels')
-    parser.add_argument('-c', 
-                        '--canvas', 
-                        action='store_true', 
-                        help='Is the canvas on? If not, do a standard trace.')
-    parser.add_argument('-t', 
-                        '--turtle', 
-                        action='store_true', 
-                        help='Is the turtle on? If not, do a standard trace.')
     
     args = parser.parse_args()
     code = sys.stdin.read()
     canvas = Canvas(args.width, args.height)
     turtle = MockTurtle(canvas=canvas)
     tracer = CodeTracer(turtle)
-    if args.turtle:
-        print tracer.trace_turtle(code)
-    elif args.canvas:
-        print tracer.trace_canvas(code)
-    else:
-        print tracer.trace_code(code)
+    code_report = tracer.trace_code(code)
+    turtle_report = tracer.turtle.report
+    if turtle_report:
+        print 'start_canvas'
+        print '\n'.join(turtle_report)
+        print 'end_canvas'
+        print '.'
+    print code_report

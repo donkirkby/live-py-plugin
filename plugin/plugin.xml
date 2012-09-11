@@ -2,27 +2,20 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         point="org.eclipse.ui.workbench.texteditor.rulerColumns">
-      <column
-            class="live_py.LiveCodingResultsRuler"
-            enabled="true"
-            global="true"
-            id="live-py.live-results"
-            includeInMenu="true"
-            name="Live Coding Results">
-         <placement
-               gravity="1.0">
-         </placement>
-         <targetClass
-               class="org.python.pydev.editor.PyEdit">
-         </targetClass>
-      </column>
-   </extension>
-   <extension
          point="org.python.pydev.pydev_pyedit_listener">
       <pyedit_listener_participant
-            class="live_py.AddComposite">
+            class="live_py.LiveCodingAnalyst">
       </pyedit_listener_participant>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="live_py.LiveCanvasView"
+            icon="icons/turtle.png"
+            id="com.github.donkirkby.live-canvas"
+            name="Live Coding Canvas"
+            restorable="true">
+      </view>
    </extension>
 
 </plugin>

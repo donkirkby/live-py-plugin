@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.ListResourceBundle;
+import java.util.WeakHashMap;
 
 import org.eclipse.compare.Splitter;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -49,17 +50,29 @@ import org.python.pydev.runners.UniversalRunner.AbstractRunner;
  * @author Don Kirkby
  *
  */
-public class AddComposite implements IPyEditListener, IPyEditListener4 {
+public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 	/**
 	 * Making it true will print some debug info to stdout.
 	 */
-	private final static boolean DEBUG = true;
+	private final static boolean DEBUG = false;
+	private static WeakHashMap<PyEdit, LiveCodingAnalyst> analystMap =
+			new WeakHashMap<PyEdit, LiveCodingAnalyst>();
 
 	private ISourceViewer mainViewer;
 	private IDocument mainDocument;
+	private PyEdit pyEdit;
 	private Document displayDocument;
 	private SourceViewer displayViewer;
+	private LiveCanvasView canvasView;
 	private File scriptPath;
+	private ArrayList<CanvasCommand> canvasCommands = 
+			new ArrayList<CanvasCommand>();
+	
+	public static LiveCodingAnalyst getAnalyst(PyEdit editor)
+	{
+		// TODO: add locking
+		return analystMap.get(editor);
+	}
 	
 	/**
 	 * Wire up a new editor so that it will be displayed the way we want.
@@ -136,6 +149,11 @@ public class AddComposite implements IPyEditListener, IPyEditListener4 {
 			 */
 			@Override
 			public Object call(ISourceViewer newViewer) {
+				if (newViewer instanceof PySourceViewer)
+				{
+					pyEdit = ((PySourceViewer)newViewer).getEdit();
+					analystMap.put(pyEdit, LiveCodingAnalyst.this);
+				}
 				mainViewer = newViewer;
 				displayViewer.getTextWidget().setFont(
 						mainViewer.getTextWidget().getFont());
@@ -243,6 +261,10 @@ public class AddComposite implements IPyEditListener, IPyEditListener4 {
 				}
 				
 				loadResults(reader);
+				LiveCanvasView view = canvasView;
+				if (view != null) {
+					view.redraw();
+				}
 				if (DEBUG) {
 					String line;
 					do
@@ -322,6 +344,7 @@ public class AddComposite implements IPyEditListener, IPyEditListener4 {
 		String line;
 		StringWriter writer = new StringWriter();
 		PrintWriter printer = new PrintWriter(writer);
+		boolean isStarted = false;
 		do {
 			line = reader.readLine();
 			if(DEBUG){
@@ -329,12 +352,38 @@ public class AddComposite implements IPyEditListener, IPyEditListener4 {
 			}
 
 			if (line != null) {
-				printer.println(line);
+				if (isStarted) {
+					printer.println(line);
+				}
+				else {
+					if (line.equals("start_canvas")) {
+						loadCanvasCommands(reader);
+					}
+					else {
+						printer.println();
+					}
+					isStarted = true;
+				}
 			}
 		} while (line != null);
 		displayDocument.set(writer.toString());
 	}
 	
+	private void loadCanvasCommands(BufferedReader reader) {
+		canvasCommands.clear();
+		CanvasReader canvasReader = new CanvasReader(reader);
+		CanvasCommand command;
+		boolean isDone;
+		do {
+			command = canvasReader.read();
+
+			isDone = command == null || command.getName().equals("end_canvas");
+			if ( ! isDone) {
+				canvasCommands.add(command);
+			}
+		} while ( ! isDone);
+	}
+
 	private void checkScriptPath() {
 		if (scriptPath != null)
 		{
@@ -355,5 +404,17 @@ public class AddComposite implements IPyEditListener, IPyEditListener4 {
 		if(DEBUG){
 			System.out.println("Script path: "+scriptPath);
 		}
+	}
+
+	public LiveCanvasView getCanvasView() {
+		return canvasView;
+	}
+
+	public void setCanvasView(LiveCanvasView canvasView) {
+		this.canvasView = canvasView;
+	}
+
+	public ArrayList<CanvasCommand> getCanvasCommands() {
+		return canvasCommands;
 	}
 }

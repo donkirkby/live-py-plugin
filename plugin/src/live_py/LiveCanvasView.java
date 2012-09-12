@@ -3,11 +3,14 @@ package live_py;
 import java.util.ArrayList;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IPartListener;
@@ -26,7 +29,7 @@ public class LiveCanvasView extends ViewPart {
 
 	public void setFocus() {
 	}
-
+	
 	public void createPartControl(Composite parent) {
 		canvas = new Canvas(parent, SWT.NONE);
  		
@@ -35,6 +38,15 @@ public class LiveCanvasView extends ViewPart {
 			@Override
 			public void paintControl(PaintEvent e) {
 				drawResult(e.gc);
+			}
+		});
+		
+		parent.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				if (analyst != null) {
+					analyst.refresh();
+				}
 			}
 		});
 		
@@ -78,6 +90,13 @@ public class LiveCanvasView extends ViewPart {
 		if (canvas != null) {
 			canvas.redraw();
 		}
+	}
+	
+	public Rectangle getBounds() {
+		return
+				canvas == null
+				? null
+				: canvas.getBounds();
 	}
 	
 	private void drawResult(GC gc) {

@@ -281,6 +281,10 @@ if __name__ == '__main__':
     import argparse
     
     parser = argparse.ArgumentParser(description='Trace Python code.')
+    parser.add_argument('-c', 
+                        '--canvas', 
+                        action='store_true', 
+                        help='Should canvas commands be printed?')
     parser.add_argument('-x', 
                         '--width', 
                         type=int,
@@ -299,7 +303,7 @@ if __name__ == '__main__':
     tracer = CodeTracer(turtle)
     code_report = tracer.trace_code(code)
     turtle_report = tracer.turtle.report
-    if turtle_report:
+    if turtle_report and args.canvas:
         print 'start_canvas'
         print '\n'.join(turtle_report)
         print 'end_canvas'

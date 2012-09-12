@@ -25,6 +25,7 @@ import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.jface.text.source.VerticalRuler;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -232,7 +233,12 @@ public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 			}
 		});
 		
-		// Perform the first analysis, but it has to run on the display thread.
+		// Perform the first analysis.
+		refresh();
+	}
+
+	public void refresh() {
+		// The analysis has to run on the display thread.
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
 		    	analyseDocument(mainDocument);
@@ -308,17 +314,14 @@ public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 		}
 		AbstractRunner runner = UniversalRunner.getRunner(nature);
 		ArrayList<String> argumentList = new ArrayList<String>();
-//		if (isTurtleOn) {
-//			argumentList.add("-t");
-//		}
-//		else if (isCanvasOn) {
-//			argumentList.add("-c");
-//		}
-//		Rectangle bounds = getControl().getBounds();
-//		argumentList.add("-x");
-//		argumentList.add(Integer.toString(bounds.width));
-//		argumentList.add("-y");
-//		argumentList.add(Integer.toString(bounds.height));
+		if (canvasView != null) {
+			argumentList.add("-c");
+			Rectangle bounds = canvasView.getBounds();
+			argumentList.add("-x");
+			argumentList.add(Integer.toString(bounds.width));
+			argumentList.add("-y");
+			argumentList.add(Integer.toString(bounds.height));
+		}
 		String[] arguments = 
 				(String[])argumentList.toArray(new String[argumentList.size()]);
 		File editorFile = pyEdit.getEditorFile();

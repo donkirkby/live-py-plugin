@@ -55,7 +55,7 @@ public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 	/**
 	 * Making it true will print some debug info to stdout.
 	 */
-	private final static boolean DEBUG = false;
+	private final static boolean DEBUG = true;
 	private static WeakHashMap<PyEdit, LiveCodingAnalyst> analystMap =
 			new WeakHashMap<PyEdit, LiveCodingAnalyst>();
 

@@ -1,18 +1,22 @@
 package live_py;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import org.eclipse.jface.resource.ColorRegistry;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
@@ -22,6 +26,7 @@ import org.python.pydev.editor.PyEdit;
 public class LiveCanvasView extends ViewPart {
 	private LiveCodingAnalyst analyst;
 	private Canvas canvas;
+	private HashMap<String, Color> colorMap = new HashMap<String, Color>();
 	
 	public LiveCanvasView() {
 		super();
@@ -110,6 +115,15 @@ public class LiveCanvasView extends ViewPart {
 		// Execute the drawing commands
 		for (CanvasCommand command : canvasCommands) {
 			String method = command.getName();
+			String fill = command.getOption("fill");
+			Color oldForeground = gc.getForeground();
+			Color newForeground = null;
+			if (fill != null) {
+				newForeground = getColor(fill);
+				if (newForeground != null) {
+					gc.setForeground(newForeground);
+				}
+			}
 			if (method.equals("create_line")) {
 				gc.drawLine(
 						command.getCoordinate(0),
@@ -158,7 +172,33 @@ public class LiveCanvasView extends ViewPart {
 						SWT.DRAW_TRANSPARENT);
 				gc.setFont(oldFont);
 			}
+			if (newForeground != null)
+			{
+				gc.setForeground(oldForeground);
+			}
 		}
+		disposeColors();
+	}
+
+	private void disposeColors() {
+		for (Color color : colorMap.values()) {
+			color.dispose();
+		}
+		colorMap.clear();
+	}
+
+	private Color getColor(String fill) {
+		Color newForeground;
+		newForeground = colorMap.get(fill);
+		if (newForeground == null && fill.startsWith("#")) {
+			int colorInt = Integer.parseInt(fill.substring(1), 16);
+			int red = (colorInt >> 16) % 256;
+			int green = (colorInt >> 8) % 256;
+			int blue = colorInt % 256;
+			newForeground = new Color(Display.getCurrent(), red, green, blue);
+			colorMap.put(fill, newForeground);
+		}
+		return newForeground;
 	}
 	
 }

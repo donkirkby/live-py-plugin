@@ -31,11 +31,15 @@ class MockTurtle(TNavigator, TPen):
         xstart = self.xcor()
         ystart = self.ycor()
         xend, yend = end
+        kwargs = {}
+        if self._pencolor:
+            kwargs['fill'] = self._pencolor
         if self._drawing:
             self.screen.cv.create_line(xstart + self.__xoff, 
                                        -ystart + self.__yoff, 
                                        xend + self.__xoff, 
-                                       -yend + self.__yoff)
+                                       -yend + self.__yoff,
+                                       **kwargs)
         self._position = end
     
     def __getattr__(self, name):
@@ -64,3 +68,25 @@ class MockTurtle(TNavigator, TPen):
                                    anchor=anchor,
                                    font=font)
         
+    def _colorstr(self, color):
+        """Return color string corresponding to args.
+
+        Argument may be a string or a tuple of three
+        numbers corresponding to actual colormode,
+        i.e. in the range 0<=n<=colormode.
+
+        If the argument doesn't represent a color,
+        just uses black.
+        """
+        if len(color) == 1:
+            color = color[0]
+        if isinstance(color, str):
+            return color
+        try:
+            r, g, b = color
+        except:
+            return 'black'
+        r, g, b = [round(255.0*x) for x in (r, g, b)]
+        if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
+            return 'black'
+        return "#%02x%02x%02x" % (r, g, b)

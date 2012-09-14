@@ -12,7 +12,8 @@ create_line
     0
     0
     100
-    0"""
+    0
+    fill='black'"""
         
         # EXEC
         t = MockTurtle()
@@ -29,7 +30,8 @@ create_line
     0
     0
     0
-    100"""
+    100
+    fill='black'"""
         
         # EXEC
         t = MockTurtle()
@@ -48,11 +50,13 @@ create_line
     0
     100
     0
+    fill='black'
 create_line
     150
     0
     350
-    0"""
+    0
+    fill='black'"""
         
         # EXEC
         t = MockTurtle()
@@ -87,7 +91,9 @@ create_line
     400
     300
     500
-    300"""
+    300
+    fill='black'"""
+
         
         # EXEC
         t = MockTurtle(canvas=Canvas(800, 600))
@@ -119,6 +125,7 @@ create_line
     0
     100
     0
+    fill='black'
 create_text
     100
     0
@@ -130,6 +137,25 @@ create_text
         t = MockTurtle()
         t.fd(100)
         t.write('Bob')
+        report = t.report
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_color(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#ff0080'"""
+        
+        # EXEC
+        t = MockTurtle()
+        t.color(1.0, 0.0, 0.5)
+        t.fd(100)
         report = t.report
         
         # VERIFY

@@ -3,7 +3,6 @@ package live_py;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import org.eclipse.jface.resource.ColorRegistry;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;

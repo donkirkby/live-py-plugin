@@ -75,16 +75,21 @@ public class LiveCanvasView extends ViewPart {
 			
 			@Override
 			public void partActivated(IWorkbenchPart part) {
+				LiveCodingAnalyst newAnalyst = null;
 				if (part instanceof PyEdit)
 				{
 					PyEdit editor = (PyEdit)part;
-					LiveCodingAnalyst newAnalyst = 
-							LiveCodingAnalyst.getAnalyst(editor);
-					if (newAnalyst != analyst && analyst != null) {
+					newAnalyst = PyEditDecorator.getAnalyst(editor);
+				}
+				if (newAnalyst != analyst) {
+					if (analyst != null) {
 						analyst.setCanvasView(null);
 					}
 					analyst = newAnalyst;
-					analyst.setCanvasView(LiveCanvasView.this);
+					if (analyst != null) {
+						analyst.setCanvasView(LiveCanvasView.this);
+					}
+					redraw();
 				}
 			}
 		});
@@ -105,12 +110,34 @@ public class LiveCanvasView extends ViewPart {
 	
 	private void drawResult(GC gc) {
 		// Clear the drawing
-		gc.fillRectangle(gc.getDevice().getBounds());
+		Rectangle bounds = getBounds();
+		gc.fillRectangle(bounds);
 		
+		String message = null;
+		ArrayList<CanvasCommand> canvasCommands = null;
 		if (analyst == null) {
+			message = "Not a Python editor.";
+		}
+		else
+		{
+			canvasCommands = analyst.getCanvasCommands();
+			if (canvasCommands == null || canvasCommands.size() == 0) {
+				message = "No turtle commands found.\n" +
+						"For example:\n" +
+						"__live_turtle__.forward(100)";
+			}
+		}
+		if (message != null) {
+			Point extent = gc.textExtent(message);
+			gc.drawText(
+					message, 
+					(bounds.width - extent.x)/2, 
+					(bounds.height - extent.y)/2,
+					SWT.DRAW_TRANSPARENT +
+					SWT.DRAW_DELIMITER);
 			return;
 		}
-		ArrayList<CanvasCommand> canvasCommands = analyst.getCanvasCommands();
+		
 		// Execute the drawing commands
 		for (CanvasCommand command : canvasCommands) {
 			String method = command.getName();

@@ -4,7 +4,7 @@
    <extension
          point="org.python.pydev.pydev_pyedit_listener">
       <pyedit_listener_participant
-            class="live_py.LiveCodingAnalyst">
+            class="live_py.PyEditDecorator">
       </pyedit_listener_participant>
    </extension>
    <extension

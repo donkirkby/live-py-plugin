@@ -9,8 +9,6 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.ListResourceBundle;
-import java.util.WeakHashMap;
 
 import org.eclipse.compare.Splitter;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -35,183 +33,129 @@ import org.python.pydev.core.MisconfigurationException;
 import org.python.pydev.core.REF;
 import org.python.pydev.core.Tuple;
 import org.python.pydev.core.bundle.BundleUtils;
-import org.python.pydev.core.callbacks.ICallbackListener;
 import org.python.pydev.core.log.Log;
-import org.python.pydev.editor.IPyEditListener;
-import org.python.pydev.editor.IPyEditListener4;
 import org.python.pydev.editor.PyEdit;
 import org.python.pydev.editor.codefolding.PySourceViewer;
 import org.python.pydev.runners.UniversalRunner;
 import org.python.pydev.runners.UniversalRunner.AbstractRunner;
 
 /**
- * This extension wraps the main PyEdit in an extra splitter and sets it up
- * like the compare editor. It then displays the live coding analysis whenever
- * the code changes.
+ * This actually runs the Python code and displays the analysis.
  * @author Don Kirkby
  *
  */
-public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
+public class LiveCodingAnalyst {
 	/**
 	 * Making it true will print some debug info to stdout.
 	 */
-	private final static boolean DEBUG = true;
-	private static WeakHashMap<PyEdit, LiveCodingAnalyst> analystMap =
-			new WeakHashMap<PyEdit, LiveCodingAnalyst>();
+	private final static boolean DEBUG = false;
 
 	private ISourceViewer mainViewer;
 	private IDocument mainDocument;
-	private PyEdit pyEdit;
 	private Document displayDocument;
 	private SourceViewer displayViewer;
 	private LiveCanvasView canvasView;
 	private File scriptPath;
 	private ArrayList<CanvasCommand> canvasCommands = 
 			new ArrayList<CanvasCommand>();
-	
-	public static LiveCodingAnalyst getAnalyst(PyEdit editor)
-	{
-		// TODO: add locking
-		return analystMap.get(editor);
+
+	/**
+	 * This callback inserts a new composite inside the standard window
+	 * and then returns the left pane of the splitter as the new parent
+	 * for the main editor controls.
+	 * @param parent The standard window that usually holds the editor.
+	 * @return The new control that the editor can be created in.
+	 */
+	public Object createPartControl(Composite parent) {
+		Splitter splitter = new Splitter(parent, SWT.HORIZONTAL);
+		
+		Composite editorContent = new Composite(splitter, SWT.NONE);
+		editorContent.setLayout(new FillLayout());
+		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		editorContent.setLayoutData(gridData);
+		
+		Composite liveDisplay = new Composite(splitter, SWT.NONE);
+		liveDisplay.setLayout(new FillLayout());
+		GridData gridData2 = new GridData(SWT.FILL, SWT.FILL, true, true);
+		liveDisplay.setLayoutData(gridData2);
+		
+		VerticalRuler ruler = new VerticalRuler(12);
+		int styles = 
+				SWT.V_SCROLL | 
+				SWT.H_SCROLL | 
+				SWT.MULTI | 
+				SWT.BORDER | 
+				SWT.FULL_SELECTION;
+		displayViewer = 
+				new SourceViewer(liveDisplay, ruler, styles);
+		SourceViewerConfiguration config = 
+				new SourceViewerConfiguration();
+		displayViewer.configure(config);
+		displayDocument = new Document("");
+		displayViewer.setDocument(displayDocument);
+		
+		displayViewer.addViewportListener(new IViewportListener() {
+			
+			/**
+			 * Update the scroll bar of the main viewer when the
+			 * display viewer is scrolled.
+			 */
+			@Override
+			public void viewportChanged(int verticalOffset) {
+				if (mainViewer != null) {
+					mainViewer.getTextWidget().setTopPixel(
+							verticalOffset);
+				}
+			}
+		});
+		
+	    splitter.setVisible(editorContent, true);
+	    splitter.setVisible(liveDisplay, true);
+
+		return editorContent;
 	}
 	
 	/**
-	 * Wire up a new editor so that it will be displayed the way we want.
+	 * Copy the style settings from the main viewer to the display
+	 * viewer.
+	 * @param newViewer The main viewer that was just created.
+	 * @return The main viewer.
 	 */
-	@Override
-	public void onEditorCreated(PyEdit edit) {
-		edit.onCreatePartControl.registerListener(
-				new ICallbackListener<Composite>() {
-			
-			/**
-			 * This callback inserts a new composite inside the standard window
-			 * and then returns the left pane of the splitter as the new parent
-			 * for the main editor controls.
-			 * @param parent The standard window that usually holds the editor.
-			 * @return The new control that the editor can be created in.
-			 */
-			public Object call(Composite parent) {
-				Splitter splitter = new Splitter(parent, SWT.HORIZONTAL);
-				
-				Composite editorContent = new Composite(splitter, SWT.NONE);
-				editorContent.setLayout(new FillLayout());
-				GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-				editorContent.setLayoutData(gridData);
-				
-				Composite liveDisplay = new Composite(splitter, SWT.NONE);
-				liveDisplay.setLayout(new FillLayout());
-				GridData gridData2 = new GridData(SWT.FILL, SWT.FILL, true, true);
-				liveDisplay.setLayoutData(gridData2);
-				
-				VerticalRuler ruler = new VerticalRuler(12);
-				int styles = 
-						SWT.V_SCROLL | 
-						SWT.H_SCROLL | 
-						SWT.MULTI | 
-						SWT.BORDER | 
-						SWT.FULL_SELECTION;
-				displayViewer = 
-						new SourceViewer(liveDisplay, ruler, styles);
-				SourceViewerConfiguration config = 
-						new SourceViewerConfiguration();
-				displayViewer.configure(config);
-				displayDocument = new Document("");
-				displayViewer.setDocument(displayDocument);
-				
-				displayViewer.addViewportListener(new IViewportListener() {
-					
-					/**
-					 * Update the scroll bar of the main viewer when the
-					 * display viewer is scrolled.
-					 */
-					@Override
-					public void viewportChanged(int verticalOffset) {
-						if (mainViewer != null) {
-							mainViewer.getTextWidget().setTopPixel(
-									verticalOffset);
-						}
-					}
-				});
-				
-			    splitter.setVisible(editorContent, true);
-			    splitter.setVisible(liveDisplay, true);
+	public Object afterCreateControl(ISourceViewer newViewer) {
+		mainViewer = newViewer;
+		displayViewer.getTextWidget().setFont(
+				mainViewer.getTextWidget().getFont());
+		return newViewer;
+	}
 
-				return editorContent;
-			}
-		});
-		edit.onAfterCreatePartControl.registerListener(
-				new ICallbackListener<ISourceViewer>() {
+	/**
+	 * Wire up the main viewer after it's created.
+	 * @param viewer The main viewer that was just created.
+	 * @return The main viewer.
+	 */
+	public Object createSourceViewer(PySourceViewer newViewer) {
+		newViewer.addViewportListener(new IViewportListener() {
 			
 			/**
-			 * Copy the style settings from the main viewer to the display
-			 * viewer.
-			 * @param newViewer The main viewer that was just created.
-			 * @return The main viewer.
+			 * Update the scroll bar of the display viewer when the main
+			 * viewer is scrolled.
+			 * @param viewer The main viewer.
+			 * @return
 			 */
 			@Override
-			public Object call(ISourceViewer newViewer) {
-				if (newViewer instanceof PySourceViewer)
-				{
-					pyEdit = ((PySourceViewer)newViewer).getEdit();
-					analystMap.put(pyEdit, LiveCodingAnalyst.this);
+			public void viewportChanged(int verticalOffset) {
+				if (displayViewer != null) {
+					displayViewer.getTextWidget().setTopPixel(
+							verticalOffset);
 				}
-				mainViewer = newViewer;
-				displayViewer.getTextWidget().setFont(
-						mainViewer.getTextWidget().getFont());
-				return newViewer;
 			}
 		});
-		edit.onCreateSourceViewer.registerListener(
-				new ICallbackListener<PySourceViewer>() {
-
-			/**
-			 * Wire up the main viewer after it's created.
-			 * @param viewer The main viewer that was just created.
-			 * @return The main viewer.
-			 */
-			@Override
-			public Object call(PySourceViewer newViewer) {
-
-				newViewer.addViewportListener(new IViewportListener() {
-					
-					/**
-					 * Update the scroll bar of the display viewer when the main
-					 * viewer is scrolled.
-					 * @param viewer The main viewer.
-					 * @return
-					 */
-					@Override
-					public void viewportChanged(int verticalOffset) {
-						if (displayViewer != null) {
-							displayViewer.getTextWidget().setTopPixel(
-									verticalOffset);
-						}
-					}
-				});
-				return newViewer;
-			}
-		});
-	}
-
-	@Override
-	public void onSave(PyEdit edit, IProgressMonitor monitor) {
-	}
-
-	@Override
-	public void onCreateActions(
-			ListResourceBundle resources, 
-			PyEdit edit,
-			IProgressMonitor monitor) {
-	}
-
-	@Override
-	public void onDispose(PyEdit edit, IProgressMonitor monitor) {
+		return newViewer;
 	}
 
 	/**
 	 * Wire up the main document and perform the first analysis.
 	 */
-	@Override
 	public void onSetDocument(
 			IDocument document, 
 			PyEdit edit,
@@ -253,6 +197,10 @@ public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 	private void analyseDocument(IDocument document) {
 		try {
 			Process process = launchProcess();
+			if (process == null)
+			{
+				return;
+			}
 			PrintWriter writer = new PrintWriter(new BufferedWriter(
 					new OutputStreamWriter(process.getOutputStream())));
 			BufferedReader reader = new BufferedReader(
@@ -308,6 +256,10 @@ public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 		IPythonNature nature;
 		try {
 			nature = pyEdit.getPythonNature();
+			if (nature == null)
+			{
+				return null;
+			}
 		} catch (MisconfigurationException e) {
 			Log.log(e);
 			return null;
@@ -347,6 +299,7 @@ public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 		String line;
 		StringWriter writer = new StringWriter();
 		PrintWriter printer = new PrintWriter(writer);
+		canvasCommands.clear();
 		boolean isStarted = false;
 		do {
 			line = reader.readLine();
@@ -373,7 +326,6 @@ public class LiveCodingAnalyst implements IPyEditListener, IPyEditListener4 {
 	}
 	
 	private void loadCanvasCommands(BufferedReader reader) {
-		canvasCommands.clear();
 		CanvasReader canvasReader = new CanvasReader(reader);
 		CanvasCommand command;
 		boolean isDone;

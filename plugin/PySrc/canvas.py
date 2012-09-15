@@ -22,8 +22,6 @@ class Canvas:
     def cget(self, option):
         return self.options[option]
     
-#echo off
-#echo width 50
 if __name__ == '__live_coding__':
     canvas = Canvas(800, 600)
     canvas.create_line(1, 2, 100, 200)

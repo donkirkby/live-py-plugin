@@ -10,12 +10,30 @@
    <extension
          point="org.eclipse.ui.views">
       <view
+            category="org.python.pydev"
             class="live_py.LiveCanvasView"
             icon="icons/turtle.png"
             id="com.github.donkirkby.live-canvas"
             name="Live Coding Canvas"
             restorable="true">
       </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            description="Enable or disable a display of program state that updates while you type."
+            id="live-py.enable.actionset"
+            label="Live Coding"
+            visible="true">
+         <action
+               class="live_py.EnableAction"
+               id="live-py.enable.action"
+               label="Li&amp;ve Coding"
+               menubarPath="pyGeneralMenu/pyNavigateGroup"
+               state="false"
+               style="toggle">
+         </action>
+      </actionSet>
    </extension>
 
 </plugin>

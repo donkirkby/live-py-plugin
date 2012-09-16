@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import org.eclipse.compare.Splitter;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -58,6 +59,8 @@ public class LiveCodingAnalyst {
 	private File scriptPath;
 	private ArrayList<CanvasCommand> canvasCommands = 
 			new ArrayList<CanvasCommand>();
+	private Composite liveDisplay;
+	private Splitter splitter;
 
 	/**
 	 * This callback inserts a new composite inside the standard window
@@ -67,14 +70,14 @@ public class LiveCodingAnalyst {
 	 * @return The new control that the editor can be created in.
 	 */
 	public Object createPartControl(Composite parent) {
-		Splitter splitter = new Splitter(parent, SWT.HORIZONTAL);
+		splitter = new Splitter(parent, SWT.HORIZONTAL);
 		
 		Composite editorContent = new Composite(splitter, SWT.NONE);
 		editorContent.setLayout(new FillLayout());
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		editorContent.setLayoutData(gridData);
 		
-		Composite liveDisplay = new Composite(splitter, SWT.NONE);
+		liveDisplay = new Composite(splitter, SWT.NONE);
 		liveDisplay.setLayout(new FillLayout());
 		GridData gridData2 = new GridData(SWT.FILL, SWT.FILL, true, true);
 		liveDisplay.setLayoutData(gridData2);
@@ -110,7 +113,6 @@ public class LiveCodingAnalyst {
 		});
 		
 	    splitter.setVisible(editorContent, true);
-	    splitter.setVisible(liveDisplay, true);
 
 		return editorContent;
 	}
@@ -152,6 +154,23 @@ public class LiveCodingAnalyst {
 		});
 		return newViewer;
 	}
+	
+	/**
+	 * Set the visibility of the live coding display.
+	 * @param isVisible
+	 */
+	public void setVisibility(final boolean isVisible) {
+		// Can only change visibility on the UI thread.
+		Display.getDefault().asyncExec(new Runnable() {
+		    public void run() {
+		    	if (splitter != null) {
+		    		splitter.setVisible(
+		    				liveDisplay, 
+		    				isVisible);
+		    	}
+		    }
+		});
+	}
 
 	/**
 	 * Wire up the main document and perform the first analysis.
@@ -161,6 +180,8 @@ public class LiveCodingAnalyst {
 			PyEdit edit,
 			IProgressMonitor monitor) {
 		mainDocument = document;
+		IAction enableAction = edit.getAction("live-py.enable.action");
+	    setVisibility(enableAction != null && enableAction.isChecked());
 		document.addDocumentListener(new IDocumentListener() {
 
 			/**

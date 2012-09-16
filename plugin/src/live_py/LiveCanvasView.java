@@ -6,6 +6,8 @@ import java.util.HashMap;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
@@ -55,7 +57,7 @@ public class LiveCanvasView extends ViewPart {
 		});
 		
 		IViewSite site = getViewSite();
-		site.getPage().addPartListener(new IPartListener() {
+		final IPartListener partListener = new IPartListener() {
 			
 			@Override
 			public void partOpened(IWorkbenchPart part) {
@@ -81,16 +83,17 @@ public class LiveCanvasView extends ViewPart {
 					PyEdit editor = (PyEdit)part;
 					newAnalyst = PyEditDecorator.getAnalyst(editor);
 				}
-				if (newAnalyst != analyst) {
-					if (analyst != null) {
-						analyst.setCanvasView(null);
-					}
-					analyst = newAnalyst;
-					if (analyst != null) {
-						analyst.setCanvasView(LiveCanvasView.this);
-					}
-					redraw();
-				}
+				setAnalyst(newAnalyst);
+			}
+		};
+		site.getPage().addPartListener(partListener);
+		parent.addDisposeListener(new DisposeListener() {
+			
+			@Override
+			public void widgetDisposed(DisposeEvent e) {
+				IViewSite viewSite = getViewSite();
+				viewSite.getPage().removePartListener(partListener);
+				setAnalyst(null);
 			}
 		});
 	}
@@ -167,8 +170,12 @@ public class LiveCanvasView extends ViewPart {
 			else if (method.equals("create_text")) {
 				Font oldFont = gc.getFont();
 				gc.setFont(command.getFontOption(gc.getDevice(), "font"));
+				int textFlags = 
+						SWT.DRAW_TRANSPARENT + 
+						SWT.DRAW_DELIMITER + 
+						SWT.DRAW_TAB;
 				String text = command.getOption("text");
-				Point size = gc.textExtent(text);
+				Point size = gc.textExtent(text, textFlags);
 				int x = command.getCoordinate(0);
 				int y = command.getCoordinate(1);
 				String anchor = command.getOption("anchor");
@@ -195,7 +202,7 @@ public class LiveCanvasView extends ViewPart {
 						text, 
 						x, 
 						y,
-						SWT.DRAW_TRANSPARENT);
+						textFlags);
 				gc.setFont(oldFont);
 			}
 			if (newForeground != null)
@@ -226,5 +233,17 @@ public class LiveCanvasView extends ViewPart {
 		}
 		return newForeground;
 	}
-	
+
+	private void setAnalyst(LiveCodingAnalyst newAnalyst) {
+		if (newAnalyst != analyst) {
+			if (analyst != null) {
+				analyst.setCanvasView(null);
+			}
+			analyst = newAnalyst;
+			if (analyst != null) {
+				analyst.setCanvasView(LiveCanvasView.this);
+			}
+			redraw();
+		}
+	}
 }

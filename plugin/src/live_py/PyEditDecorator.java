@@ -30,6 +30,12 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 		return analystMap.get(editor);
 	}
 	
+	public static void setAllVisibilities(boolean isVisible) {
+		for (LiveCodingAnalyst analyst : analystMap.values()) {
+			analyst.setVisibility(isVisible);
+		}
+	}
+	
 	/**
 	 * Wire up a new editor so that it will be displayed the way we want.
 	 */

@@ -2,6 +2,7 @@ package live_py;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +39,14 @@ public class CanvasCommand {
 	}
 	public int getCoordinate(int index) {
 		return coordinates.get(index);
+	}
+	public int[] getAllCoordinates() {
+		int[] copy = new int[coordinates.size()];
+		Iterator<Integer> itr = coordinates.iterator();
+		for (int i = 0; i < copy.length; i++) {
+			copy[i] = itr.next().intValue();
+		}
+		return copy;
 	}
 	public Font getFontOption(Device device, String name) {
 		String value = options.get(name);

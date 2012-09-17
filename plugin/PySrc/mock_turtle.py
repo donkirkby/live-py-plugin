@@ -9,6 +9,8 @@ class MockTurtle(TNavigator, TPen):
             self.cv = canvas
             
     def __init__(self, x=0, y=0, heading=0, canvas=None):
+        self._path = None
+        self._lines_to_draw = []
         TNavigator.__init__(self)
         TPen.__init__(self)
         if canvas == None:
@@ -35,15 +37,22 @@ class MockTurtle(TNavigator, TPen):
         if self._pencolor:
             kwargs['fill'] = self._pencolor
         if self._drawing:
-            self.screen.cv.create_line(xstart + self.__xoff, 
-                                       -ystart + self.__yoff, 
-                                       xend + self.__xoff, 
-                                       -yend + self.__yoff,
-                                       **kwargs)
+            args = [xstart + self.__xoff, 
+                    -ystart + self.__yoff, 
+                    xend + self.__xoff, 
+                    -yend + self.__yoff]
+            if self._path:
+                self._lines_to_draw.append((args, kwargs))
+            else:
+                self.screen.cv.create_line(*args, **kwargs)
+        if self._path:
+            self._path.append(xend + self.__xoff)
+            self._path.append(-yend + self.__yoff)
         self._position = end
-    
+        
     def __getattr__(self, name):
         if name == 'report':
+            self._newLine()
             return self.screen.cv.report
         raise AttributeError(name)
 
@@ -52,6 +61,29 @@ class MockTurtle(TNavigator, TPen):
 
     def window_height(self):
         return self.screen.cv.cget('height')
+    
+    def begin_fill(self):
+        self.fill(True)
+        
+    def end_fill(self):
+        self.fill(False)
+        
+    def fill(self, flag=None):
+        if flag is None:
+            return self._path is not None
+        if self._path and len(self._path) > 2:
+            self.screen.cv.create_polygon(*self._path,
+                                          fill=self._fillcolor,
+                                          outline='')
+        for args, kwargs in self._lines_to_draw:
+            self.screen.cv.create_line(*args, **kwargs)
+        if not flag:
+            self._path = None
+            self._lines_to_draw = []
+        else:
+            x, y = self._position
+            self._path = [x + self.__xoff, -y + self.__yoff]
+            self._lines_to_draw = []
 
     def write(self, arg, move=False, align="left", font=("Arial", 8, "normal")):
         if move:

@@ -8,7 +8,10 @@ class Canvas:
                                                      *args, 
                                                      **kwargs)
 
-        method_names = ('create_line', 'create_rectangle', 'create_text')
+        method_names = ('create_line', 
+                        'create_rectangle',
+                        'create_polygon',
+                        'create_text')
         for method_name in method_names:
             self.__dict__[method_name] = make_call(method_name)
         

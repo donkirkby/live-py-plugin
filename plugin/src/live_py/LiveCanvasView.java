@@ -145,13 +145,23 @@ public class LiveCanvasView extends ViewPart {
 		for (CanvasCommand command : canvasCommands) {
 			String method = command.getName();
 			String fill = command.getOption("fill");
+			String outline = command.getOption("outline");
 			Color oldForeground = gc.getForeground();
 			Color newForeground = null;
-			if (fill != null) {
+			Color oldBackground = gc.getBackground();
+			Color newBackground = null;
+			if (outline != null) {
+				newForeground = getColor(outline);
+				newBackground = getColor(fill);
+			}
+			else {
 				newForeground = getColor(fill);
-				if (newForeground != null) {
-					gc.setForeground(newForeground);
-				}
+			}
+			if (newForeground != null) {
+				gc.setForeground(newForeground);
+			}
+			if (newBackground != null) {
+				gc.setBackground(newBackground);
 			}
 			if (method.equals("create_line")) {
 				gc.drawLine(
@@ -166,6 +176,15 @@ public class LiveCanvasView extends ViewPart {
 						command.getCoordinate(1),
 						command.getCoordinate(2) - command.getCoordinate(0),
 						command.getCoordinate(3) - command.getCoordinate(1));
+			}
+			else if (method.equals("create_polygon")) {
+				int[] coordinates = command.getAllCoordinates();
+				if (newBackground != null) {
+					gc.fillPolygon(coordinates);
+				}
+//				if (newForeground != null) {
+//					gc.drawPolygon(coordinates);
+//				}
 			}
 			else if (method.equals("create_text")) {
 				Font oldFont = gc.getFont();
@@ -205,9 +224,11 @@ public class LiveCanvasView extends ViewPart {
 						textFlags);
 				gc.setFont(oldFont);
 			}
-			if (newForeground != null)
-			{
+			if (newForeground != null) {
 				gc.setForeground(oldForeground);
+			}
+			if (newBackground != null) {
+				gc.setBackground(oldBackground);
 			}
 		}
 		disposeColors();

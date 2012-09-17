@@ -16,21 +16,20 @@ Installing
    was able to do that in two different ways.
     1. Copy it to the system-wide Eclipse installation.
     
-             sudo cp live-py_1.0.0.201206132143.jar /usr/lib/eclipse/dropins/
+             sudo cp live-py_2.0.0.201209171018.jar /usr/lib/eclipse/dropins/
     2. Copy it to your `.eclipse` folder in your home directory. This doesn't 
        require sudo permission.
        
              mkdir ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
-             cp live-py_1.0.0.201206132219.jar \
+             cp live-py_2.0.0.201209171018.jar \
              ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
 4. Restart Eclipse.
-5. Open any Python file, and add a comment like this:
-
-        # echo on
-   You should see an extra column next to the line numbers that shows the 
-   results of any code that runs. It may be less distracting to turn off the 
-   line numbers.
-
+5. Open any Python file, and from the Pydev menu, choose Live Coding.
+   You should see an extra panel on the right that shows the results of running
+   your code.
+6. To try the turtle graphics features, open the Window menu, and choose 
+   Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.
+x
 Uninstalling
 ------------
 
@@ -48,11 +47,11 @@ Working Features
 
 To do
 -----
+- PyUnit integration
 - print statements don't work.
+- canvas coordinates?
 - Any syntax error currently blanks out the results, should just show previous 
 result with error marker.
-- Figure out how to add a horizontal scroll bar.
-- Move ruler to right side.
 
 Creating an Install Package
 ---------------------------

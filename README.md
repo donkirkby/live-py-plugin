@@ -29,7 +29,7 @@ Installing
    your code.
 6. To try the turtle graphics features, open the Window menu, and choose 
    Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.
-x
+
 Uninstalling
 ------------
 

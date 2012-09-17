@@ -23,6 +23,7 @@ import org.python.pydev.editor.codefolding.PySourceViewer;
 public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	private static WeakHashMap<PyEdit, LiveCodingAnalyst> analystMap =
 			new WeakHashMap<PyEdit, LiveCodingAnalyst>();
+	private static boolean isVisible;
 
 	public static LiveCodingAnalyst getAnalyst(PyEdit editor)
 	{
@@ -31,6 +32,8 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	}
 	
 	public static void setAllVisibilities(boolean isVisible) {
+		PyEditDecorator.isVisible = isVisible;
+		
 		for (LiveCodingAnalyst analyst : analystMap.values()) {
 			analyst.setVisibility(isVisible);
 		}
@@ -42,6 +45,7 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	@Override
 	public void onEditorCreated(PyEdit edit) {
 		final LiveCodingAnalyst analyst = new LiveCodingAnalyst();
+		analyst.setVisibility(isVisible);
 		analystMap.put(edit, analyst);
 				
 		edit.onCreatePartControl.registerListener(

@@ -61,6 +61,7 @@ public class LiveCodingAnalyst {
 			new ArrayList<CanvasCommand>();
 	private Composite liveDisplay;
 	private Splitter splitter;
+	private boolean isVisible;
 
 	/**
 	 * This callback inserts a new composite inside the standard window
@@ -113,6 +114,7 @@ public class LiveCodingAnalyst {
 		});
 		
 	    splitter.setVisible(editorContent, true);
+	    splitter.setVisible(liveDisplay, isVisible);
 
 		return editorContent;
 	}
@@ -160,6 +162,7 @@ public class LiveCodingAnalyst {
 	 * @param isVisible
 	 */
 	public void setVisibility(final boolean isVisible) {
+		this.isVisible = isVisible;
 		// Can only change visibility on the UI thread.
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
@@ -180,8 +183,12 @@ public class LiveCodingAnalyst {
 			PyEdit edit,
 			IProgressMonitor monitor) {
 		mainDocument = document;
+		// TODO: Why does getAction always return null?
 		IAction enableAction = edit.getAction("live-py.enable.action");
-	    setVisibility(enableAction != null && enableAction.isChecked());
+	    setVisibility(
+	    		enableAction != null 
+	    		? enableAction.isChecked()
+	    		: isVisible);
 		document.addDocumentListener(new IDocumentListener() {
 
 			/**

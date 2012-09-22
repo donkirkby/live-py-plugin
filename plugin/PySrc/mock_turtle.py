@@ -53,6 +53,7 @@ class MockTurtle(TNavigator, TPen):
     def __getattr__(self, name):
         if name == 'report':
             self._newLine()
+            self._flush_lines()
             return self.screen.cv.report
         raise AttributeError(name)
 
@@ -68,6 +69,13 @@ class MockTurtle(TNavigator, TPen):
     def end_fill(self):
         self.fill(False)
         
+
+    def _flush_lines(self):
+        for args, kwargs in self._lines_to_draw:
+            self.screen.cv.create_line(*args, **kwargs)
+        
+        self._lines_to_draw = []
+
     def fill(self, flag=None):
         if flag is None:
             return self._path is not None
@@ -75,15 +83,12 @@ class MockTurtle(TNavigator, TPen):
             self.screen.cv.create_polygon(*self._path,
                                           fill=self._fillcolor,
                                           outline='')
-        for args, kwargs in self._lines_to_draw:
-            self.screen.cv.create_line(*args, **kwargs)
+        self._flush_lines()
         if not flag:
             self._path = None
-            self._lines_to_draw = []
         else:
             x, y = self._position
             self._path = [x + self.__xoff, -y + self.__yoff]
-            self._lines_to_draw = []
 
     def write(self, arg, move=False, align="left", font=("Arial", 8, "normal")):
         if move:

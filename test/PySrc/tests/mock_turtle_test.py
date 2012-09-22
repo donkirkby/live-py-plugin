@@ -165,27 +165,27 @@ create_line
     def test_fill(self):
         # SETUP
         expected_report = """\
-create_line
-    0
-    0
-    100
-    0
-    fill='#ff0000'
-create_line
-    100
-    0
-    100
-    100
-    fill='#ff0000'
 create_polygon
     0
     0
     100
     0
     100
-    -100
+    100
     outline=''
-    fill='#0000ff'"""
+    fill='#0000ff'
+create_line
+    0
+    0
+    100
+    0
+    fill='#ff0000'
+create_line
+    100
+    0
+    100
+    100
+    fill='#ff0000'"""
         
         # EXEC
         t = MockTurtle()
@@ -195,6 +195,34 @@ create_polygon
             t.fd(100)
             t.right(90)
         t.end_fill()
+        report = t.report
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_forgotten_end_fill(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#ff0000'
+create_line
+    100
+    0
+    100
+    100
+    fill='#ff0000'"""
+        
+        # EXEC
+        t = MockTurtle()
+        t.color('red', 'blue')
+        t.begin_fill()
+        for _ in range(2):
+            t.fd(100)
+            t.right(90)
         report = t.report
         
         # VERIFY

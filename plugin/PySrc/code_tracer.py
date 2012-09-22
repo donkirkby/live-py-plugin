@@ -220,7 +220,7 @@ class TraceAssignments(NodeTransformer):
 
 class CodeTracer(object):
     def __init__(self, turtle=None):
-        self.message_limit = 1000
+        self.message_limit = 10000
         self.keepalive = False
         self.turtle = turtle if turtle else MockTurtle()
         self.environment = {'__name__': MODULE_NAME, 

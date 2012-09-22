@@ -1,6 +1,3 @@
-#echo on
-#echo width 60
-#echo turtle
 def draw(t):
     for i in range(20):
         d = 50 + i*10

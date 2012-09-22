@@ -48,11 +48,11 @@ Working Features
 
 To do
 -----
+- PyUnit integration
 - print statements don't work.
+- canvas coordinates?
 - Any syntax error currently blanks out the results, should just show previous 
 result with error marker.
-- Figure out how to add a horizontal scroll bar.
-- Move ruler to right side.
 
 Creating an Install Package
 ---------------------------

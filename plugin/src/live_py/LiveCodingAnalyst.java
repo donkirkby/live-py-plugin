@@ -9,6 +9,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.compare.Splitter;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -50,6 +52,40 @@ public class LiveCodingAnalyst {
 	 * Making it true will print some debug info to stdout.
 	 */
 	private final static boolean DEBUG = false;
+	
+	private static LinkedBlockingQueue<AnalysisTask> toAnalyse =
+			new LinkedBlockingQueue<AnalysisTask>();
+	private static Thread analysisThread = new Thread() {
+		public void run() {
+			try {
+				while (true) {
+					AnalysisTask last = toAnalyse.take();
+					AnalysisTask next;
+					do {
+						next = toAnalyse.poll(0, TimeUnit.SECONDS);
+						if (next != null)
+						{
+							last = next;
+						}
+					} while (next != null);
+					last.analyst.analyseDocument(last.sourceCode, last.bounds);
+				}
+			} catch (InterruptedException e) {
+				// Just exit the thread if it was interrupted.
+			}
+		};
+	};
+	
+	static {
+		analysisThread.setDaemon(true);
+		analysisThread.start();
+	}
+	
+	private class AnalysisTask {
+		public String sourceCode;
+		public LiveCodingAnalyst analyst;
+		public Rectangle bounds;
+	}
 
 	private ISourceViewer mainViewer;
 	private IDocument mainDocument;
@@ -197,7 +233,11 @@ public class LiveCodingAnalyst {
 			 */
 			@Override
 			public void documentChanged(DocumentEvent event) {
-				analyseDocument(event.getDocument());
+				addAnalysisTask(
+						event.getDocument(),
+						canvasView != null
+						? canvasView.getBounds()
+						: null);
 			}
 			
 			@Override
@@ -206,25 +246,20 @@ public class LiveCodingAnalyst {
 		});
 		
 		// Perform the first analysis.
-		refresh();
+		refresh(null);
 	}
 
-	public void refresh() {
-		// The analysis has to run on the display thread.
-		Display.getDefault().asyncExec(new Runnable() {
-		    public void run() {
-		    	analyseDocument(mainDocument);
-		    }
-		});
+	public void refresh(Rectangle bounds) {
+		addAnalysisTask(mainDocument, bounds);
 	}
 
 	/**
 	 * Analyse the document and display the results.
 	 * @param document
 	 */
-	private void analyseDocument(IDocument document) {
+	private void analyseDocument(String sourceCode, Rectangle bounds) {
 		try {
-			Process process = launchProcess();
+			Process process = launchProcess(bounds);
 			if (process == null)
 			{
 				return;
@@ -236,17 +271,13 @@ public class LiveCodingAnalyst {
 			BufferedReader errorReader = new BufferedReader(
 					new InputStreamReader(process.getErrorStream()));
 			try {
-				writer.write(document.get());
+				writer.write(sourceCode);
 				writer.close();
 				if(DEBUG){
-					System.out.println("Writing: " + document.get());
+					System.out.println("Writing: " + sourceCode);
 				}
 				
 				loadResults(reader);
-				LiveCanvasView view = canvasView;
-				if (view != null) {
-					view.redraw();
-				}
 				if (DEBUG) {
 					String line;
 					do
@@ -267,15 +298,28 @@ public class LiveCodingAnalyst {
 			if (message == null) {
 				message = e.toString();
 			}
-			displayDocument.set(message);
+			displayResults(message);
 		}
-
-		// Update the scroll position after changing the text.
-		displayViewer.getTextWidget().setTopPixel(
-				mainViewer.getTextWidget().getTopPixel());
 	}
 
-	private Process launchProcess() throws IOException {
+	private void displayResults(final String results) {
+		// The document can only be updated from the display thread.
+		Display.getDefault().asyncExec(new Runnable() {
+		    public void run() {
+				LiveCanvasView view = canvasView;
+				if (view != null) {
+					view.redraw();
+				}
+		    	displayDocument.set(results);
+
+				// Update the scroll position after changing the text.
+				displayViewer.getTextWidget().setTopPixel(
+						mainViewer.getTextWidget().getTopPixel());
+		    }
+		});
+	}
+
+	private Process launchProcess(Rectangle bounds) throws IOException {
 		checkScriptPath();
 		if(mainViewer == null){
 			return null;
@@ -294,9 +338,8 @@ public class LiveCodingAnalyst {
 		}
 		AbstractRunner runner = UniversalRunner.getRunner(nature);
 		ArrayList<String> argumentList = new ArrayList<String>();
-		if (canvasView != null) {
+		if (bounds != null) {
 			argumentList.add("-c");
-			Rectangle bounds = canvasView.getBounds();
 			argumentList.add("-x");
 			argumentList.add(Integer.toString(bounds.width));
 			argumentList.add("-y");
@@ -327,15 +370,14 @@ public class LiveCodingAnalyst {
 		String line;
 		StringWriter writer = new StringWriter();
 		PrintWriter printer = new PrintWriter(writer);
-		canvasCommands.clear();
 		boolean isStarted = false;
 		do {
 			line = reader.readLine();
-			if(DEBUG){
-				System.out.println("load results line: "+line);
-			}
 
 			if (line != null) {
+				if(DEBUG){
+					System.out.println("load results line: "+line);
+				}
 				if (isStarted) {
 					printer.println(line);
 				}
@@ -350,10 +392,11 @@ public class LiveCodingAnalyst {
 				}
 			}
 		} while (line != null);
-		displayDocument.set(writer.toString());
+		displayResults(writer.toString());
 	}
 	
 	private void loadCanvasCommands(BufferedReader reader) {
+		ArrayList<CanvasCommand> newCommands = new ArrayList<CanvasCommand>();
 		CanvasReader canvasReader = new CanvasReader(reader);
 		CanvasCommand command;
 		boolean isDone;
@@ -362,9 +405,10 @@ public class LiveCodingAnalyst {
 
 			isDone = command == null || command.getName().equals("end_canvas");
 			if ( ! isDone) {
-				canvasCommands.add(command);
+				newCommands.add(command);
 			}
 		} while ( ! isDone);
+		canvasCommands = newCommands;
 	}
 
 	private void checkScriptPath() {
@@ -399,5 +443,17 @@ public class LiveCodingAnalyst {
 
 	public ArrayList<CanvasCommand> getCanvasCommands() {
 		return canvasCommands;
+	}
+
+	private void addAnalysisTask(IDocument document, Rectangle bounds) {
+		if (document == null) {
+			return;
+		}
+		
+		AnalysisTask task = new AnalysisTask();
+		task.sourceCode = document.get();
+		task.analyst = LiveCodingAnalyst.this;
+		task.bounds = bounds;
+		toAnalyse.add(task);
 	}
 }

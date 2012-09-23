@@ -51,7 +51,7 @@ public class LiveCanvasView extends ViewPart {
 			@Override
 			public void controlResized(ControlEvent e) {
 				if (analyst != null) {
-					analyst.refresh();
+					analyst.refresh(getBounds());
 				}
 			}
 		});
@@ -140,7 +140,6 @@ public class LiveCanvasView extends ViewPart {
 					SWT.DRAW_DELIMITER);
 			return;
 		}
-		
 		// Execute the drawing commands
 		for (CanvasCommand command : canvasCommands) {
 			String method = command.getName();

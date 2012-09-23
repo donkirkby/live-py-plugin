@@ -38,6 +38,7 @@ Uninstalling
 
 Working Features
 ----------------
+- turtle graphics, including filled polygons
 - local variable assignments
 - looping
 - function calls, and multiple calls.

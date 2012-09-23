@@ -27,6 +27,7 @@ import org.python.pydev.editor.PyEdit;
 public class LiveCanvasView extends ViewPart {
 	private LiveCodingAnalyst analyst;
 	private Canvas canvas;
+	private Rectangle canvasBounds;
 	private HashMap<String, Color> colorMap = new HashMap<String, Color>();
 	
 	public LiveCanvasView() {
@@ -47,11 +48,12 @@ public class LiveCanvasView extends ViewPart {
 			}
 		});
 		
-		parent.addControlListener(new ControlAdapter() {
+		canvas.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
+				canvasBounds = canvas.getBounds();
 				if (analyst != null) {
-					analyst.refresh(getBounds());
+					analyst.refresh();
 				}
 			}
 		});
@@ -84,6 +86,9 @@ public class LiveCanvasView extends ViewPart {
 					newAnalyst = PyEditDecorator.getAnalyst(editor);
 				}
 				setAnalyst(newAnalyst);
+				if (newAnalyst != null) {
+					newAnalyst.refresh();
+				}
 			}
 		};
 		site.getPage().addPartListener(partListener);
@@ -105,10 +110,8 @@ public class LiveCanvasView extends ViewPart {
 	}
 	
 	public Rectangle getBounds() {
-		return
-				canvas == null
-				? null
-				: canvas.getBounds();
+		// cache the bounds so we can see them from a background thread.
+		return canvasBounds; 
 	}
 	
 	private void drawResult(GC gc) {

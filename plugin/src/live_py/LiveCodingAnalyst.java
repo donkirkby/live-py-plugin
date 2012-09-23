@@ -233,11 +233,7 @@ public class LiveCodingAnalyst {
 			 */
 			@Override
 			public void documentChanged(DocumentEvent event) {
-				addAnalysisTask(
-						event.getDocument(),
-						canvasView != null
-						? canvasView.getBounds()
-						: null);
+				addAnalysisTask(event.getDocument());
 			}
 			
 			@Override
@@ -246,11 +242,11 @@ public class LiveCodingAnalyst {
 		});
 		
 		// Perform the first analysis.
-		refresh(null);
+		refresh();
 	}
 
-	public void refresh(Rectangle bounds) {
-		addAnalysisTask(mainDocument, bounds);
+	public void refresh() {
+		addAnalysisTask(mainDocument);
 	}
 
 	/**
@@ -445,7 +441,7 @@ public class LiveCodingAnalyst {
 		return canvasCommands;
 	}
 
-	private void addAnalysisTask(IDocument document, Rectangle bounds) {
+	private void addAnalysisTask(IDocument document) {
 		if (document == null) {
 			return;
 		}
@@ -453,7 +449,10 @@ public class LiveCodingAnalyst {
 		AnalysisTask task = new AnalysisTask();
 		task.sourceCode = document.get();
 		task.analyst = LiveCodingAnalyst.this;
-		task.bounds = bounds;
+		task.bounds = 
+				canvasView != null
+				? canvasView.getBounds()
+				: null;
 		toAnalyse.add(task);
 	}
 }

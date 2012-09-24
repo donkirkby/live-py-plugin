@@ -614,5 +614,34 @@ create_line
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
+    def test_yield(self):
+        # SETUP
+        code = """\
+def foo(x):
+    a = x
+    yield a
+    a += 2
+    yield a
+
+n = foo(10)
+s = sum(n)
+"""
+        expected_report = """\
+x = 10 
+a = 10 
+yield 10 
+a = 12 
+yield 12 
+
+
+s = 22 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
 if __name__ == '__main__':
     unittest.main()

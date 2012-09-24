@@ -1,6 +1,6 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
                  Attribute, Call, Expr, Index, Load, Name, NodeTransformer, Num, 
-                 Return, Store, Str, Subscript, Tuple)
+                 Return, Store, Str, Subscript, Tuple, Yield)
 import sys
 import traceback
 
@@ -184,6 +184,16 @@ class TraceAssignments(NodeTransformer):
                                           [Name(id=RESULT_NAME, ctx=Load()),
                                            Num(n=existing_node.lineno)]),
                 Return(value=Name(id=RESULT_NAME, ctx=Load()))]
+    
+    def visit_Yield(self, node):
+        existing_node = self.generic_visit(node)
+        value = existing_node.value
+        if value is None:
+            value = Name(id='None', ctx=Load())
+        
+        return Yield(value=self._create_bare_context_call(
+                    'yield_value', 
+                    [value, Num(n=existing_node.lineno)]))
     
     def _trace_assignment(self, target):
         #name, value, line number

@@ -382,6 +382,7 @@ public class LiveCodingAnalyst {
 						loadCanvasCommands(reader);
 					}
 					else {
+						canvasCommands = new ArrayList<CanvasCommand>();
 						printer.println();
 					}
 					isStarted = true;

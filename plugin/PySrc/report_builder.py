@@ -40,6 +40,10 @@ class ReportBuilder(object):
         self.add_message('return %r ' % value, line_number)
         return value
         
+    def yield_value(self, value, line_number):
+        self.add_message('yield %r ' % value, line_number)
+        return value
+        
     def record_call(self, 
                     name, 
                     display_before, 

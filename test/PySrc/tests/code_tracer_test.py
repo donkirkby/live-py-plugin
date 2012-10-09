@@ -1,3 +1,4 @@
+from sys import version_info
 import unittest
 from code_tracer import CodeTracer
 
@@ -319,9 +320,15 @@ n = Decimal('10') """
 x = 2
 x = 1/0
 """
-        expected_report = """\
+        expected_report_python2 = """\
 x = 2 
 ZeroDivisionError: integer division or modulo by zero """
+        expected_report_python3 = """\
+x = 2 
+ZeroDivisionError: division by zero """
+        expected_report = (expected_report_python3 
+                           if version_info.major >= 3
+                           else expected_report_python2)
         tracer = CodeTracer()
         
         # EXEC
@@ -338,11 +345,20 @@ def foo(n):
 
 x = foo(5)
 """
-        expected_report = """\
+        expected_report_python2 = """\
 n = 5 
 ZeroDivisionError: integer division or modulo by zero 
 
 ZeroDivisionError: integer division or modulo by zero """
+        expected_report_python3 = """\
+n = 5 
+ZeroDivisionError: division by zero 
+
+ZeroDivisionError: division by zero """
+        expected_report = (expected_report_python3 
+                           if version_info.major >= 3
+                           else expected_report_python2)
+
         tracer = CodeTracer()
         
         # EXEC

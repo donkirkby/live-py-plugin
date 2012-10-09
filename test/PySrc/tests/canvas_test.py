@@ -48,7 +48,7 @@ create_rectangle
         canvas = Canvas()
         with self.assertRaisesRegexp(
                 AttributeError, 
-                "Canvas instance has no attribute 'create_wirple'"):
+                "(Canvas instance|'Canvas' object) has no attribute 'create_wirple'"):
             canvas.create_wirple(1, 'floop')
 
     def test_bounds(self):

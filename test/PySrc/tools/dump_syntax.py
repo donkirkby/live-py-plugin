@@ -3,17 +3,17 @@ trees from code snippets.
 """
 
 import ast
+import sys
 
 code = """\
-f = (lambda n,
-            x: (n + 
-                x))
+f = lambda n: n + 1
 x = f(10)
 """
 
 tree = ast.parse(code)
 
-print ast.dump(tree)
-print
+print(sys.version)
+print(ast.dump(tree))
+print('')
 for s in tree.body:
-    print '    ' + ast.dump(s, include_attributes=True)
+    print('    ' + ast.dump(s, include_attributes=True))

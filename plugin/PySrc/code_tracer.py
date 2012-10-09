@@ -1,12 +1,24 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
                  Attribute, Call, Expr, Index, Load, Name, NodeTransformer, Num, 
                  Return, Store, Str, Subscript, Tuple, Yield)
+
+try:
+    # Import some classes that are only available in Python 3.
+    from ast import arg #@UnresolvedImport
+except:
+    arg = None # If we're in Python 2, we just won't use them.
+
 import sys
 import traceback
 
 from canvas import Canvas
 from mock_turtle import MockTurtle
 from report_builder import ReportBuilder
+
+try:
+    from exec_python2 import exec_code #@UnusedImport
+except:
+    from exec_python3 import exec_code #@Reimport
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
@@ -134,8 +146,10 @@ class TraceAssignments(NodeTransformer):
         for target in new_node.args.args:
             if isinstance(target, Name) and target.id == 'self':
                 continue
+            if arg and isinstance(target, arg) and target.arg == 'self':
+                continue
             new_node.body.insert(argument_count, 
-                                 self._trace_assignment(target))
+                                 self._trace_assignment(target, node.lineno))
             argument_count += 1
 
         args = [Num(n=min(line_numbers)),
@@ -158,9 +172,12 @@ class TraceAssignments(NodeTransformer):
         self._find_line_numbers(new_node, line_numbers)
         
         # trace lambda argument values
-        calls = [getattr(self._trace_assignment(target), 'value', None)
+        calls = [getattr(self._trace_assignment(target, node.lineno), 
+                         'value', 
+                         None)
                  for target in new_node.args.args
-                 if getattr(target, 'id', 'self') != 'self']
+                 if getattr(target, 'id', 'self') != 'self' or 
+                 getattr(target, 'arg', 'self') != 'self']
 
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
@@ -195,12 +212,17 @@ class TraceAssignments(NodeTransformer):
                     'yield_value', 
                     [value, Num(n=existing_node.lineno)]))
     
-    def _trace_assignment(self, target):
+    def _trace_assignment(self, target, default_lineno=None):
+        lineno = getattr(target, 'lineno', default_lineno)
         #name, value, line number
         if isinstance(target, Name):
             args = [Str(s=target.id), 
                     Name(id=target.id, ctx=Load()),
-                    Num(n=target.lineno)]
+                    Num(n=lineno)]
+        elif arg and isinstance(target, arg):
+            args=[Str(s=target.arg),
+                  Name(id=target.arg, ctx=Load()),
+                  Num(n=lineno)]
         elif isinstance(target, Subscript):
             return self._trace_assignment(target.value)
         elif isinstance(target, Attribute):
@@ -208,9 +230,9 @@ class TraceAssignments(NodeTransformer):
                     Attribute(value=target.value, 
                               attr=target.attr, 
                               ctx=Load()),
-                    Num(n=target.lineno)]
+                    Num(n=lineno)]
         else:
-            return None
+            raise TypeError('Unknown target: %s' % target)
             
         return self._create_context_call('assign', args)
         
@@ -238,12 +260,12 @@ class CodeTracer(object):
                             TURTLE_NAME: self.turtle}
         
     def trace_canvas(self, source):
-        exec source in self.environment
+        exec_code(source, self.environment, self.environment)
         
         return '\n'.join(self.turtle.screen.cv.report)
         
     def trace_turtle(self, source):
-        exec source in self.environment
+        exec_code(source, self.environment, self.environment)
         
         return '\n'.join(self.turtle.report)
         
@@ -252,16 +274,16 @@ class CodeTracer(object):
 
         try:
             tree = parse(source)
-        
+    
             visitor = TraceAssignments()
             new_tree = visitor.visit(tree)
             fix_missing_locations(new_tree)
-            
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
             self.environment[CONTEXT_NAME] = builder
-            exec code in self.environment
-        except SyntaxError, ex:
+            exec_code(code, self.environment, self.environment)
+        except SyntaxError:
+            ex = sys.exc_info()[1]
             messages = traceback.format_exception_only(type(ex), ex)
             builder.add_message(messages[-1].strip() + ' ', ex.lineno)
         except:
@@ -279,7 +301,7 @@ class CodeTracer(object):
                         is_reported = True
                 if not is_reported:
                     builder.add_message(message, 1)
-#                    print '=== Unexpected Exception in tracing code ==='
+#                    print('=== Unexpected Exception in tracing code ===')
 #                    traceback.print_exception(etype, value, tb)
             finally:
                 del tb
@@ -314,8 +336,8 @@ if __name__ == '__main__':
     code_report = tracer.trace_code(code)
     turtle_report = tracer.turtle.report
     if turtle_report and args.canvas:
-        print 'start_canvas'
-        print '\n'.join(turtle_report)
-        print 'end_canvas'
-        print '.'
-    print code_report
+        print('start_canvas')
+        print('\n'.join(turtle_report))
+        print('end_canvas')
+        print('.')
+    print(code_report)

@@ -19,7 +19,7 @@ class Canvas:
         self.report.append(method_name)
         for arg in args:
             self.report.append("    %r" % int(round(arg)))
-        for name, value in kwargs.iteritems():
+        for name, value in kwargs.items():
             self.report.append("    %s=%r" % (name, value))
     
     def cget(self, option):

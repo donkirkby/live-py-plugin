@@ -383,7 +383,7 @@ public class LiveCodingAnalyst {
 					}
 					else {
 						canvasCommands = new ArrayList<CanvasCommand>();
-						printer.println();
+						printer.println(line);
 					}
 					isStarted = true;
 				}

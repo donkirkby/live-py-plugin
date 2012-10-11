@@ -33,14 +33,15 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.python.pydev.core.IPythonNature;
 import org.python.pydev.core.MisconfigurationException;
-import org.python.pydev.core.REF;
-import org.python.pydev.core.Tuple;
 import org.python.pydev.core.bundle.BundleUtils;
 import org.python.pydev.core.log.Log;
 import org.python.pydev.editor.PyEdit;
 import org.python.pydev.editor.codefolding.PySourceViewer;
 import org.python.pydev.runners.UniversalRunner;
 import org.python.pydev.runners.UniversalRunner.AbstractRunner;
+
+import com.aptana.shared_core.io.FileUtils;
+import com.aptana.shared_core.structure.Tuple;
 
 /**
  * This actually runs the Python code and displays the analysis.
@@ -345,7 +346,7 @@ public class LiveCodingAnalyst {
 				(String[])argumentList.toArray(new String[argumentList.size()]);
 		File editorFile = pyEdit.getEditorFile();
 		Tuple<Process, String> tuple = runner.createProcess(
-				REF.getFileAbsolutePath(scriptPath), 
+				FileUtils.getFileAbsolutePath(scriptPath), 
 				arguments, 
 				editorFile.getParentFile(), 
 				null);

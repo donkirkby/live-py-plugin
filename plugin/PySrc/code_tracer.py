@@ -1,6 +1,7 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
-                 Attribute, Call, Expr, Index, Load, Name, NodeTransformer, Num, 
-                 Return, Store, Str, Subscript, Tuple, Yield)
+                 Attribute, BinOp, Call, Expr, Index, Load, Mod, Name, 
+                 NodeTransformer, Num, Return, Store, Str, Subscript, Tuple, 
+                 Yield)
 
 try:
     # Import some classes that are only available in Python 3.
@@ -48,9 +49,22 @@ class TraceAssignments(NodeTransformer):
                     previous_line_number = line_number
         return new_node
         
+    def _trace_print_function(self, existing_node):
+        values = existing_node.args
+        message_format = 'print(' + ', '.join(['%r']*len(values)) + ') '
+        return self._create_bare_context_call('add_message', 
+                                              [BinOp(left=Str(message_format),
+                                                     op=Mod(),
+                                                     right=Tuple(elts=values,
+                                                                 ctx=Load())), 
+                                               Num(existing_node.lineno)])
+        
     def visit_Call(self, node):
         existing_node = self.generic_visit(node)
         value_node = existing_node.func
+        
+        if isinstance(value_node, Name) and value_node.id == 'print':
+            return self._trace_print_function(existing_node)
         
         names = []
         while isinstance(value_node, Attribute):
@@ -76,6 +90,17 @@ class TraceAssignments(NodeTransformer):
         new_node = self._create_bare_context_call('record_call', args)
         return new_node
 
+    def visit_Print(self, node):
+        existing_node = self.generic_visit(node)
+        values = existing_node.values
+        message_format = 'print' + ','.join([' %r']*len(values)) + ' '
+        return self._create_context_call('add_message', 
+                                         [BinOp(left=Str(message_format),
+                                                op=Mod(),
+                                                right=Tuple(elts=values,
+                                                            ctx=Load())), 
+                                          Num(existing_node.lineno)])
+    
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
@@ -278,6 +303,8 @@ class CodeTracer(object):
             visitor = TraceAssignments()
             new_tree = visitor.visit(tree)
             fix_missing_locations(new_tree)
+#            from ast import dump
+#            print(dump(new_tree, include_attributes=True))
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
             self.environment[CONTEXT_NAME] = builder

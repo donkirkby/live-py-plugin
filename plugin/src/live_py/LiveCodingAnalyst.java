@@ -31,6 +31,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.osgi.framework.Bundle;
 import org.python.pydev.core.IPythonNature;
 import org.python.pydev.core.MisconfigurationException;
 import org.python.pydev.core.REF;
@@ -413,18 +414,23 @@ public class LiveCodingAnalyst {
 		{
 			return;
 		}
+		Bundle bundle = Activator.getDefault().getBundle();
+		Path sourceFolder = new Path("PySrc");
 		scriptPath = BundleUtils.getRelative(
-				new Path("PySrc/code_tracer.py"),
-				Activator.getDefault().getBundle());
-		BundleUtils.getRelative(
-				new Path("PySrc/report_builder.py"),
-				Activator.getDefault().getBundle());
-		BundleUtils.getRelative(
-				new Path("PySrc/canvas.py"),
-				Activator.getDefault().getBundle());
-		BundleUtils.getRelative(
-				new Path("PySrc/mock_turtle.py"),
-				Activator.getDefault().getBundle());
+				sourceFolder.append("code_tracer.py"),
+				bundle);
+		String[] otherScripts = new String[] {
+				"report_builder.py",
+				"canvas.py",
+				"exec_python2.py",
+				"exec_python3.py",
+				"mock_turtle.py"
+		};
+		for (String script : otherScripts) {
+			BundleUtils.getRelative(
+					sourceFolder.append(script),
+					bundle);
+		}
 		if(DEBUG){
 			System.out.println("Script path: "+scriptPath);
 		}

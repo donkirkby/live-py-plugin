@@ -103,6 +103,57 @@ create_line
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
+    def test_scale(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+create_line
+    100
+    0
+    100
+    150
+    fill='black'"""
+
+        
+        # EXEC
+        t = MockTurtle(canvas=Canvas())
+        t.screen.xscale = 100.0
+        t.screen.yscale = 50
+        t.fd(1)
+        t.right(90)
+        t.fd(3)
+        report = t.report
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_offset_with_scale(self):
+        """ The offset is applied BEFORE the scale. """
+        
+        # SETUP
+        expected_report = """\
+create_line
+    400
+    300
+    500
+    300
+    fill='black'"""
+
+        
+        # EXEC
+        t = MockTurtle(canvas=Canvas(800, 600))
+        t.screen.xscale = 100 
+        t.fd(1)
+        report = t.report
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
     def test_repr(self):
         # SETUP
         expected_text = "MockTurtle(100, 0, 10)"

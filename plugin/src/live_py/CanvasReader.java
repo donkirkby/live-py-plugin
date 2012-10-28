@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 public class CanvasReader {
+	private boolean DEBUG = false;
 	private BufferedReader inputReader;
 	private String nextLine;
 
@@ -25,6 +26,9 @@ public class CanvasReader {
 				nextLine = inputReader.readLine();
 				if (nextLine == null || !nextLine.startsWith("    ")) {
 					return command;
+				}
+				if (DEBUG) {
+					System.out.println("load canvas line: " + nextLine);
 				}
 				nextLine = nextLine.substring(4); // trim spaces
 				int position = nextLine.indexOf('=');

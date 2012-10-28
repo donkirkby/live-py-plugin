@@ -7,6 +7,7 @@ class MockTurtle(TNavigator, TPen):
     class _Screen(object):
         def __init__(self, canvas):
             self.cv = canvas
+            self.xscale = self.yscale = 1
             
     def __init__(self, x=0, y=0, heading=0, canvas=None):
         self._path = None
@@ -37,10 +38,10 @@ class MockTurtle(TNavigator, TPen):
         if self._pencolor:
             kwargs['fill'] = self._pencolor
         if self._drawing:
-            args = [xstart + self.__xoff, 
-                    -ystart + self.__yoff, 
-                    xend + self.__xoff, 
-                    -yend + self.__yoff]
+            args = [xstart*self.screen.xscale + self.__xoff, 
+                    -ystart*self.screen.yscale + self.__yoff, 
+                    xend*self.screen.xscale + self.__xoff, 
+                    -yend*self.screen.yscale + self.__yoff]
             if self._path:
                 self._lines_to_draw.append((args, kwargs))
             else:

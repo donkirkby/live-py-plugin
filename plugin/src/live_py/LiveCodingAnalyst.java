@@ -235,7 +235,12 @@ public class LiveCodingAnalyst {
 			 */
 			@Override
 			public void documentChanged(DocumentEvent event) {
-				addAnalysisTask(event.getDocument());
+				boolean isDisplayVisible = 
+						displayViewer.getControl().isVisible();
+				if (isDisplayVisible || canvasView != null)
+				{
+					addAnalysisTask(event.getDocument());
+				}
 			}
 			
 			@Override

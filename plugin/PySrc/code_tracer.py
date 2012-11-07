@@ -59,6 +59,19 @@ class TraceAssignments(NodeTransformer):
                                                                  ctx=Load())), 
                                                Num(existing_node.lineno)])
         
+
+    def _get_attribute_names(self, attribute_node):
+        names = []
+        while isinstance(attribute_node, Attribute):
+            names.insert(0, attribute_node.attr)
+            attribute_node = attribute_node.value
+        
+        if not names or not hasattr(attribute_node, 'id'):
+            return None
+        
+        names.insert(0, attribute_node.id)
+        return names
+
     def visit_Call(self, node):
         existing_node = self.generic_visit(node)
         value_node = existing_node.func
@@ -66,15 +79,11 @@ class TraceAssignments(NodeTransformer):
         if isinstance(value_node, Name) and value_node.id == 'print':
             return self._trace_print_function(existing_node)
         
-        names = []
-        while isinstance(value_node, Attribute):
-            names.insert(0, value_node.attr)
-            value_node = value_node.value
-        if not names or not hasattr(value_node, 'id'):
+        names = self._get_attribute_names(value_node)
+        if names is None:
             return existing_node
-        names.insert(0, value_node.id)
         
-        args = [Str(s='.'.join(names[0:-1])),
+        args = [Str(s='.'.join(names[:-1])),
                 Call(func=Name(id='repr', ctx=Load()),
                      args=[existing_node.func.value],
                      keywords=[],
@@ -251,7 +260,10 @@ class TraceAssignments(NodeTransformer):
         elif isinstance(target, Subscript):
             return self._trace_assignment(target.value)
         elif isinstance(target, Attribute):
-            args = [Str(s='%s.%s' % (target.value.id, target.attr)),
+            names = self._get_attribute_names(target)
+            if names is None:
+                raise TypeError('Unknown target: %s' % target)
+            args = [Str(s='.'.join(names)),
                     Attribute(value=target.value, 
                               attr=target.attr, 
                               ctx=Load()),

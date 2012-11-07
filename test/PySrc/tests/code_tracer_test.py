@@ -476,6 +476,31 @@ shelf.counts = {2: 3} """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
         
+    def test_set_attribute_attribute(self):
+        # SETUP
+        code = """\
+class foo(object):
+    pass
+
+f = foo()
+f.child = foo()
+f.child.name = 'bob'
+"""
+        expected_report = """\
+
+
+
+
+
+f.child.name = 'bob' """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        
     def test_old_class(self):
         # SETUP
         code = """\

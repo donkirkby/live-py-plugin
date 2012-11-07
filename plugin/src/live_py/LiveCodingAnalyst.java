@@ -11,6 +11,8 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.compare.Splitter;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -280,7 +282,7 @@ public class LiveCodingAnalyst {
 					System.out.println("Writing: " + sourceCode);
 				}
 				
-				loadResults(reader);
+				loadResults(reader, countLines(sourceCode));
 				if (DEBUG) {
 					String line;
 					do
@@ -303,6 +305,16 @@ public class LiveCodingAnalyst {
 			}
 			displayResults(message);
 		}
+	}
+
+	private int countLines(String text) {
+		Matcher matcher = 
+				Pattern.compile("\n|\r\n|\n\r").matcher(text);
+		int lineCount = 0;
+		while (matcher.find()) {
+			lineCount++;
+		}
+		return lineCount;
 	}
 
 	private void displayResults(final String results) {
@@ -369,10 +381,12 @@ public class LiveCodingAnalyst {
 		return null;
 	}
 
-	private void loadResults(BufferedReader reader) throws IOException {
+	private void loadResults(BufferedReader reader, int minLineCount) 
+			throws IOException {
 		String line;
 		StringWriter writer = new StringWriter();
 		PrintWriter printer = new PrintWriter(writer);
+		int lineCount = 0;
 		boolean isStarted = false;
 		do {
 			line = reader.readLine();
@@ -383,6 +397,7 @@ public class LiveCodingAnalyst {
 				}
 				if (isStarted) {
 					printer.println(line);
+					lineCount++;
 				}
 				else {
 					if (line.equals("start_canvas")) {
@@ -391,11 +406,16 @@ public class LiveCodingAnalyst {
 					else {
 						canvasCommands = new ArrayList<CanvasCommand>();
 						printer.println(line);
+						lineCount++;
 					}
 					isStarted = true;
 				}
 			}
 		} while (line != null);
+		while (lineCount < minLineCount) {
+			printer.println();
+			lineCount++;
+		}
 		displayResults(writer.toString());
 	}
 	

@@ -709,5 +709,21 @@ print('x')
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_assign_tuple(self):
+        # SETUP
+        code = """\
+b, c = 3, 42
+"""
+        expected_report = """\
+b = 3 c = 42 
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,5 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
-                 Attribute, BinOp, Call, Expr, Index, Load, Mod, Name, 
+                 Attribute, BinOp, Call, Expr, Index, List, Load, Mod, Name, 
                  NodeTransformer, Num, Return, Store, Str, Subscript, Tuple, 
                  Yield)
 
@@ -114,9 +114,14 @@ class TraceAssignments(NodeTransformer):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
         for target in existing_node.targets:
-            trace = self._trace_assignment(target)
-            if trace:
-                new_nodes.append(trace)
+            if isinstance(target, Tuple) or isinstance(target, List):
+                to_trace = target.elts
+            else:
+                to_trace = [target]
+            for item in to_trace:
+                trace = self._trace_assignment(item)
+                if trace:
+                    new_nodes.append(trace)
 
         return new_nodes
     

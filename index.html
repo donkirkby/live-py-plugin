@@ -35,8 +35,8 @@
 
 <p>Live coding in Python implemented as an Eclipse plug in.</p>
 
-<p>To see how it works, watch the <a href="http://www.youtube.com/watch?v=ZrbIVMdChDQ">demo video</a> or read the 
-<a href="http://donkirkby.blogspot.ca/2012/06/live-coding-in-python.html">blog post</a>.</p>
+<p>To see how it works, watch the <a href="http://www.youtube.com/watch?v=LV3aFRHlAEQ">demo video</a> or read the 
+<a href="http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html">blog post</a>.</p>
 
 <h2>Installing</h2>
 
@@ -52,7 +52,7 @@ was able to do that in two different ways.</p>
 <li>
 <p>Copy it to the system-wide Eclipse installation.</p>
 
-<pre><code> sudo cp live-py_1.0.0.201206132143.jar /usr/lib/eclipse/dropins/
+<pre><code> sudo cp live-py_2.0.0.201209171018.jar /usr/lib/eclipse/dropins/
 </code></pre>
 </li>
 <li>
@@ -60,23 +60,18 @@ was able to do that in two different ways.</p>
 require sudo permission.</p>
 
 <pre><code> mkdir ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
- cp live-py_1.0.0.201206132219.jar \
+ cp live-py_2.0.0.201209171018.jar \
  ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
 </code></pre>
 </li>
 </ol>
 </li>
 <li><p>Restart Eclipse.</p></li>
-<li>
-<p>Open any Python file, and add a comment like this:</p>
-
-<pre><code># echo on
-</code></pre>
-
-<p>You should see an extra column next to the line numbers that shows the 
-results of any code that runs. It may be less distracting to turn off the 
-line numbers.</p>
-</li>
+<li><p>Open any Python file, and from the Pydev menu, choose Live Coding.
+You should see an extra panel on the right that shows the results of running
+your code.</p></li>
+<li><p>To try the turtle graphics features, open the Window menu, and choose 
+Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.</p></li>
 </ol><h2>Uninstalling</h2>
 
 <ol>
@@ -85,20 +80,21 @@ line numbers.</p>
 </ol><h2>Working Features</h2>
 
 <ul>
+<li>turtle graphics, including filled polygons</li>
 <li>local variable assignments</li>
 <li>looping</li>
 <li>function calls, and multiple calls.</li>
 <li>compile errors</li>
 <li>runtime exceptions</li>
 <li>infinite loops halted.</li>
+<li>print statements work.</li>
 </ul><h2>To do</h2>
 
 <ul>
-<li>print statements don't work.</li>
+<li>PyUnit integration</li>
+<li>canvas coordinates?</li>
 <li>Any syntax error currently blanks out the results, should just show previous 
 result with error marker.</li>
-<li>Figure out how to add a horizontal scroll bar.</li>
-<li>Move ruler to right side.</li>
 </ul><h2>Creating an Install Package</h2>
 
 <ol>

@@ -45,11 +45,11 @@ Working Features
 - compile errors
 - runtime exceptions
 - infinite loops halted.
+- print statements work.
 
 To do
 -----
 - PyUnit integration
-- print statements don't work.
 - canvas coordinates?
 - Any syntax error currently blanks out the results, should just show previous 
 result with error marker.
@@ -64,5 +64,5 @@ Creating an Install Package
 
 [pydev]: http://pydev.org/download.html
 [downloads]: https://github.com/donkirkby/live-py-plugin/downloads
-[video]: http://www.youtube.com/watch?v=ZrbIVMdChDQ
-[blog]: http://donkirkby.blogspot.ca/2012/06/live-coding-in-python.html
+[video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
+[blog]: http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html

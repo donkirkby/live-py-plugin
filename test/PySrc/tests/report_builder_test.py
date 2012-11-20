@@ -191,5 +191,45 @@ y = 'main' """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_frames(self):
+        # SETUP
+        expected_report = """\
+i = 1 | i = 2 
+n = 2 | """
+        
+        # EXEC
+        builder = ReportBuilder()
+        builder.start_frame(1, 2)
+        builder.assign(name='i', value=1, line_number=1)
+        builder.start_frame(1, 2)
+        builder.assign(name='i', value=2, line_number=1)
+        builder.end_frame()
+        builder.assign(name='n', value=2, line_number=2)
+        builder.end_frame()
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_frames_with_extra_message(self):
+        # SETUP
+        expected_report = """\
+i = 1 | i = 2 
+      | extra message"""
+        
+        # EXEC
+        builder = ReportBuilder()
+        builder.start_frame(1, 2)
+        builder.assign(name='i', value=1, line_number=1)
+        builder.start_frame(1, 2)
+        builder.assign(name='i', value=2, line_number=1)
+        builder.end_frame()
+        builder.end_frame()
+        builder.add_extra_message('extra message', 2)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
 if __name__ == '__main__':
     unittest.main()

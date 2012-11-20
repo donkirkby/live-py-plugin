@@ -1,7 +1,7 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
                  Attribute, BinOp, Call, Expr, Index, List, Load, Mod, Name, 
-                 NodeTransformer, Num, Return, Store, Str, Subscript, Tuple, 
-                 Yield)
+                 NodeTransformer, Num, Return, Store, Str, Subscript, TryFinally,
+                 Tuple, Yield)
 
 try:
     # Import some classes that are only available in Python 3.
@@ -179,22 +179,22 @@ class TraceAssignments(NodeTransformer):
         
         line_numbers = set()
         self._find_line_numbers(new_node, line_numbers)
+        args = [Num(n=min(line_numbers)),
+                Num(n=max(line_numbers))]
+        old_body = new_node.body
+        new_node.body = [self._create_context_call('start_frame', args)]
         
         # trace function parameter values
-        argument_count = 0
         for target in new_node.args.args:
             if isinstance(target, Name) and target.id == 'self':
                 continue
             if arg and isinstance(target, arg) and target.arg == 'self':
                 continue
-            new_node.body.insert(argument_count, 
-                                 self._trace_assignment(target, node.lineno))
-            argument_count += 1
+            new_node.body.append(self._trace_assignment(target, node.lineno))
 
-        args = [Num(n=min(line_numbers)),
-                Num(n=max(line_numbers))]
-        new_node.body.insert(0,
-                             self._create_context_call('start_block', args))
+        end_frame = self._create_context_call('end_frame')
+        new_node.body.append(TryFinally(body=old_body, 
+                                        finalbody=[end_frame]))
         return new_node
 
     def visit_Lambda(self, node):
@@ -278,10 +278,12 @@ class TraceAssignments(NodeTransformer):
             
         return self._create_context_call('assign', args)
         
-    def _create_context_call(self, function_name, args):
+    def _create_context_call(self, function_name, args=None):
         return Expr(value=self._create_bare_context_call(function_name, args))
         
-    def _create_bare_context_call(self, function_name, args):
+    def _create_bare_context_call(self, function_name, args=None):
+        if args is None:
+            args = []
         context_name = Name(id=CONTEXT_NAME, ctx=Load())
         function = Attribute(value=context_name,
                              attr=function_name,
@@ -331,31 +333,25 @@ class CodeTracer(object):
             messages = traceback.format_exception_only(type(ex), ex)
             builder.add_message(messages[-1].strip() + ' ', ex.lineno)
         except:
-            exc_info = sys.exc_info()
-            try:
-                is_reported = False
-                builder.message_limit = None # make sure we don't hit limit
-                etype, value, tb = exc_info
-                messages = traceback.format_exception_only(etype, value)
-                message = messages[-1].strip() + ' '
-                entries = traceback.extract_tb(tb)
-                for filename, line_number, _, _ in entries:
-                    if filename == PSEUDO_FILENAME:
-                        builder.add_message(message, line_number)
-                        is_reported = True
-                if not is_reported:
-                    builder.add_message(message, 1)
-#                    print('=== Unexpected Exception in tracing code ===')
-#                    traceback.print_exception(etype, value, tb)
-            finally:
-                del tb
-                del exc_info # prevents circular reference
+            etype, value, tb = sys.exc_info()
+            is_reported = False
+            builder.message_limit = None # make sure we don't hit limit
+            messages = traceback.format_exception_only(etype, value)
+            message = messages[-1].strip() + ' '
+            entries = traceback.extract_tb(tb)
+            for filename, line_number, _, _ in entries:
+                if filename == PSEUDO_FILENAME:
+                    builder.add_extra_message(message, line_number)
+                    is_reported = True
+            if not is_reported:
+                builder.add_message(message, 1)
+#                print('=== Unexpected Exception in tracing code ===')
+#                traceback.print_exception(etype, value, tb)
                 
         return builder.report()
     
 if __name__ == '__main__':
     import argparse
-    
     parser = argparse.ArgumentParser(description='Trace Python code.')
     parser.add_argument('-c', 
                         '--canvas', 

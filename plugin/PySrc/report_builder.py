@@ -3,8 +3,15 @@ class ReportBuilder(object):
         self.messages = []
         self.message_count = 0
         self.message_limit = message_limit
+        self.stack_block = None
+        self.stack = [] # current call stack
+        self.history = [] # all stack frames that need to be combined
         
     def start_block(self, first_line, last_line):
+        if self.stack:
+            self.stack[-1].start_block(first_line, last_line)
+            return
+        
         self._check_line_count(last_line)
         line_indexes = range(first_line-1, last_line)
         max_width = 0
@@ -19,6 +26,15 @@ class ReportBuilder(object):
                 self.messages[line_index] = message.ljust(max_width) + '| '
         else:
             self._increment_message_count()
+            
+    def start_frame(self, first_line, last_line):
+        new_frame = ReportBuilder()
+        new_frame.stack_block = (first_line, last_line)
+        self.stack.append(new_frame)
+        self.history.append(new_frame)
+    
+    def end_frame(self):
+        self.stack.pop()
 
     def _increment_message_count(self):
         if (self.message_limit is not None and self.message_count >= self.message_limit):
@@ -26,9 +42,20 @@ class ReportBuilder(object):
         self.message_count += 1
 
     def add_message(self, message, line_number):
+        """ Add a message to the report on line line_number (1-based). """
         self._increment_message_count()
-        self._check_line_count(line_number)
-        self.messages[line_number - 1] += message
+        if self.stack:
+            self.stack[-1].add_message(message, line_number)
+        else:
+            self._check_line_count(line_number)
+            self.messages[line_number - 1] += message
+            
+    def add_extra_message(self, message, line_number):
+        """ Add an extra message to the last frame after the code has finished
+        running. """
+        
+        target = self.history[-1] if self.history else self
+        target.add_message(message, line_number)
 
     def assign(self, name, value, line_number):
         display = repr(value)
@@ -55,6 +82,15 @@ class ReportBuilder(object):
         return result
     
     def report(self):
+        for frame in self.history:
+            first_line, last_line = frame.stack_block
+            self.start_block(first_line, last_line)
+            for i in range(len(frame.messages)):
+                message = frame.messages[i]
+                if message:
+                    line_number = i+1
+                    self.add_message(message, line_number)
+        self.history = []
         return '\n'.join(self.messages)
 
     def _check_line_count(self, line_count):

@@ -725,5 +725,33 @@ b = 3 c = 42
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_recursion(self):
+        # SETUP
+        code = """\
+def f(n):
+    r = 1
+    for i in range(n):
+        r += f(i)
+    return r
+
+r = f(2)
+"""
+        expected_report = """\
+n = 2         | n = 0    | n = 1    | n = 0 
+r = 1         | r = 1    | r = 1    | r = 1 
+i = 0 | i = 1 |          | i = 0    | 
+r = 2 | r = 4 |          | r = 2    | 
+return 4      | return 1 | return 2 | return 1 
+
+r = 4 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+"""\
+"""
 if __name__ == '__main__':
     unittest.main()

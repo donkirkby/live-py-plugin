@@ -57,6 +57,24 @@ i = 1 | i = 2 | i = 4 """
         # VERIFY        
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_loop_target_list(self):
+        # SETUP
+        code = """\
+for a,b in [(1,2)]:
+    c = a + b
+"""
+        expected_report = """\
+a = 1 b = 2 
+c = 3 
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_nested_loop(self):
         # SETUP
         code = """\
@@ -716,6 +734,38 @@ b, c = 3, 42
 """
         expected_report = """\
 b = 3 c = 42 
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_assign_tuple_tuple(self):
+        # SETUP
+        code = """\
+a, (b, c) = (1, (2, 3))
+"""
+        expected_report = """\
+a = 1 b = 2 c = 3 
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_assign_tuple_list(self):
+        # SETUP
+        code = """\
+a, [b, c] = (1, (2, 3))
+"""
+        expected_report = """\
+a = 1 b = 2 c = 3 
 """
         tracer = CodeTracer()
         

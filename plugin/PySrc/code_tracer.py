@@ -1,6 +1,6 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
                  Attribute, BinOp, Call, Expr, Index, List, Load, Mod, Name, 
-                 NodeTransformer, Num, Return, Store, Str, Subscript, TryFinally,
+                 NodeTransformer, Num, Return, Store, Str, Subscript,
                  Tuple, Yield)
 
 try:
@@ -113,15 +113,7 @@ class TraceAssignments(NodeTransformer):
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
-        for target in existing_node.targets:
-            if isinstance(target, Tuple) or isinstance(target, List):
-                to_trace = target.elts
-            else:
-                to_trace = [target]
-            for item in to_trace:
-                trace = self._trace_assignment(item)
-                if trace:
-                    new_nodes.append(trace)
+        new_nodes.extend(self._trace_assignment_list(existing_node.targets))
 
         return new_nodes
     
@@ -152,12 +144,12 @@ class TraceAssignments(NodeTransformer):
         
         line_numbers = set()
         self._find_line_numbers(new_node, line_numbers)
-        new_node.body.insert(0, 
-                             self._trace_assignment(new_node.target))
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
-        new_node.body.insert(0,
-                             self._create_context_call('start_block', args))
+        new_body = [self._create_context_call('start_block', args)]
+        new_body.extend(self._trace_assignment_list(new_node.target))
+        new_body.extend(new_node.body)
+        new_node.body = new_body
         return new_node
     
     def visit_While(self, node):
@@ -273,6 +265,27 @@ class TraceAssignments(NodeTransformer):
                     'yield_value', 
                     [value, Num(n=existing_node.lineno)]))
     
+    def _trace_assignment_list(self, targets):
+        """ Build a list of assignment calls based on the contents of targets.
+        If targets is a single name, then return a list with one call.
+        If targets is a Tuple or a List, then make recursive calls for each
+        item, combine the results into a list, and return it."""
+        
+        new_nodes = []
+        # Tuple and List hold their contents in elts.
+        todo = getattr(targets, 'elts', targets)
+        try:
+            todo = list(todo)
+        except TypeError:
+            # todo wasn't iterable, treat it as a single item
+            trace = self._trace_assignment(targets)
+            if trace:
+                new_nodes.append(trace)
+            return new_nodes
+        for target in todo:
+            new_nodes.extend(self._trace_assignment_list(target))
+        return new_nodes
+
     def _trace_assignment(self, target, default_lineno=None):
         lineno = getattr(target, 'lineno', default_lineno)
         #name, value, line number

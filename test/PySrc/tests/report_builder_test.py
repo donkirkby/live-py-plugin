@@ -199,13 +199,11 @@ n = 2 | """
         
         # EXEC
         builder = ReportBuilder()
-        builder.start_frame(1, 2)
-        builder.assign(name='i', value=1, line_number=1)
-        builder.start_frame(1, 2)
-        builder.assign(name='i', value=2, line_number=1)
-        builder.end_frame()
-        builder.assign(name='n', value=2, line_number=2)
-        builder.end_frame()
+        frame1 = builder.start_frame(1, 2)
+        frame1.assign(name='i', value=1, line_number=1)
+        frame2 = builder.start_frame(1, 2)
+        frame2.assign(name='i', value=2, line_number=1)
+        frame1.assign(name='n', value=2, line_number=2)
         report = builder.report()
         
         # VERIFY
@@ -219,12 +217,10 @@ i = 1 | i = 2
         
         # EXEC
         builder = ReportBuilder()
-        builder.start_frame(1, 2)
-        builder.assign(name='i', value=1, line_number=1)
-        builder.start_frame(1, 2)
-        builder.assign(name='i', value=2, line_number=1)
-        builder.end_frame()
-        builder.end_frame()
+        frame1 = builder.start_frame(1, 2)
+        frame1.assign(name='i', value=1, line_number=1)
+        frame2 = builder.start_frame(1, 2)
+        frame2.assign(name='i', value=2, line_number=1)
         builder.add_extra_message('extra message', 2)
         report = builder.report()
         

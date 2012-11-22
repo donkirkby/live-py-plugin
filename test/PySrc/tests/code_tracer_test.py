@@ -751,7 +751,38 @@ r = 4 """
 
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
-"""\
+
+    def test_incomplete_iterator(self):
+        # SETUP
+        code = """\
+def f():
+    yield 1
+    yield 2
+    
+r = f()
+x = r.next()
+y = r.next()
+#z = r.next() #Don't complete the iterator, so the function never exits.
+print x
 """
+        expected_report = """\
+
+yield 1 
+yield 2 
+
+
+x = 1 
+y = 2 
+
+print 1 
+"""
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
 if __name__ == '__main__':
     unittest.main()

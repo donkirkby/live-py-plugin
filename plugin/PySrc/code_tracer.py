@@ -172,6 +172,13 @@ class TraceAssignments(NodeTransformer):
         return new_node
     
     def visit_FunctionDef(self, node):
+        """ Instrument a function definition by creating a new report builder
+        for this stack frame and putting it in a local variable. The local
+        variable has the same name as the global variable so all calls can
+        use the same CONTEXT_NAME symbol, but it means that I had to use this:
+        x = globals()['x'].start_frame()
+        Kind of ugly, but I think it was worth it to handle recursive calls.
+        """
         if node.name == '__repr__':
             return node
         
@@ -182,7 +189,24 @@ class TraceAssignments(NodeTransformer):
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
         old_body = new_node.body
-        new_node.body = [self._create_context_call('start_frame', args)]
+        globals_call = Call(func=Name(id='globals', ctx=Load()), 
+                            args=[], 
+                            keywords=[], 
+                            starargs=None, 
+                            kwargs=None)
+        global_context = Subscript(value=globals_call, 
+                                   slice=Index(value=Str(s=CONTEXT_NAME)), 
+                                   ctx=Load())
+        start_frame_call = Call(func=Attribute(value=global_context, 
+                                               attr='start_frame', 
+                                               ctx=Load()), 
+                                args=args, 
+                                keywords=[], 
+                                starargs=None, 
+                                kwargs=None)
+        context_assign = Assign(targets=[Name(id=CONTEXT_NAME, ctx=Store())],
+                                value=start_frame_call)
+        new_node.body = [context_assign]
         
         # trace function parameter values
         for target in new_node.args.args:
@@ -192,9 +216,7 @@ class TraceAssignments(NodeTransformer):
                 continue
             new_node.body.append(self._trace_assignment(target, node.lineno))
 
-        end_frame = self._create_context_call('end_frame')
-        new_node.body.append(TryFinally(body=old_body, 
-                                        finalbody=[end_frame]))
+        new_node.body.extend(old_body)
         return new_node
 
     def visit_Lambda(self, node):

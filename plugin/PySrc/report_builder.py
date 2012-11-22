@@ -8,10 +8,6 @@ class ReportBuilder(object):
         self.history = [] # all stack frames that need to be combined
         
     def start_block(self, first_line, last_line):
-        if self.stack:
-            self.stack[-1].start_block(first_line, last_line)
-            return
-        
         self._check_line_count(last_line)
         line_indexes = range(first_line-1, last_line)
         max_width = 0
@@ -30,12 +26,9 @@ class ReportBuilder(object):
     def start_frame(self, first_line, last_line):
         new_frame = ReportBuilder()
         new_frame.stack_block = (first_line, last_line)
-        self.stack.append(new_frame)
         self.history.append(new_frame)
+        return new_frame
     
-    def end_frame(self):
-        self.stack.pop()
-
     def _increment_message_count(self):
         if (self.message_limit is not None and self.message_count >= self.message_limit):
             raise RuntimeError('live coding message limit exceeded')
@@ -44,11 +37,8 @@ class ReportBuilder(object):
     def add_message(self, message, line_number):
         """ Add a message to the report on line line_number (1-based). """
         self._increment_message_count()
-        if self.stack:
-            self.stack[-1].add_message(message, line_number)
-        else:
-            self._check_line_count(line_number)
-            self.messages[line_number - 1] += message
+        self._check_line_count(line_number)
+        self.messages[line_number - 1] += message
             
     def add_extra_message(self, message, line_number):
         """ Add an extra message to the last frame after the code has finished

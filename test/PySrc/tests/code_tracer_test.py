@@ -406,7 +406,7 @@ IndentationError: expected an indented block """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
-    def test_infinite_loop(self):
+    def test_infinite_loop_by_count(self):
         # SETUP
         code = """\
 n = 0
@@ -419,6 +419,27 @@ n = 0
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
         tracer.message_limit = 4
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_infinite_loop_by_width(self):
+        # SETUP
+        code = """\
+n = 0
+while True:
+    n += 1
+"""
+        expected_report = """\
+n = 0 
+      |       | 
+n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
+        tracer = CodeTracer()
+        tracer.max_width = 20
         
         # EXEC
         report = tracer.trace_code(code)

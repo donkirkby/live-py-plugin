@@ -1,5 +1,5 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
-                 Attribute, BinOp, Call, Expr, Index, List, Load, Mod, Name, 
+                 Attribute, BinOp, Call, Expr, Index, Load, Mod, Name, 
                  NodeTransformer, Num, Return, Store, Str, Subscript,
                  Tuple, Yield)
 
@@ -332,6 +332,7 @@ class TraceAssignments(NodeTransformer):
 class CodeTracer(object):
     def __init__(self, turtle=None):
         self.message_limit = 10000
+        self.max_width = None
         self.keepalive = False
         self.turtle = turtle if turtle else MockTurtle()
         self.environment = {'__name__': MODULE_NAME, 
@@ -350,6 +351,7 @@ class CodeTracer(object):
         
     def trace_code(self, source):
         builder = ReportBuilder(self.message_limit)
+        builder.max_width = self.max_width
 
         try:
             tree = parse(source)
@@ -371,6 +373,7 @@ class CodeTracer(object):
             etype, value, tb = sys.exc_info()
             is_reported = False
             builder.message_limit = None # make sure we don't hit limit
+            builder.max_width = None # make sure we don't hit limit
             messages = traceback.format_exception_only(etype, value)
             message = messages[-1].strip() + ' '
             entries = traceback.extract_tb(tb)
@@ -408,6 +411,7 @@ if __name__ == '__main__':
     canvas = Canvas(args.width, args.height)
     turtle = MockTurtle(canvas=canvas)
     tracer = CodeTracer(turtle)
+    tracer.max_width = 200000
     code_report = tracer.trace_code(code)
     turtle_report = tracer.turtle.report
     if turtle_report and args.canvas:

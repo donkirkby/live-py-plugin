@@ -6,8 +6,10 @@ import ast
 import sys
 
 code = """\
-f = lambda n: n + 1
-x = f(10)
+import sys
+from ..turtle import Turtle
+
+sys.exit(3)
 """
 
 tree = ast.parse(code)
@@ -16,4 +18,4 @@ print(sys.version)
 print(ast.dump(tree))
 print('')
 for s in tree.body:
-    print('    ' + ast.dump(s, include_attributes=True))
+    print('    ' + ast.dump(s, include_attributes=False))

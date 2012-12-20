@@ -1,3 +1,6 @@
+import sys
+import traceback
+
 class ReportBuilder(object):
     def __init__(self, message_limit=None):
         self.messages = []
@@ -94,6 +97,15 @@ class ReportBuilder(object):
         if not display.startswith('<'):
             self.add_message('%s = %r ' % (name, value), line_number)
         return value
+    
+    def exception(self):
+        etype, value, tb = sys.exc_info()
+        messages = traceback.format_exception_only(etype, value)
+        message = messages[-1].strip() + ' '
+        entries = traceback.extract_tb(tb)
+        if entries:
+            _, line_number, _, _ = entries[0]
+            self.add_message(message, line_number)
     
     def return_value(self, value, line_number):
         self.add_message('return %r ' % value, line_number)

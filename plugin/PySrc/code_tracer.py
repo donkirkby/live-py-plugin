@@ -1,7 +1,7 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
-                 Attribute, BinOp, Call, Expr, Index, Load, Mod, Name, 
-                 NodeTransformer, Num, Return, Store, Str, Subscript,
-                 Tuple, Yield)
+                 Attribute, BinOp, Call, ExceptHandler, Expr, Index, Load, Mod, 
+                 Name, NodeTransformer, Num, Raise, Return, Store, Str, 
+                 Subscript, TryExcept, Tuple, Yield)
 
 try:
     # Import some classes that are only available in Python 3.
@@ -29,6 +29,20 @@ PSEUDO_FILENAME = '<live coding source>'
 MODULE_NAME = '__live_coding__'
 
 class TraceAssignments(NodeTransformer):
+
+    def _set_statement_line_numbers(self, 
+                                    statements, 
+                                    previous_line_number=None):
+        """ Make sure that a series of statements have line numbers in order.
+        previous_line_number is the line number to start with, or None."""
+        for statement in statements:
+            line_number = getattr(statement, 'lineno', None)
+            if (line_number is None and statement is not None and 
+                previous_line_number is not None):
+                statement.lineno = previous_line_number
+            else:
+                previous_line_number = line_number
+
     def visit(self, node):
         new_node = super(TraceAssignments, self).visit(node)
         body = getattr(new_node, 'body', None)
@@ -39,14 +53,7 @@ class TraceAssignments(NodeTransformer):
             except TypeError:
                 # body doesn't contain statements
                 statements = []
-            for statement in statements:
-                line_number = getattr(statement, 'lineno', None)
-                if (line_number is None and 
-                    statement is not None and
-                    previous_line_number is not None):
-                    statement.lineno = previous_line_number
-                else:
-                    previous_line_number = line_number
+            self._set_statement_line_numbers(statements, previous_line_number)
         return new_node
         
     def _trace_print_function(self, existing_node):
@@ -178,9 +185,11 @@ class TraceAssignments(NodeTransformer):
         
         line_numbers = set()
         self._find_line_numbers(new_node, line_numbers)
-        args = [Num(n=min(line_numbers)),
-                Num(n=max(line_numbers))]
-        old_body = new_node.body
+        first_line_number = min(line_numbers)
+        last_line_number = max(line_numbers)
+        args = [Num(n=first_line_number),
+                Num(n=last_line_number)]
+        try_body = new_node.body
         globals_call = Call(func=Name(id='globals', ctx=Load()), 
                             args=[], 
                             keywords=[], 
@@ -208,7 +217,34 @@ class TraceAssignments(NodeTransformer):
                 continue
             new_node.body.append(self._trace_assignment(target, node.lineno))
 
-        new_node.body.extend(old_body)
+        handler_body = [self._create_context_call('exception'),
+                        Raise()]
+        new_node.body.append(
+            TryExcept(body=try_body,
+                      handlers=[ExceptHandler(body=handler_body)],
+                      orelse=[]))
+        self._set_statement_line_numbers(try_body, first_line_number)
+        self._set_statement_line_numbers(handler_body, last_line_number)
+        return new_node
+
+    def visit_Module(self, node):
+        new_node = self.generic_visit(node)
+        line_numbers = set()
+        self._find_line_numbers(new_node, line_numbers)
+        if line_numbers:
+            first_line_number = min(line_numbers)
+            last_line_number = max(line_numbers)
+        else:
+            first_line_number = last_line_number = 1
+        try_body = new_node.body
+        handler_body = [self._create_context_call('exception')]
+        handler = ExceptHandler(body=handler_body,
+                                lineno=last_line_number)
+        new_node.body = [TryExcept(body=try_body,
+                                   handlers=[handler],
+                                   orelse=[])]
+        self._set_statement_line_numbers(try_body, first_line_number)
+        self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
 
     def visit_Lambda(self, node):

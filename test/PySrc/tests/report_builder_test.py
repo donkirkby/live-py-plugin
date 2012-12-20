@@ -1,5 +1,10 @@
 import unittest
 
+try:
+    from exec_python2 import exec_code #@UnusedImport
+except:
+    from exec_python3 import exec_code #@Reimport
+
 from report_builder import ReportBuilder
 
 class ReportBuilderTest(unittest.TestCase):
@@ -222,6 +227,27 @@ i = 1 | i = 2
         frame2 = builder.start_frame(1, 2)
         frame2.assign(name='i', value=2, line_number=1)
         builder.add_extra_message('extra message', 2)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
+    def test_exception(self):
+        # SETUP
+        source = """\
+try:
+    raise RuntimeError('foo')
+except:
+    builder.exception()"""
+        expected_report = """\
+
+RuntimeError: foo 
+"""
+        
+        # EXEC
+        builder = ReportBuilder()
+        environment = dict(builder=builder)
+        exec_code(source, environment, environment)
         report = builder.report()
         
         # VERIFY

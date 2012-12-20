@@ -455,6 +455,7 @@ while True:
     pass
 """
         expected_report = """\
+
 RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
         tracer.message_limit = 3
@@ -823,6 +824,34 @@ r = 4 """
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_recursion_exception(self):
+        # SETUP
+        code = """\
+def f(n):
+    m = n - 1
+    if m == 0:
+        raise RuntimeError('Invalid n.')
+    return f(m)
+
+r = f(2)
+"""
+        expected_report = """\
+n = 2                    | n = 1 
+m = 1                    | m = 0 
+                         | 
+                         | RuntimeError: Invalid n. 
+RuntimeError: Invalid n. | 
+
+RuntimeError: Invalid n. """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_incomplete_iterator(self):
         # SETUP
         code = """\
@@ -831,11 +860,12 @@ def f():
     yield 2
     
 r = f()
-x = r.next()
-y = r.next()
-#z = r.next() #Don't complete the iterator, so the function never exits.
-print x
+x = next(r)
+y = next(r)
+#z = next(r) #Don't complete the iterator, so the function never exits.
+n = x
 """
+
         expected_report = """\
 
 yield 1 
@@ -845,7 +875,7 @@ yield 2
 x = 1 
 y = 2 
 
-print 1 
+n = 1 
 """
         tracer = CodeTracer()
         

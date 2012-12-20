@@ -6,16 +6,27 @@ import ast
 import sys
 
 code = """\
-import sys
-from ..turtle import Turtle
-
-sys.exit(3)
+try:
+    def f(n):
+        try:
+            m = n - 1
+            if m == 0:
+                raise RuntimeError('Invalid n.')
+            return f(m)
+        except:
+            dump()
+            raise
+    
+    r = f(2)
+except:
+    dump()
 """
 
 tree = ast.parse(code)
 
 print(sys.version)
-print(ast.dump(tree))
+print(ast.dump(tree, include_attributes=True))
 print('')
 for s in tree.body:
-    print('    ' + ast.dump(s, include_attributes=False))
+    print('    ' + ast.dump(s, include_attributes=True))
+

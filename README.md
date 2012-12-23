@@ -63,6 +63,6 @@ Creating an Install Package
    that as your install package.
 
 [pydev]: http://pydev.org/download.html
-[downloads]: https://github.com/donkirkby/live-py-plugin/downloads
+[downloads]: https://github.com/donkirkby/live-py-plugin/tree/master/dist
 [video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
 [blog]: http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html

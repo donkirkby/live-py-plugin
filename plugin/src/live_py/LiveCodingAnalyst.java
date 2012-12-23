@@ -153,6 +153,8 @@ public class LiveCodingAnalyst {
 			}
 		});
 		
+		new TextViewerSupport(displayViewer); // registers itself
+
 	    splitter.setVisible(editorContent, true);
 	    splitter.setVisible(liveDisplay, isVisible);
 

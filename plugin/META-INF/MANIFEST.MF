@@ -14,5 +14,6 @@ Require-Bundle: org.eclipse.ui,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: org.eclipse.compare,
+ org.eclipse.core.expressions,
  org.eclipse.jface.text,
  org.eclipse.jface.text.source

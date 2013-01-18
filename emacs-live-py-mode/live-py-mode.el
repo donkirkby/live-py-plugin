@@ -13,6 +13,8 @@
                              (+ (buffer-size) 1)
                              command-line
                              live-py-output-buffer))
+  (with-current-buffer live-py-output-buffer
+    (setq buffer-read-only 1))
   (live-py-synchronize-scroll)
   (set 'live-py-timer nil))
 
@@ -61,7 +63,8 @@ With arg, turn mode on if and only if arg is positive."
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (delete-other-windows)
     (get-buffer-create live-py-output-buffer)
-    (with-current-buffer live-py-output-buffer (setq buffer-read-only t))
+    (with-current-buffer live-py-output-buffer
+      (toggle-truncate-lines 1))
     (set (make-local-variable 'live-py-output-window)
          (split-window-horizontally))
     (set-window-buffer live-py-output-window live-py-output-buffer)

@@ -4,11 +4,15 @@
   (when live-py-timer (cancel-timer live-py-timer))
   (set 'live-py-timer (run-at-time 0.5 nil 'live-py-trace)))
 
+
 (defun live-py-trace ()
-  (shell-command-on-region 1
-                           (+ (buffer-size) 1)
-                           "python code_tracer.py"  ;; TODO: make path configurable
-                           live-py-output-buffer)
+  (interactive)
+  (let* ((tracer-path (locate-file "code_tracer.py" load-path))
+         (command-line (concat "python " tracer-path)))
+    (shell-command-on-region 1
+                             (+ (buffer-size) 1)
+                             command-line
+                             live-py-output-buffer))
   (live-py-synchronize-scroll)
   (set 'live-py-timer nil))
 

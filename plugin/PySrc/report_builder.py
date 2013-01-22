@@ -108,7 +108,7 @@ class ReportBuilder(object):
             self.add_message(message, line_number)
     
     def return_value(self, value, line_number):
-        self.add_message('return %r ' % value, line_number)
+        self.add_message('return %s ' % repr(value), line_number)
         return value
         
     def yield_value(self, value, line_number):

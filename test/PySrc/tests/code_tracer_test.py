@@ -885,5 +885,24 @@ n = 1
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_return_tuple(self):
+        # SETUP
+        code = """\
+def f():
+    return (1, 2)
+
+x = f()
+"""
+        expected_report = """\
+
+return (1, 2) 
+
+x = (1, 2) """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertEqual(report, expected_report)
+
 if __name__ == '__main__':
     unittest.main()

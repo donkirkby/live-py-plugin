@@ -1,12 +1,10 @@
 (defun live-py-after-change-function (start stop len)
   "Run the buffer through the code tracer and show results in the trace buffer"
-  (interactive)
   (when live-py-timer (cancel-timer live-py-timer))
   (set 'live-py-timer (run-at-time 0.5 nil 'live-py-trace)))
 
 
 (defun live-py-trace ()
-  (interactive)
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
          (buffer-dir (file-name-directory (buffer-file-name)))
          (command-line (concat "python " tracer-path))

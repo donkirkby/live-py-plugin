@@ -45,6 +45,16 @@
          (live-py-synchronize-scroll))))
 
 
+(defun live-py-show-output-window ()
+  (delete-other-windows)
+  (get-buffer-create live-py-output-buffer)
+  (with-current-buffer live-py-output-buffer
+    (toggle-truncate-lines 1))
+  (set (make-local-variable 'live-py-output-window)
+       (split-window-horizontally))
+  (set-window-buffer live-py-output-window live-py-output-buffer))
+
+
 (define-minor-mode live-py-mode
   "Minor mode to do on-the-fly Python tracing.
 When called interactively, toggles the minor mode.
@@ -65,13 +75,7 @@ With arg, turn mode on if and only if arg is positive."
                  "*"))
     (set (make-local-variable 'live-py-timer) nil)
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
-    (delete-other-windows)
-    (get-buffer-create live-py-output-buffer)
-    (with-current-buffer live-py-output-buffer
-      (toggle-truncate-lines 1))
-    (set (make-local-variable 'live-py-output-window)
-         (split-window-horizontally))
-    (set-window-buffer live-py-output-window live-py-output-buffer)
+    (live-py-show-output-window)
     (live-py-after-change-function 0 0 0)
     (add-hook 'post-command-hook 'live-py-check-to-scroll nil t)
     )

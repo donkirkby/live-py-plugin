@@ -24,7 +24,7 @@
 (defun live-py-synchronize-scroll ()
   (let ((code-window-start (+ (count-lines 1 (window-start)) 1))
         (position (line-number-at-pos)))
-    (unless (window-valid-p 'live-py-output-window)
+    (unless (window-valid-p live-py-output-window)
       (live-py-show-output-window))
     (with-selected-window live-py-output-window
       (goto-line code-window-start)

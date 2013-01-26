@@ -73,12 +73,12 @@ With arg, turn mode on if and only if arg is positive."
          (split-window-horizontally))
     (set-window-buffer live-py-output-window live-py-output-buffer)
     (live-py-after-change-function 0 0 0)
-    (add-hook 'post-command-hook 'live-py-check-to-scroll)
+    (add-hook 'post-command-hook 'live-py-check-to-scroll nil t)
     )
    ;; Turning the mode OFF.
    (t
     (remove-hook 'after-change-functions 'live-py-after-change-function t)
-    (remove-hook 'post-command-hook 'live-py-check-to-scroll)
+    (remove-hook 'post-command-hook 'live-py-check-to-scroll t)
     (kill-buffer live-py-output-buffer)
     (delete-window live-py-output-window)
     )

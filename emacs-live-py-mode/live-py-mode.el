@@ -8,7 +8,11 @@
 (defun live-py-trace ()
   (interactive)
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
-         (command-line (concat "python " tracer-path)))
+         (buffer-dir (file-name-directory (buffer-file-name)))
+         (command-line (concat "python " tracer-path))
+         (pythonpath (concat "PYTHONPATH=" buffer-dir))
+         (process-environment (cons pythonpath process-environment))
+         )
     (shell-command-on-region 1
                              (+ (buffer-size) 1)
                              command-line

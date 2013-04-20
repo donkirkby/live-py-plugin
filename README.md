@@ -1,7 +1,7 @@
 live-py-plugin
 ==============
 
-Live coding in Python implemented as an Eclipse plugin and an Emacs minor mode.
+Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.
 
 To see how it works, watch the [demo video][video] or read the 
 [blog post][blog].
@@ -48,9 +48,9 @@ Installing the Emacs mode
    which is in your Emacs `load-path`. For example:
 
         cd live-py-plugin
-        cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/{canvas,exec_python2,mock_turtle,report_builder}.py ~/.emacs.d/
+        cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/*.py ~/.emacs.d/
 
-   Assuming ~/.emacs.d/ is added your `load-path` in `~/.emacs.d/init.el` or `~/.emacs`:
+   Add ~/.emacs.d/ to your `load-path` in `~/.emacs.d/init.el` or `~/.emacs`:
 
         (add-to-list 'load-path "~/.emacs.d")
 4. Load the Lisp library in your `~/.emacs.d/init.el` or `~/.emacs`:
@@ -65,8 +65,6 @@ Uninstalling the Emacs mode
 ---------------------------
 
 1. Remove the files you copied into `~/.emacs.d/`:
-
-        rm ~/.emacs.d/{live-py-mode.el,{canvas,exec_python2,mock_turtle,report_builder}.py
 2. Revert additions to `~/.emacs.d/init.el` or `~/.emacs`.
 3. Restart Emacs.
 

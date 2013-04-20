@@ -1,13 +1,13 @@
 live-py-plugin
 ==============
 
-Live coding in Python implemented as an Eclipse plug in.
+Live coding in Python implemented as an Eclipse plugin and an Emacs minor mode.
 
 To see how it works, watch the [demo video][video] or read the 
 [blog post][blog].
 
-Installing
-----------
+Installing the Eclipse plugin
+-----------------------------
 
 1. Install the [PyDev plugin][pydev] and Eclipse if you don't already have them.
 2. Download the latest version of the live-py plugin jar file from the 
@@ -30,15 +30,49 @@ Installing
 6. To try the turtle graphics features, open the Window menu, and choose 
    Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.
 
-Uninstalling
-------------
+Uninstalling the Eclipse plugin
+-------------------------------
 
 1. Delete the jar file from the dropins directory.
 2. Restart Eclipse.
 
+Installing the Emacs mode
+-------------------------
+
+1. Install [GNU Emacs][emacs] if you don't already have it.
+2. Clone the latest version of the live-py Emacs mode:
+
+        git clone https://github.com/donkirkby/live-py-plugin.git
+
+3. Copy the Emacs Lisp file and the supporting Python files into a directory
+   which is in your Emacs `load-path`. For example:
+
+        cd live-py-plugin
+        cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/{canvas,exec_python2,mock_turtle,report_builder}.py ~/.emacs.d/
+
+   Assuming ~/.emacs.d/ is added your `load-path` in `~/.emacs.d/init.el` or `~/.emacs`:
+
+        (add-to-list 'load-path "~/.emacs.d")
+4. Load the Lisp library in your `~/.emacs.d/init.el` or `~/.emacs`:
+
+        (require 'live-py-mode)
+5. Restart Emacs.
+6. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.
+   You should see an extra window on the right that shows the results of running
+   your code.
+
+Uninstalling the Emacs mode
+---------------------------
+
+1. Remove the files you copied into `~/.emacs.d/`:
+
+        rm ~/.emacs.d/{live-py-mode.el,{canvas,exec_python2,mock_turtle,report_builder}.py
+2. Revert additions to `~/.emacs.d/init.el` or `~/.emacs`.
+3. Restart Emacs.
+
 Working Features
 ----------------
-- turtle graphics, including filled polygons
+- turtle graphics, including filled polygons (Eclipse only)
 - local variable assignments
 - looping
 - function calls, and multiple calls.
@@ -53,9 +87,10 @@ To do
 - canvas coordinates?
 - Any syntax error currently blanks out the results, should just show previous 
 result with error marker.
+- Run `code_tracer.py` asynchronously so the editor doesn't block (Emacs only).
 
-Creating an Install Package
----------------------------
+Creating an Install Package for the Eclipse plugin
+--------------------------------------------------
 1. Open live-py/plugin.xml, and increment the Version field.
 2. Click the Export Wizard in the bottom right corner.
 3. Change the destination to Directory, and click Finish.
@@ -66,3 +101,4 @@ Creating an Install Package
 [downloads]: https://github.com/donkirkby/live-py-plugin/wiki/Downloads
 [video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
 [blog]: http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html
+[emacs]: http://www.gnu.org/software/emacs/

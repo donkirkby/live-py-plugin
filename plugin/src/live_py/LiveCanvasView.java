@@ -148,10 +148,12 @@ public class LiveCanvasView extends ViewPart {
 			String method = command.getName();
 			String fill = command.getOption("fill");
 			String outline = command.getOption("outline");
+			String newLineWidthText = command.getOption("pensize");
 			Color oldForeground = gc.getForeground();
 			Color newForeground = null;
 			Color oldBackground = gc.getBackground();
 			Color newBackground = null;
+			int oldLineWidth = gc.getLineWidth();
 			if (outline != null) {
 				newForeground = getColor(outline);
 				newBackground = getColor(fill);
@@ -164,6 +166,11 @@ public class LiveCanvasView extends ViewPart {
 			}
 			if (newBackground != null) {
 				gc.setBackground(newBackground);
+			}
+			if (newLineWidthText != null) {
+				int newLineWidth = Integer.parseInt(newLineWidthText);
+				gc.setLineWidth(newLineWidth);
+				gc.setLineCap(SWT.CAP_ROUND);
 			}
 			if (method.equals("create_line")) {
 				gc.drawLine(
@@ -232,6 +239,9 @@ public class LiveCanvasView extends ViewPart {
 			if (newBackground != null) {
 				gc.setBackground(oldBackground);
 			}
+			if (newLineWidthText != null) {
+				gc.setLineWidth(oldLineWidth);
+			}
 		}
 		disposeColors();
 	}
@@ -246,11 +256,17 @@ public class LiveCanvasView extends ViewPart {
 	private Color getColor(String fill) {
 		Color newForeground;
 		newForeground = colorMap.get(fill);
-		if (newForeground == null && fill.startsWith("#")) {
-			int colorInt = Integer.parseInt(fill.substring(1), 16);
-			int red = (colorInt >> 16) % 256;
-			int green = (colorInt >> 8) % 256;
-			int blue = colorInt % 256;
+		if (newForeground == null) {
+			int red, green, blue;
+			if ( ! fill.startsWith("#")) {
+				red = green = blue = 0;
+			}
+			else {
+				int colorInt = Integer.parseInt(fill.substring(1), 16);
+				red = (colorInt >> 16) % 256;
+				green = (colorInt >> 8) % 256;
+				blue = colorInt % 256;
+			}
 			newForeground = new Color(Display.getCurrent(), red, green, blue);
 			colorMap.put(fill, newForeground);
 		}

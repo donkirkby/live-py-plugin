@@ -685,6 +685,7 @@ create_line
     0
     100
     0
+    pensize=1
     fill='black'
 """
         tracer = CodeTracer()

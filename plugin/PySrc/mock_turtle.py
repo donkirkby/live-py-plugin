@@ -37,6 +37,8 @@ class MockTurtle(TNavigator, TPen):
         kwargs = {}
         if self._pencolor:
             kwargs['fill'] = self._pencolor
+        if self._pensize:
+            kwargs['pensize'] = self._pensize
         if self._drawing:
             args = [xstart*self.screen.xscale + self.__xoff, 
                     -ystart*self.screen.yscale + self.__yoff, 
@@ -126,10 +128,10 @@ class MockTurtle(TNavigator, TPen):
         try:
             r, g, b = color
         except:
-            return 'black'
+            return '#000000'
         r, g, b = [round(255.0*x) for x in (r, g, b)]
         if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
-            return 'black'
+            return '#000000'
         return "#%02x%02x%02x" % (r, g, b)
 
 #Normally, Tkinter will look up these colour names for you, but we don't

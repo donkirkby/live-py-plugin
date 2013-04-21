@@ -13,6 +13,7 @@ create_line
     0
     100
     0
+    pensize=1
     fill='black'"""
         
         # EXEC
@@ -31,6 +32,7 @@ create_line
     0
     0
     100
+    pensize=1
     fill='black'"""
         
         # EXEC
@@ -50,12 +52,14 @@ create_line
     0
     100
     0
+    pensize=1
     fill='black'
 create_line
     150
     0
     350
     0
+    pensize=1
     fill='black'"""
         
         # EXEC
@@ -92,6 +96,7 @@ create_line
     300
     500
     300
+    pensize=1
     fill='black'"""
 
         
@@ -111,12 +116,14 @@ create_line
     0
     100
     0
+    pensize=1
     fill='black'
 create_line
     100
     0
     100
     150
+    pensize=1
     fill='black'"""
 
         
@@ -142,6 +149,7 @@ create_line
     300
     500
     300
+    pensize=1
     fill='black'"""
 
         
@@ -176,6 +184,7 @@ create_line
     0
     100
     0
+    pensize=1
     fill='black'
 create_text
     100
@@ -202,6 +211,7 @@ create_line
     0
     100
     0
+    pensize=1
     fill='#ff0080'"""
         
         # EXEC
@@ -230,12 +240,14 @@ create_line
     0
     100
     0
+    pensize=1
     fill='#ff0000'
 create_line
     100
     0
     100
     100
+    pensize=1
     fill='#ff0000'"""
         
         # EXEC
@@ -259,12 +271,14 @@ create_line
     0
     100
     0
+    pensize=1
     fill='#ff0000'
 create_line
     100
     0
     100
     100
+    pensize=1
     fill='#ff0000'"""
         
         # EXEC

@@ -31,6 +31,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.osgi.framework.Bundle;
@@ -111,7 +112,12 @@ public class LiveCodingAnalyst {
 	 * @return The new control that the editor can be created in.
 	 */
 	public Object createPartControl(Composite parent) {
+		parent.setLayout(new GridLayout());
+		parent.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));             
+
 		splitter = new Splitter(parent, SWT.HORIZONTAL);
+		splitter.setLayout(new FillLayout());
+		splitter.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));           
 		
 		Composite editorContent = new Composite(splitter, SWT.NONE);
 		editorContent.setLayout(new FillLayout());

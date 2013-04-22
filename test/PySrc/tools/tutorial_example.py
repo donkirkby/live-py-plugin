@@ -1,5 +1,3 @@
-# echo on                               
-# echo width 40
 def search(n, a):
     low = 0
     high = len(a) - 1

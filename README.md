@@ -4,7 +4,10 @@ live-py-plugin
 Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.
 
 To see how it works, watch the [demo video][video] or read the 
-[blog post][blog].
+[blog post][blog]. You might also find some useful examples in the 
+[tools folder][tools].
+
+If you like this project, check out some of my [other projects][projects].
 
 Installing the Eclipse plugin
 -----------------------------
@@ -86,6 +89,7 @@ To do
 - Any syntax error currently blanks out the results, should just show previous 
 result with error marker.
 - Run `code_tracer.py` asynchronously so the editor doesn't block (Emacs only).
+- Also see the [issues list][issues].
 
 Creating an Install Package for the Eclipse plugin
 --------------------------------------------------
@@ -100,3 +104,6 @@ Creating an Install Package for the Eclipse plugin
 [video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
 [blog]: http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html
 [emacs]: http://www.gnu.org/software/emacs/
+[tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
+[issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
+[projects]: http://donkirkby.github.io/

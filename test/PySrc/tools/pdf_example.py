@@ -14,15 +14,13 @@ class TurtleArt(Flowable):
     def draw(self):
         t = PdfTurtle(self.canv, self._frame)
         draw_spiral(t)
-        t.penup() # Needed to write final section out to the PDF file.
 
 def go():
     doc = SimpleDocTemplate("example.pdf")
     styles = getSampleStyleSheet()
     story = [Paragraph('PDF Example', styles['Title'])]
     text = """\
-This is an example of how to use turtle graphics in a PDF document.
-Don't forget to call turtle.penup() when you're finished."""
+This is an example of how to use turtle graphics in a PDF document."""
     story.append(Paragraph(text, styles['Normal']))
     story.append(Spacer(1,0.055*inch))
     story.append(TurtleArt())

@@ -33,12 +33,15 @@
       <section id="main_content" class="inner">
         <h1>live-py-plugin</h1>
 
-<p>Live coding in Python implemented as an Eclipse plug in.</p>
+<p>Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.</p>
 
 <p>To see how it works, watch the <a href="http://www.youtube.com/watch?v=LV3aFRHlAEQ">demo video</a> or read the 
-<a href="http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html">blog post</a>.</p>
+<a href="http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html">blog post</a>. You might also find some useful examples in the 
+<a href="https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools">tools folder</a>.</p>
 
-<h2>Installing</h2>
+<p>If you like this project, check out some of my <a href="http://donkirkby.github.io/">other projects</a>.</p>
+
+<h2>Installing the Eclipse plugin</h2>
 
 <ol>
 <li>Install the <a href="http://pydev.org/download.html">PyDev plugin</a> and Eclipse if you don't already have them.</li>
@@ -72,15 +75,54 @@ You should see an extra panel on the right that shows the results of running
 your code.</p></li>
 <li><p>To try the turtle graphics features, open the Window menu, and choose 
 Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.</p></li>
-</ol><h2>Uninstalling</h2>
+</ol><h2>Uninstalling the Eclipse plugin</h2>
 
 <ol>
 <li>Delete the jar file from the dropins directory.</li>
 <li>Restart Eclipse.</li>
+</ol><h2>Installing the Emacs mode</h2>
+
+<ol>
+<li>Install <a href="http://www.gnu.org/software/emacs/">GNU Emacs</a> if you don't already have it.</li>
+<li>
+<p>Clone the latest version of the live-py Emacs mode:</p>
+
+<pre><code>git clone https://github.com/donkirkby/live-py-plugin.git
+</code></pre>
+</li>
+<li>
+<p>Copy the Emacs Lisp file and the supporting Python files into a directory
+which is in your Emacs <code>load-path</code>. For example:</p>
+
+<pre><code>cd live-py-plugin
+cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/*.py ~/.emacs.d/
+</code></pre>
+
+<p>Add ~/.emacs.d/ to your <code>load-path</code> in <code>~/.emacs.d/init.el</code> or <code>~/.emacs</code>:</p>
+
+<pre><code>(add-to-list 'load-path "~/.emacs.d")
+</code></pre>
+</li>
+<li>
+<p>Load the Lisp library in your <code>~/.emacs.d/init.el</code> or <code>~/.emacs</code>:</p>
+
+<pre><code>(require 'live-py-mode)
+</code></pre>
+</li>
+<li><p>Restart Emacs.</p></li>
+<li><p>Open any Python file, and activate live-py-mode with <code>M-x live-py-mode</code>.
+You should see an extra window on the right that shows the results of running
+your code.</p></li>
+</ol><h2>Uninstalling the Emacs mode</h2>
+
+<ol>
+<li>Remove the files you copied into <code>~/.emacs.d/</code>:</li>
+<li>Revert additions to <code>~/.emacs.d/init.el</code> or <code>~/.emacs</code>.</li>
+<li>Restart Emacs.</li>
 </ol><h2>Working Features</h2>
 
 <ul>
-<li>turtle graphics, including filled polygons</li>
+<li>turtle graphics, including filled polygons (Eclipse only)</li>
 <li>local variable assignments</li>
 <li>looping</li>
 <li>function calls, and multiple calls.</li>
@@ -95,7 +137,9 @@ Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.</p
 <li>canvas coordinates?</li>
 <li>Any syntax error currently blanks out the results, should just show previous 
 result with error marker.</li>
-</ul><h2>Creating an Install Package</h2>
+<li>Run <code>code_tracer.py</code> asynchronously so the editor doesn't block (Emacs only).</li>
+<li>Also see the <a href="https://github.com/donkirkby/live-py-plugin/issues?state=open">issues list</a>.</li>
+</ul><h2>Creating an Install Package for the Eclipse plugin</h2>
 
 <ol>
 <li>Open live-py/plugin.xml, and increment the Version field.</li>

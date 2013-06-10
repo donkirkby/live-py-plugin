@@ -8,9 +8,10 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.ui.ide,
- org.python.pydev,
- org.python.pydev.core,
- org.eclipse.ui.editors;bundle-version="3.7.0"
+ org.python.pydev;bundle-version="2.7.5",
+ org.python.pydev.core;bundle-version="2.7.5",
+ org.eclipse.ui.editors;bundle-version="3.7.0",
+ org.python.pydev.shared_ui;bundle-version="2.7.5"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: org.eclipse.compare,

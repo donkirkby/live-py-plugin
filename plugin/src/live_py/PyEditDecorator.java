@@ -7,11 +7,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.swt.widgets.Composite;
-import org.python.pydev.core.callbacks.ICallbackListener;
-import org.python.pydev.editor.IPyEditListener;
-import org.python.pydev.editor.IPyEditListener4;
 import org.python.pydev.editor.PyEdit;
 import org.python.pydev.editor.codefolding.PySourceViewer;
+import org.python.pydev.shared_core.callbacks.ICallbackListener;
+import org.python.pydev.shared_ui.editor.BaseEditor;
+import org.python.pydev.shared_ui.editor.IPyEditListener;
+import org.python.pydev.shared_ui.editor.IPyEditListener4;
 
 /**
  * This extension wraps the main PyEdit in an extra splitter and sets it up
@@ -21,8 +22,8 @@ import org.python.pydev.editor.codefolding.PySourceViewer;
  *
  */
 public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
-	private static WeakHashMap<PyEdit, LiveCodingAnalyst> analystMap =
-			new WeakHashMap<PyEdit, LiveCodingAnalyst>();
+	private static WeakHashMap<BaseEditor, LiveCodingAnalyst> analystMap =
+			new WeakHashMap<BaseEditor, LiveCodingAnalyst>();
 	private static boolean isVisible;
 
 	public static LiveCodingAnalyst getAnalyst(PyEdit editor)
@@ -43,18 +44,20 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	 * Wire up a new editor so that it will be displayed the way we want.
 	 */
 	@Override
-	public void onEditorCreated(PyEdit edit) {
+	public void onEditorCreated(BaseEditor edit) {
 		final LiveCodingAnalyst analyst = new LiveCodingAnalyst();
 		analyst.setVisibility(isVisible);
 		analystMap.put(edit, analyst);
-				
-		edit.onCreatePartControl.registerListener(
+		
+		PyEdit pyEdit = (PyEdit) edit;
+		
+		pyEdit.onCreatePartControl.registerListener(
 				new ICallbackListener<Composite>() {
 			public Object call(Composite parent) {
 				return analyst.createPartControl(parent);
 			}
 		});
-		edit.onAfterCreatePartControl.registerListener(
+		pyEdit.onAfterCreatePartControl.registerListener(
 				new ICallbackListener<ISourceViewer>() {
 			
 			@Override
@@ -62,7 +65,7 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 				return analyst.afterCreateControl(newViewer);
 			}
 		});
-		edit.onCreateSourceViewer.registerListener(
+		pyEdit.onCreateSourceViewer.registerListener(
 				new ICallbackListener<PySourceViewer>() {
 			@Override
 			public Object call(PySourceViewer newViewer) {
@@ -72,18 +75,18 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	}
 
 	@Override
-	public void onSave(PyEdit edit, IProgressMonitor monitor) {
+	public void onSave(BaseEditor edit, IProgressMonitor monitor) {
 	}
 
 	@Override
 	public void onCreateActions(
 			ListResourceBundle resources, 
-			PyEdit edit,
+			BaseEditor edit,
 			IProgressMonitor monitor) {
 	}
 
 	@Override
-	public void onDispose(PyEdit edit, IProgressMonitor monitor) {
+	public void onDispose(BaseEditor edit, IProgressMonitor monitor) {
 	}
 
 	/**
@@ -92,7 +95,7 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	@Override
 	public void onSetDocument(
 			IDocument document, 
-			PyEdit edit,
+			BaseEditor edit,
 			IProgressMonitor monitor) {
 		LiveCodingAnalyst analyst = analystMap.get(edit);
 		if (analyst != null) {

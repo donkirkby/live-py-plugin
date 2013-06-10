@@ -905,5 +905,24 @@ x = (1, 2) """
         # VERIFY        
         self.assertEqual(report, expected_report)
 
+    def test_multiline_exception(self):
+        # SETUP
+        code = """\
+x = (
+     '')
+y = 2
+z = 1/0
+"""
+        expected_report = """\
+x = '' 
+
+y = 2 
+ZeroDivisionError: integer division or modulo by zero """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertEqual(report, expected_report)
+
 if __name__ == '__main__':
     unittest.main()

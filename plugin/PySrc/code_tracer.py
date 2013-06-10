@@ -41,7 +41,9 @@ class TraceAssignments(NodeTransformer):
                 previous_line_number is not None):
                 statement.lineno = previous_line_number
             else:
-                previous_line_number = line_number
+                line_numbers = set()
+                self._find_line_numbers(statement, line_numbers)
+                previous_line_number = max(line_numbers)
 
     def visit(self, node):
         new_node = super(TraceAssignments, self).visit(node)

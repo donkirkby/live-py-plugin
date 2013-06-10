@@ -9,6 +9,8 @@ class PdfTurtle(TNavigator, TPen):
             self.cv = canvas
             
     def __init__(self, canvas, frame):
+        self._path = None
+        self._lines_to_draw = None
         self.screen = None
         TNavigator.__init__(self)
         TPen.__init__(self)
@@ -22,16 +24,58 @@ class PdfTurtle(TNavigator, TPen):
         return (position[0] + self.__xoff, position[1] - self.__yoff)
     
     def _goto(self, end):
-        if self._drawing and self.screen:
-            if self._pencolor:
-                self.screen.cv.setStrokeColor(self._pencolor)
-            if self._pensize:
-                self.screen.cv.setLineWidth(self._pensize)
+        if self.screen:
             x1, y1 = self._convert_position(self._position)
             x2, y2 = self._convert_position(end)
-            self.screen.cv.line(x1, y1, x2, y2)
+            if self._drawing:
+                pencolor = self._pencolor or 0
+                pensize = self._pensize or 0
+                # May draw line twice when filling, but it makes sure that we
+                # still draw line when caller doesn't call end_fill().
+                self._draw_line(x1, y1, x2, y2, pencolor, pensize)
+                if self._lines_to_draw is not None:
+                    self._lines_to_draw.append((x1, 
+                                                y1, 
+                                                x2, 
+                                                y2, 
+                                                pencolor, 
+                                                pensize))
+            if self._path is not None:
+                self._path.lineTo(x2, y2)
         self._position = end
     
+    def _draw_line(self, x1, y1, x2, y2, pencolor, pensize):
+        self.screen.cv.setStrokeColor(pencolor)
+        self.screen.cv.setLineWidth(pensize)
+        self.screen.cv.line(x1, y1, x2, y2)
+        
+    def begin_fill(self):
+        self.fill(True)
+        
+    def end_fill(self):
+        self.fill(False)
+        
+    def _flush_lines(self):
+        if self._lines_to_draw:
+            for x1, y1, x2, y2, pencolor, pensize in self._lines_to_draw:
+                self._draw_line(x1, y1, x2, y2, pencolor, pensize)
+
+    def fill(self, flag=None):
+        if flag is None:
+            return self._path is not None
+        if self._path: #TODO: and len(self._path) > 2:
+            if self._fillcolor:
+                self.screen.cv.setFillColor(self._fillcolor)
+            self.screen.cv.drawPath(self._path, stroke=0, fill=1)
+        self._flush_lines()
+        if not flag:
+            self._path = None
+            self._lines_to_draw = None
+        else:
+            self._path = self.screen.cv.beginPath()
+            self._path.moveTo(*self._convert_position(self._position))
+            self._lines_to_draw = []
+
     def window_width(self):
         return self.frame._width
 

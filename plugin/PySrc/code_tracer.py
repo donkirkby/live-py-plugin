@@ -1,13 +1,20 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
                  Attribute, BinOp, Call, ExceptHandler, Expr, Index, Load, Mod, 
                  Name, NodeTransformer, Num, Raise, Return, Store, Str, 
-                 Subscript, TryExcept, Tuple, Yield)
+                 Subscript, Tuple, Yield)
 
 try:
     # Import some classes that are only available in Python 3.
     from ast import arg #@UnresolvedImport
 except:
     arg = None # If we're in Python 2, we just won't use them.
+
+try:
+    # Import some classes that are only available in Python 3.3.
+    from ast import Try #@UnresolvedImport
+except:
+    from ast import TryExcept
+    Try = TryExcept
 
 import sys
 import traceback
@@ -222,9 +229,10 @@ class TraceAssignments(NodeTransformer):
         handler_body = [self._create_context_call('exception'),
                         Raise()]
         new_node.body.append(
-            TryExcept(body=try_body,
-                      handlers=[ExceptHandler(body=handler_body)],
-                      orelse=[]))
+            Try(body=try_body,
+                handlers=[ExceptHandler(body=handler_body)],
+                orelse=[],
+                finalbody=[]))
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
@@ -242,9 +250,14 @@ class TraceAssignments(NodeTransformer):
         handler_body = [self._create_context_call('exception')]
         handler = ExceptHandler(body=handler_body,
                                 lineno=last_line_number)
-        new_node.body = [TryExcept(body=try_body,
-                                   handlers=[handler],
-                                   orelse=[])]
+        if not try_body:
+            # empty module
+            new_node.body = try_body
+        else:
+            new_node.body = [Try(body=try_body,
+                                 handlers=[handler],
+                                 orelse=[],
+                                 finalbody=[])]
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node

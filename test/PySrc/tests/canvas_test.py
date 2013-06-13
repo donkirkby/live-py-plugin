@@ -70,9 +70,9 @@ create_rectangle
 create_text
     100
     200
-    text='foo'
+    anchor='s'
     font=('Arial', 8, 'normal')
-    anchor='s'"""
+    text='foo'"""
         
         # EXEC
         canvas = Canvas()

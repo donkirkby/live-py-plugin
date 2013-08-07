@@ -932,5 +932,26 @@ ZeroDivisionError: division by zero """
         # VERIFY        
         self.assertEqual(report, expected_report)
 
+    def test_multivalue_yield(self):
+        # SETUP
+        code = """\
+def foo():
+    yield 1, 2
+        
+for x in foo():
+    pass
+"""
+        expected_report = """\
+
+yield 1, 2 
+
+x = (1, 2) """
+
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
 if __name__ == '__main__':
     unittest.main()

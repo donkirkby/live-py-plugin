@@ -112,7 +112,11 @@ class ReportBuilder(object):
         return value
         
     def yield_value(self, value, line_number):
-        self.add_message('yield %r ' % value, line_number)
+        if isinstance(value, tuple):
+            display = ', '.join([repr(item) for item in value])
+        else:
+            display = repr(value)
+        self.add_message('yield %s ' % display, line_number)
         return value
         
     def record_call(self, 

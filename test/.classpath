@@ -5,9 +5,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/live-py"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="lib" path="/usr/lib/eclipse/plugins/org.eclipse.swt.gtk.linux.x86_64_3.7.0.dist.jar" sourcepath="/usr/lib/eclipse/plugins/org.eclipse.swt.gtk.linux.x86_64_3.7.0.dist.jar">
+	<classpathentry kind="lib" path="/usr/lib/eclipse/plugins/org.eclipse.swt_3.7.2.jar" sourcepath="/usr/lib/eclipse/plugins/org.eclipse.swt_3.7.2.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/usr/lib/eclipse/dropins/sdk/plugins/org.eclipse.platform.doc.isv_3.7.0.dist.jar!/reference/api"/>
+			<attribute name="javadoc_location" value="jar:file:/usr/lib/eclipse/dropins/sdk/plugins/org.eclipse.platform.doc.isv_3.7.2.dist.jar!/reference/api"/>
 		</attributes>
 		<accessrules>
 			<accessrule kind="accessible" pattern="org/eclipse/swt/*"/>
@@ -26,13 +26,6 @@
 			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/*"/>
 			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/image/*"/>
 			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/theme/*"/>
-			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/accessibility/gtk/*"/>
-			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/cairo/*"/>
-			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/cde/*"/>
-			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/gnome/*"/>
-			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/gtk/*"/>
-			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/mozilla/*"/>
-			<accessrule kind="discouraged" pattern="org/eclipse/swt/internal/opengl/glx/*"/>
 			<accessrule ignoreifbetter="true" kind="nonaccessible" pattern="**/*"/>
 		</accessrules>
 	</classpathentry>

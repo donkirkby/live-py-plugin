@@ -13,7 +13,7 @@ Installing the Eclipse plugin
 -----------------------------
 
 1. Install the [PyDev plugin][pydev] and Eclipse if you don't already have them.
-   It's been tested with PyDev 2.7.5, Eclipse 4.2, Python 2.7, 3.2, and 3.3. It
+   It's been tested with PyDev 2.7.5 and 3.1.0, Eclipse 4.2 and 4.3, Python 2.7, 3.2, and 3.3. It
    seems to be particularly sensitive to changes in PyDev.
 2. Download the latest version of the live-py plugin jar file from the 
    [releases page][releases].

@@ -3,11 +3,10 @@ package live_py;
 import java.io.BufferedReader;
 import java.io.StringReader;
 
-import junit.framework.Assert;
-
 import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class CanvasReaderTest {

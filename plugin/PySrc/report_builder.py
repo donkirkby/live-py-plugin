@@ -1,3 +1,4 @@
+import re
 import sys
 import traceback
 
@@ -95,7 +96,9 @@ class ReportBuilder(object):
     def assign(self, name, value, line_number):
         display = repr(value)
         if not display.startswith('<'):
-            self.add_message('%s = %r ' % (name, value), line_number)
+            if '\n' in display:
+                display = re.sub(r'\s+', ' ', display)
+            self.add_message('%s = %s ' % (name, display), line_number)
         return value
     
     def exception(self):

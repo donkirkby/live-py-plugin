@@ -39,6 +39,24 @@ x = 5
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
 
+    def test_assign_object_with_multiline_repr(self):
+        # SETUP
+        expected_report = 'm = multiline_class(1, 2) '
+        class multiline_class(object):
+            def __init__(self, x, y):
+                self.x = x
+                self.y = y
+            def __repr__(self):
+                return "multiline_class(%r,\n%r)" % (self.x, self.y)
+        
+        # EXEC
+        builder = ReportBuilder()
+        builder.assign(name='m', value=multiline_class(1, 2), line_number=1)
+        report = builder.report()
+        
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report.splitlines())
+
     def test_assign_function(self):
         # SETUP
         expected_report = ''

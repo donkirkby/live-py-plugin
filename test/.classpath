@@ -5,7 +5,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/live-py"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="lib" path="/opt/eclipse/plugins/org.eclipse.swt.gtk.linux.x86_64_3.102.1.v20130827-2048.jar" sourcepath="/usr/lib/eclipse/plugins/org.eclipse.swt_3.7.2.jar">
+	<classpathentry kind="lib" path="/opt/eclipse/plugins/org.eclipse.swt.gtk.linux.x86_64_3.103.0.v20140605-2012.jar" sourcepath="/usr/lib/eclipse/plugins/org.eclipse.swt_3.7.2.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="jar:file:/usr/lib/eclipse/dropins/sdk/plugins/org.eclipse.platform.doc.isv_3.7.2.dist.jar!/reference/api"/>
 		</attributes>

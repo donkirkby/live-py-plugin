@@ -23,11 +23,6 @@ from canvas import Canvas
 from mock_turtle import MockTurtle
 from report_builder import ReportBuilder
 
-try:
-    from exec_python2 import exec_code #@UnusedImport
-except:
-    from exec_python3 import exec_code #@Reimport
-
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
 CANVAS_NAME = '__live_canvas__'
@@ -391,12 +386,12 @@ class CodeTracer(object):
                             TURTLE_NAME: self.turtle}
         
     def trace_canvas(self, source):
-        exec_code(source, self.environment, self.environment)
+        exec(source, self.environment, self.environment)
         
         return '\n'.join(self.turtle.screen.cv.report)
         
     def trace_turtle(self, source):
-        exec_code(source, self.environment, self.environment)
+        exec(source, self.environment, self.environment)
         
         return '\n'.join(self.turtle.report)
         
@@ -415,7 +410,7 @@ class CodeTracer(object):
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
             self.environment[CONTEXT_NAME] = builder
-            exec_code(code, self.environment, self.environment)
+            exec(code, self.environment, self.environment)
         except SyntaxError:
             ex = sys.exc_info()[1]
             messages = traceback.format_exception_only(type(ex), ex)

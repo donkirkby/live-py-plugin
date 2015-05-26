@@ -1,10 +1,5 @@
 import unittest
 
-try:
-    from exec_python2 import exec_code #@UnusedImport
-except:
-    from exec_python3 import exec_code #@Reimport
-
 from report_builder import ReportBuilder
 
 class ReportBuilderTest(unittest.TestCase):
@@ -265,7 +260,7 @@ RuntimeError: foo
         # EXEC
         builder = ReportBuilder()
         environment = dict(builder=builder)
-        exec_code(source, environment, environment)
+        exec(source, environment, environment)
         report = builder.report()
         
         # VERIFY

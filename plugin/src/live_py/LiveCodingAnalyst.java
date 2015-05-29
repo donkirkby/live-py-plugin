@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.compare.Splitter;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.action.IAction;
@@ -28,6 +27,7 @@ import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.jface.text.source.VerticalRuler;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
@@ -101,8 +101,9 @@ public class LiveCodingAnalyst {
 	private File scriptPath;
 	private ArrayList<CanvasCommand> canvasCommands = 
 			new ArrayList<CanvasCommand>();
+	private Composite editorContent;
 	private Composite liveDisplay;
-	private Splitter splitter;
+	private SashForm splitter;
 	private boolean isVisible;
 
 	/**
@@ -116,11 +117,11 @@ public class LiveCodingAnalyst {
 		parent.setLayout(new GridLayout());
 		parent.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));             
 
-		splitter = new Splitter(parent, SWT.HORIZONTAL);
+		splitter = new SashForm(parent, SWT.HORIZONTAL);
 		splitter.setLayout(new FillLayout());
 		splitter.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));           
 		
-		Composite editorContent = new Composite(splitter, SWT.NONE);
+		editorContent = new Composite(splitter, SWT.NONE);
 		editorContent.setLayout(new FillLayout());
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		editorContent.setLayoutData(gridData);
@@ -162,8 +163,7 @@ public class LiveCodingAnalyst {
 		
 		new TextViewerSupport(displayViewer); // registers itself
 
-	    splitter.setVisible(editorContent, true);
-	    splitter.setVisible(liveDisplay, isVisible);
+		setVisibilityNow();
 
 		return editorContent;
 	}
@@ -215,14 +215,17 @@ public class LiveCodingAnalyst {
 		// Can only change visibility on the UI thread.
 		Display.getDefault().asyncExec(new Runnable() {
 		    public void run() {
-		    	if (splitter != null) {
-		    		splitter.setVisible(
-		    				liveDisplay, 
-		    				isVisible);
-		    	}
+		    	setVisibilityNow();
 		    }
 		});
 	}
+
+    private void setVisibilityNow() {
+        if (splitter != null) {
+            // If live display is not visible, maximize main editor.
+            splitter.setMaximizedControl(isVisible ? null : editorContent);
+        }
+    }
 
 	/**
 	 * Wire up the main document and perform the first analysis.
@@ -457,8 +460,6 @@ public class LiveCodingAnalyst {
 		String[] otherScripts = new String[] {
 				"report_builder.py",
 				"canvas.py",
-				"exec_python2.py",
-				"exec_python3.py",
 				"mock_turtle.py"
 		};
 		for (String script : otherScripts) {

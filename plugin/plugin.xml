@@ -26,12 +26,18 @@
             label="Live Coding"
             visible="true">
          <action
-               class="live_py.EnableAction"
-               id="live-py.enable.action"
-               label="Li&amp;ve Coding"
-               menubarPath="pyGeneralMenu/pyNavigateGroup"
-               state="false"
-               style="toggle">
+               class="live_py.PlayAction"
+               id="live-py.play.action"
+               toolbarPath="pyDebugGroup"
+               icon="icons/media-play-3x.png"
+               tooltip="Start live coding">
+         </action>
+         <action
+               class="live_py.StopAction"
+               id="live-py.stop.action"
+               toolbarPath="pyDebugGroup"
+               icon="icons/media-stop-3x.png"
+               tooltip="Stop live coding">
          </action>
       </actionSet>
    </extension>

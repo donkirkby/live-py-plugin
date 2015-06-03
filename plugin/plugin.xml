@@ -19,27 +19,98 @@
       </view>
    </extension>
    <extension
-         point="org.eclipse.ui.actionSets">
-      <actionSet
-            description="Enable or disable a display of program state that updates while you type."
-            id="live-py.enable.actionset"
-            label="Live Coding"
-            visible="true">
-         <action
-               class="live_py.PlayAction"
-               id="live-py.play.action"
-               toolbarPath="pyDebugGroup"
-               icon="icons/media-play-3x.png"
-               tooltip="Start live coding">
-         </action>
-         <action
-               class="live_py.StopAction"
-               id="live-py.stop.action"
-               toolbarPath="pyDebugGroup"
-               icon="icons/media-stop-3x.png"
-               tooltip="Stop live coding">
-         </action>
-      </actionSet>
+         point="org.eclipse.ui.commands">
+      <category
+            id="live-py.commands.category"
+            name="Live Coding">
+      </category>
+      <command
+            categoryId="live-py.commands.category"
+            id="live-py.commands.start"
+            name="Start Live Coding">
+      </command>
+      <command
+            categoryId="live-py.commands.category"
+            id="live-py.commands.stop"
+            name="Stop Live Coding">
+      </command>
    </extension>
-
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="live_py.StartHandler"
+            commandId="live-py.commands.start">
+        <activeWhen>
+            <with variable="activeEditorId">
+               <equals value="org.python.pydev.editor.PythonEditor"/>
+            </with>
+        </activeWhen>
+      </handler>
+      <handler
+            class="live_py.StopHandler"
+            commandId="live-py.commands.stop">
+        <activeWhen>
+            <with variable="activeEditorId">
+               <equals value="org.python.pydev.editor.PythonEditor"/>
+            </with>
+        </activeWhen>
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="live-py.commands.start"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+6">
+      </key>
+      <key
+            commandId="live-py.commands.stop"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+7">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               id="live-py.menus.main"
+               label="Live Coding"
+               mnemonic="L">
+            <command
+                  commandId="live-py.commands.start"
+                  id="live-py.menus.start"
+                  mnemonic="T">
+            </command>
+            <command
+                  commandId="live-py.commands.stop"
+                  id="live-py.menus.stop"
+                  mnemonic="P">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="live-py.toolbars.main">
+            <command
+                  commandId="live-py.commands.start"
+                  icon="icons/media-play-3x.png"
+                  id="live-py.toolbars.start"
+                  tooltip="Start Live Coding">
+            </command>
+            <command
+                  commandId="live-py.commands.stop"
+                  icon="icons/media-stop-3x.png"
+                  id="live-py.toolbars.stop"
+                  tooltip="Stop Live Coding">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.core.expressions.definitions">
+   </extension>
 </plugin>

@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -224,6 +223,9 @@ public class LiveCodingAnalyst {
         if (splitter != null) {
             // If live display is not visible, maximize main editor.
             splitter.setMaximizedControl(isVisible ? null : editorContent);
+            if (isVisible) {
+                refresh();
+            }
         }
     }
 
@@ -235,12 +237,6 @@ public class LiveCodingAnalyst {
 			BaseEditor edit,
 			IProgressMonitor monitor) {
 		mainDocument = document;
-		// TODO: Why does getAction always return null?
-		IAction enableAction = edit.getAction("live-py.enable.action");
-	    setVisibility(
-	    		enableAction != null 
-	    		? enableAction.isChecked()
-	    		: isVisible);
 		document.addDocumentListener(new IDocumentListener() {
 
 			/**
@@ -249,7 +245,8 @@ public class LiveCodingAnalyst {
 			 */
 			@Override
 			public void documentChanged(DocumentEvent event) {
-				boolean isDisplayVisible = 
+				boolean isDisplayVisible =
+				        splitter.getMaximizedControl() == null &&
 						displayViewer.getControl().isVisible();
 				if (isDisplayVisible || canvasView != null)
 				{
@@ -261,9 +258,6 @@ public class LiveCodingAnalyst {
 			public void documentAboutToBeChanged(DocumentEvent event) {
 			}
 		});
-		
-		// Perform the first analysis.
-		refresh();
 	}
 
 	public void refresh() {

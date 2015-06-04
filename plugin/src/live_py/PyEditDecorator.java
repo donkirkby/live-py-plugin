@@ -24,20 +24,11 @@ import org.python.pydev.shared_ui.editor.IPyEditListener4;
 public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	private static WeakHashMap<BaseEditor, LiveCodingAnalyst> analystMap =
 			new WeakHashMap<BaseEditor, LiveCodingAnalyst>();
-	private static boolean isVisible;
 
 	public static LiveCodingAnalyst getAnalyst(PyEdit editor)
 	{
 		// TODO: add locking
 		return analystMap.get(editor);
-	}
-	
-	public static void setAllVisibilities(boolean isVisible) {
-		PyEditDecorator.isVisible = isVisible;
-		
-		for (LiveCodingAnalyst analyst : analystMap.values()) {
-			analyst.setVisibility(isVisible);
-		}
 	}
 	
 	/**
@@ -46,7 +37,6 @@ public class PyEditDecorator implements IPyEditListener, IPyEditListener4 {
 	@Override
 	public void onEditorCreated(BaseEditor edit) {
 		final LiveCodingAnalyst analyst = new LiveCodingAnalyst();
-		analyst.setVisibility(isVisible);
 		analystMap.put(edit, analyst);
 		
 		PyEdit pyEdit = (PyEdit) edit;

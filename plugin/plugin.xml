@@ -62,13 +62,13 @@
             commandId="live-py.commands.start"
             contextId="org.eclipse.ui.contexts.window"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M1+6">
+            sequence="M3+F11"><!-- Alt+F11 -->
       </key>
       <key
             commandId="live-py.commands.stop"
             contextId="org.eclipse.ui.contexts.window"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
-            sequence="M1+7">
+            sequence="M2+F11"><!-- Shift+F11 -->
       </key>
    </extension>
    <extension

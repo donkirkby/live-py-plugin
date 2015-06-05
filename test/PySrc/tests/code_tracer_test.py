@@ -153,7 +153,7 @@ a = [1, 2] """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
+        # VERIFY
         self.assertEqual(expected_report.splitlines(), report.splitlines())
     
     def test_nested_method_call(self):
@@ -662,7 +662,7 @@ x = 11 """
         # EXEC
         report = tracer.trace_code(code)
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertMultiLineEqual(expected_report, report)
         
     def test_trace_canvas(self):
         # SETUP
@@ -783,15 +783,14 @@ print('x')
 b, c = 3, 42
 """
         expected_report = """\
-b = 3 c = 42 
-"""
+(b, c) = (3, 42) """
         tracer = CodeTracer()
         
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertMultiLineEqual(expected_report, report)
 
     def test_assign_tuple_tuple(self):
         # SETUP
@@ -799,7 +798,7 @@ b = 3 c = 42
 a, (b, c) = (1, (2, 3))
 """
         expected_report = """\
-a = 1 b = 2 c = 3 
+(a, (b, c)) = (1, (2, 3)) 
 """
         tracer = CodeTracer()
         
@@ -815,15 +814,29 @@ a = 1 b = 2 c = 3
 a, [b, c] = (1, (2, 3))
 """
         expected_report = """\
-a = 1 b = 2 c = 3 
-"""
+(a, (b, c)) = (1, (2, 3)) """
         tracer = CodeTracer()
         
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertMultiLineEqual(expected_report, report)
+
+    def test_assign_assignment(self):
+        # SETUP
+        code = """\
+a = b = 2
+"""
+        expected_report = """\
+a = b = 2 """
+        tracer = CodeTracer()
+        
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertMultiLineEqual(expected_report, report)
 
     def test_recursion(self):
         # SETUP

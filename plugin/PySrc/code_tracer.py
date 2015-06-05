@@ -1,7 +1,7 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
-                 Attribute, BinOp, Call, ExceptHandler, Expr, Index, Load, Mod, 
-                 Name, NodeTransformer, Num, Raise, Return, Slice, Store, Str, 
-                 Subscript, Tuple, Yield)
+                 Attribute, BinOp, Call, ExceptHandler, Expr, Index, List, Load,
+                 Mod, Name, NodeTransformer, Num, Raise, Return, Slice, Store,
+                 Str, Subscript, Tuple, Yield)
 import copy
 
 try:
@@ -146,7 +146,11 @@ class TraceAssignments(NodeTransformer):
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
-        new_nodes.extend(self._trace_assignment_list(existing_node.targets))
+        existing_node.value = self._create_bare_context_call(
+            'assign', 
+            [Str(s=self._get_assignment_targets(existing_node.targets)), 
+             existing_node.value, 
+             Num(n=existing_node.lineno)])
 
         return new_nodes
     
@@ -386,6 +390,37 @@ class TraceAssignments(NodeTransformer):
             
         return self._create_context_call('assign', args)
         
+    def _get_assignment_target(self, target):
+        if isinstance(target, Name):
+            target_name = target.id
+        elif arg and isinstance(target, arg):
+            target_name = target.arg
+        elif isinstance(target, Subscript):
+            target_name = self._get_subscript_repr(target)
+        elif isinstance(target, Tuple) or isinstance(target, List):
+            target_names = map(self._get_assignment_target, target.elts)
+            target_name = '({})'.format(', '.join(target_names))
+        elif isinstance(target, Attribute):
+            names = self._get_attribute_names(target)
+            if names is None:
+                raise TypeError('Unknown target: %s' % target)
+            target_name = '.'.join(names)
+        else:
+            raise TypeError('Unknown target: %s' % target)
+        return target_name
+
+    def _get_assignment_targets(self, targets):
+        """ Build a string representation of assignment targets.
+        
+        For example, "x = " for a single target, or "x = y = " for multiple
+        targets.
+        """
+        result = []
+        for target in targets:
+            target_name = self._get_assignment_target(target)
+            result.append(target_name)
+        return ' = '.join(result)
+        
     def _create_context_call(self, function_name, args=None):
         return Expr(value=self._create_bare_context_call(function_name, args))
         
@@ -432,8 +467,8 @@ class CodeTracer(object):
             visitor = TraceAssignments()
             new_tree = visitor.visit(tree)
             fix_missing_locations(new_tree)
-#            from ast import dump
-#            print(dump(new_tree, include_attributes=True))
+#             from ast import dump
+#             print(dump(new_tree, include_attributes=False))
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
             
             self.environment[CONTEXT_NAME] = builder
@@ -497,26 +532,15 @@ if __name__ == '__main__':
 elif __name__ == '__live_coding__':
     import unittest
     class CodeTracerTest(unittest.TestCase):
-        def test_slice(self):
+        def test_something(self):
             # SETUP
             code = """\
-a = [1, 2, 3, 4, 5]
-a[2:4] = [30]
-b = a
-a[2:] = [300]
-b = a
-a[:2] = [2000]
-b = a
+f = lambda n: n + 1
+x = f(10)
 """
-            # TODO: Handle slices with no lower bound
             expected_report = """\
-a = [1, 2, 3, 4, 5] 
-a[2:4] = [30] 
-b = [1, 2, 30, 40] 
-a[2:] = [300] 
-b = [1, 2, 300] 
-a[:2] = '...' 
-b = [2000, 300] """
+n = 10 
+x = 11 """
             # EXEC
             report = CodeTracer().trace_code(code)
     
@@ -524,11 +548,11 @@ b = [2000, 300] """
             self.assertMultiLineEqual(expected_report, report)
 
     suite = unittest.TestSuite()
-    suite.addTest(CodeTracerTest("test_slice"))
+    suite.addTest(CodeTracerTest("test_something"))
     test_results = unittest.TextTestRunner().run(suite)
 
-    print test_results.errors
-    print test_results.failures
+    print(test_results.errors)
+    print(test_results.failures)
     
     
     

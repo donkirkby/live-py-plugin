@@ -750,7 +750,7 @@ s = 22 """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertMultiLineEqual(expected_report, report)
         
     def test_print(self):
         # SETUP
@@ -836,6 +836,25 @@ a = b = 2 """
         report = tracer.trace_code(code)
 
         # VERIFY
+        self.assertMultiLineEqual(expected_report, report)
+        
+    def test_assign_to_anonymous_attribute(self):
+        # SETUP
+        code = """\
+class Foo(object):
+    pass
+
+Foo().x = 2
+"""
+        expected_report = """\
+
+
+
+<?>.x = 2 """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
         self.assertMultiLineEqual(expected_report, report)
 
     def test_recursion(self):

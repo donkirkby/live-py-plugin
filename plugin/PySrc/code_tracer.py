@@ -2,7 +2,6 @@ from ast import (fix_missing_locations, iter_fields, parse, Assign, AST,
                  Attribute, BinOp, Call, ExceptHandler, Expr, Index, List, Load,
                  Mod, Name, NodeTransformer, Num, Raise, Return, Slice, Store,
                  Str, Subscript, Tuple, Yield)
-import copy
 
 try:
     # Import some classes that are only available in Python 3.
@@ -78,10 +77,10 @@ class TraceAssignments(NodeTransformer):
             names.insert(0, attribute_node.attr)
             attribute_node = attribute_node.value
         
-        if not names or not hasattr(attribute_node, 'id'):
+        if not names:
             return None
         
-        names.insert(0, attribute_node.id)
+        names.insert(0, getattr(attribute_node, 'id', '<?>'))
         return names
     
     def _get_subscript_repr(self, subscript):
@@ -369,22 +368,6 @@ class TraceAssignments(NodeTransformer):
             args=[Str(s=target.arg),
                   Name(id=target.arg, ctx=Load()),
                   Num(n=lineno)]
-        elif isinstance(target, Subscript):
-            name = self._get_subscript_repr(target)
-            value = copy.deepcopy(target)
-            value.ctx = Load()
-            args = [Str(s=name),
-                    value,
-                    Num(n=lineno)]
-        elif isinstance(target, Attribute):
-            names = self._get_attribute_names(target)
-            if names is None:
-                raise TypeError('Unknown target: %s' % target)
-            args = [Str(s='.'.join(names)),
-                    Attribute(value=target.value, 
-                              attr=target.attr, 
-                              ctx=Load()),
-                    Num(n=lineno)]
         else:
             raise TypeError('Unknown target: %s' % target)
             
@@ -393,8 +376,6 @@ class TraceAssignments(NodeTransformer):
     def _get_assignment_target(self, target):
         if isinstance(target, Name):
             target_name = target.id
-        elif arg and isinstance(target, arg):
-            target_name = target.arg
         elif isinstance(target, Subscript):
             target_name = self._get_subscript_repr(target)
         elif isinstance(target, Tuple) or isinstance(target, List):
@@ -402,8 +383,6 @@ class TraceAssignments(NodeTransformer):
             target_name = '({})'.format(', '.join(target_names))
         elif isinstance(target, Attribute):
             names = self._get_attribute_names(target)
-            if names is None:
-                raise TypeError('Unknown target: %s' % target)
             target_name = '.'.join(names)
         else:
             raise TypeError('Unknown target: %s' % target)
@@ -531,24 +510,27 @@ if __name__ == '__main__':
 
 elif __name__ == '__live_coding__':
     import unittest
-    class CodeTracerTest(unittest.TestCase):
-        def test_something(self):
-            # SETUP
-            code = """\
+    def test_something(self):
+        # SETUP
+        code = """\
 f = lambda n: n + 1
 x = f(10)
 """
-            expected_report = """\
+        expected_report = """\
 n = 10 
 x = 11 """
-            # EXEC
-            report = CodeTracer().trace_code(code)
-    
-            # VERIFY        
-            self.assertMultiLineEqual(expected_report, report)
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertMultiLineEqual(expected_report, report)
+
+    class DummyTest(unittest.TestCase):
+        def test_delegation(self):
+            test_something(self)
 
     suite = unittest.TestSuite()
-    suite.addTest(CodeTracerTest("test_something"))
+    suite.addTest(DummyTest("test_delegation"))
     test_results = unittest.TextTestRunner().run(suite)
 
     print(test_results.errors)

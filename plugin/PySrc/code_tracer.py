@@ -1,7 +1,8 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST, 
                  Attribute, BinOp, Call, ExceptHandler, Expr, Index, Load, Mod, 
-                 Name, NodeTransformer, Num, Raise, Return, Store, Str, 
+                 Name, NodeTransformer, Num, Raise, Return, Slice, Store, Str, 
                  Subscript, Tuple, Yield)
+import copy
 
 try:
     # Import some classes that are only available in Python 3.
@@ -82,6 +83,27 @@ class TraceAssignments(NodeTransformer):
         
         names.insert(0, attribute_node.id)
         return names
+    
+    def _get_subscript_repr(self, subscript):
+        value = subscript.value
+        if isinstance(value, Name):
+            value_text = value.id
+        elif isinstance(value, Subscript):
+            value_text = self._get_subscript_repr(value)
+        elif isinstance(value, Attribute):
+            value_text = '.'.join(self._get_attribute_names(value))
+        else:
+            value_text = "..."
+        return '{}[{}]'.format(value_text, self._get_slice_repr(subscript.slice))
+    
+    def _get_slice_repr(self, sliceNode):
+        if isinstance(sliceNode, Index):
+            return sliceNode.value.n
+        if isinstance(sliceNode, Slice):
+            return '{}:{}'.format(sliceNode.lower and sliceNode.lower.n or '',
+                                  sliceNode.upper and sliceNode.upper.n or '')
+        return '...'
+        
 
     def visit_Call(self, node):
         existing_node = self.generic_visit(node)
@@ -344,7 +366,12 @@ class TraceAssignments(NodeTransformer):
                   Name(id=target.arg, ctx=Load()),
                   Num(n=lineno)]
         elif isinstance(target, Subscript):
-            return self._trace_assignment(target.value)
+            name = self._get_subscript_repr(target)
+            value = copy.deepcopy(target)
+            value.ctx = Load()
+            args = [Str(s=name),
+                    value,
+                    Num(n=lineno)]
         elif isinstance(target, Attribute):
             names = self._get_attribute_names(target)
             if names is None:
@@ -466,3 +493,43 @@ if __name__ == '__main__':
         print('end_canvas')
         print('.')
     print(code_report)
+
+elif __name__ == '__live_coding__':
+    import unittest
+    class CodeTracerTest(unittest.TestCase):
+        def test_slice(self):
+            # SETUP
+            code = """\
+a = [1, 2, 3, 4, 5]
+a[2:4] = [30]
+b = a
+a[2:] = [300]
+b = a
+a[:2] = [2000]
+b = a
+"""
+            # TODO: Handle slices with no lower bound
+            expected_report = """\
+a = [1, 2, 3, 4, 5] 
+a[2:4] = [30] 
+b = [1, 2, 30, 40] 
+a[2:] = [300] 
+b = [1, 2, 300] 
+a[:2] = '...' 
+b = [2000, 300] """
+            # EXEC
+            report = CodeTracer().trace_code(code)
+    
+            # VERIFY        
+            self.assertMultiLineEqual(expected_report, report)
+
+    suite = unittest.TestSuite()
+    suite.addTest(CodeTracerTest("test_slice"))
+    test_results = unittest.TextTestRunner().run(suite)
+
+    print test_results.errors
+    print test_results.failures
+    
+    
+    
+    

@@ -102,16 +102,43 @@ n = 0 | n = 1 | n = 3 | n = 4 | n = 5 | n = 7 """
 a = [1, 2, [3, 4]]
 a[0] = 9
 a[2][1] = 8
+b = a
 """
         expected_report = """\
 a = [1, 2, [3, 4]] 
-a = [9, 2, [3, 4]] 
-a = [9, 2, [3, 8]] """
+a[0] = 9 
+a[2][1] = 8 
+b = [9, 2, [3, 8]] """
         # EXEC
         report = CodeTracer().trace_code(code)
 
         # VERIFY        
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertMultiLineEqual(expected_report, report)
+        
+    def test_slice(self):
+        # SETUP
+        code = """\
+a = [1, 2, 3, 4, 5]
+a[1:4] = [20, 30]
+b = a
+a[2:] = [300]
+b = a
+a[:2] = [2000]
+b = a
+"""
+        expected_report = """\
+a = [1, 2, 3, 4, 5] 
+a[1:4] = [20, 30] 
+b = [1, 20, 30, 5] 
+a[2:] = [300] 
+b = [1, 20, 300] 
+a[:2] = [2000] 
+b = [2000, 300] """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY        
+        self.assertMultiLineEqual(expected_report, report)
 
     def test_method_call(self):
         # SETUP
@@ -507,14 +534,14 @@ shelf.counts[2] = 3
 
 
 shelf.counts = {} 
-shelf.counts = {2: 3} """
+shelf.counts[2] = 3 """
         tracer = CodeTracer()
         
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertMultiLineEqual(expected_report, report)
         
     def test_set_attribute_attribute(self):
         # SETUP

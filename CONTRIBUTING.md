@@ -19,7 +19,9 @@ If you want to see what's currently being worked on, check out the [waffle board
 
 Running from source code
 ------------------------
-1. You need to install the PDE. You can either install the standard edition of Eclipse that includes it, or you can open the Help menu, choose Eclipse Marketplace..., click on the Yoxos marketplace, search for PDE, and install it.
+1. You need to install the PDE. You can either install the standard edition of
+   Eclipse that includes it, or you can open the Help menu, choose Eclipse
+   Marketplace..., click on the Yoxos marketplace, search for PDE, and install it.
 2. Open the plugin.xml file with the Plug-in Manifest Editor.
 3. Click on the green play button to launch the Eclipse application.
 4. Create a new PyDev project, add a Python file, and then turn on Live Coding.
@@ -27,10 +29,16 @@ Running from source code
 
 Creating an Install Package for the Eclipse plugin
 --------------------------------------------------
-1. Open live-py/plugin.xml, and increment the Version field.
-2. Click the Export Wizard in the bottom right corner.
-3. Change the destination to Directory, and click Finish.
-4. Go to the directory you chose, and find the .jar file. You can distribute
+Be sure that you test everything with the latest versions of [PyDev][pdrel] and
+[Python][pyrel].
+
+1. Check that all the Java unit tests run.
+2. Check that all the Python unit tests run in the latest versions of both
+   Python 2 and Python 3.
+3. Open live-py/plugin.xml, and increment the Version field.
+4. Click the Export Wizard in the bottom right corner.
+5. Change the destination to Directory, and click Finish.
+6. Go to the directory you chose, and find the .jar file. You can distribute
    that as your install package.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
@@ -38,4 +46,6 @@ Creating an Install Package for the Eclipse plugin
 [pde]: https://eclipse.org/pde/
 [tutorial]: http://www.vogella.com/tutorials/EclipsePlugIn/article.html
 [waffle]: https://waffle.io/donkirkby/live-py-plugin
+[pdrel]: http://pydev.org/history_pydev.html
+[pyrel]: https://www.python.org/downloads/
 

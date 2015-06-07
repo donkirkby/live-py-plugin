@@ -41,9 +41,9 @@ import org.python.pydev.editor.PyEdit;
 import org.python.pydev.editor.codefolding.PySourceViewer;
 import org.python.pydev.runners.UniversalRunner;
 import org.python.pydev.runners.UniversalRunner.AbstractRunner;
+import org.python.pydev.shared_core.bundle.BundleUtils;
 import org.python.pydev.shared_core.io.FileUtils;
 import org.python.pydev.shared_core.structure.Tuple;
-import org.python.pydev.shared_ui.bundle.BundleUtils;
 import org.python.pydev.shared_ui.editor.BaseEditor;
 
 

@@ -2,9 +2,9 @@
 <html>
 
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Live-py-plugin : Live coding in Python implemented as an Eclipse plug in." />
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Live-py-plugin : Live coding in Python implemented as an Eclipse plug in.">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
@@ -31,7 +31,8 @@
     <!-- MAIN CONTENT -->
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
-        <h1>live-py-plugin</h1>
+        <h1>
+<a id="live-py-plugin" class="anchor" href="#live-py-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>live-py-plugin</h1>
 
 <p>Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.</p>
 
@@ -41,12 +42,15 @@
 
 <p>If you like this project, check out some of my <a href="http://donkirkby.github.io/">other projects</a>.</p>
 
-<h2>Installing the Eclipse plugin</h2>
+<h2>
+<a id="installing-the-eclipse-plugin" class="anchor" href="#installing-the-eclipse-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing the Eclipse plugin</h2>
 
 <ol>
-<li>Install the <a href="http://pydev.org/download.html">PyDev plugin</a> and Eclipse if you don't already have them.</li>
+<li>Install the <a href="http://pydev.org/download.html">PyDev plugin</a> and Eclipse if you don't already have them.
+It's been tested with PyDev 4.1.0, Eclipse 4.4, Python 2.7 and 3.4. It
+seems to be particularly sensitive to changes in PyDev.</li>
 <li>Download the latest version of the live-py plugin jar file from the 
-<a href="https://github.com/donkirkby/live-py-plugin/wiki/Downloads">downloads page</a>.</li>
+<a href="https://github.com/donkirkby/live-py-plugin/releases">releases page</a>.</li>
 <li>
 <p>Copy the plugin jar file to Eclipse's dropins folder. On my workstation I 
 was able to do that in two different ways.</p>
@@ -69,18 +73,24 @@ require sudo permission.</p>
 </li>
 </ol>
 </li>
-<li><p>Restart Eclipse.</p></li>
-<li><p>Open any Python file, and from the Pydev menu, choose Live Coding.
+<li>Restart Eclipse.</li>
+<li>Open any Python file, and from the Pydev menu, choose Live Coding.
 You should see an extra panel on the right that shows the results of running
-your code.</p></li>
-<li><p>To try the turtle graphics features, open the Window menu, and choose 
-Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.</p></li>
-</ol><h2>Uninstalling the Eclipse plugin</h2>
+your code.</li>
+<li>To try the turtle graphics features, open the Window menu, and choose 
+Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.</li>
+</ol>
+
+<h2>
+<a id="uninstalling-the-eclipse-plugin" class="anchor" href="#uninstalling-the-eclipse-plugin" aria-hidden="true"><span class="octicon octicon-link"></span></a>Uninstalling the Eclipse plugin</h2>
 
 <ol>
 <li>Delete the jar file from the dropins directory.</li>
 <li>Restart Eclipse.</li>
-</ol><h2>Installing the Emacs mode</h2>
+</ol>
+
+<h2>
+<a id="installing-the-emacs-mode" class="anchor" href="#installing-the-emacs-mode" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing the Emacs mode</h2>
 
 <ol>
 <li>Install <a href="http://www.gnu.org/software/emacs/">GNU Emacs</a> if you don't already have it.</li>
@@ -109,17 +119,23 @@ cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/*.py ~/.emacs.d/
 <pre><code>(require 'live-py-mode)
 </code></pre>
 </li>
-<li><p>Restart Emacs.</p></li>
-<li><p>Open any Python file, and activate live-py-mode with <code>M-x live-py-mode</code>.
+<li>Restart Emacs.</li>
+<li>Open any Python file, and activate live-py-mode with <code>M-x live-py-mode</code>.
 You should see an extra window on the right that shows the results of running
-your code.</p></li>
-</ol><h2>Uninstalling the Emacs mode</h2>
+your code.</li>
+</ol>
+
+<h2>
+<a id="uninstalling-the-emacs-mode" class="anchor" href="#uninstalling-the-emacs-mode" aria-hidden="true"><span class="octicon octicon-link"></span></a>Uninstalling the Emacs mode</h2>
 
 <ol>
 <li>Remove the files you copied into <code>~/.emacs.d/</code>:</li>
 <li>Revert additions to <code>~/.emacs.d/init.el</code> or <code>~/.emacs</code>.</li>
 <li>Restart Emacs.</li>
-</ol><h2>Working Features</h2>
+</ol>
+
+<h2>
+<a id="working-features" class="anchor" href="#working-features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Working Features</h2>
 
 <ul>
 <li>turtle graphics, including filled polygons (Eclipse only)</li>
@@ -130,24 +146,9 @@ your code.</p></li>
 <li>runtime exceptions</li>
 <li>infinite loops halted.</li>
 <li>print statements work.</li>
-</ul><h2>To do</h2>
+</ul>
 
-<ul>
-<li>PyUnit integration</li>
-<li>canvas coordinates?</li>
-<li>Any syntax error currently blanks out the results, should just show previous 
-result with error marker.</li>
-<li>Run <code>code_tracer.py</code> asynchronously so the editor doesn't block (Emacs only).</li>
-<li>Also see the <a href="https://github.com/donkirkby/live-py-plugin/issues?state=open">issues list</a>.</li>
-</ul><h2>Creating an Install Package for the Eclipse plugin</h2>
-
-<ol>
-<li>Open live-py/plugin.xml, and increment the Version field.</li>
-<li>Click the Export Wizard in the bottom right corner.</li>
-<li>Change the destination to Directory, and click Finish.</li>
-<li>Go to the directory you chose, and find the .jar file. You can distribute
-that as your install package.</li>
-</ol>
+<p>If you find the project useful, help us <a href="https://github.com/donkirkby/live-py-plugin/blob/master/CONTRIBUTING.md">make it better</a>.</p>
       </section>
     </div>
 
@@ -155,7 +156,7 @@ that as your install package.</li>
     <div id="footer_wrap" class="outer">
       <footer class="inner">
         <p class="copyright">Live-py-plugin maintained by <a href="https://github.com/donkirkby">donkirkby</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
       </footer>
     </div>
 

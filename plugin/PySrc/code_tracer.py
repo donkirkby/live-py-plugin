@@ -97,10 +97,10 @@ class TraceAssignments(NodeTransformer):
     
     def _get_slice_repr(self, sliceNode):
         if isinstance(sliceNode, Index):
-            return sliceNode.value.n
+            return getattr(sliceNode.value, 'n', '?')
         if isinstance(sliceNode, Slice):
-            return '{}:{}'.format(sliceNode.lower and sliceNode.lower.n or '',
-                                  sliceNode.upper and sliceNode.upper.n or '')
+            return '{}:{}'.format(sliceNode.lower and getattr(sliceNode.lower, 'n', '?') or '',
+                                  sliceNode.upper and getattr(sliceNode.upper, 'n', '?') or '')
         return '...'
         
 
@@ -368,6 +368,10 @@ class TraceAssignments(NodeTransformer):
             args=[Str(s=target.arg),
                   Name(id=target.arg, ctx=Load()),
                   Num(n=lineno)]
+        elif isinstance(target, Subscript):
+            args=[Str(s=self._get_subscript_repr(target)),
+                  Subscript(value=target.value, slice=target.slice, ctx=Load()),
+                  Num(n=lineno)]
         else:
             raise TypeError('Unknown target: %s' % target)
             
@@ -513,12 +517,12 @@ elif __name__ == '__live_coding__':
     def test_something(self):
         # SETUP
         code = """\
-f = lambda n: n + 1
-x = f(10)
+a = [1, 2, [3, 4]]
+a[0] += 1
 """
         expected_report = """\
-n = 10 
-x = 11 """
+a = [1, 2, [3, 4]] 
+a[0] = 11 """
         # EXEC
         report = CodeTracer().trace_code(code)
 

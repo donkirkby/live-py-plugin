@@ -18,7 +18,7 @@ class PdfTurtle(TNavigator, TPen):
         self.screen = PdfTurtle._Screen(canvas)
         self.frame = frame
         self.__xoff = self.window_width()/2
-        self.__yoff = self.window_height()/2
+        self.__yoff = -self.window_height()/2
         
     def _convert_position(self, position):
         return (position[0] + self.__xoff, position[1] - self.__yoff)

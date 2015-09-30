@@ -7,9 +7,10 @@ from turtle_example import draw_spiral
 from pdf_turtle import PdfTurtle
 
 class TurtleArt(Flowable):
-    def wrap(self, *args):
-        #HACK: This will appear at the end, so I don't care about flow.
-        return (0, 0)
+    def wrap(self, availWidth, availHeight):
+        self.width = availWidth
+        self.height = availHeight
+        return (availWidth, availHeight)
         
     def draw(self):
         t = PdfTurtle(self.canv, self._frame)

@@ -1,12 +1,12 @@
 ;;; live-py-mode.el --- Live Coding in Python
 
-;; Copyright (C) 2015 Don Kirkby, Antti Kaihola
+;; Copyright (C) 2015 Don Kirkby
 
-;; Author: Antti Kaihola <akaihol+github@ambitone.com>
+;; Author: Don Kirkby <donkirkby@gmail.com>
 ;; Keywords: live coding
-;; URL: https://github.com/donkirkby/live-py-plugin
+;; URL: http://donkirkby.github.io/live-py-plugin/
 ;; Version: 2015
-;; X-Original-Version: 0.1
+;; X-Original-Version: 2.8.1
 ;; Package-Requires: ((emacs "24.1"))
 
 ;; This program is distributed under the Eclipse Public License - v 1.0

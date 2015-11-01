@@ -7,7 +7,12 @@ To see how it works, watch the [demo video][video] or read the
 [blog post][blog]. You might also find some useful examples in the 
 [tools folder][tools].
 
+Special thanks to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for contributing the Emacs support.
+
 If you like this project, check out some of my [other projects][projects].
+
+[akaihola]: https://github.com/akaihola
+[cpaulik]: https://github.com/cpaulik
 
 Installing the Eclipse plugin
 -----------------------------

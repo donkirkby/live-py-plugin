@@ -22,6 +22,11 @@
 ;; Requirements: Emacs 24.
 
 ;;; Code:
+
+(defvar live-py-timer)
+(defvar live-py-output-buffer)
+(defvar live-py-output-window)
+
 (defun live-py-after-change-function (start stop len)
   "Run the buffer through the code tracer and show results in the trace buffer."
   (when live-py-timer (cancel-timer live-py-timer))

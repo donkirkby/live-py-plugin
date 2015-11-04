@@ -87,6 +87,7 @@
   (set-window-buffer live-py-output-window live-py-output-buffer))
 
 
+;;;###autoload
 (define-minor-mode live-py-mode
   "Minor mode to do on-the-fly Python tracing.
 When called interactively, toggles the minor mode.

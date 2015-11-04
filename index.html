@@ -40,6 +40,8 @@
 <a href="http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html">blog post</a>. You might also find some useful examples in the 
 <a href="https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools">tools folder</a>.</p>
 
+<p>Special thanks to <a href="https://github.com/akaihola">Antti Kaihola</a> and <a href="https://github.com/cpaulik">Christoph Paulik</a> for contributing the Emacs support.</p>
+
 <p>If you like this project, check out some of my <a href="http://donkirkby.github.io/">other projects</a>.</p>
 
 <h2>
@@ -94,8 +96,12 @@ Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.</l
 
 <ol>
 <li>Install <a href="http://www.gnu.org/software/emacs/">GNU Emacs</a> if you don't already have it.</li>
+<li>It's probably easiest to <a href="https://melpa.org/#/getting-started">install MELPA</a> and then use that to install
+the <code>live-py-mode</code> package. That will make it easy to upgrade and to
+install other packages. If you install with MELPA, you can skip the
+rest of these instructions.</li>
 <li>
-<p>Clone the latest version of the live-py Emacs mode:</p>
+<p>To install without MELPA, clone the latest version of the live-py Emacs mode:</p>
 
 <pre><code>git clone https://github.com/donkirkby/live-py-plugin.git
 </code></pre>
@@ -127,6 +133,9 @@ your code.</li>
 
 <h2>
 <a id="uninstalling-the-emacs-mode" class="anchor" href="#uninstalling-the-emacs-mode" aria-hidden="true"><span class="octicon octicon-link"></span></a>Uninstalling the Emacs mode</h2>
+
+<p>If you installed it with MELPA, just use it to uninstall. If not, follow these
+steps:</p>
 
 <ol>
 <li>Remove the files you copied into <code>~/.emacs.d/</code>:</li>

@@ -50,11 +50,15 @@ Installing the Emacs mode
 -------------------------
 
 1. Install [GNU Emacs][emacs] if you don't already have it.
-2. Clone the latest version of the live-py Emacs mode:
+2. It's probably easiest to [install MELPA][melpa] and then use that to install
+    the `live-py-mode` package. That will make it easy to upgrade and to
+    install other packages. If you install with MELPA, you can skip the
+    rest of these instructions.
+3. To install without MELPA, clone the latest version of the live-py Emacs mode:
 
         git clone https://github.com/donkirkby/live-py-plugin.git
 
-3. Copy the Emacs Lisp file and the supporting Python files into a directory
+4. Copy the Emacs Lisp file and the supporting Python files into a directory
    which is in your Emacs `load-path`. For example:
 
         cd live-py-plugin
@@ -63,16 +67,20 @@ Installing the Emacs mode
    Add ~/.emacs.d/ to your `load-path` in `~/.emacs.d/init.el` or `~/.emacs`:
 
         (add-to-list 'load-path "~/.emacs.d")
-4. Load the Lisp library in your `~/.emacs.d/init.el` or `~/.emacs`:
+5. Load the Lisp library in your `~/.emacs.d/init.el` or `~/.emacs`:
 
         (require 'live-py-mode)
-5. Restart Emacs.
-6. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.
+6. Restart Emacs.
+7. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.
    You should see an extra window on the right that shows the results of running
    your code.
 
+[melpa]: https://melpa.org/#/getting-started
+
 Uninstalling the Emacs mode
 ---------------------------
+If you installed it with MELPA, just use it to uninstall. If not, follow these
+steps:
 
 1. Remove the files you copied into `~/.emacs.d/`:
 2. Revert additions to `~/.emacs.d/init.el` or `~/.emacs`.

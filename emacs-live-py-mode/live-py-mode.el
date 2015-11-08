@@ -81,7 +81,8 @@
   (delete-other-windows)
   (get-buffer-create live-py-output-buffer)
   (with-current-buffer live-py-output-buffer
-    (toggle-truncate-lines 1))
+    (toggle-truncate-lines 1)
+    (setq-local show-trailing-whitespace nil))
   (set (make-local-variable 'live-py-output-window)
        (split-window-horizontally))
   (set-window-buffer live-py-output-window live-py-output-buffer))

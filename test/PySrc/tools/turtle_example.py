@@ -12,10 +12,10 @@ def draw_spiral(t):
 if __name__ == '__live_coding__':
     global __live_turtle__
     draw_spiral(__live_turtle__)
-    
+
 elif __name__ == '__main__':
     from Tkinter import mainloop
     from turtle import Turtle
-    
+
     draw_spiral(Turtle())
     mainloop()

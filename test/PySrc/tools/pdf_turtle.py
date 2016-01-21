@@ -1,28 +1,31 @@
 from turtle import TNavigator, TPen
 from argparse import ArgumentError
 
+
 class PdfTurtle(TNavigator, TPen):
     """ Helper class to include turtle graphics within a PDF document. """
-    
+
     class _Screen(object):
         def __init__(self, canvas):
             self.cv = canvas
-            
-    def __init__(self, canvas, frame):
+
+    def __init__(self, canvas, frame, width=None, height=None):
+        self.width = width if width is not None else frame._width
+        self.height = height if height is not None else frame._height
         self._path = None
         self._lines_to_draw = None
         self.screen = None
         TNavigator.__init__(self)
         TPen.__init__(self)
-        canvas.setLineCap(1) # Round
+        canvas.setLineCap(1)  # Round
         self.screen = PdfTurtle._Screen(canvas)
         self.frame = frame
         self.__xoff = self.window_width()/2
         self.__yoff = -self.window_height()/2
-        
+
     def _convert_position(self, position):
         return (position[0] + self.__xoff, position[1] - self.__yoff)
-    
+
     def _goto(self, end):
         if self.screen:
             x1, y1 = self._convert_position(self._position)
@@ -34,27 +37,27 @@ class PdfTurtle(TNavigator, TPen):
                 # still draw line when caller doesn't call end_fill().
                 self._draw_line(x1, y1, x2, y2, pencolor, pensize)
                 if self._lines_to_draw is not None:
-                    self._lines_to_draw.append((x1, 
-                                                y1, 
-                                                x2, 
-                                                y2, 
-                                                pencolor, 
+                    self._lines_to_draw.append((x1,
+                                                y1,
+                                                x2,
+                                                y2,
+                                                pencolor,
                                                 pensize))
             if self._path is not None:
                 self._path.lineTo(x2, y2)
         self._position = end
-    
+
     def _draw_line(self, x1, y1, x2, y2, pencolor, pensize):
         self.screen.cv.setStrokeColor(pencolor)
         self.screen.cv.setLineWidth(pensize)
         self.screen.cv.line(x1, y1, x2, y2)
-        
+
     def begin_fill(self):
         self.fill(True)
-        
+
     def end_fill(self):
         self.fill(False)
-        
+
     def _flush_lines(self):
         if self._lines_to_draw:
             for x1, y1, x2, y2, pencolor, pensize in self._lines_to_draw:
@@ -63,7 +66,7 @@ class PdfTurtle(TNavigator, TPen):
     def fill(self, flag=None):
         if flag is None:
             return self._path is not None
-        if self._path: #TODO: and len(self._path) > 2:
+        if self._path:  # TODO: and len(self._path) > 2:
             if self._fillcolor:
                 self.screen.cv.setFillColor(self._fillcolor)
             self.screen.cv.drawPath(self._path, stroke=0, fill=1)
@@ -77,12 +80,16 @@ class PdfTurtle(TNavigator, TPen):
             self._lines_to_draw = []
 
     def window_width(self):
-        return self.frame._width
+        return self.width
 
     def window_height(self):
-        return self.frame._height
+        return self.height
 
-    def write(self, arg, move=False, align="left", font=("Helvetica", 8, "normal")):
+    def write(self,
+              arg,
+              move=False,
+              align="left",
+              font=("Helvetica", 8, "normal")):
         if move:
             raise ArgumentError('move', 'Parameter is not supported.')
         fontName = font[0]
@@ -93,21 +100,21 @@ class PdfTurtle(TNavigator, TPen):
                     fontName += '-'
                     is_style_added = True
                 fontName += style.capitalize()
-        
+
         x = self.xcor() + self.__xoff
         y = self.ycor() - self.__yoff
         y += font[1] * 0.45
         self.screen.cv.setFont(fontName, font[1])
         if align == 'left':
-            self.screen.cv.drawString(x, 
+            self.screen.cv.drawString(x,
                                       y,
                                       str(arg))
         elif align == 'center':
-            self.screen.cv.drawCentredString(x, 
+            self.screen.cv.drawCentredString(x,
                                              y,
                                              str(arg))
         elif align == 'right':
-            self.screen.cv.drawRightString(x, 
+            self.screen.cv.drawRightString(x,
                                            y,
                                            str(arg))
 
@@ -134,8 +141,8 @@ class PdfTurtle(TNavigator, TPen):
             return '#000000'
         return "#%02x%02x%02x" % (r, g, b)
 
-#Normally, Tkinter will look up these colour names for you, but we don't
-#actually launch Tkinter when we're analysing code.
+# Normally, Tkinter will look up these colour names for you, but we don't
+# actually launch Tkinter when we're analysing code.
 color_map = {
     'alice blue': '#f0f8ff',
     'aliceblue': '#f0f8ff',

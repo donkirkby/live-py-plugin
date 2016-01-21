@@ -10,8 +10,8 @@ class PdfTurtle(TNavigator, TPen):
             self.cv = canvas
 
     def __init__(self, canvas, frame, width=None, height=None):
-        self.width = width if width is not None else frame._width
-        self.height = height if height is not None else frame._height
+        self._window_width = width if width is not None else frame._width
+        self._window_height = height if height is not None else frame._height
         self._path = None
         self._lines_to_draw = None
         self.screen = None
@@ -80,10 +80,10 @@ class PdfTurtle(TNavigator, TPen):
             self._lines_to_draw = []
 
     def window_width(self):
-        return self.width
+        return self._window_width
 
     def window_height(self):
-        return self.height
+        return self._window_height
 
     def write(self,
               arg,

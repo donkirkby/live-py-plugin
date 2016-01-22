@@ -2,15 +2,28 @@ from sys import version_info
 import unittest
 from code_tracer import CodeTracer
 
+
 class CodeTracerTest(unittest.TestCase):
+    def setUp(self):
+        super(CodeTracerTest, self).setUp()
+        self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
+
+    def trimReport(self, report):
+        lines = report.splitlines()
+        trimmed_lines = [line.rstrip() for line in lines]
+        return '\n'.join(trimmed_lines)
+
+    def assertReportEqual(self, expected_report, report):
+        self.assertEqual(self.trimReport(expected_report),
+                         self.trimReport(report))
 
     def test_empty(self):
         # EXEC
         report = CodeTracer().trace_code("")
         expected_report = ""
 
-        # VERIFY        
-        self.assertEqual(report, expected_report)
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_assignment(self):
         # SETUP
@@ -22,8 +35,8 @@ i = 1 """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(report, expected_report)
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_increment(self):
         # SETUP
@@ -32,13 +45,13 @@ i = 1
 i += 1
 """
         expected_report = """\
-i = 1 
+i = 1
 i = 2 """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_loop(self):
         # SETUP
@@ -48,14 +61,14 @@ for j in range(3):
     i += j
 """
         expected_report = """\
-i = 1 
-j = 0 | j = 1 | j = 2 
+i = 1
+j = 0 | j = 1 | j = 2
 i = 1 | i = 2 | i = 4 """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_loop_target_list(self):
         # SETUP
@@ -64,16 +77,16 @@ for a,b in [(1,2)]:
     c = a + b
 """
         expected_report = """\
-a = 1 b = 2 
-c = 3 
+a = 1 b = 2
+c = 3
 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_nested_loop(self):
         # SETUP
@@ -85,16 +98,16 @@ for i in range(2):
         n += j
 """
         expected_report = """\
-n = 0 
-i = 0                 | i = 1 
-n = 0                 | n = 4 
-j = 0 | j = 1 | j = 2 | j = 0 | j = 1 | j = 2 
+n = 0
+i = 0                 | i = 1
+n = 0                 | n = 4
+j = 0 | j = 1 | j = 2 | j = 0 | j = 1 | j = 2
 n = 0 | n = 1 | n = 3 | n = 4 | n = 5 | n = 7 """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_mutable(self):
         # SETUP
@@ -108,19 +121,19 @@ b = a
 a[0] += 1
 """
         expected_report = """\
-a = [1, 2, [3, 4]] 
-a[0] = 9 
-a[2][1] = 8 
-i = 0 
-a[?] = 10 
-b = [10, 2, [3, 8]] 
+a = [1, 2, [3, 4]]
+a[0] = 9
+a[2][1] = 8
+i = 0
+a[?] = 10
+b = [10, 2, [3, 8]]
 a[0] = 11 """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertMultiLineEqual(expected_report, report)
-        
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_slice(self):
         # SETUP
         code = """\
@@ -133,18 +146,18 @@ a[:2] = [2000]
 b = a
 """
         expected_report = """\
-a = [1, 2, 3, 4, 5] 
-a[1:4] = [20, 30] 
-b = [1, 20, 30, 5] 
-a[2:] = [300] 
-b = [1, 20, 300] 
-a[:2] = [2000] 
+a = [1, 2, 3, 4, 5]
+a[1:4] = [20, 30]
+b = [1, 20, 30, 5]
+a[2:] = [300]
+b = [1, 20, 300]
+a[:2] = [2000]
 b = [2000, 300] """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertMultiLineEqual(expected_report, report)
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_method_call(self):
         # SETUP
@@ -154,14 +167,14 @@ a.sort()
 a.sort() # second call makes no change, nothing printed
 """
         expected_report = """\
-a = [2, 1] 
+a = [2, 1]
 a = [1, 2] """
         # EXEC
         report = CodeTracer().trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-    
+        self.assertReportEqual(expected_report, report)
+
     def test_nested_method_call(self):
         # SETUP
         code = """\
@@ -177,13 +190,13 @@ f.items.append(2)
 
 
 
-f.items = [] 
+f.items = []
 f.items = [2] """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_loop_conditional(self):
         # SETUP
@@ -194,18 +207,18 @@ for i in range(3):
 c = 2
 """
         expected_report = """\
-i = 0 | i = 1 | i = 2 
-      |       | 
-      | c = 5 | 
+i = 0 | i = 1 | i = 2
+      |       |
+      | c = 5 |
 c = 2 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_function(self):
         # SETUP
         code = """\
@@ -218,21 +231,21 @@ m = 2
 n = foo(m)
 """
         expected_report = """\
-x = 2 
-a = 2 
-b = 3 
-return 3 
+x = 2
+a = 2
+b = 3
+return 3
 
-m = 2 
+m = 2
 n = 3 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_empty_return(self):
         # SETUP
         code = """\
@@ -242,18 +255,18 @@ def foo(x):
 n = foo(10)
 """
         expected_report = """\
-x = 10 
-return None 
+x = 10
+return None
 
 n = None """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_return_subscript(self):
         # SETUP
         code = """\
@@ -264,46 +277,46 @@ def foo(x):
 n = foo(2)
 """
         expected_report = """\
-x = 2 
-a = [2, 3] 
-return 3 
+x = 2
+a = [2, 3]
+return 3
 
 n = 3 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_chained_function(self):
         # SETUP
         code = """\
 def foo(x):
     return x + 10
-    
+
 def bar(y):
     return foo(y) - 2
 
 n = bar(3)
 """
         expected_report = """\
-x = 3 
-return 13 
+x = 3
+return 13
 
-y = 3 
-return 11 
+y = 3
+return 11
 
 n = 11 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_call_on_literal(self):
         # SETUP
         code = """\
@@ -312,13 +325,13 @@ s = 'abc'.replace('a', 'A')
         expected_report = """\
 s = 'Abc' """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_function_called_twice(self):
         # SETUP
         code = """\
@@ -330,20 +343,20 @@ n = foo()
 r = foo()
 """
         expected_report = """\
-          | 
-x = 2     | x = 2 
-return 12 | return 12 
+          |
+x = 2     | x = 2
+return 12 | return 12
 
-n = 12 
+n = 12
 r = 12 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_import(self):
         # SETUP
         code = """\
@@ -356,15 +369,15 @@ n = Decimal('10')
 
 n = Decimal('10') """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
 #        self.maxDiff = None
 #        self.assertEqual([], tracer.log)
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_runtime_error(self):
         # SETUP
         code = """\
@@ -372,21 +385,21 @@ x = 2
 x = 1/0
 """
         expected_report_python2 = """\
-x = 2 
+x = 2
 ZeroDivisionError: integer division or modulo by zero """
         expected_report_python3 = """\
-x = 2 
+x = 2
 ZeroDivisionError: division by zero """
-        expected_report = (expected_report_python3 
+        expected_report = (expected_report_python3
                            if version_info.major >= 3
                            else expected_report_python2)
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_unwinding_exceptions(self):
         # SETUP
@@ -397,26 +410,26 @@ def foo(n):
 x = foo(5)
 """
         expected_report_python2 = """\
-n = 5 
-ZeroDivisionError: integer division or modulo by zero 
+n = 5
+ZeroDivisionError: integer division or modulo by zero
 
 ZeroDivisionError: integer division or modulo by zero """
         expected_report_python3 = """\
-n = 5 
-ZeroDivisionError: division by zero 
+n = 5
+ZeroDivisionError: division by zero
 
 ZeroDivisionError: division by zero """
-        expected_report = (expected_report_python3 
+        expected_report = (expected_report_python3
                            if version_info.major >= 3
                            else expected_report_python2)
 
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_compile_error(self):
         # SETUP
@@ -432,12 +445,12 @@ n -= 1
 
 IndentationError: expected an indented block """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_infinite_loop_by_count(self):
         # SETUP
@@ -447,18 +460,18 @@ while True:
     n += 1
 """
         expected_report = """\
-n = 0 
-      |       | 
+n = 0
+      |       |
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
         tracer.message_limit = 4
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_infinite_loop_by_width(self):
         # SETUP
@@ -468,18 +481,18 @@ while True:
     n += 1
 """
         expected_report = """\
-n = 0 
-      |       | 
+n = 0
+      |       |
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
         tracer.max_width = 20
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_infinite_loop_pass(self):
         # SETUP
@@ -492,14 +505,14 @@ while True:
 RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
         tracer.message_limit = 3
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_set_attribute(self):
         # SETUP
         code = """\
@@ -516,14 +529,14 @@ dog.name = "Spot"
 
 dog.name = 'Spot' """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_set_attribute_item(self):
         # SETUP
         code = """\
@@ -539,16 +552,16 @@ shelf.counts[2] = 3
 
 
 
-shelf.counts = {} 
+shelf.counts = {}
 shelf.counts[2] = 3 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertMultiLineEqual(expected_report, report)
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_set_attribute_attribute(self):
         # SETUP
         code = """\
@@ -567,13 +580,13 @@ f.child.name = 'bob'
 
 f.child.name = 'bob' """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_old_class(self):
         # SETUP
         code = """\
@@ -590,21 +603,21 @@ dog.name = "Spot"
 
 dog.name = 'Spot' """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_repr(self):
         # SETUP
         code = """\
 class Dog(object):
     def __init__(self, name):
         self.name = name
-    
+
     def __repr__(self):
         return 'Dog(%r)' % self.name
 
@@ -613,23 +626,23 @@ animal = dog
 """
         expected_report = """\
 
-name = 'Spot' 
-self.name = 'Spot' 
+name = 'Spot'
+self.name = 'Spot'
 
 
 
 
-dog = Dog('Spot') 
+dog = Dog('Spot')
 animal = Dog('Spot') """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_module_name(self):
         # SETUP
         code = """\
@@ -640,20 +653,20 @@ if __name__ == '__live_coding__':
     y = foo(10)
 """
         expected_report = """\
-x = 10 
-return 13 
+x = 10
+return 13
 
 
 y = 13 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_lambda(self):
         # SETUP
         code = """\
@@ -661,15 +674,15 @@ f = lambda n: n + 1
 x = f(10)
 """
         expected_report = """\
-n = 10 
+n = 10
 x = 11 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
         # VERIFY
-        self.assertMultiLineEqual(expected_report, report)
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_trace_canvas(self):
         # SETUP
         code = """\
@@ -678,15 +691,15 @@ y = 50
 __live_canvas__.create_line(x, y, x+10, y+10)
 """
         expected_report = """\
-x = 100 
+x = 100
 y = 50 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_canvas(self):
         # SETUP
         code = """\
@@ -700,13 +713,13 @@ create_line
     101
 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_canvas(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_turtle(self):
         # SETUP
         code = """\
@@ -722,13 +735,13 @@ create_line
     pensize=1
 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_turtle(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_yield(self):
         # SETUP
         code = """\
@@ -742,22 +755,22 @@ n = foo(10)
 s = sum(n)
 """
         expected_report = """\
-x = 10 
-a = 10 
-yield 10 
-a = 12 
-yield 12 
+x = 10
+a = 10
+yield 10
+a = 12
+yield 12
 
 
 s = 22 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertMultiLineEqual(expected_report, report)
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_print(self):
         # SETUP
         code = """\
@@ -765,23 +778,23 @@ s = 'x'
 print(s)
 """
         expected_report_python2 = """\
-s = 'x' 
-print 'x' 
+s = 'x'
+print 'x'
 """
         expected_report_python3 = """\
-s = 'x' 
-print('x') 
+s = 'x'
+print('x')
 """
-        expected_report = (expected_report_python3 
+        expected_report = (expected_report_python3
                            if version_info.major >= 3
                            else expected_report_python2)
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_assign_tuple(self):
         # SETUP
@@ -791,12 +804,12 @@ b, c = 3, 42
         expected_report = """\
 (b, c) = (3, 42) """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertMultiLineEqual(expected_report, report)
+        self.assertReportEqual(expected_report, report)
 
     def test_assign_tuple_tuple(self):
         # SETUP
@@ -804,15 +817,15 @@ b, c = 3, 42
 a, (b, c) = (1, (2, 3))
 """
         expected_report = """\
-(a, (b, c)) = (1, (2, 3)) 
+(a, (b, c)) = (1, (2, 3))
 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_assign_tuple_list(self):
         # SETUP
@@ -822,12 +835,12 @@ a, [b, c] = (1, (2, 3))
         expected_report = """\
 (a, (b, c)) = (1, (2, 3)) """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertMultiLineEqual(expected_report, report)
+        self.assertReportEqual(expected_report, report)
 
     def test_assign_assignment(self):
         # SETUP
@@ -837,13 +850,13 @@ a = b = 2
         expected_report = """\
 a = b = 2 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertMultiLineEqual(expected_report, report)
-        
+        self.assertReportEqual(expected_report, report)
+
     def test_assign_to_anonymous_attribute(self):
         # SETUP
         code = """\
@@ -860,8 +873,8 @@ Foo().x = 2
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertMultiLineEqual(expected_report, report)
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_recursion(self):
         # SETUP
@@ -875,20 +888,20 @@ def f(n):
 r = f(2)
 """
         expected_report = """\
-n = 2         | n = 0    | n = 1    | n = 0 
-r = 1         | r = 1    | r = 1    | r = 1 
-i = 0 | i = 1 |          | i = 0    | 
-r = 2 | r = 4 |          | r = 2    | 
-return 4      | return 1 | return 2 | return 1 
+n = 2         | n = 0    | n = 1    | n = 0
+r = 1         | r = 1    | r = 1    | r = 1
+i = 0 | i = 1 |          | i = 0    |
+r = 2 | r = 4 |          | r = 2    |
+return 4      | return 1 | return 2 | return 1
 
 r = 4 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_recursion_exception(self):
         # SETUP
@@ -902,21 +915,21 @@ def f(n):
 r = f(2)
 """
         expected_report = """\
-n = 2                    | n = 1 
-m = 1                    | m = 0 
-                         | 
-                         | RuntimeError: Invalid n. 
-RuntimeError: Invalid n. | 
+n = 2                    | n = 1
+m = 1                    | m = 0
+                         |
+                         | RuntimeError: Invalid n.
+RuntimeError: Invalid n. |
 
 RuntimeError: Invalid n. """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
         self.maxDiff = None
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_incomplete_iterator(self):
         # SETUP
@@ -924,7 +937,7 @@ RuntimeError: Invalid n. """
 def f():
     yield 1
     yield 2
-    
+
 r = f()
 x = next(r)
 y = next(r)
@@ -934,22 +947,22 @@ n = x
 
         expected_report = """\
 
-yield 1 
-yield 2 
+yield 1
+yield 2
 
 
-x = 1 
-y = 2 
+x = 1
+y = 2
 
-n = 1 
+n = 1
 """
         tracer = CodeTracer()
-        
+
         # EXEC
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        self.assertReportEqual(expected_report, report)
 
     def test_return_tuple(self):
         # SETUP
@@ -961,14 +974,14 @@ x = f()
 """
         expected_report = """\
 
-return (1, 2) 
+return (1, 2)
 
 x = (1, 2) """
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(report, expected_report)
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_multiline_exception(self):
         # SETUP
@@ -979,44 +992,44 @@ y = 2
 z = 1/0
 """
         expected_report_python2 = """\
-x = '' 
+x = ''
 
-y = 2 
+y = 2
 ZeroDivisionError: integer division or modulo by zero """
         expected_report_python3 = """\
-x = '' 
+x = ''
 
-y = 2 
+y = 2
 ZeroDivisionError: division by zero """
-        expected_report = (expected_report_python3 
+        expected_report = (expected_report_python3
                            if version_info.major >= 3
                            else expected_report_python2)
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(report, expected_report)
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
     def test_multivalue_yield(self):
         # SETUP
         code = """\
 def foo():
     yield 1, 2
-        
+
 for x in foo():
     pass
 """
         expected_report = """\
 
-yield 1, 2 
+yield 1, 2
 
 x = (1, 2) """
 
         # EXEC
         report = CodeTracer().trace_code(code)
 
-        # VERIFY        
-        self.assertEqual(expected_report.splitlines(), report.splitlines())
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
 
 if __name__ == '__main__':
     unittest.main()

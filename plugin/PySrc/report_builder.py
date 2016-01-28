@@ -6,6 +6,7 @@ import traceback
 class ReportBuilder(object):
     def __init__(self, message_limit=None):
         self.messages = []
+        self.assignments = []
         self.message_count = 0
         self.message_limit = message_limit
         self.stack_block = None  # (first_line, last_line) numbers, not indexes
@@ -95,12 +96,40 @@ class ReportBuilder(object):
         target.add_message(message, line_number)
 
     def assign(self, name, value, line_number):
-        display = repr(value)
-        if not display.startswith('<'):
+        """ Convenience method for simple assignments.
+
+        Just wraps all the separate steps for a flexible assignment. """
+
+        self.start_assignment()
+        try:
+            self.set_assignment_value(value)
+            self.report_assignment('{} = {{!r}}'.format(name),
+                                   line_number=line_number)
+        finally:
+            self.end_assignment()
+        return value
+
+    def start_assignment(self):
+        self.assignments.append([])
+
+    def end_assignment(self):
+        self.assignments.pop()
+
+    def set_assignment_value(self, value):
+        self.assignments[-1].append(value)
+        return value
+
+    def add_assignment_index(self, value):
+        self.assignments[-1].insert(-1, value)
+        return value
+
+    def report_assignment(self, format_string, line_number):
+        assignment_values = self.assignments[-1]
+        display = format_string.format(*assignment_values)
+        if not display.endswith('>'):
             if '\n' in display:
                 display = re.sub(r'\s+', ' ', display)
-            self.add_message('%s = %s ' % (name, display), line_number)
-        return value
+            self.add_message(display + ' ', line_number)
 
     def exception(self):
         etype, value, tb = sys.exc_info()

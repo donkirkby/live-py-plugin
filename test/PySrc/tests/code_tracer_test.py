@@ -1,22 +1,11 @@
 from sys import version_info
 import unittest
+
 from code_tracer import CodeTracer
+from report_builder_test import ReportTestCase
 
 
-class CodeTracerTest(unittest.TestCase):
-    def setUp(self):
-        super(CodeTracerTest, self).setUp()
-        self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
-
-    def trimReport(self, report):
-        lines = report.splitlines()
-        trimmed_lines = [line.rstrip() for line in lines]
-        return '\n'.join(trimmed_lines)
-
-    def assertReportEqual(self, expected_report, report):
-        self.assertEqual(self.trimReport(expected_report),
-                         self.trimReport(report))
-
+class CodeTracerTest(ReportTestCase):
     def test_empty(self):
         # EXEC
         report = CodeTracer().trace_code("")
@@ -125,7 +114,7 @@ a = [1, 2, [3, 4]]
 a[0] = 9
 a[2][1] = 8
 i = 0
-a[?] = 10
+a[0] = 10
 b = [10, 2, [3, 8]]
 a[0] = 11 """
         # EXEC
@@ -928,7 +917,6 @@ RuntimeError: Invalid n. """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_incomplete_iterator(self):

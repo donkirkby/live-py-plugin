@@ -1,7 +1,7 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST,
                  Attribute, BinOp, Call, ExceptHandler, Expr, Index, List,
                  Load, Mod, Name, NodeTransformer, Num, Raise, Return, Slice,
-                 Store, Str, Subscript, Tuple, Yield)
+                 Store, Str, Subscript, TryFinally, Tuple, Yield)
 
 try:
     # Import some classes that are only available in Python 3.
@@ -83,6 +83,26 @@ class TraceAssignments(NodeTransformer):
         names.insert(0, getattr(attribute_node, 'id', '<?>'))
         return names
 
+    def _wrap_subscript_target(self, subscript):
+        """ Build string describing subscript target and wrap indexes.
+
+        For example, "x[{!r}]" for one index. Each index will be wrapped in a
+        call to context.add_assignment_index().
+        @return: string
+        """
+        value = subscript.value
+        if isinstance(value, Name):
+            value_text = value.id
+        elif isinstance(value, Subscript):
+            value_text = self._wrap_subscript_target(value)
+        elif isinstance(value, Attribute):
+            value_text = '.'.join(self._get_attribute_names(value))
+        else:
+            value_text = "..."
+        slice_text = self._wrap_slice(subscript.slice)
+        format_text = '{}[{}]'.format(value_text, slice_text)
+        return format_text
+
     def _get_subscript_repr(self, subscript):
         value = subscript.value
         if isinstance(value, Name):
@@ -95,6 +115,36 @@ class TraceAssignments(NodeTransformer):
             value_text = "..."
         return '{}[{}]'.format(value_text,
                                self._get_slice_repr(subscript.slice))
+
+    def _wrap_slice(self, sliceNode):
+        """ Wrap a slice in calls to add_assignment_index.
+
+        Also build a format string for the slice.
+        @return: format_text
+        """
+        if isinstance(sliceNode, Index):
+            sliceNode.value = self._create_bare_context_call(
+                'add_assignment_index',
+                [sliceNode.value])
+            return '{!r}'
+        if isinstance(sliceNode, Slice):
+            if sliceNode.lower is None:
+                lower_text = ''
+            else:
+                lower_text = '{!r}'
+                sliceNode.lower = self._create_bare_context_call(
+                    'add_assignment_index',
+                    [sliceNode.lower])
+            if sliceNode.upper is None:
+                upper_text = ''
+            else:
+                upper_text = '{!r}'
+                sliceNode.upper = self._create_bare_context_call(
+                    'add_assignment_index',
+                    [sliceNode.upper])
+            format_text = '{}:{}'.format(lower_text, upper_text)
+            return format_text
+        return '?'
 
     def _get_slice_repr(self, sliceNode):
         if isinstance(sliceNode, Index):
@@ -147,13 +197,39 @@ class TraceAssignments(NodeTransformer):
                                           Num(existing_node.lineno)])
 
     def visit_Assign(self, node):
-        existing_node = self.generic_visit(node)
-        new_nodes = [existing_node]
-        existing_node.value = self._create_bare_context_call(
-            'assign',
-            [Str(s=self._get_assignment_targets(existing_node.targets)),
-             existing_node.value,
-             Num(n=existing_node.lineno)])
+        is_old = False
+        if is_old:
+            existing_node = self.generic_visit(node)
+            new_nodes = [existing_node]
+            existing_node.value = self._create_bare_context_call(
+                'assign',
+                [Str(s=self._get_assignment_targets(existing_node.targets)),
+                 existing_node.value,
+                 Num(n=existing_node.lineno)])
+        else:
+            existing_node = self.generic_visit(node)
+            line_numbers = set()
+            self._find_line_numbers(existing_node, line_numbers)
+            first_line_number = min(line_numbers)
+            last_line_number = max(line_numbers)
+            new_nodes = []
+            format_string = self._wrap_assignment_targets(
+                existing_node.targets)
+            existing_node.value = self._create_bare_context_call(
+                'set_assignment_value',
+                [existing_node.value])
+            new_nodes.append(self._create_context_call('start_assignment'))
+            report_assignment = self._create_context_call(
+                'report_assignment',
+                [Str(s=format_string), Num(n=existing_node.lineno)])
+            end_assignment = self._create_context_call('end_assignment')
+            try_body = [existing_node, report_assignment]
+            finally_body = [end_assignment]
+            new_nodes.append(TryFinally(body=try_body,
+                                        finalbody=finally_body,
+                                        lineno=first_line_number))
+            self._set_statement_line_numbers(try_body, first_line_number)
+            self._set_statement_line_numbers(finally_body, last_line_number)
 
         return new_nodes
 
@@ -398,6 +474,26 @@ class TraceAssignments(NodeTransformer):
             raise TypeError('Unknown target: %s' % target)
         return target_name
 
+    def _wrap_assignment_target(self, target):
+        """ Build string describing one assignment target and wrap indexes.
+
+        For example, "x" for a variable target, or "x[{!r}] for an indexed
+        target. An indexed target will have each index wrapped in a call to
+        context.add_assignment_index().
+        @return: string
+        """
+        if isinstance(target, Name):
+            return target.id
+        if isinstance(target, Subscript):
+            return self._wrap_subscript_target(target)
+        if isinstance(target, Tuple) or isinstance(target, List):
+            target_names = map(self._wrap_assignment_target, target.elts)
+            return '({})'.format(', '.join(target_names))
+        if isinstance(target, Attribute):
+            names = self._get_attribute_names(target)
+            return '.'.join(names)
+        return '?'
+
     def _get_assignment_targets(self, targets):
         """ Build a string representation of assignment targets.
 
@@ -410,10 +506,27 @@ class TraceAssignments(NodeTransformer):
             result.append(target_name)
         return ' = '.join(result)
 
+    def _wrap_assignment_targets(self, targets):
+        """ Build string describing assignment targets and wrap indexes.
+
+        For example, "x = {!r}" for a single target, "x = y = {!r}" for
+        multiple targets, or "x[{!r}] = {!r} for an indexed target.
+        @return: string
+        """
+        strings = []
+        for target in targets:
+            strings.append(self._wrap_assignment_target(target))
+        strings.append('{!r}')  # for assignment value
+        return ' = '.join(strings)
+
     def _create_context_call(self, function_name, args=None):
+        " Create a method call expression on the live coding context object. "
         return Expr(value=self._create_bare_context_call(function_name, args))
 
     def _create_bare_context_call(self, function_name, args=None):
+        """ Create a method call on the live coding context object.
+
+        Bare means that it is not wrapped in an expression. """
         if args is None:
             args = []
         context_name = Name(id=CONTEXT_NAME, ctx=Load())

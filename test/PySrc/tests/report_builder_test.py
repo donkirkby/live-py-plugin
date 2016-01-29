@@ -11,7 +11,7 @@ class ReportTestCase(unittest.TestCase):
     def trimReport(self, report):
         lines = report.splitlines()
         trimmed_lines = [line.rstrip() for line in lines]
-        return '\n'.join(trimmed_lines)
+        return '\n'.join(trimmed_lines) + '\n'
 
     def assertReportEqual(self, expected_report, report):
         self.assertEqual(self.trimReport(expected_report),

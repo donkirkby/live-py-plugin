@@ -197,39 +197,29 @@ class TraceAssignments(NodeTransformer):
                                           Num(existing_node.lineno)])
 
     def visit_Assign(self, node):
-        is_old = False
-        if is_old:
-            existing_node = self.generic_visit(node)
-            new_nodes = [existing_node]
-            existing_node.value = self._create_bare_context_call(
-                'assign',
-                [Str(s=self._get_assignment_targets(existing_node.targets)),
-                 existing_node.value,
-                 Num(n=existing_node.lineno)])
-        else:
-            existing_node = self.generic_visit(node)
-            line_numbers = set()
-            self._find_line_numbers(existing_node, line_numbers)
-            first_line_number = min(line_numbers)
-            last_line_number = max(line_numbers)
-            new_nodes = []
-            format_string = self._wrap_assignment_targets(
-                existing_node.targets)
-            existing_node.value = self._create_bare_context_call(
-                'set_assignment_value',
-                [existing_node.value])
-            new_nodes.append(self._create_context_call('start_assignment'))
-            report_assignment = self._create_context_call(
-                'report_assignment',
-                [Str(s=format_string), Num(n=existing_node.lineno)])
-            end_assignment = self._create_context_call('end_assignment')
-            try_body = [existing_node, report_assignment]
-            finally_body = [end_assignment]
-            new_nodes.append(TryFinally(body=try_body,
-                                        finalbody=finally_body,
-                                        lineno=first_line_number))
-            self._set_statement_line_numbers(try_body, first_line_number)
-            self._set_statement_line_numbers(finally_body, last_line_number)
+        existing_node = self.generic_visit(node)
+        line_numbers = set()
+        self._find_line_numbers(existing_node, line_numbers)
+        first_line_number = min(line_numbers)
+        last_line_number = max(line_numbers)
+        new_nodes = []
+        format_string = self._wrap_assignment_targets(
+            existing_node.targets)
+        existing_node.value = self._create_bare_context_call(
+            'set_assignment_value',
+            [existing_node.value])
+        new_nodes.append(self._create_context_call('start_assignment'))
+        report_assignment = self._create_context_call(
+            'report_assignment',
+            [Str(s=format_string), Num(n=existing_node.lineno)])
+        end_assignment = self._create_context_call('end_assignment')
+        try_body = [existing_node, report_assignment]
+        finally_body = [end_assignment]
+        new_nodes.append(TryFinally(body=try_body,
+                                    finalbody=finally_body,
+                                    lineno=first_line_number))
+        self._set_statement_line_numbers(try_body, first_line_number)
+        self._set_statement_line_numbers(finally_body, last_line_number)
 
         return new_nodes
 
@@ -459,21 +449,6 @@ class TraceAssignments(NodeTransformer):
 
         return self._create_context_call('assign', args)
 
-    def _get_assignment_target(self, target):
-        if isinstance(target, Name):
-            target_name = target.id
-        elif isinstance(target, Subscript):
-            target_name = self._get_subscript_repr(target)
-        elif isinstance(target, Tuple) or isinstance(target, List):
-            target_names = map(self._get_assignment_target, target.elts)
-            target_name = '({})'.format(', '.join(target_names))
-        elif isinstance(target, Attribute):
-            names = self._get_attribute_names(target)
-            target_name = '.'.join(names)
-        else:
-            raise TypeError('Unknown target: %s' % target)
-        return target_name
-
     def _wrap_assignment_target(self, target):
         """ Build string describing one assignment target and wrap indexes.
 
@@ -493,18 +468,6 @@ class TraceAssignments(NodeTransformer):
             names = self._get_attribute_names(target)
             return '.'.join(names)
         return '?'
-
-    def _get_assignment_targets(self, targets):
-        """ Build a string representation of assignment targets.
-
-        For example, "x = " for a single target, or "x = y = " for multiple
-        targets.
-        """
-        result = []
-        for target in targets:
-            target_name = self._get_assignment_target(target)
-            result.append(target_name)
-        return ' = '.join(result)
 
     def _wrap_assignment_targets(self, targets):
         """ Build string describing assignment targets and wrap indexes.

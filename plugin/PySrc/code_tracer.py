@@ -109,19 +109,6 @@ class TraceAssignments(NodeTransformer):
         format_text = '{}[{}]'.format(value_text, slice_text)
         return format_text
 
-    def _get_subscript_repr(self, subscript):
-        value = subscript.value
-        if isinstance(value, Name):
-            value_text = value.id
-        elif isinstance(value, Subscript):
-            value_text = self._get_subscript_repr(value)
-        elif isinstance(value, Attribute):
-            value_text = '.'.join(self._get_attribute_names(value))
-        else:
-            value_text = "..."
-        return '{}[{}]'.format(value_text,
-                               self._get_slice_repr(subscript.slice))
-
     def _wrap_assignment_index(self, index_node, index_to_get):
         """ Wrap an index node in an assignment index method.
 
@@ -185,18 +172,6 @@ class TraceAssignments(NodeTransformer):
         else:
             format_text = '?'
         return format_text, index_to_get
-
-    def _get_slice_repr(self, sliceNode):
-        if isinstance(sliceNode, Index):
-            return getattr(sliceNode.value, 'n', '?')
-        if isinstance(sliceNode, Slice):
-            return '{}:{}'.format(sliceNode.lower and getattr(sliceNode.lower,
-                                                              'n',
-                                                              '?') or '',
-                                  sliceNode.upper and getattr(sliceNode.upper,
-                                                              'n',
-                                                              '?') or '')
-        return '...'
 
     def visit_Call(self, node):
         existing_node = self.generic_visit(node)
@@ -501,12 +476,6 @@ class TraceAssignments(NodeTransformer):
         elif arg and isinstance(target, arg):
             args = [Str(s=target.arg),
                     Name(id=target.arg, ctx=Load()),
-                    Num(n=lineno)]
-        elif isinstance(target, Subscript):
-            args = [Str(s=self._get_subscript_repr(target)),
-                    Subscript(value=target.value,
-                              slice=target.slice,
-                              ctx=Load()),
                     Num(n=lineno)]
         else:
             raise TypeError('Unknown target: %s' % target)

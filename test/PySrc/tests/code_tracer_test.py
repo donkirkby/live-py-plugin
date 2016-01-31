@@ -1054,5 +1054,26 @@ x = (1, 2) """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_yield_none(self):
+        # SETUP
+        code = """\
+def foo():
+    yield
+
+for x in foo():
+    pass
+"""
+        expected_report = """\
+
+yield None
+
+x = None """
+
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
 if __name__ == '__main__':
     unittest.main()

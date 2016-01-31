@@ -104,19 +104,54 @@ n = 0 | n = 1 | n = 3 | n = 4 | n = 5 | n = 7 """
 a = [1, 2, [3, 4]]
 a[0] = 9
 a[2][1] = 8
-i = 0
-a[i] = 10
 b = a
-a[0] += 1
+i, j = 2, 1
+a[i][j] = 7
+a[0:2] = list(reversed(a[0:2]))
+b = a
+d = -1
+a[i:j:d] = [100]
+b = a
 """
         expected_report = """\
 a = [1, 2, [3, 4]]
 a[0] = 9
 a[2][1] = 8
-i = 0
+b = [9, 2, [3, 8]]
+(i, j) = (2, 1)
+a[2][1] = 7
+a[0:2] = [2, 9]
+b = [2, 9, [3, 7]]
+d = -1
+a[2:1:-1] = [100]
+b = [2, 9, 100]
+"""
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_mutable_increment(self):
+        # SETUP
+        code = """\
+a = [1, 2, [3, 4]]
+a[0] += 9
+a[2][1] += 8
+b = a
+i, j = 2, 1
+a[i][j] += 7
+b = a
+"""
+        expected_report = """\
+a = [1, 2, [3, 4]]
 a[0] = 10
-b = [10, 2, [3, 8]]
-a[0] = 11 """
+a[2][1] = 12
+b = [10, 2, [3, 12]]
+(i, j) = (2, 1)
+a[2][1] = 19
+b = [10, 2, [3, 19]]
+"""
         # EXEC
         report = CodeTracer().trace_code(code)
 

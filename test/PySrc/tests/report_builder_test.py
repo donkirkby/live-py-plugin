@@ -71,7 +71,7 @@ x = 5
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    def test_assign_slices(self):
+    def test_assign_with_indexes(self):
         # SETUP
         expected_report = "a[0][23] = b['x'] = 99 "
 
@@ -83,6 +83,24 @@ x = 5
         builder.add_assignment_index(23)
         builder.add_assignment_index('x')
         builder.report_assignment('a[{!r}][{!r}] = b[{!r}] = {!r}',
+                                  line_number=1)
+        builder.end_assignment()
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_assign_value_after_indexes(self):
+        # SETUP
+        expected_report = "a[0][23] = 99 "
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.start_assignment()
+        builder.add_assignment_index(0)
+        builder.add_assignment_index(23)
+        builder.set_assignment_value(99)
+        builder.report_assignment('a[{!r}][{!r}] = {!r}',
                                   line_number=1)
         builder.end_assignment()
         report = builder.report()

@@ -110,22 +110,26 @@ class ReportBuilder(object):
         return value
 
     def start_assignment(self):
-        self.assignments.append([])
+        self.assignments.append(AssignmentReport())
 
     def end_assignment(self):
         self.assignments.pop()
 
     def set_assignment_value(self, value):
-        self.assignments[-1].append(value)
+        self.assignments[-1].value = value
         return value
 
     def add_assignment_index(self, value):
-        self.assignments[-1].insert(-1, value)
+        self.assignments[-1].indexes.append(value)
         return value
 
+    def get_assignment_index(self, index_index):
+        return self.assignments[-1].indexes[index_index]
+
     def report_assignment(self, format_string, line_number):
-        assignment_values = self.assignments[-1]
-        display = format_string.format(*assignment_values)
+        assignment = self.assignments[-1]
+        display = format_string.format(*(assignment.indexes +
+                                         [assignment.value]))
         if not display.endswith('>'):
             if '\n' in display:
                 display = re.sub(r'\s+', ' ', display)
@@ -177,3 +181,9 @@ class ReportBuilder(object):
     def _check_line_count(self, line_count):
         while len(self.messages) < line_count:
             self.messages.append('')
+
+
+class AssignmentReport(object):
+    def __init__(self):
+        self.value = None
+        self.indexes = []

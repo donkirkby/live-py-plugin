@@ -1,8 +1,10 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST,
                  Attribute, BinOp, Call, ExceptHandler, Expr, Index, List,
                  Load, Mod, Name, NodeTransformer, Num, Raise, Return, Slice,
-                 Store, Str, Subscript, TryFinally, Tuple, Yield)
+                 Store, Str, Subscript, Tuple, Yield)
 from copy import deepcopy
+import sys
+import traceback
 
 try:
     # Import some classes that are only available in Python 3.
@@ -11,14 +13,10 @@ except:
     arg = None  # If we're in Python 2, we just won't use them.
 
 try:
-    # Import some classes that are only available in Python 3.3.
-    from ast import Try  # @UnresolvedImport
+    # Make Python 3.3 try class compatible with old versions.
+    TryFinally = TryExcept = sys.modules['ast'].Try
 except:
-    from ast import TryExcept
-    Try = TryExcept
-
-import sys
-import traceback
+    from ast import TryExcept, TryFinally
 
 from canvas import Canvas
 from mock_turtle import MockTurtle
@@ -232,6 +230,8 @@ class TraceAssignments(NodeTransformer):
         finally_body = [end_assignment]
         new_nodes.append(TryFinally(body=try_body,
                                     finalbody=finally_body,
+                                    handlers=[],
+                                    orelse=[],
                                     lineno=first_line_number))
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(finally_body, last_line_number)
@@ -262,6 +262,8 @@ class TraceAssignments(NodeTransformer):
         finally_body = [end_assignment]
         new_nodes.append(TryFinally(body=try_body,
                                     finalbody=finally_body,
+                                    handlers=[],
+                                    orelse=[],
                                     lineno=first_line_number))
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(finally_body, last_line_number)
@@ -358,10 +360,10 @@ class TraceAssignments(NodeTransformer):
         handler_body = [self._create_context_call('exception'),
                         Raise()]
         new_node.body.append(
-            Try(body=try_body,
-                handlers=[ExceptHandler(body=handler_body)],
-                orelse=[],
-                finalbody=[]))
+            TryExcept(body=try_body,
+                      handlers=[ExceptHandler(body=handler_body)],
+                      orelse=[],
+                      finalbody=[]))
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
@@ -383,10 +385,10 @@ class TraceAssignments(NodeTransformer):
             # empty module
             new_node.body = try_body
         else:
-            new_node.body = [Try(body=try_body,
-                                 handlers=[handler],
-                                 orelse=[],
-                                 finalbody=[])]
+            new_node.body = [TryExcept(body=try_body,
+                                       handlers=[handler],
+                                       orelse=[],
+                                       finalbody=[])]
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node

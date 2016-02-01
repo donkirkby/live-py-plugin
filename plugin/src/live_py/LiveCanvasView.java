@@ -15,6 +15,9 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -38,8 +41,25 @@ public class LiveCanvasView extends ViewPart {
     }
     
     public void createPartControl(Composite parent) {
-        canvas = new Canvas(parent, SWT.NONE);
-        
+        Composite container = new Composite(parent, SWT.NONE);
+        final int numColumns = 2;
+        final boolean makeColumnsEqualWidth = false;
+        container.setLayout(new GridLayout(numColumns, makeColumnsEqualWidth));
+
+        boolean areButtonsEnabled = false;
+        if (areButtonsEnabled) {
+            Button stopButton = new Button(container, SWT.NONE);
+            stopButton.setText("Stop");
+            Button startButton = new Button(container, SWT.NONE);
+            startButton.setText("Start");
+            startButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
+        }
+
+        canvas = new Canvas(container, SWT.NONE);
+        final GridData canvasLayout = new GridData(GridData.FILL_BOTH);
+        canvasLayout.horizontalSpan = numColumns;
+        canvas.setLayoutData(canvasLayout);
+       
         canvas.addPaintListener(new PaintListener() {
             
             @Override
@@ -79,6 +99,10 @@ public class LiveCanvasView extends ViewPart {
             
             @Override
             public void partActivated(IWorkbenchPart part) {
+                if (part == LiveCanvasView.this) {
+                    // Keep the previous analyst active.
+                    return;
+                }
                 LiveCodingAnalyst newAnalyst = null;
                 if (part instanceof PyEdit)
                 {

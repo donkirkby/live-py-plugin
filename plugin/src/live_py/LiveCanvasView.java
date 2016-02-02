@@ -225,7 +225,8 @@ public class LiveCanvasView extends ViewPart {
                 gc.setBackground(newBackground);
             }
             if (newLineWidthText != null) {
-                int newLineWidth = Integer.parseInt(newLineWidthText);
+                int newLineWidth =
+                        (int)Math.round(Double.parseDouble(newLineWidthText));
                 gc.setLineWidth(newLineWidth);
                 gc.setLineCap(SWT.CAP_ROUND);
             }

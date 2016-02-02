@@ -437,8 +437,13 @@ for c in ['a',
 quality = ''
 c = 'a'       | c = None
               |
-quality = 'a' | TypeError: cannot concatenate 'str' and 'NoneType' objects
-"""
+quality = 'a' | TypeError:"""
+        if version_info.major >= 3:
+            expected_report += (
+                " Can't convert 'NoneType' object to str implicitly")
+        else:
+            expected_report += (
+                " cannot concatenate 'str' and 'NoneType' objects")
         tracer = CodeTracer()
 
         # EXEC

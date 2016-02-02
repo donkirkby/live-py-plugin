@@ -30,7 +30,7 @@ PSEUDO_FILENAME = '<live coding source>'
 MODULE_NAME = '__live_coding__'
 
 
-class TraceAssignments(NodeTransformer):
+class Tracer(NodeTransformer):
 
     def _set_statement_line_numbers(self,
                                     statements,
@@ -48,7 +48,7 @@ class TraceAssignments(NodeTransformer):
                 previous_line_number = max(line_numbers)
 
     def visit(self, node):
-        new_node = super(TraceAssignments, self).visit(node)
+        new_node = super(Tracer, self).visit(node)
         body = getattr(new_node, 'body', None)
         if body is not None:
             previous_line_number = getattr(new_node, 'lineno', None)
@@ -540,6 +540,20 @@ class TraceAssignments(NodeTransformer):
                     kwargs=None)
 
 
+class LineNumberCleaner(NodeTransformer):
+    def __init__(self):
+        self.max_line = 0
+
+    def visit(self, node):
+        lineno = getattr(node, 'lineno', None)
+        if lineno is not None:
+            if lineno < self.max_line:
+                node.lineno = self.max_line
+            else:
+                self.max_line = lineno
+        return self.generic_visit(node)
+
+
 class CodeTracer(object):
     def __init__(self, turtle=None):
         self.message_limit = 10000
@@ -567,8 +581,8 @@ class CodeTracer(object):
         try:
             tree = parse(source)
 
-            visitor = TraceAssignments()
-            new_tree = visitor.visit(tree)
+            new_tree = Tracer().visit(tree)
+            LineNumberCleaner().visit(new_tree)
             fix_missing_locations(new_tree)
 #             from ast import dump
 #             print(dump(new_tree, include_attributes=False))

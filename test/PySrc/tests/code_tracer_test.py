@@ -425,6 +425,28 @@ ZeroDivisionError: division by zero """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_multiline_error(self):
+        # SETUP
+        code = """\
+quality = ''
+for c in ['a',
+          None]:
+    quality += c
+"""
+        expected_report = """\
+quality = ''
+c = 'a'       | c = None
+              |
+quality = 'a' | TypeError: cannot concatenate 'str' and 'NoneType' objects
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_unwinding_exceptions(self):
         # SETUP
         code = """\

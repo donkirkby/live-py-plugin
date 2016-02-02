@@ -2,6 +2,8 @@ package live_py;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
@@ -21,6 +23,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.ui.IPartListener;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
@@ -32,6 +36,8 @@ public class LiveCanvasView extends ViewPart {
     private Canvas canvas;
     private Rectangle canvasBounds;
     private HashMap<String, Color> colorMap = new HashMap<String, Color>();
+    private Set<LiveCodingAnalyst> activeAnalysts =
+            new HashSet<LiveCodingAnalyst>();
     
     public LiveCanvasView() {
         super();
@@ -46,20 +52,44 @@ public class LiveCanvasView extends ViewPart {
         final boolean makeColumnsEqualWidth = false;
         container.setLayout(new GridLayout(numColumns, makeColumnsEqualWidth));
 
-        boolean areButtonsEnabled = false;
-        if (areButtonsEnabled) {
-            Button stopButton = new Button(container, SWT.NONE);
-            stopButton.setText("Stop");
-            Button startButton = new Button(container, SWT.NONE);
-            startButton.setText("Start");
-            startButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
-        }
+        Button startButton = new Button(container, SWT.NONE);
+        startButton.setText("Start");
+        Button stopButton = new Button(container, SWT.NONE);
+        stopButton.setText("Stop");
+        stopButton.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_END));
 
         canvas = new Canvas(container, SWT.NONE);
         final GridData canvasLayout = new GridData(GridData.FILL_BOTH);
         canvasLayout.horizontalSpan = numColumns;
         canvas.setLayoutData(canvasLayout);
-       
+        
+        startButton.addListener(SWT.Selection, new Listener() {
+            @Override
+            public void handleEvent(Event arg0) {
+                final LiveCodingAnalyst currentAnalyst = analyst;
+                if ( ! activeAnalysts.contains(currentAnalyst)) {
+                    activeAnalysts.add(currentAnalyst);
+                    setAnalyst(null);
+                    setAnalyst(currentAnalyst);
+                    currentAnalyst.refresh();
+                }
+            }
+        });
+        
+        stopButton.addListener(SWT.Selection, new Listener() {
+            @Override
+            public void handleEvent(Event arg0) {
+                final LiveCodingAnalyst currentAnalyst = analyst;
+                if (activeAnalysts.contains(currentAnalyst)) {
+                    activeAnalysts.remove(currentAnalyst);
+                    setAnalyst(null);
+                    setAnalyst(currentAnalyst);
+                    currentAnalyst.reset();
+                    canvas.redraw();
+                }
+            }
+        });
+        
         canvas.addPaintListener(new PaintListener() {
             
             @Override
@@ -147,6 +177,9 @@ public class LiveCanvasView extends ViewPart {
         ArrayList<CanvasCommand> canvasCommands = null;
         if (analyst == null) {
             message = "Not a Python editor.";
+        }
+        else if ( ! activeAnalysts.contains(analyst)) {
+            message = "Press Start to display turtle graphics.";
         }
         else
         {
@@ -303,7 +336,7 @@ public class LiveCanvasView extends ViewPart {
                 analyst.setCanvasView(null);
             }
             analyst = newAnalyst;
-            if (analyst != null) {
+            if (analyst != null && activeAnalysts.contains(analyst)) {
                 analyst.setCanvasView(LiveCanvasView.this);
             }
             redraw();

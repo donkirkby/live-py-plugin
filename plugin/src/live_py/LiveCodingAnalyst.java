@@ -263,6 +263,11 @@ public class LiveCodingAnalyst {
     public void refresh() {
         addAnalysisTask(mainDocument);
     }
+    
+    /** Remove any current analysis, but don't trigger another. */
+    public void reset() {
+        canvasCommands.clear();
+    }
 
     /**
      * Analyse the document and display the results.

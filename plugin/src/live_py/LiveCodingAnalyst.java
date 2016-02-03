@@ -156,6 +156,7 @@ public class LiveCodingAnalyst {
                 if (mainViewer != null) {
                     mainViewer.getTextWidget().setTopPixel(
                             verticalOffset);
+                    mainViewer.invalidateTextPresentation();
                 }
             }
         });

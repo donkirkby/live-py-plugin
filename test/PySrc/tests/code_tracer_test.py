@@ -564,6 +564,31 @@ RuntimeError: live coding message limit exceeded """
         self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
+    def test_infinite_loop_pass_in_function(self):
+        # SETUP
+        code = """\
+def foo():
+    while True:
+        pass
+
+foo()
+"""
+        expected_report = """\
+
+
+
+
+RuntimeError: live coding message limit exceeded """
+        tracer = CodeTracer()
+        tracer.message_limit = 3
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertReportEqual(expected_report, report)
+
     def test_set_attribute(self):
         # SETUP
         code = """\

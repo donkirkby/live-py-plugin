@@ -65,7 +65,7 @@ class ReportBuilder(object):
                 raise RuntimeError('live coding message limit exceeded')
 
     def start_frame(self, first_line, last_line):
-        new_frame = ReportBuilder()
+        new_frame = ReportBuilder(self.message_limit)
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths
         new_frame.max_width = self.max_width

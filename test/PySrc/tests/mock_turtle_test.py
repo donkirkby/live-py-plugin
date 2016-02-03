@@ -3,8 +3,8 @@ import unittest
 from canvas import Canvas
 from mock_turtle import MockTurtle
 
-class MockTurtleTest(unittest.TestCase):
 
+class MockTurtleTest(unittest.TestCase):
     def test_forward(self):
         # SETUP
         expected_report = """\
@@ -16,12 +16,12 @@ create_line
     fill='black'
     pensize=1
 """
-        
+
         # EXEC
         t = MockTurtle()
         t.fd(100)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
@@ -36,13 +36,13 @@ create_line
     fill='black'
     pensize=1
 """
-        
+
         # EXEC
         t = MockTurtle()
         t.right(90)
         t.fd(100)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
@@ -64,7 +64,7 @@ create_line
     fill='black'
     pensize=1
 """
-        
+
         # EXEC
         t = MockTurtle()
         t.fd(100)
@@ -73,7 +73,7 @@ create_line
         t.pendown()
         t.fd(200)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
@@ -81,12 +81,12 @@ create_line
         # SETUP
         expected_width = 800
         expected_height = 600
-        
+
         # EXEC
         t = MockTurtle(canvas=Canvas(expected_width, expected_height))
         width = t.window_width()
         height = t.window_height()
-        
+
         # VERIFY
         self.assertEqual(expected_width, width)
         self.assertEqual(expected_height, height)
@@ -103,12 +103,11 @@ create_line
     pensize=1
 """
 
-        
         # EXEC
         t = MockTurtle(canvas=Canvas(800, 600))
         t.fd(100)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
@@ -131,7 +130,6 @@ create_line
     pensize=1
 """
 
-        
         # EXEC
         t = MockTurtle(canvas=Canvas())
         t.screen.xscale = 100.0
@@ -140,13 +138,13 @@ create_line
         t.right(90)
         t.fd(3)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
     def test_offset_with_scale(self):
         """ The offset is applied BEFORE the scale. """
-        
+
         # SETUP
         expected_report = """\
 create_line
@@ -158,27 +156,26 @@ create_line
     pensize=1
 """
 
-        
         # EXEC
         t = MockTurtle(canvas=Canvas(800, 600))
-        t.screen.xscale = 100 
+        t.screen.xscale = 100
         t.fd(1)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
     def test_repr(self):
         # SETUP
         expected_text = "MockTurtle(100, 0, 10)"
-        
+
         # EXEC
         t = MockTurtle(25, 0, -7)
         t.left(7)
         t.fd(75)
         t.left(10)
         text = repr(t)
-        
+
         # VERIFY
         self.assertEqual(expected_text, text)
 
@@ -200,13 +197,13 @@ create_text
     font=('Arial', 8, 'normal')
     text='Bob'
 """
-        
+
         # EXEC
         t = MockTurtle()
         t.fd(100)
         t.write('Bob')
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
@@ -220,13 +217,13 @@ create_line
     0
     fill='#ff0080'
     pensize=1"""
-        
+
         # EXEC
         t = MockTurtle()
         t.color(1.0, 0.0, 0.5)
         t.fd(100)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
@@ -256,7 +253,7 @@ create_line
     100
     fill='#ff0000'
     pensize=1"""
-        
+
         # EXEC
         t = MockTurtle()
         t.color('red', 'blue')
@@ -266,7 +263,7 @@ create_line
             t.right(90)
         t.end_fill()
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
@@ -288,7 +285,7 @@ create_line
     fill='#ff0000'
     pensize=1
 """
-        
+
         # EXEC
         t = MockTurtle()
         t.color('red', 'blue')
@@ -297,6 +294,6 @@ create_line
             t.fd(100)
             t.right(90)
         report = t.report
-        
+
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)

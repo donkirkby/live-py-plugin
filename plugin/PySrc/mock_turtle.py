@@ -3,18 +3,19 @@ from turtle import TNavigator, TPen
 from canvas import Canvas
 from argparse import ArgumentError
 
+
 class MockTurtle(TNavigator, TPen):
     class _Screen(object):
         def __init__(self, canvas):
             self.cv = canvas
             self.xscale = self.yscale = 1
-            
+
     def __init__(self, x=0, y=0, heading=0, canvas=None):
         self._path = None
         self._lines_to_draw = []
         TNavigator.__init__(self)
         TPen.__init__(self)
-        if canvas == None:
+        if canvas is None:
             canvas = Canvas()
         self.screen = MockTurtle._Screen(canvas)
         self.__xoff = self.screen.cv.cget('width')/2
@@ -23,13 +24,13 @@ class MockTurtle(TNavigator, TPen):
             self.setx(x)
             self.sety(y)
         self.setheading(heading)
-    
+
     def __repr__(self):
         x = round(self.xcor())
         y = round(self.ycor())
         h = round(self.heading())
         return 'MockTurtle(%d, %d, %d)' % (x, y, h)
-        
+
     def _goto(self, end):
         xstart = self.xcor()
         ystart = self.ycor()
@@ -40,9 +41,9 @@ class MockTurtle(TNavigator, TPen):
         if self._pensize:
             kwargs['pensize'] = self._pensize
         if self._drawing:
-            args = [xstart*self.screen.xscale + self.__xoff, 
-                    -ystart*self.screen.yscale + self.__yoff, 
-                    xend*self.screen.xscale + self.__xoff, 
+            args = [xstart*self.screen.xscale + self.__xoff,
+                    -ystart*self.screen.yscale + self.__yoff,
+                    xend*self.screen.xscale + self.__xoff,
                     -yend*self.screen.yscale + self.__yoff]
             if self._path:
                 self._lines_to_draw.append((args, kwargs))
@@ -52,7 +53,7 @@ class MockTurtle(TNavigator, TPen):
             self._path.append(xend + self.__xoff)
             self._path.append(-yend + self.__yoff)
         self._position = end
-        
+
     def __getattr__(self, name):
         if name == 'report':
             self._newLine()
@@ -65,18 +66,17 @@ class MockTurtle(TNavigator, TPen):
 
     def window_height(self):
         return self.screen.cv.cget('height')
-    
+
     def begin_fill(self):
         self.fill(True)
-        
+
     def end_fill(self):
         self.fill(False)
-        
 
     def _flush_lines(self):
         for args, kwargs in self._lines_to_draw:
             self.screen.cv.create_line(*args, **kwargs)
-        
+
         self._lines_to_draw = []
 
     def fill(self, flag=None):
@@ -93,7 +93,11 @@ class MockTurtle(TNavigator, TPen):
             x, y = self._position
             self._path = [x + self.__xoff, -y + self.__yoff]
 
-    def write(self, arg, move=False, align="left", font=("Arial", 8, "normal")):
+    def write(self,
+              arg,
+              move=False,
+              align="left",
+              font=("Arial", 8, "normal")):
         if move:
             raise ArgumentError('move', 'Parameter is not supported.')
         if align == 'left':
@@ -107,10 +111,10 @@ class MockTurtle(TNavigator, TPen):
                       font=font)
         if self._pencolor:
             kwargs['fill'] = self._pencolor
-        self.screen.cv.create_text(self.xcor() + self.__xoff, 
+        self.screen.cv.create_text(self.xcor() + self.__xoff,
                                    -self.ycor() + self.__yoff,
                                    **kwargs)
-        
+
     def _colorstr(self, color):
         """Return color string corresponding to args.
 
@@ -134,8 +138,8 @@ class MockTurtle(TNavigator, TPen):
             return '#000000'
         return "#%02x%02x%02x" % (r, g, b)
 
-#Normally, Tkinter will look up these colour names for you, but we don't
-#actually launch Tkinter when we're analysing code.
+# Normally, Tkinter will look up these colour names for you, but we don't
+# actually launch Tkinter when we're analysing code.
 color_map = {
     'alice blue': '#f0f8ff',
     'aliceblue': '#f0f8ff',

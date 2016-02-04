@@ -170,6 +170,8 @@ class MockTurtle(TNavigator, TPen):
 
     def _color(self, colorstr):
         """ Reverse lookup of _colorstr. """
+        if not colorstr.startswith('#'):
+            return colorstr
         itercolors = getattr(color_map, 'iteritems', color_map.items)
         for name, code in itercolors():
             if code == colorstr:

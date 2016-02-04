@@ -242,6 +242,12 @@ create_line
 
         self.assertEqual((expected_color, expected_color), color)
 
+    def test_get_default_color(self):
+        t = MockTurtle()
+        color = t.color()
+
+        self.assertEqual(('black', 'black'), color)
+
     def test_fill(self):
         # SETUP
         expected_report = """\

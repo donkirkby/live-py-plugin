@@ -40,6 +40,8 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 5. Change the destination to Directory, and click Finish.
 6. Go to the directory you chose, and find the .jar file. You can distribute
    that as your install package.
+7. Commit the version change, create a release on GitHub, and attach the .jar
+   file.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [g+]: http://google.com/+donkirkby

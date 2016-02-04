@@ -227,6 +227,21 @@ create_line
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
+    def test_get_color_names(self):
+        t = MockTurtle()
+        t.color('blue')
+        color = t.color()
+
+        self.assertEqual(('blue', 'blue'), color)
+
+    def test_get_color_rgb(self):
+        t = MockTurtle()
+        expected_color = (1.0, 0.0, 0.5)
+        t.color(expected_color)
+        color = t.color()
+
+        self.assertEqual((expected_color, expected_color), color)
+
     def test_fill(self):
         # SETUP
         expected_report = """\

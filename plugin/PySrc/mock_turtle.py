@@ -2,6 +2,7 @@ from turtle import TNavigator, TPen
 
 from canvas import Canvas
 from argparse import ArgumentError
+from collections import namedtuple
 
 
 class MockTurtle(TNavigator, TPen):
@@ -9,6 +10,8 @@ class MockTurtle(TNavigator, TPen):
         def __init__(self, canvas):
             self.cv = canvas
             self.xscale = self.yscale = 1
+
+    _Stamp = namedtuple('Stamp', 'pos heading color')
 
     def __init__(self, x=0, y=0, heading=0, canvas=None):
         self._path = None
@@ -18,6 +21,7 @@ class MockTurtle(TNavigator, TPen):
         if canvas is None:
             canvas = Canvas()
         self.screen = MockTurtle._Screen(canvas)
+        self.stamps = []
         self.__xoff = self.screen.cv.cget('width')/2
         self.__yoff = self.screen.cv.cget('height')/2
         if x or y:
@@ -58,8 +62,27 @@ class MockTurtle(TNavigator, TPen):
         if name == 'report':
             self._newLine()
             self._flush_lines()
+            self._draw_stamps()
             return self.screen.cv.report
         raise AttributeError(name)
+
+    def _draw_stamps(self):
+        self.pensize(1)
+        for stamp in self.stamps:
+            self.up()
+            self.goto(stamp.pos)
+            self.setheading(stamp.heading)
+            self.color(*stamp.color)
+            self.down()
+            self.begin_fill()
+            self.left(151)
+            self.fd(10.296)
+            self.left(140.8)
+            self.fd(5.385)
+            self.right(43.6)
+            self.fd(5.385)
+            self.setpos(stamp.pos)
+            self.end_fill()
 
     def window_width(self):
         return self.screen.cv.cget('width')
@@ -92,6 +115,10 @@ class MockTurtle(TNavigator, TPen):
         else:
             x, y = self._position
             self._path = [x + self.__xoff, -y + self.__yoff]
+
+    def stamp(self):
+        self.stamps.append(
+            MockTurtle._Stamp(self.pos(), self.heading(), self.color()))
 
     def write(self,
               arg,
@@ -137,6 +164,17 @@ class MockTurtle(TNavigator, TPen):
         if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
             return '#000000'
         return "#%02x%02x%02x" % (r, g, b)
+
+    def _rgb_value(self, rgbstr):
+        return round(int(rgbstr, 16)/2.55)/100.0
+
+    def _color(self, colorstr):
+        """ Reverse lookup of _colorstr. """
+        itercolors = getattr(color_map, 'iteritems', color_map.items)
+        for name, code in itercolors():
+            if code == colorstr:
+                return name
+        return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
 
 # Normally, Tkinter will look up these colour names for you, but we don't
 # actually launch Tkinter when we're analysing code.

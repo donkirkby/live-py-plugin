@@ -60,6 +60,7 @@ class MockTurtle(TNavigator, TPen):
 
     def __getattr__(self, name):
         if name == 'report':
+            self._path = None  # Cancel incomplete fill.
             self._newLine()
             self._flush_lines()
             self._draw_stamps()

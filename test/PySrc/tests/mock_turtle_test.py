@@ -318,3 +318,130 @@ create_line
 
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
+
+    def test_stamp(self):
+        # SETUP
+        expected_report = """\
+create_polygon
+    0
+    0
+    -9
+    -5
+    -7
+    0
+    -9
+    5
+    0
+    0
+    fill='#000000'
+    outline=''
+create_line
+    0
+    0
+    -9
+    -5
+    fill='#000000'
+    pensize=1
+create_line
+    -9
+    -5
+    -7
+    0
+    fill='#000000'
+    pensize=1
+create_line
+    -7
+    0
+    -9
+    5
+    fill='#000000'
+    pensize=1
+create_line
+    -9
+    5
+    0
+    0
+    fill='#000000'
+    pensize=1
+"""
+
+        # EXEC
+        t = MockTurtle()
+        t.stamp()
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_forgotten_end_fill_with_stamp(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#ff0000'
+    pensize=1
+create_line
+    100
+    0
+    100
+    100
+    fill='#ff0000'
+    pensize=1
+create_polygon
+    0
+    0
+    -9
+    -5
+    -7
+    0
+    -9
+    5
+    0
+    0
+    fill='#000000'
+    outline=''
+create_line
+    0
+    0
+    -9
+    -5
+    fill='#000000'
+    pensize=1
+create_line
+    -9
+    -5
+    -7
+    0
+    fill='#000000'
+    pensize=1
+create_line
+    -7
+    0
+    -9
+    5
+    fill='#000000'
+    pensize=1
+create_line
+    -9
+    5
+    0
+    0
+    fill='#000000'
+    pensize=1
+"""
+
+        # EXEC
+        t = MockTurtle()
+        t.stamp()
+        t.color('red', 'blue')
+        t.begin_fill()
+        for _ in range(2):
+            t.fd(100)
+            t.right(90)
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)

@@ -50,6 +50,7 @@ Installing the Emacs mode
 -------------------------
 It's probably easiest to use the MELPA package archive, as described in this
 section, but the next section gives instructions for installing without MELPA.
+
 1. Install [GNU Emacs][emacs] if you don't already have it.
 2. [Install MELPA][melpa]. You probably want to follow the instructions
     for the stable version, instead of the default bleeding-edge version.

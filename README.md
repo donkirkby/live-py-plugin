@@ -7,10 +7,13 @@ To see how it works, watch the [demo video][video] or read the
 [blog post][blog]. You might also find some useful examples in the 
 [tools folder][tools].
 
+![Screenshot of a star diagram][screenshot]
+
 Special thanks to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for contributing the Emacs support.
 
 If you like this project, check out some of my [other projects][projects].
 
+[screenshot]: https://raw.githubusercontent.com/donkirkby/live-py-plugin/master/screenshot.png
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik
 
@@ -34,7 +37,7 @@ Installing the Eclipse plugin
              cp live-py_2.0.0.201209171018.jar \
              ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
 4. Restart Eclipse.
-5. Open any Python file, and from the Pydev menu, choose Live Coding.
+5. Open any Python file, and from the Live Coding menu, choose Start Live Coding.
    You should see an extra panel on the right that shows the results of running
    your code.
 6. To try the turtle graphics features, open the Window menu, and choose 
@@ -90,7 +93,7 @@ Installing the Emacs mode without MELPA
 
 Uninstalling the Emacs mode
 ---------------------------
-If you installed it with MELPA, just use it to uninstall. If not, follow these
+If you installed with MELPA, just use it to uninstall. If not, follow these
 steps:
 
 1. Remove the files you copied into `~/.emacs.d/`:

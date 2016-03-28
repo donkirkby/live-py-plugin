@@ -8,12 +8,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.text.Document;
@@ -35,6 +37,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.osgi.framework.Bundle;
 import org.python.pydev.core.IPythonNature;
+import org.python.pydev.core.IPythonPathNature;
 import org.python.pydev.core.MisconfigurationException;
 import org.python.pydev.core.log.Log;
 import org.python.pydev.editor.PyEdit;
@@ -365,15 +368,17 @@ public class LiveCodingAnalyst {
         }
         AbstractRunner runner = UniversalRunner.getRunner(nature);
         File editorFile = pyEdit.getEditorFile();
-        String fileName = editorFile.getName();
-        int dotIndex = fileName.lastIndexOf('.');
-        String moduleName =
-                dotIndex < 0
-                ? fileName
-                : fileName.substring(0, dotIndex);
         ArrayList<String> argumentList = new ArrayList<String>();
-        argumentList.add("-m");
-        argumentList.add(moduleName);
+        try {
+            String moduleName = getModuleName(pyEdit, nature);
+            argumentList.add("-m");
+            argumentList.add(moduleName);
+        } catch (CoreException e) {
+            if(DEBUG){
+                System.out.println("Can't determine module name: "
+                        + e.getMessage());
+            }
+        }
         if (bounds != null) {
             argumentList.add("-c");
             argumentList.add("-x");
@@ -399,6 +404,30 @@ public class LiveCodingAnalyst {
             System.out.println("Unable to make launch.");
         }
         return null;
+    }
+
+    private String getModuleName(PyEdit pyEdit, IPythonNature nature)
+            throws CoreException {
+        File editorFile = pyEdit.getEditorFile();
+        IPythonPathNature pythonPathNature = nature.getPythonPathNature();
+        String pythonPath = pythonPathNature.getOnlyProjectPythonPathStr(true);
+        int pipeIndex = pythonPath.indexOf('|');
+        if (pipeIndex >= 0) {
+            pythonPath = pythonPath.substring(0, pipeIndex);
+        }
+        java.nio.file.Path filePath;
+        filePath = Paths.get(pythonPath).relativize(editorFile.toPath());
+        String moduleName = "";
+        for (java.nio.file.Path component : filePath) {
+            if (moduleName.length() > 0) {
+                moduleName += ".";
+            }
+            moduleName += component.getFileName();
+        }
+        if (moduleName.endsWith(".py")) {
+            moduleName = moduleName.substring(0, moduleName.length()-3);
+        }
+        return moduleName;
     }
 
     private void loadResults(BufferedReader reader, int minLineCount) 

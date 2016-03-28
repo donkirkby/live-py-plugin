@@ -364,7 +364,16 @@ public class LiveCodingAnalyst {
             return null;
         }
         AbstractRunner runner = UniversalRunner.getRunner(nature);
+        File editorFile = pyEdit.getEditorFile();
+        String fileName = editorFile.getName();
+        int dotIndex = fileName.lastIndexOf('.');
+        String moduleName =
+                dotIndex < 0
+                ? fileName
+                : fileName.substring(0, dotIndex);
         ArrayList<String> argumentList = new ArrayList<String>();
+        argumentList.add("-m");
+        argumentList.add(moduleName);
         if (bounds != null) {
             argumentList.add("-c");
             argumentList.add("-x");
@@ -374,7 +383,6 @@ public class LiveCodingAnalyst {
         }
         String[] arguments = 
                 (String[])argumentList.toArray(new String[argumentList.size()]);
-        File editorFile = pyEdit.getEditorFile();
         Tuple<Process, String> tuple = runner.createProcess(
                 FileUtils.getFileAbsolutePath(scriptPath), 
                 arguments, 

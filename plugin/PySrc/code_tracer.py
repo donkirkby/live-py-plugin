@@ -5,6 +5,7 @@ from ast import (fix_missing_locations, iter_fields, parse, Assign, AST,
 from copy import deepcopy
 import sys
 import traceback
+import types
 
 try:
     # Import some classes that are only available in Python 3.
@@ -27,7 +28,7 @@ RESULT_NAME = '__live_coding_result__'
 CANVAS_NAME = '__live_canvas__'
 TURTLE_NAME = '__live_turtle__'
 PSEUDO_FILENAME = '<live coding source>'
-MODULE_NAME = '__live_coding__'
+SCOPE_NAME = '__live_coding__'
 
 
 class Tracer(NodeTransformer):
@@ -560,7 +561,7 @@ class CodeTracer(object):
         self.max_width = None
         self.keepalive = False
         self.turtle = turtle if turtle else MockTurtle()
-        self.environment = {'__name__': MODULE_NAME,
+        self.environment = {'__name__': SCOPE_NAME,
                             CANVAS_NAME: self.turtle.screen.cv,
                             TURTLE_NAME: self.turtle}
 
@@ -574,7 +575,7 @@ class CodeTracer(object):
 
         return '\n'.join(self.turtle.report)
 
-    def trace_code(self, source):
+    def trace_code(self, source, module_name=None):
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
 
@@ -589,7 +590,16 @@ class CodeTracer(object):
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
             self.environment[CONTEXT_NAME] = builder
-            exec(code, self.environment, self.environment)
+            if module_name is None:
+                environment = self.environment
+            else:
+                mod = types.ModuleType(module_name)
+                sys.modules[module_name] = mod
+                # Any reason to set mod.__file__?
+
+                mod.__dict__.update(self.environment)
+                environment = mod.__dict__
+            exec(code, environment)
         except SyntaxError:
             ex = sys.exc_info()[1]
             messages = traceback.format_exception_only(type(ex), ex)
@@ -630,6 +640,9 @@ if __name__ == '__main__':
                         type=int,
                         default=600,
                         help='height of the canvas in pixels')
+    parser.add_argument('-m',
+                        '--module',
+                        help='install traced code as a module with this name')
 
     args = parser.parse_args()
     code = sys.stdin.read()
@@ -637,7 +650,7 @@ if __name__ == '__main__':
     turtle = MockTurtle(canvas=canvas)
     tracer = CodeTracer(turtle)
     tracer.max_width = 200000
-    code_report = tracer.trace_code(code)
+    code_report = tracer.trace_code(code, module_name=args.module)
     turtle_report = tracer.turtle.report
     if turtle_report and args.canvas:
         print('start_canvas')

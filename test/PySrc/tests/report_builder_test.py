@@ -324,5 +324,26 @@ RuntimeError: foo
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_exception_multiline_message(self):
+        # SETUP
+        source = """\
+try:
+    raise RuntimeError('a\\nb')
+except:
+    builder.exception()"""
+        expected_report = """\
+
+RuntimeError: a b
+"""
+
+        # EXEC
+        builder = ReportBuilder()
+        environment = dict(builder=builder)
+        exec(source, environment, environment)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
 if __name__ == '__main__':
     unittest.main()

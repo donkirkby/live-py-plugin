@@ -139,6 +139,8 @@ class ReportBuilder(object):
         etype, value, tb = sys.exc_info()
         messages = traceback.format_exception_only(etype, value)
         message = messages[-1].strip() + ' '
+        if '\n' in message:
+            message = re.sub(r'\s+', ' ', message)
         entries = traceback.extract_tb(tb)
         if entries:
             _, line_number, _, _ = entries[0]

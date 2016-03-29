@@ -140,6 +140,26 @@ return 'bob'
         self.assertReportEqual(expected_report, report)
         self.assertEqual(expected_value, value)
 
+    def test_return_multiline(self):
+        # SETUP
+        class Multiline(object):
+            def __repr__(self):
+                return 'Multiline(\n)'
+        expected_value = Multiline()
+        expected_report = """\
+
+return Multiline( )
+"""
+
+        # EXEC
+        builder = ReportBuilder()
+        value = builder.return_value(value=expected_value, line_number=2)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+        self.assertEqual(expected_value, value)
+
     def test_call(self):
         # SETUP
         expected_report = """\

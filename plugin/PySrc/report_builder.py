@@ -81,6 +81,8 @@ class ReportBuilder(object):
 
     def add_message(self, message, line_number):
         """ Add a message to the report on line line_number (1-based). """
+        if '\n' in message:
+            message = re.sub(r'\s+', ' ', message)
         self._increment_message_count()
         self._check_line_count(line_number)
         new_width = len(self.messages[line_number - 1]) + len(message)
@@ -131,16 +133,12 @@ class ReportBuilder(object):
         display = format_string.format(*(assignment.indexes +
                                          [assignment.value]))
         if not display.endswith('>'):
-            if '\n' in display:
-                display = re.sub(r'\s+', ' ', display)
             self.add_message(display + ' ', line_number)
 
     def exception(self):
         etype, value, tb = sys.exc_info()
         messages = traceback.format_exception_only(etype, value)
         message = messages[-1].strip() + ' '
-        if '\n' in message:
-            message = re.sub(r'\s+', ' ', message)
         entries = traceback.extract_tb(tb)
         if entries:
             _, line_number, _, _ = entries[0]

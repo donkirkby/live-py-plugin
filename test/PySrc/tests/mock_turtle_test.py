@@ -232,7 +232,7 @@ create_line
         t.color('blue')
         color = t.color()
 
-        self.assertEqual(('blue', 'blue'), color)
+        self.assertIn(color, (('blue', 'blue'), ('blue1', 'blue1')))
 
     def test_get_color_rgb(self):
         t = MockTurtle()

@@ -9,7 +9,7 @@ class PdfTurtle(TNavigator, TPen):
         def __init__(self, canvas):
             self.cv = canvas
 
-    def __init__(self, canvas, frame, width=None, height=None):
+    def __init__(self, canvas, frame=None, width=None, height=None):
         self._window_width = width if width is not None else frame._width
         self._window_height = height if height is not None else frame._height
         self._path = None
@@ -19,7 +19,6 @@ class PdfTurtle(TNavigator, TPen):
         TPen.__init__(self)
         canvas.setLineCap(1)  # Round
         self.screen = PdfTurtle._Screen(canvas)
-        self.frame = frame
         self.__xoff = self.window_width()/2
         self.__yoff = -self.window_height()/2
 

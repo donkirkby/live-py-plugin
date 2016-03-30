@@ -941,11 +941,27 @@ class Foo(object):
 
 Foo().x = 2
 """
+        expected_report = ""
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_method_of_anonymous_object(self):
+        # SETUP
+        code = """\
+def make_string():
+    return 'abc'
+
+s = make_string().upper()
+"""
         expected_report = """\
 
+return 'abc'
 
-
-<?>.x = 2 """
+s = 'ABC'
+"""
         # EXEC
         report = CodeTracer().trace_code(code)
 

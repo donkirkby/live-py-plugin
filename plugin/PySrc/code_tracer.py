@@ -176,6 +176,8 @@ class Tracer(NodeTransformer):
         existing_node = self.generic_visit(node)
         value_node = existing_node.func
 
+        if self._is_untraceable_attribute(value_node):
+            return existing_node
         if isinstance(value_node, Name) and value_node.id == 'print':
             return self._trace_print_function(existing_node)
 
@@ -210,8 +212,19 @@ class Tracer(NodeTransformer):
                                                             ctx=Load())),
                                           Num(existing_node.lineno)])
 
+    def _is_untraceable_attribute(self, node):
+        if isinstance(node, Attribute):
+            if isinstance(node.value, Name):
+                return False
+            if isinstance(node.value, Attribute):
+                return self._is_untraceable_attribute(node.value)
+            return True
+        return False
+
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
+        if any(map(self._is_untraceable_attribute, existing_node.targets)):
+            return existing_node
         line_numbers = set()
         self._find_line_numbers(existing_node, line_numbers)
         first_line_number = min(line_numbers)

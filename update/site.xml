@@ -3,7 +3,7 @@
    <description name="Live Coding in Python" url="http://donkirkby.github.io/live-py-plugin/update">
       Run your Python code while you type. Displays variable state and turtle graphics that are updated as you type your code.
    </description>
-   <feature url="features/live_py_feature_2.10.0.201603302043.jar" id="live_py_feature" version="2.10.0.201603302043">
+   <feature url="features/live_py_feature_2.10.0.201603302110.jar" id="live_py_feature" version="2.10.0.201603302110">
       <category name="devtools"/>
    </feature>
    <category-def name="devtools" label="Developer Tools"/>

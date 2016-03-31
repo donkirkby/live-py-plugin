@@ -35,13 +35,12 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 1. Check that all the Java unit tests run.
 2. Check that all the Python unit tests run in the latest versions of both
    Python 2 and Python 3.
-3. Open live-py/plugin.xml, and increment the Version field.
-4. Click the Export Wizard in the bottom right corner.
-5. Change the destination to Directory, and click Finish.
-6. Go to the directory you chose, and find the .jar file. You can distribute
-   that as your install package.
-7. Commit the version change, create a release on GitHub, and attach the .jar
-   file.
+3. Open plugin/plugin.xml and feature/feature.xml, and increment the Version
+    field in each file.
+4. Commit the version changes, and push to GitHub.
+5. Check out the `gh-pages` branch, and open the update project's `site.xml`.
+6. Click the Build All button.
+7. Commit the new version files, push, and create a release on GitHub.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [g+]: http://google.com/+donkirkby

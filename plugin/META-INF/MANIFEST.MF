@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Live-Py
+Bundle-Name: Live Coding in Python
 Bundle-SymbolicName: live-py;singleton:=true
-Bundle-Version: 2.9.0.qualifier
+Bundle-Version: 2.10.0.qualifier
 Bundle-Activator: live_py.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,

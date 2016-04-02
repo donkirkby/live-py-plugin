@@ -21,21 +21,10 @@ Installing the Eclipse plugin
 -----------------------------
 
 1. Install the [PyDev plugin][pydev] and Eclipse if you don't already have them.
-   It's been tested with PyDev 4.1.0, Eclipse 4.4, Python 2.7 and 3.4. It
+   It's been tested with PyDev 4.5.5, Eclipse 4.4, Python 2.7 and 3.4. It
    seems to be particularly sensitive to changes in PyDev.
-2. Download the latest version of the live-py plugin jar file from the 
-   [releases page][releases].
-3. Copy the plugin jar file to Eclipse's dropins folder. On my workstation I 
-   was able to do that in two different ways.
-    1. Copy it to the system-wide Eclipse installation.
-    
-             sudo cp live-py_2.0.0.201209171018.jar /usr/lib/eclipse/dropins/
-    2. Copy it to your `.eclipse` folder in your home directory. This doesn't 
-       require sudo permission.
-       
-             mkdir ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
-             cp live-py_2.0.0.201209171018.jar \
-             ~/.eclipse/org.eclipse.platform_3.7.0_155965261/dropins
+2. In Eclipse, choose Help: Eclipse Marketplace... from the menu.
+3. Search for Live Coding in Python, and install it.
 4. Restart Eclipse.
 5. Open any Python file, and from the Live Coding menu, choose Start Live Coding.
    You should see an extra panel on the right that shows the results of running
@@ -43,11 +32,17 @@ Installing the Eclipse plugin
 6. To try the turtle graphics features, open the Window menu, and choose 
    Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.
 
+If you don't want to use the Eclipse marketplace, you can also install from the
+[update site][update].
+
+[update]: http://donkirkby.github.io/live-py-plugin/update
+
 Uninstalling the Eclipse plugin
 -------------------------------
 
-1. Delete the jar file from the dropins directory.
-2. Restart Eclipse.
+1. In Eclipse, choose Help: Installation Details from the menu.
+2. Select Live Coding in Python, and click the Uninstall... button.
+3. Restart Eclipse.
 
 Installing the Emacs mode
 -------------------------
@@ -114,11 +109,9 @@ Working Features
 If you find the project useful, help us [make it better][contributing].
 
 [pydev]: http://pydev.org/download.html
-[releases]: https://github.com/donkirkby/live-py-plugin/releases
 [video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
 [blog]: http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html
 [emacs]: http://www.gnu.org/software/emacs/
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
-[issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [projects]: http://donkirkby.github.io/
 [contributing]: https://github.com/donkirkby/live-py-plugin/blob/master/CONTRIBUTING.md

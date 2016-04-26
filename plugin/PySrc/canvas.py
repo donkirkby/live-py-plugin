@@ -3,18 +3,19 @@ class Canvas:
         self.options = {'width': width,
                         'height': height}
         self.report = []
+
         def make_call(method_name):
-            return lambda *args, **kwargs: self.call(method_name, 
-                                                     *args, 
+            return lambda *args, **kwargs: self.call(method_name,
+                                                     *args,
                                                      **kwargs)
 
-        method_names = ('create_line', 
+        method_names = ('create_line',
                         'create_rectangle',
                         'create_polygon',
                         'create_text')
         for method_name in method_names:
             self.__dict__[method_name] = make_call(method_name)
-        
+
     def call(self, method_name, *args, **kwargs):
         self.report.append(method_name)
         for arg in args:
@@ -24,10 +25,10 @@ class Canvas:
         for key in keys:
             value = kwargs[key]
             self.report.append("    %s=%r" % (key, value))
-    
+
     def cget(self, option):
         return self.options[option]
-    
+
 if __name__ == '__live_coding__':
     canvas = Canvas(800, 600)
     canvas.create_line(1, 2, 100, 200)

@@ -1,8 +1,9 @@
+from argparse import ArgumentError
+from collections import namedtuple
+import sys
 from turtle import TNavigator, TPen
 
 from canvas import Canvas
-from argparse import ArgumentError
-from collections import namedtuple
 
 
 class MockTurtle(TNavigator, TPen):
@@ -12,15 +13,42 @@ class MockTurtle(TNavigator, TPen):
             self.xscale = self.yscale = 1
 
     _Stamp = namedtuple('Stamp', 'pos heading color')
+    _pen = OriginalTurtle = original_mainloop = None
+    instances = []
+
+    @classmethod
+    def monkey_patch(cls, canvas=None):
+        turtle_module = sys.modules['turtle']
+        cls.OriginalTurtle = turtle_module.Turtle
+        turtle_module.Turtle = MockTurtle
+        cls.original_mainloop = turtle_module.mainloop
+        turtle_module.mainloop = lambda: None
+        MockTurtle._pen = MockTurtle(canvas=canvas)
+
+    @classmethod
+    def remove_monkey_patch(cls):
+        MockTurtle.instances = []
+        if cls.OriginalTurtle is not None:
+            turtle_module = sys.modules['turtle']
+            turtle_module.Turtle = cls.OriginalTurtle
+            turtle_module.mainloop = cls.original_mainloop
+            MockTurtle._pen = cls.OriginalTurtle = cls.original_mainloop = None
+
+    @classmethod
+    def get_all_reports(cls):
+        return MockTurtle._pen.report
 
     def __init__(self, x=0, y=0, heading=0, canvas=None):
         self._path = None
         self._lines_to_draw = []
         TNavigator.__init__(self)
         TPen.__init__(self)
-        if canvas is None:
-            canvas = Canvas()
-        self.screen = MockTurtle._Screen(canvas)
+        if MockTurtle._pen is not None:
+            self.screen = MockTurtle._pen.screen
+        else:
+            if canvas is None:
+                canvas = Canvas()
+            self.screen = MockTurtle._Screen(canvas)
         self.stamps = []
         self.__xoff = self.screen.cv.cget('width')/2
         self.__yoff = self.screen.cv.cget('height')/2
@@ -28,6 +56,7 @@ class MockTurtle(TNavigator, TPen):
             self.setx(x)
             self.sety(y)
         self.setheading(heading)
+        MockTurtle.instances.append(self)
 
     def __repr__(self):
         x = round(self.xcor())
@@ -60,10 +89,11 @@ class MockTurtle(TNavigator, TPen):
 
     def __getattr__(self, name):
         if name == 'report':
-            self._path = None  # Cancel incomplete fill.
-            self._newLine()
-            self._flush_lines()
-            self._draw_stamps()
+            for instance in MockTurtle.instances:
+                instance._path = None  # Cancel incomplete fill.
+                instance._newLine()
+                instance._flush_lines()
+                instance._draw_stamps()
             return self.screen.cv.report
         raise AttributeError(name)
 

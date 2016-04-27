@@ -1,3 +1,4 @@
+import turtle
 import unittest
 
 from canvas import Canvas
@@ -5,6 +6,9 @@ from mock_turtle import MockTurtle
 
 
 class MockTurtleTest(unittest.TestCase):
+    def tearDown(self):
+        MockTurtle.remove_monkey_patch()
+
     def test_forward(self):
         # SETUP
         expected_report = """\
@@ -444,4 +448,87 @@ create_line
         report = t.report
 
         # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_monkey_patch_anonymous_turtle(self):
+        MockTurtle.monkey_patch()
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+"""
+
+        turtle.fd(100)
+        report = MockTurtle.get_all_reports()
+
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_monkey_patch_new_turtle(self):
+        MockTurtle.monkey_patch()
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+"""
+
+        t = turtle.Turtle()
+        t.fd(100)
+        report = MockTurtle.get_all_reports()
+
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_monkey_patch_multiple_turtles(self):
+        MockTurtle.monkey_patch()
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_line
+    100
+    0
+    100
+    100
+    fill='black'
+    pensize=1
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_line
+    100
+    0
+    100
+    -100
+    fill='black'
+    pensize=1
+"""
+
+        t1 = turtle.Turtle()
+        t1.begin_fill()
+        t1.fd(100)
+        t1.right(90)
+        t1.fd(100)
+        t2 = turtle.Turtle()
+        t2.begin_fill()
+        t2.fd(100)
+        t2.left(90)
+        t2.fd(100)
+        report = MockTurtle.get_all_reports()
+
+        self.maxDiff = None
         self.assertEqual(expected_report.splitlines(), report)

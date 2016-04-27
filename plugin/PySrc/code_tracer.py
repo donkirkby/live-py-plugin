@@ -25,8 +25,6 @@ from report_builder import ReportBuilder
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
-CANVAS_NAME = '__live_canvas__'
-TURTLE_NAME = '__live_turtle__'
 PSEUDO_FILENAME = '<live coding source>'
 SCOPE_NAME = '__live_coding__'
 
@@ -569,14 +567,12 @@ class LineNumberCleaner(NodeTransformer):
 
 
 class CodeTracer(object):
-    def __init__(self, turtle=None):
+    def __init__(self, canvas=None):
         self.message_limit = 10000
         self.max_width = None
         self.keepalive = False
-        self.turtle = turtle if turtle else MockTurtle()
-        self.environment = {'__name__': SCOPE_NAME,
-                            CANVAS_NAME: self.turtle.screen.cv,
-                            TURTLE_NAME: self.turtle}
+        MockTurtle.monkey_patch(canvas)
+        self.environment = {'__name__': SCOPE_NAME}
 
     def trace_canvas(self, source):
         exec(source, self.environment, self.environment)
@@ -586,7 +582,7 @@ class CodeTracer(object):
     def trace_turtle(self, source):
         exec(source, self.environment, self.environment)
 
-        return '\n'.join(self.turtle.report)
+        return '\n'.join(MockTurtle.get_all_reports())
 
     def trace_code(self, source, module_name=None):
         builder = ReportBuilder(self.message_limit)
@@ -660,11 +656,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     code = sys.stdin.read()
     canvas = Canvas(args.width, args.height)
-    turtle = MockTurtle(canvas=canvas)
-    tracer = CodeTracer(turtle)
+    tracer = CodeTracer(canvas)
     tracer.max_width = 200000
     code_report = tracer.trace_code(code, module_name=args.module)
-    turtle_report = tracer.turtle.report
+    turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:
         print('start_canvas')
         print('\n'.join(turtle_report))

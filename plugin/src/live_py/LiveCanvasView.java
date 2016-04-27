@@ -187,7 +187,8 @@ public class LiveCanvasView extends ViewPart {
             if (canvasCommands == null || canvasCommands.size() == 0) {
                 message = "No turtle commands found.\n" +
                         "For example:\n" +
-                        "__live_turtle__.forward(100)";
+                        "from turtle import *\n" +
+                        "forward(100)";
             }
         }
         if (message != null) {

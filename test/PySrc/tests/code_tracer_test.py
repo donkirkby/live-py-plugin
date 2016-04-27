@@ -2,10 +2,14 @@ from sys import version_info
 import unittest
 
 from code_tracer import CodeTracer
+from mock_turtle import MockTurtle
 from report_builder_test import ReportTestCase
 
 
 class CodeTracerTest(ReportTestCase):
+    def tearDown(self):
+        MockTurtle.remove_monkey_patch()
+
     def test_empty(self):
         # EXEC
         report = CodeTracer().trace_code("")
@@ -762,13 +766,16 @@ x = 11 """
     def test_trace_canvas(self):
         # SETUP
         code = """\
-x = 100
-y = 50
-__live_canvas__.create_line(x, y, x+10, y+10)
+from turtle import *
+
+d = 100
+forward(d)
 """
         expected_report = """\
-x = 100
-y = 50 """
+
+
+d = 100
+"""
         tracer = CodeTracer()
 
         # EXEC
@@ -776,30 +783,12 @@ y = 50 """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    def test_canvas(self):
-        # SETUP
-        code = """\
-__live_canvas__.create_line(0, 1, 100, 101)
-"""
-        expected_report = """\
-create_line
-    0
-    1
-    100
-    101
-"""
-        tracer = CodeTracer()
-
-        # EXEC
-        report = tracer.trace_canvas(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
     def test_turtle(self):
         # SETUP
         code = """\
-__live_turtle__.forward(100)
+from turtle import *
+
+forward(100)
 """
         expected_report = """\
 create_line
@@ -814,6 +803,24 @@ create_line
 
         # EXEC
         report = tracer.trace_turtle(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_mainloop(self):
+        # SETUP
+        code = """\
+from turtle import *
+
+mainloop()
+"""
+        expected_report = """\
+
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)

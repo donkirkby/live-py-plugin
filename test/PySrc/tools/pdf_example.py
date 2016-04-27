@@ -48,5 +48,5 @@ This is an example of how to use turtle graphics in a PDF document."""
 go()
 
 # Uncomment this to display the PDF after you generate it.
-# from subprocess import call
+# from subprocess import call  # @IgnorePep8
 # call(["evince", "example.pdf"])

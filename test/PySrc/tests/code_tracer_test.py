@@ -1150,5 +1150,81 @@ x = None """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_future(self):
+        code = """\
+from __future__ import print_function
+
+print('x')
+"""
+        expected_report = """\
+
+
+print('x') """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_future_after_docstring_and_comment(self):
+        code = """\
+''' My module '''
+
+# some comment
+
+from __future__ import print_function
+
+print('x')
+"""
+        expected_report = """\
+
+
+
+
+
+
+print('x') """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_print_with_sep(self):
+        code = """\
+from __future__ import print_function
+
+p = 'Bob'
+n = 23
+s = '--'
+print(p, n, sep=s)
+"""
+        expected_report = """\
+
+
+p = 'Bob'
+n = 23
+s = '--'
+print('Bob', 23, sep='--') """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_print_with_star(self):
+        code = """\
+from __future__ import print_function
+
+args = ['Bob', 23]
+print(*args)
+"""
+        expected_report = """\
+
+
+args = ['Bob', 23]
+print(*['Bob', 23]) """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
 if __name__ == '__main__':
     unittest.main()

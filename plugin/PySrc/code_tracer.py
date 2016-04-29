@@ -1,7 +1,7 @@
 from ast import (fix_missing_locations, iter_fields, parse, Assign, AST,
-                 Attribute, BinOp, Call, ExceptHandler, Expr, Index, List,
-                 Load, Mod, Name, NodeTransformer, Num, Raise, Return, Slice,
-                 Store, Str, Subscript, Tuple, Yield)
+                 Attribute, BinOp, Call, ExceptHandler, Expr, ImportFrom,
+                 Index, List, Load, Mod, Name, NodeTransformer, Num, Raise,
+                 Return, Slice, Store, Str, Subscript, Tuple, Yield)
 from copy import deepcopy
 import sys
 import traceback
@@ -60,8 +60,15 @@ class Tracer(NodeTransformer):
         return new_node
 
     def _trace_print_function(self, existing_node):
-        values = existing_node.args
-        message_format = 'print(' + ', '.join(['%r']*len(values)) + ') '
+        values = list(existing_node.args)
+        formats = ['%r'] * len(values)
+        if existing_node.starargs is not None:
+            values.append(existing_node.starargs)
+            formats.append('*%r')
+        for keyword in existing_node.keywords:
+            values.append(keyword.value)
+            formats.append('{}=%r'.format(keyword.arg))
+        message_format = 'print(' + ', '.join(formats) + ') '
         return self._create_bare_context_call('add_message',
                                               [BinOp(left=Str(message_format),
                                                      op=Mod(),
@@ -380,29 +387,37 @@ class Tracer(NodeTransformer):
         self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
 
+    def _is_module_header(self, statement):
+        if isinstance(statement, ImportFrom):
+            return statement.module == '__future__'
+        if isinstance(statement, Expr):
+            return isinstance(statement.value, Str)
+        return False
+
     def visit_Module(self, node):
         new_node = self.generic_visit(node)
-        line_numbers = set()
-        self._find_line_numbers(new_node, line_numbers)
-        if line_numbers:
-            first_line_number = min(line_numbers)
-            last_line_number = max(line_numbers)
-        else:
-            first_line_number = last_line_number = 1
         try_body = new_node.body
-        handler_body = [self._create_context_call('exception')]
-        handler = ExceptHandler(body=handler_body,
-                                lineno=last_line_number)
-        if not try_body:
-            # empty module
-            new_node.body = try_body
-        else:
-            new_node.body = [TryExcept(body=try_body,
-                                       handlers=[handler],
-                                       orelse=[],
-                                       finalbody=[])]
-        self._set_statement_line_numbers(try_body, first_line_number)
-        self._set_statement_line_numbers(handler_body, last_line_number)
+        if try_body:
+            new_body = []
+            while try_body and self._is_module_header(try_body[0]):
+                new_body.append(try_body.pop(0))
+            line_numbers = set()
+            self._find_line_numbers(new_node, line_numbers)
+            if line_numbers:
+                first_line_number = min(line_numbers)
+                last_line_number = max(line_numbers)
+            else:
+                first_line_number = last_line_number = 1
+            handler_body = [self._create_context_call('exception')]
+            handler = ExceptHandler(body=handler_body,
+                                    lineno=last_line_number)
+            new_body.append(TryExcept(body=try_body,
+                                      handlers=[handler],
+                                      orelse=[],
+                                      finalbody=[]))
+            new_node.body = new_body
+            self._set_statement_line_numbers(try_body, first_line_number)
+            self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
 
     def visit_Lambda(self, node):

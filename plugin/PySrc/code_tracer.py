@@ -464,6 +464,21 @@ class Tracer(NodeTransformer):
                                            Num(n=existing_node.lineno)]),
                 Return(value=Name(id=RESULT_NAME, ctx=Load()))]
 
+    def visit_TryExcept(self, node):
+        existing_node = self.generic_visit(node)
+        for handler in existing_node.handlers:
+            handler_name = getattr(handler.name, 'id', handler.name)
+            handler.body.insert(0, self._create_context_call(
+                'assign',
+                [Str(s=handler_name),
+                 Name(id=handler_name, ctx=Load()),
+                 Num(n=handler.lineno)]))
+        return existing_node
+
+    def visit_Try(self, node):
+        # Python 3.3 renamed TryExcept and TryFinally to Try
+        return self.visit_TryExcept(node)
+
     def visit_Yield(self, node):
         existing_node = self.generic_visit(node)
         value = existing_node.value

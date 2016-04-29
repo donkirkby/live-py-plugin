@@ -1,5 +1,4 @@
 from sys import version_info
-import unittest
 
 from code_tracer import CodeTracer
 from mock_turtle import MockTurtle
@@ -421,6 +420,28 @@ ZeroDivisionError: division by zero """
         expected_report = (expected_report_python3
                            if version_info.major >= 3
                            else expected_report_python2)
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_runtime_error_caught(self):
+        # SETUP
+        code = """\
+try:
+    raise RuntimeError('Bad stuff happened.')
+except Exception as e:
+    f = e
+"""
+        expected_report = """\
+
+
+e = RuntimeError('Bad stuff happened.',)
+f = RuntimeError('Bad stuff happened.',) """
+
         tracer = CodeTracer()
 
         # EXEC
@@ -1225,6 +1246,3 @@ print(*['Bob', 23]) """
         report = CodeTracer().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
-
-if __name__ == '__main__':
-    unittest.main()

@@ -99,6 +99,8 @@ public class LiveCodingAnalyst {
     private IDocument mainDocument;
     private Document displayDocument;
     private SourceViewer displayViewer;
+    private int horizontalTarget;
+    private int horizontalPosition;
     private LiveCanvasView canvasView;
     private File scriptPath;
     private ArrayList<CanvasCommand> canvasCommands = 
@@ -340,11 +342,20 @@ public class LiveCodingAnalyst {
                 if (view != null) {
                     view.redraw();
                 }
+                final int horizontalNow =
+                        displayViewer.getTextWidget().getHorizontalPixel();
+                if (horizontalNow != horizontalPosition) {
+                    horizontalTarget = horizontalNow;
+                }
                 displayDocument.set(results);
 
                 // Update the scroll position after changing the text.
                 displayViewer.getTextWidget().setTopPixel(
                         mainViewer.getTextWidget().getTopPixel());
+                displayViewer.getTextWidget().setHorizontalPixel(
+                        horizontalTarget);
+                horizontalPosition =
+                        displayViewer.getTextWidget().getHorizontalPixel();
             }
         });
     }

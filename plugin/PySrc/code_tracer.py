@@ -639,6 +639,9 @@ class CodeTracer(object):
                 mod.__dict__.update(self.environment)
                 environment = mod.__dict__
             exec(code, environment)
+            for value in environment.values():
+                if isinstance(value, types.GeneratorType):
+                    value.close()
         except SyntaxError:
             ex = sys.exc_info()[1]
             messages = traceback.format_exception_only(type(ex), ex)

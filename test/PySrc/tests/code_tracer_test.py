@@ -1053,27 +1053,31 @@ RuntimeError: Invalid n. """
     def test_incomplete_iterator(self):
         # SETUP
         code = """\
-def f():
-    yield 1
-    yield 2
+def gen(n):
+    state = 'Starting'
+    try:
+        for i in range(n):
+            yield i
+    finally:
+        state = 'Done'
 
-r = f()
-x = next(r)
-y = next(r)
-#z = next(r) #Don't complete the iterator, so the function never exits.
-n = x
+
+g = gen(999)
+x = next(g)
 """
 
         expected_report = """\
+n = 999
+state = 'Starting'
 
-yield 1
-yield 2
+i = 0
+yield 0 GeneratorExit
+
+state = 'Done'
 
 
-x = 1
-y = 2
 
-n = 1
+x = 0
 """
         tracer = CodeTracer()
 

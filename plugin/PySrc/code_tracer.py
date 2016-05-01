@@ -468,11 +468,12 @@ class Tracer(NodeTransformer):
         existing_node = self.generic_visit(node)
         for handler in existing_node.handlers:
             handler_name = getattr(handler.name, 'id', handler.name)
-            handler.body.insert(0, self._create_context_call(
-                'assign',
-                [Str(s=handler_name),
-                 Name(id=handler_name, ctx=Load()),
-                 Num(n=handler.lineno)]))
+            if handler_name is not None:
+                handler.body.insert(0, self._create_context_call(
+                    'assign',
+                    [Str(s=handler_name),
+                     Name(id=handler_name, ctx=Load()),
+                     Num(n=handler.lineno)]))
         return existing_node
 
     def visit_Try(self, node):

@@ -450,6 +450,28 @@ f = RuntimeError('Bad stuff happened.',) """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_runtime_error_caught_unnamed(self):
+        # SETUP
+        code = """\
+try:
+    raise RuntimeError('Bad stuff happened.')
+except:
+    f = 'Worse stuff'
+"""
+        expected_report = """\
+
+
+
+f = 'Worse stuff' """
+
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_multiline_error(self):
         # SETUP
         code = """\

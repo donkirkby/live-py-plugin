@@ -428,6 +428,29 @@ ZeroDivisionError: division by zero """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_runtime_error_after_conditional(self):
+        # SETUP
+        code = """\
+if False:
+    x = 2
+else:
+    x = 3
+raise RuntimeError('Bad stuff happened.')
+"""
+        expected_report = """\
+
+
+
+x = 3
+RuntimeError: Bad stuff happened. """
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_runtime_error_caught(self):
         # SETUP
         code = """\

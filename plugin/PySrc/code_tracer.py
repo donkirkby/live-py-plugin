@@ -623,8 +623,8 @@ class CodeTracer(object):
             tree = parse(source)
 
             new_tree = Tracer().visit(tree)
-            LineNumberCleaner().visit(new_tree)
             fix_missing_locations(new_tree)
+            LineNumberCleaner().visit(new_tree)
 #             from ast import dump
 #             print(dump(new_tree, include_attributes=False))
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')

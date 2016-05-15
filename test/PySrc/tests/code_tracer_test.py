@@ -409,17 +409,11 @@ n = Decimal('10') """
         # SETUP
         code = """\
 x = 2
-x = 1/0
+raise RuntimeError('Bad stuff happened.')
 """
-        expected_report_python2 = """\
+        expected_report = """\
 x = 2
-ZeroDivisionError: integer division or modulo by zero """
-        expected_report_python3 = """\
-x = 2
-ZeroDivisionError: division by zero """
-        expected_report = (expected_report_python3
-                           if version_info.major >= 3
-                           else expected_report_python2)
+RuntimeError: Bad stuff happened. """
         tracer = CodeTracer()
 
         # EXEC
@@ -526,23 +520,15 @@ quality = 'a' | TypeError:"""
         # SETUP
         code = """\
 def foo(n):
-    return n/0
+    raise RuntimeError('Bad stuff happened.')
 
 x = foo(5)
 """
-        expected_report_python2 = """\
+        expected_report = """\
 n = 5
-ZeroDivisionError: integer division or modulo by zero
+RuntimeError: Bad stuff happened.
 
-ZeroDivisionError: integer division or modulo by zero """
-        expected_report_python3 = """\
-n = 5
-ZeroDivisionError: division by zero
-
-ZeroDivisionError: division by zero """
-        expected_report = (expected_report_python3
-                           if version_info.major >= 3
-                           else expected_report_python2)
+RuntimeError: Bad stuff happened. """
 
         tracer = CodeTracer()
 
@@ -1157,21 +1143,13 @@ x = (1, 2) """
 x = (
      '')
 y = 2
-z = 1/0
+raise RuntimeError('Bad stuff happened.')
 """
-        expected_report_python2 = """\
+        expected_report = """\
 x = ''
 
 y = 2
-ZeroDivisionError: integer division or modulo by zero """
-        expected_report_python3 = """\
-x = ''
-
-y = 2
-ZeroDivisionError: division by zero """
-        expected_report = (expected_report_python3
-                           if version_info.major >= 3
-                           else expected_report_python2)
+RuntimeError: Bad stuff happened. """
         # EXEC
         report = CodeTracer().trace_code(code)
 

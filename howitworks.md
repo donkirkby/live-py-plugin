@@ -1,0 +1,86 @@
+---
+title: How it Works
+subtitle: Instrumenting Python Code
+---
+I want to record each change to the program's state, so I take the original
+source code and add logging calls around each assignment, loop iteration,
+and other interesting features. Each change I make to the code needs to leave
+its behaviour the same while recording enough information to build a display.
+The recording is done by making calls to a new global variable:
+`__live_coding_context__`.
+
+As an example, consider the following code with its display:
+
+    a = 'Hello'        | a = 'Hello' 
+    b = a + ', World!' | b = 'Hello, World!' 
+
+That code could be instrumented like this:
+
+    a = __live_coding_context__.assign('a', 'Hello', 1)
+    b = __live_coding_context__.assign('b', a + ', World!', 2)
+
+The `assign()` method takes in the calculated value, records the assignment
+for its report, and then returns the value for the actual assignment.
+The numbers are the line numbers from the original code, and they tell the
+context where to report the assignments so they show up on the right lines.
+
+To display loop execution, I add the pipe symbol at the end of every line in the
+loop, each time the loop starts. The context has a `start_block()` method to
+do this. Here's an example with its display:
+
+    x = 0               | x = 0 
+    for n in [1, 3, 5]: | n = 1 | n = 3 | n = 5 
+        x = x + n       | x = 1 | x = 4 | x = 9 
+ 
+That could be instrumented like this, including `start_block()` and
+instrumentation of the loop variable:
+
+    x = __live_coding_context__.assign('x', 0, 1)
+    for n in [1, 3, 5]:
+        __live_coding_context__.start_block(2, 3)
+        __live_coding_context__.assign('n', n, 2)
+        x = __live_coding_context__.assign('x', x + n, 3)
+
+Once I know what changes I want to make to the code, how do I add things to
+the user's source code? Python has an amazing module called `ast` for handling
+abstract syntax trees. You can parse Python source code from a string, and then
+make changes to it. Finally, you can compile and run it.
+
+Here's some example source code:
+
+    s = 'Hello'
+    s += ', World!'
+
+Here are the `ast` objects that it gets parsed into:
+
+    Module(body=[Assign(targets=[Name(id='s', ctx=Store())],
+                        value=Str(s='Hello')),
+                 AugAssign(target=Name(id='s', ctx=Store()),
+                           op=Add(),
+                           value=Str(s=', World!'))])
+
+Those objects also have attributes holding the line numbers they came from, so
+I can display the assignments next to the matching lines of source code. To make
+changes to an abstract syntax tree, you define a class that visits each node
+of the tree, and returns the modified node. Here's a simple example, the method
+that modifies a for loop:
+
+    def visit_For(self, node):
+        new_node = self.generic_visit(node)
+
+        line_numbers = set()
+        self._find_line_numbers(new_node, line_numbers)
+        args = [Num(n=min(line_numbers)),
+                Num(n=max(line_numbers))]
+        new_body = [self._create_context_call('start_block', args)]
+        new_body.extend(self._trace_assignment_list(new_node.target))
+        new_body.extend(new_node.body)
+        new_node.body = new_body
+        return new_node
+
+The `generic_visit()` visits all the child nodes before modifying the for
+for loop itself. Next, I walk through the child nodes looking for all the line
+numbers that are included in the loop, so I can draw the pipe symbols between
+each iteration of the loop. Then I insert calls to `start_block()` and
+`assign()` before the original statements in the for loop. Finally, I return
+the modified for loop.

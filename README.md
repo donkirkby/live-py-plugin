@@ -3,16 +3,18 @@ live-py-plugin
 
 Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.
 
-To see how it works, watch the [demo video][video] or read the 
+To see how to use it, watch the [demo video][video] or read the 
 [blog post][blog]. You might also find some useful examples in the 
-[tools folder][tools].
+[tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
 
-Special thanks to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for contributing the Emacs support.
+Special thanks to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for
+contributing the Emacs support.
 
 If you like this project, check out some of my [other projects][projects].
 
+[how]: http://donkirkby.github.io/live-py-plugin/howitworks
 [screenshot]: https://raw.githubusercontent.com/donkirkby/live-py-plugin/master/screenshot.png
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik

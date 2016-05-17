@@ -65,6 +65,15 @@ class ReportBuilder(object):
                 raise RuntimeError('live coding message limit exceeded')
 
     def start_frame(self, first_line, last_line):
+        """ Start a new stack frame to support recursive calls.
+
+        This allows extra messages to be added to a stack frame after a
+        recursive call finishes.
+        :param int first_line: the first line of the function that the frame is
+        running.
+        :param int last_line: the last line of the function that the frame is
+        running.
+        """
         new_frame = ReportBuilder(self.message_limit)
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths

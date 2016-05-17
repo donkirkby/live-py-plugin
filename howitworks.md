@@ -43,8 +43,8 @@ instrumentation of the loop variable:
 
 Once I know what changes I want to make to the code, how do I add things to
 the user's source code? Python has an amazing module called `ast` for handling
-abstract syntax trees. You can parse Python source code from a string, and then
-make changes to it. Finally, you can compile and run it.
+abstract syntax trees. You can parse Python source code from a string into a
+syntax tree, and then make changes to it. Finally, you can compile and run it.
 
 Here's some example source code:
 
@@ -84,3 +84,42 @@ numbers that are included in the loop, so I can draw the pipe symbols between
 each iteration of the loop. Then I insert calls to `start_block()` and
 `assign()` before the original statements in the for loop. Finally, I return
 the modified for loop.
+
+One of the most challenging parts was to register the instrumented code as a
+module so a developer can register callbacks to the instrumented code. This is
+useful for running unit tests, for example. David Beazley wrote
+[an exhaustive review][beaz] of Python's module system, and that showed how to
+manually override the import process.
+
+Here's a minimal example of how to replace the standard import:
+
+    from ast import parse
+    import types
+    import sys
+    
+    source = """\
+    def foo():
+        print('Hello, World!')
+    """
+    module_name = 'live_lib'
+    
+    tree = parse(source)
+    # TODO: Instrument tree.
+    code = compile(tree, '<dummy file>', 'exec')
+    
+    mod = types.ModuleType(module_name)
+    sys.modules[module_name] = mod
+    exec(code, mod.__dict__)
+    
+    import live_lib
+    
+    live_lib.foo()
+
+The source string holds the original source code, and I parse that into a
+syntax tree. After instrumenting the tree (not shown), I compile it and execute
+it using the module's dictionary for its global variables. After that, importing
+the `live_lib` module will import the instrumented code, even if there is no
+`live_lib.py` file. Any other modules that import `live_lib` will get the
+instrumented code.
+
+[beaz]: http://www.dabeaz.com/modulepackage/

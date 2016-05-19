@@ -95,6 +95,20 @@ create_line
         self.assertEqual(expected_width, width)
         self.assertEqual(expected_height, height)
 
+    def test_bounds_after_monkey_patch(self):
+        # SETUP
+        expected_width = 300
+        expected_height = 200
+
+        # EXEC
+        MockTurtle.monkey_patch(canvas=Canvas(expected_width, expected_height))
+        width = turtle.window_width()
+        height = turtle.window_height()
+
+        # VERIFY
+        self.assertEqual(expected_width, width)
+        self.assertEqual(expected_height, height)
+
     def test_offset(self):
         # SETUP
         expected_report = """\

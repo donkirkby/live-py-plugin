@@ -1,4 +1,4 @@
-class Canvas:
+class Canvas(object):
     def __init__(self, width=0, height=0):
         self.options = {'width': width,
                         'height': height}

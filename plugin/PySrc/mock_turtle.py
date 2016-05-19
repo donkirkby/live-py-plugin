@@ -9,11 +9,19 @@ from canvas import Canvas
 class MockTurtle(TNavigator, TPen):
     class _Screen(object):
         def __init__(self, canvas):
+            if canvas is None:
+                canvas = Canvas()
             self.cv = canvas
             self.xscale = self.yscale = 1
 
+        def window_width(self):
+            return self.cv.cget('width')
+
+        def window_height(self):
+            return self.cv.cget('height')
+
     _Stamp = namedtuple('Stamp', 'pos heading color')
-    _pen = OriginalTurtle = original_mainloop = None
+    _screen = _pen = OriginalTurtle = original_mainloop = None
     instances = []
 
     @classmethod
@@ -23,7 +31,8 @@ class MockTurtle(TNavigator, TPen):
         turtle_module.Turtle = MockTurtle
         cls.original_mainloop = turtle_module.mainloop
         turtle_module.mainloop = lambda: None
-        MockTurtle._pen = MockTurtle(canvas=canvas)
+        MockTurtle._screen = MockTurtle._Screen(canvas)
+        MockTurtle._pen = MockTurtle()
 
     @classmethod
     def remove_monkey_patch(cls):
@@ -33,6 +42,7 @@ class MockTurtle(TNavigator, TPen):
             turtle_module.Turtle = cls.OriginalTurtle
             turtle_module.mainloop = cls.original_mainloop
             MockTurtle._pen = cls.OriginalTurtle = cls.original_mainloop = None
+            MockTurtle._screen = None
 
     @classmethod
     def get_all_reports(cls):
@@ -43,11 +53,9 @@ class MockTurtle(TNavigator, TPen):
         self._lines_to_draw = []
         TNavigator.__init__(self)
         TPen.__init__(self)
-        if MockTurtle._pen is not None:
-            self.screen = MockTurtle._pen.screen
+        if MockTurtle._screen is not None:
+            self.screen = MockTurtle._screen
         else:
-            if canvas is None:
-                canvas = Canvas()
             self.screen = MockTurtle._Screen(canvas)
         self.stamps = []
         self.__xoff = self.screen.cv.cget('width')/2

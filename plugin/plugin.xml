@@ -8,17 +8,6 @@
       </pyedit_listener_participant>
    </extension>
    <extension
-         point="org.eclipse.ui.views">
-      <view
-            category="org.python.pydev"
-            class="live_py.LiveCanvasView"
-            icon="icons/turtle.png"
-            id="com.github.donkirkby.live-canvas"
-            name="Live Coding Canvas"
-            restorable="true">
-      </view>
-   </extension>
-   <extension
          point="org.eclipse.ui.commands">
       <category
             id="live-py.commands.category"

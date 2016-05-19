@@ -117,7 +117,6 @@ public class LiveCodingAnalyst {
     private SourceViewer displayViewer;
     private int horizontalTarget;
     private int horizontalPosition;
-    private LiveCanvasView canvasView;
     private File scriptPath;
     private ArrayList<CanvasCommand> canvasCommands = 
             new ArrayList<CanvasCommand>();
@@ -562,14 +561,6 @@ public class LiveCodingAnalyst {
         if(DEBUG){
             System.out.println("Script path: "+scriptPath);
         }
-    }
-
-    public LiveCanvasView getCanvasView() {
-        return canvasView;
-    }
-
-    public void setCanvasView(LiveCanvasView canvasView) {
-        this.canvasView = canvasView;
     }
 
     public ArrayList<CanvasCommand> getCanvasCommands() {

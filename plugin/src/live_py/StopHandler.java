@@ -1,5 +1,7 @@
 package live_py;
 
+import live_py.LiveCodingAnalyst.Mode;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -19,7 +21,7 @@ public class StopHandler extends AbstractHandler {
         IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
         IEditorPart editor = window.getActivePage().getActiveEditor();
         if (editor instanceof PyEdit) {
-            PyEditDecorator.getAnalyst((PyEdit) editor).setVisibility(false);
+            PyEditDecorator.getAnalyst((PyEdit) editor).setMode(Mode.Hidden);
         }
         return null;
     }

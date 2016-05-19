@@ -15,13 +15,13 @@ import org.python.pydev.editor.PyEdit;
  * @author don
  *
  */
-public class StartHandler extends AbstractHandler {
+public class TurtleHandler extends AbstractHandler {
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
         IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindowChecked(event);
         IEditorPart editor = window.getActivePage().getActiveEditor();
         if (editor instanceof PyEdit) {
-            PyEditDecorator.getAnalyst((PyEdit) editor).setMode(Mode.Display);
+            PyEditDecorator.getAnalyst((PyEdit) editor).setMode(Mode.Turtle);
         }
         return null;
     }

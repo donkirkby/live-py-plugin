@@ -31,6 +31,11 @@
       </command>
       <command
             categoryId="live-py.commands.category"
+            id="live-py.commands.turtle"
+            name="Start Live Turtle">
+      </command>
+      <command
+            categoryId="live-py.commands.category"
             id="live-py.commands.stop"
             name="Stop Live Coding">
       </command>
@@ -40,6 +45,15 @@
       <handler
             class="live_py.StartHandler"
             commandId="live-py.commands.start">
+        <activeWhen>
+            <with variable="activeEditorId">
+               <equals value="org.python.pydev.editor.PythonEditor"/>
+            </with>
+        </activeWhen>
+      </handler>
+      <handler
+            class="live_py.TurtleHandler"
+            commandId="live-py.commands.turtle">
         <activeWhen>
             <with variable="activeEditorId">
                <equals value="org.python.pydev.editor.PythonEditor"/>
@@ -65,6 +79,12 @@
             sequence="M3+F11"><!-- Alt+F11 -->
       </key>
       <key
+            commandId="live-py.commands.turtle"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M3+F12"><!-- Alt+F12 -->
+      </key>
+      <key
             commandId="live-py.commands.stop"
             contextId="org.eclipse.ui.contexts.window"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
@@ -82,12 +102,17 @@
             <command
                   commandId="live-py.commands.start"
                   id="live-py.menus.start"
-                  mnemonic="T">
+                  mnemonic="A">
+            </command>
+            <command
+                  commandId="live-py.commands.turtle"
+                  id="live-py.menus.turtle"
+                  mnemonic="U">
             </command>
             <command
                   commandId="live-py.commands.stop"
                   id="live-py.menus.stop"
-                  mnemonic="P">
+                  mnemonic="O">
             </command>
          </menu>
       </menuContribution>
@@ -100,6 +125,12 @@
                   icon="icons/media-play-3x.png"
                   id="live-py.toolbars.start"
                   tooltip="Start Live Coding">
+            </command>
+            <command
+                  commandId="live-py.commands.turtle"
+                  icon="icons/turtle.png"
+                  id="live-py.toolbars.turtle"
+                  tooltip="Start Live Turtle">
             </command>
             <command
                   commandId="live-py.commands.stop"

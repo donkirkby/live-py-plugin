@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -29,10 +30,19 @@ import org.eclipse.jface.text.source.SourceViewerConfiguration;
 import org.eclipse.jface.text.source.VerticalRuler;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.osgi.framework.Bundle;
@@ -60,6 +70,12 @@ public class LiveCodingAnalyst {
      * Making it true will print some debug info to stdout.
      */
     private final static boolean DEBUG = false;
+    
+    public enum Mode {
+        Hidden, // source code only
+        Display, // variable values and iteration
+        Turtle // turtle graphics
+    }
     
     private static LinkedBlockingQueue<AnalysisTask> toAnalyse =
             new LinkedBlockingQueue<AnalysisTask>();
@@ -107,8 +123,11 @@ public class LiveCodingAnalyst {
             new ArrayList<CanvasCommand>();
     private Composite editorContent;
     private Composite liveDisplay;
+    private Canvas canvas;
+    private Rectangle canvasBounds;
+    private HashMap<String, Color> colorMap = new HashMap<String, Color>();
     private SashForm splitter;
-    private boolean isVisible;
+    private Mode mode = Mode.Hidden;
 
     /**
      * This callback inserts a new composite inside the standard window
@@ -129,6 +148,8 @@ public class LiveCodingAnalyst {
         editorContent.setLayout(new FillLayout());
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
         editorContent.setLayoutData(gridData);
+        
+        canvas = new Canvas(splitter, SWT.NONE);
         
         liveDisplay = new Composite(splitter, SWT.NONE);
         liveDisplay.setLayout(new FillLayout());
@@ -168,7 +189,23 @@ public class LiveCodingAnalyst {
         
         new TextViewerSupport(displayViewer); // registers itself
 
-        setVisibilityNow();
+        canvas.addPaintListener(new PaintListener() {
+            
+            @Override
+            public void paintControl(PaintEvent e) {
+                drawResult(e.gc);
+            }
+        });
+        
+        canvas.addControlListener(new ControlAdapter() {
+            @Override
+            public void controlResized(ControlEvent e) {
+                canvasBounds = canvas.getBounds();
+                refresh();
+            }
+        });
+        
+        setModeNow();
 
         return editorContent;
     }
@@ -215,21 +252,30 @@ public class LiveCodingAnalyst {
      * Set the visibility of the live coding display.
      * @param isVisible
      */
-    public void setVisibility(final boolean isVisible) {
-        this.isVisible = isVisible;
+    public void setMode(final Mode mode) {
+        this.mode = mode;
         // Can only change visibility on the UI thread.
         Display.getDefault().asyncExec(new Runnable() {
             public void run() {
-                setVisibilityNow();
+                setModeNow();
             }
         });
     }
 
-    private void setVisibilityNow() {
+    private void setModeNow() {
         if (splitter != null) {
-            // If live display is not visible, maximize main editor.
-            splitter.setMaximizedControl(isVisible ? null : editorContent);
-            if (isVisible) {
+            if (mode == Mode.Turtle) {
+                liveDisplay.setVisible(false);
+                canvas.setVisible(true);
+            }
+            else {
+                canvas.setVisible(false);
+                liveDisplay.setVisible(true);
+            }
+            // If live display and turtle are not visible, maximize main editor.
+            splitter.setMaximizedControl(mode == Mode.Hidden ? editorContent : null);
+            if (mode != Mode.Hidden) {
+                splitter.layout();
                 refresh();
             }
         }
@@ -251,10 +297,7 @@ public class LiveCodingAnalyst {
              */
             @Override
             public void documentChanged(DocumentEvent event) {
-                boolean isDisplayVisible =
-                        splitter.getMaximizedControl() == null &&
-                        displayViewer.getControl().isVisible();
-                if (isDisplayVisible || canvasView != null)
+                if (mode != Mode.Hidden)
                 {
                     addAnalysisTask(event.getDocument());
                 }
@@ -338,24 +381,25 @@ public class LiveCodingAnalyst {
         // The document can only be updated from the display thread.
         Display.getDefault().asyncExec(new Runnable() {
             public void run() {
-                LiveCanvasView view = canvasView;
-                if (view != null) {
-                    view.redraw();
+                if (mode == Mode.Turtle) {
+                    redraw();
                 }
-                final int horizontalNow =
-                        displayViewer.getTextWidget().getHorizontalPixel();
-                if (horizontalNow != horizontalPosition) {
-                    horizontalTarget = horizontalNow;
+                else {
+                    final int horizontalNow =
+                            displayViewer.getTextWidget().getHorizontalPixel();
+                    if (horizontalNow != horizontalPosition) {
+                        horizontalTarget = horizontalNow;
+                    }
+                    displayDocument.set(results);
+    
+                    // Update the scroll position after changing the text.
+                    displayViewer.getTextWidget().setTopPixel(
+                            mainViewer.getTextWidget().getTopPixel());
+                    displayViewer.getTextWidget().setHorizontalPixel(
+                            horizontalTarget);
+                    horizontalPosition =
+                            displayViewer.getTextWidget().getHorizontalPixel();
                 }
-                displayDocument.set(results);
-
-                // Update the scroll position after changing the text.
-                displayViewer.getTextWidget().setTopPixel(
-                        mainViewer.getTextWidget().getTopPixel());
-                displayViewer.getTextWidget().setHorizontalPixel(
-                        horizontalTarget);
-                horizontalPosition =
-                        displayViewer.getTextWidget().getHorizontalPixel();
             }
         });
     }
@@ -540,10 +584,173 @@ public class LiveCodingAnalyst {
         AnalysisTask task = new AnalysisTask();
         task.sourceCode = document.get();
         task.analyst = LiveCodingAnalyst.this;
-        task.bounds = 
-                canvasView != null
-                ? canvasView.getBounds()
-                : null;
+        task.bounds = getBounds();
         toAnalyse.add(task);
+    }
+    
+    public void redraw() {
+        if (canvas != null) {
+            canvas.redraw();
+        }
+    }
+    
+    public Rectangle getBounds() {
+        // cache the bounds so we can see them from a background thread.
+        return canvasBounds; 
+    }
+    
+    private void drawResult(GC gc) {
+        // Clear the drawing
+        Rectangle bounds = getBounds();
+        gc.fillRectangle(bounds);
+        
+        String message = null;
+        ArrayList<CanvasCommand> canvasCommands = null;
+        canvasCommands = getCanvasCommands();
+        if (canvasCommands == null || canvasCommands.size() == 0) {
+            message = "No turtle commands found.\n" +
+                    "For example:\n" +
+                    "from turtle import *\n" +
+                    "forward(100)";
+        }
+        if (message != null) {
+            Point extent = gc.textExtent(message);
+            gc.drawText(
+                    message, 
+                    (bounds.width - extent.x)/2, 
+                    (bounds.height - extent.y)/2,
+                    SWT.DRAW_TRANSPARENT +
+                    SWT.DRAW_DELIMITER);
+            return;
+        }
+        // Execute the drawing commands
+        for (CanvasCommand command : canvasCommands) {
+            String method = command.getName();
+            String fill = command.getOption("fill");
+            String outline = command.getOption("outline");
+            String newLineWidthText = command.getOption("pensize");
+            Color oldForeground = gc.getForeground();
+            Color newForeground = null;
+            Color oldBackground = gc.getBackground();
+            Color newBackground = null;
+            int oldLineWidth = gc.getLineWidth();
+            if (outline != null) {
+                newForeground = getColor(outline);
+                newBackground = getColor(fill);
+            }
+            else {
+                newForeground = getColor(fill);
+            }
+            if (newForeground != null) {
+                gc.setForeground(newForeground);
+            }
+            if (newBackground != null) {
+                gc.setBackground(newBackground);
+            }
+            if (newLineWidthText != null) {
+                int newLineWidth =
+                        (int)Math.round(Double.parseDouble(newLineWidthText));
+                gc.setLineWidth(newLineWidth);
+                gc.setLineCap(SWT.CAP_ROUND);
+            }
+            if (method.equals("create_line")) {
+                gc.drawLine(
+                        command.getCoordinate(0),
+                        command.getCoordinate(1),
+                        command.getCoordinate(2),
+                        command.getCoordinate(3));
+            }
+            else if (method.equals("create_rectangle")) {
+                gc.drawRectangle(
+                        command.getCoordinate(0),
+                        command.getCoordinate(1),
+                        command.getCoordinate(2) - command.getCoordinate(0),
+                        command.getCoordinate(3) - command.getCoordinate(1));
+            }
+            else if (method.equals("create_polygon")) {
+                int[] coordinates = command.getAllCoordinates();
+                if (newBackground != null) {
+                    gc.fillPolygon(coordinates);
+                }
+//              if (newForeground != null) {
+//                  gc.drawPolygon(coordinates);
+//              }
+            }
+            else if (method.equals("create_text")) {
+                Font oldFont = gc.getFont();
+                gc.setFont(command.getFontOption(gc.getDevice(), "font"));
+                int textFlags = 
+                        SWT.DRAW_TRANSPARENT + 
+                        SWT.DRAW_DELIMITER + 
+                        SWT.DRAW_TAB;
+                String text = command.getOption("text");
+                Point size = gc.textExtent(text, textFlags);
+                int x = command.getCoordinate(0);
+                int y = command.getCoordinate(1);
+                String anchor = command.getOption("anchor");
+                anchor = anchor == null ? "center" : anchor;
+                if (anchor.startsWith("s")) {
+                    y -= size.y;
+                }
+                else if (anchor.startsWith("n")) {
+                    // defaults to top
+                }
+                else {
+                    y -= size.y/2;
+                }
+                if (anchor.endsWith("e")) {
+                    x -= size.x;
+                }
+                else if (anchor.endsWith("w")) {
+                    // defaults to left side
+                }
+                else {
+                    x -= size.x/2;
+                }
+                gc.drawText(
+                        text, 
+                        x, 
+                        y,
+                        textFlags);
+                gc.setFont(oldFont);
+            }
+            if (newForeground != null) {
+                gc.setForeground(oldForeground);
+            }
+            if (newBackground != null) {
+                gc.setBackground(oldBackground);
+            }
+            if (newLineWidthText != null) {
+                gc.setLineWidth(oldLineWidth);
+            }
+        }
+        disposeColors();
+    }
+
+    private void disposeColors() {
+        for (Color color : colorMap.values()) {
+            color.dispose();
+        }
+        colorMap.clear();
+    }
+
+    private Color getColor(String fill) {
+        Color newForeground;
+        newForeground = colorMap.get(fill);
+        if (newForeground == null) {
+            int red, green, blue;
+            if ( ! fill.startsWith("#")) {
+                red = green = blue = 0;
+            }
+            else {
+                int colorInt = Integer.parseInt(fill.substring(1), 16);
+                red = (colorInt >> 16) % 256;
+                green = (colorInt >> 8) % 256;
+                blue = colorInt % 256;
+            }
+            newForeground = new Color(Display.getCurrent(), red, green, blue);
+            colorMap.put(fill, newForeground);
+        }
+        return newForeground;
     }
 }

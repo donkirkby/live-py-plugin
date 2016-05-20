@@ -17,4 +17,3 @@ print(ast.dump(tree, include_attributes=True))
 print('')
 for s in tree.body:
     print('    ' + ast.dump(s, include_attributes=False))
-

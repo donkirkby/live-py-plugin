@@ -166,13 +166,16 @@ class ReportBuilder(object):
         return value
 
     def record_call(self,
-                    name,
-                    display_before,
+                    names,
+                    displays_before,
                     result,
-                    display_after,
+                    displays_after,
                     line_number):
-        if display_before != display_after:
-            self.add_message('%s = %s ' % (name, display_after), line_number)
+        zipped = zip(names, displays_before, displays_after)
+        for name, display_before, display_after in zipped:
+            if display_before != display_after:
+                self.add_message('%s = %s ' % (name, display_after),
+                                 line_number)
         return result
 
     def report(self):

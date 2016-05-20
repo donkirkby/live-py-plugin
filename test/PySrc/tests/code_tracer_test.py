@@ -225,6 +225,23 @@ f.items = [2] """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_method_call_output_param(self):
+        # SETUP
+        code = """\
+from heapq import heappush
+l = []
+heappush(l, 5)
+"""
+        expected_report = """\
+
+l = []
+l = [5] """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_loop_conditional(self):
         # SETUP
         code = """\

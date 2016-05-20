@@ -179,30 +179,44 @@ class Tracer(NodeTransformer):
 
     def visit_Call(self, node):
         existing_node = self.generic_visit(node)
-        value_node = existing_node.func
+        func_node = existing_node.func
 
-        if self._is_untraceable_attribute(value_node):
+        if self._is_untraceable_attribute(func_node):
             return existing_node
-        if isinstance(value_node, Name) and value_node.id == 'print':
+        if isinstance(func_node, Name) and func_node.id == 'print':
             return self._trace_print_function(existing_node)
 
-        names = self._get_attribute_names(value_node)
-        if names is None:
-            return existing_node
+        comparisons = []  # [(name, node)]
+        names = self._get_attribute_names(func_node)
+        if names is not None:
+            comparisons.append(('.'.join(names[:-1]),
+                                existing_node.func.value))
 
-        args = [Str(s='.'.join(names[:-1])),
-                Call(func=Name(id='repr', ctx=Load()),
-                     args=[existing_node.func.value],
-                     keywords=[],
-                     starargs=None,
-                     kwargs=None),
+        for arg_node in existing_node.args:
+            if isinstance(arg_node, Name):
+                comparisons.append((arg_node.id, arg_node))
+
+        if not comparisons:
+            return existing_node
+        args = [List(elts=[], ctx=Load()),
+                List(elts=[], ctx=Load()),
                 existing_node,
+                List(elts=[], ctx=Load()),
+                Num(n=existing_node.lineno)]
+        for name, node in comparisons:
+            args[0].elts.append(Str(s=name))  # name
+            args[1].elts.append(  # repr() before
                 Call(func=Name(id='repr', ctx=Load()),
-                     args=[existing_node.func.value],
+                     args=[node],
                      keywords=[],
                      starargs=None,
-                     kwargs=None),
-                Num(n=existing_node.lineno)]
+                     kwargs=None))
+            args[3].elts.append(  # repr() after
+                Call(func=Name(id='repr', ctx=Load()),
+                     args=[node],
+                     keywords=[],
+                     starargs=None,
+                     kwargs=None))
         new_node = self._create_bare_context_call('record_call', args)
         return new_node
 

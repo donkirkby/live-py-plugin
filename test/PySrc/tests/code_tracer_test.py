@@ -1290,3 +1290,70 @@ print(*['Bob', 23]) """
         report = CodeTracer().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
+
+    def test_delete_item(self):
+        code = """\
+l = [0, 10, 20]
+del l[1]
+"""
+        expected_report = """\
+l = [0, 10, 20]
+l = [0, 20] """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_delete_attribute(self):
+        code = """\
+class Foo(object):
+    def __init__(self, name=None):
+        self.name = name
+
+    def __repr__(self):
+        name = getattr(self, 'name', None)
+        if name is None:
+            return 'Foo()'
+        return 'Foo({!r})'.format(name)
+
+f = Foo('Bob')
+del f.name
+g = f
+"""
+        expected_report = """\
+
+name = 'Bob'
+self.name = 'Bob'
+
+
+
+
+
+
+
+f = Foo('Bob')
+f = Foo()
+g = Foo() """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_delete_item_of_attribute(self):
+        code = """\
+class Foo(object):
+    pass
+f = Foo()
+f.l = [0, 10, 20]
+del f.l[1]
+"""
+        expected_report = """\
+
+
+
+f.l = [0, 10, 20]
+f.l = [0, 20] """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)

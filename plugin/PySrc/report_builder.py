@@ -178,6 +178,9 @@ class ReportBuilder(object):
                                  line_number)
         return result
 
+    def record_delete(self, name, target, line_number):
+        return DeletionTarget(name, target, line_number, self)
+
     def report(self):
         for frame in self.history:
             first_line, last_line = frame.stack_block
@@ -193,6 +196,32 @@ class ReportBuilder(object):
     def _check_line_count(self, line_count):
         while len(self.messages) < line_count:
             self.messages.append('')
+
+
+class DeletionTarget(object):
+    def __init__(self, name, target, line_number, report_builder):
+        self.name = name
+        self.target = target
+        self.line_number = line_number
+        self.report_builder = report_builder
+
+    def __delitem__(self, key):
+        before = repr(self.target)
+        del self.target[key]
+        after = repr(self.target)
+        if before != after:
+            self.report_builder.assign(self.name,
+                                       self.target,
+                                       self.line_number)
+
+    def __delattr__(self, key):
+        before = repr(self.target)
+        self.target.__delattr__(key)
+        after = repr(self.target)
+        if before != after:
+            self.report_builder.assign(self.name,
+                                       self.target,
+                                       self.line_number)
 
 
 class AssignmentReport(object):

@@ -220,6 +220,21 @@ a = [1, 2] b = 6
         self.assertReportEqual(expected_report, report)
         self.assertEqual(expected_result, result)
 
+    def test_delete_item(self):
+        # SETUP
+        expected_report = "d = {'a': 1}"
+        d = {'a': 1, 'b': 2}
+        expected_d = {'a': 1}
+
+        # EXEC
+        builder = ReportBuilder()
+        del builder.record_delete(name='d', target=d, line_number=1)['b']
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+        self.assertEqual(expected_d, d)
+
     def test_multiple_lines(self):
         # SETUP
         expected_report = """\

@@ -220,6 +220,25 @@ class Tracer(NodeTransformer):
         new_node = self._create_bare_context_call('record_call', args)
         return new_node
 
+    def visit_Delete(self, node):
+        existing_node = self.generic_visit(node)
+        for target in existing_node.targets:
+            attribute_names = self._get_attribute_names(target)
+            if attribute_names:
+                target_name = '.'.join(attribute_names[:-1])
+            else:
+                target_value = getattr(target, 'value', None)
+                attribute_names = self._get_attribute_names(target_value)
+                if attribute_names:
+                    target_name = '.'.join(attribute_names)
+                else:
+                    target_name = getattr(target_value, 'id', None)
+            if target_name is not None:
+                args = [Str(s=target_name), target.value, Num(n=target.lineno)]
+                target.value = self._create_bare_context_call('record_delete',
+                                                              args)
+        return existing_node
+
     def visit_Print(self, node):
         existing_node = self.generic_visit(node)
         values = existing_node.values

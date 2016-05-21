@@ -79,7 +79,7 @@ that modifies a for loop:
         return new_node
 
 The `generic_visit()` visits all the child nodes before modifying the for
-for loop itself. Next, I walk through the child nodes looking for all the line
+loop itself. Next, I walk through the child nodes looking for all the line
 numbers that are included in the loop, so I can draw the pipe symbols between
 each iteration of the loop. Then I insert calls to `start_block()` and
 `assign()` before the original statements in the for loop. Finally, I return
@@ -121,5 +121,25 @@ it using the module's dictionary for its global variables. After that, importing
 the `live_lib` module will import the instrumented code, even if there is no
 `live_lib.py` file. Any other modules that import `live_lib` will get the
 instrumented code.
+
+I also learned enough about Python's module system to replace the regular
+turtle with my mock turtle. Now I don't need any special variables or method
+calls to visualize turtle graphics. The exact same code can run in live coding
+mode or in regular mode. The technique of replacing some framework code with
+a new version is called monkey patching; here's the
+`MockTurtle.monkey_patch()` method:
+
+    @classmethod
+    def monkey_patch(cls, canvas=None):
+        turtle_module = sys.modules['turtle']
+        turtle_module.Turtle = MockTurtle
+        turtle_module.mainloop = lambda: None
+        MockTurtle._screen = MockTurtle._Screen(canvas)
+        MockTurtle._pen = MockTurtle()
+
+This replaces the regular `turtle.Turtle` class with `MockTurtle`, as well
+as registering an instance of MockTurtle that will record all its commands.
+The `mainloop()` method usually keeps the turtle window open, but the
+replacement does nothing, because there is no window to keep open.
 
 [beaz]: http://www.dabeaz.com/modulepackage/

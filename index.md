@@ -3,8 +3,8 @@ title: Live Coding in Python
 subtitle: An Eclipse Plug In and an Emacs Mode
 ---
 To see how to use it, watch the [demo video][video] or read the 
-[blog post][blog]. You might also find some useful examples in the 
-[tools folder][tools]. To learn more, read about [how it works][how].
+[getting started page][starting]. You might also find some useful examples in
+the [tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
 
@@ -14,7 +14,7 @@ contributing the Emacs support.
 If you like this project, check out some of my [other projects][projects].
 
 [how]: http://donkirkby.github.io/live-py-plugin/howitworks
-[screenshot]: https://raw.githubusercontent.com/donkirkby/live-py-plugin/master/screenshot.png
+[screenshot]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik
 
@@ -111,7 +111,7 @@ If you find the project useful, help us [make it better][contributing].
 
 [pydev]: http://pydev.org/download.html
 [video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
-[blog]: http://donkirkby.blogspot.ca/2012/11/live-coding-in-python-v2.html
+[starting]: http://donkirkby.github.com/live-py-plugin/getting_started
 [emacs]: http://www.gnu.org/software/emacs/
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
 [projects]: http://donkirkby.github.io/

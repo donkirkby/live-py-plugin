@@ -44,7 +44,7 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
     from the list, and click OK.
 7. Drag `live_py_feature` under the devtools group, and click the Build button.
 8. Commit the new version files, push, and create a release on GitHub.
-9. Update the version number on the [Ecplipse marketplace][mkt].
+9. Update the version number on the [Eclipse marketplace][mkt].
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [g+]: http://google.com/+donkirkby

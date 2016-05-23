@@ -77,17 +77,9 @@ writing code instead of stepping through it.
 I open the live coding display on the right, and it shows me what's in the
 variable after each change.
 
-<table><tr><td>
-
-    s = 'Hello'                             
-    s += ', World!'
-
-</td><td>
-
-    s = 'Hello'
-    s = 'Hello, World!'
-
-</td></tr></table>
+    # Original source code                   | # Displays variables and loops
+    s = 'Hello'                              | s = 'Hello' 
+    s += ', World!'                          | s = 'Hello, World!' 
 
 Let's do something more interesting and write a library function that does
 binary search for a value in a sorted array. The live coding will show us what's
@@ -100,21 +92,10 @@ happening in our code so we don't have to hold it all in our heads.
 It's a bad search function that never finds anything, but let's see how it works
 when we call it.
 
-<table><tr><td>
-
-    def search(n, a):                       
-        return -1
-    
-    i = search(2, [1, 2, 4])
-    
-</td><td>
-    
-    n = 2 a = [1, 2, 4]                     
-    return -1
-    
-    i = -1 
-
-</td></tr></table>
+    def search(n, a):                        | n = 2 a = [1, 2, 4] 
+        return -1                            | return -1 
+                                             | 
+    i = search(2, [1, 2, 4])                 | i = -1 
 
 You can see the input parameters at the start of the function, and the return
 value at the end.
@@ -122,31 +103,15 @@ value at the end.
 We'll start looking for the value in the array, and the first place to look is
 the middle item.
 
-<table><tr><td>
-
-    def search(n, a):                       
-        low = 0
-        high = len(a) - 1
-        mid = low + high / 2
-        if n == a[mid]:
-            return mid
-        return -1
-
-    i = search(2, [1, 2, 4])
-    
-</td><td>
-
-    n = 2 a = [1, 2, 4]                     
-    low = 0
-    high = 2
-    mid = 1
-    
-    return 1
-    
-    
-    i = 1
-    
-</td></tr></table>
+    def search(n, a):                        | n = 2 a = [1, 2, 4] 
+        low = 0                              | low = 0 
+        high = len(a) - 1                    | high = 2 
+        mid = low + high / 2                 | mid = 1 
+        if n == a[mid]:                      | 
+            return mid                       | return 1 
+        return -1                            | 
+                                             | 
+    i = search(2, [1, 2, 4])                 | i = 1 
 
 That was lucky! It was in the first place we looked, and you can see the
 calculations as it goes. You see an abstract formula in the code, like
@@ -155,39 +120,19 @@ display, like `high = 2`. However, a search function usually won't find the
 item we're searching for on the first try. Let's ask for an item earlier in the
 list and use a while loop to find it.
 
-<table><tr><td>
-
-    def search(n, a):                       
-        low = 0
-        high = len(a) - 1
-        while True:
-            mid = low + high / 2
-            v = a[mid]
-            if n == v:
-                return mid
-            if n < v:
-                high = mid - 1
-        return -1
-    
-    i = search(1, [1, 2, 4])
-
-</td><td>
-
-    n = 1 a = [1, 2, 4]                     
-    low = 0
-    high = 2
-             |
-    mid = 1  | mid = 0
-    v = 2    | v = 1
-             |
-             | return 0
-             |
-    high = 0 |
-    
-    
-    i = 0
-
-</td></tr></table>
+    def search(n, a):                        | n = 1 a = [1, 2, 4] 
+        low = 0                              | low = 0 
+        high = len(a) - 1                    | high = 2 
+        while True:                          |          | 
+            mid = low + high / 2             | mid = 1  | mid = 0 
+            v = a[mid]                       | v = 2    | v = 1 
+            if n == v:                       |          | 
+                return mid                   |          | return 0 
+            if n < v:                        |          | 
+                high = mid - 1               | high = 0 | 
+        return -1                            | 
+                                             | 
+    i = search(1, [1, 2, 4])                 | i = 0 
 
 The loop runs twice, and each run adds a column to the display showing the
 calculations. That's a good example of how this tool differs from a debugger.
@@ -199,43 +144,21 @@ follow than animated sorting algorithms.
 
 Now let's look for an item later in the list.
 
-<table><tr><td>
-
-    def search(n, a):                       
-        low = 0
-        high = len(a) - 1
-        while True:
-            mid = low + high / 2
-            v = a[mid]
-            if n == v:
-                return mid
-            if n < v:
-                high = mid - 1
-            else:
-                low = mid + 1
-        return -1
-    
-    i = search(4, [1, 2, 4])
-    
-</td><td>
-
-    n = 4 a = [1, 2, 4]                     
-    low = 0
-    high = 2
-            |
-    mid = 1 | mid = 3
-    v = 2   | IndexError: list index out of
-            |
-            | 
-            |
-            |
-            |
-    low = 2 |
-    
-    
-    IndexError: list index out of range
-    
-</td></tr></table>
+    def search(n, a):                        | n = 4 a = [1, 2, 4] 
+        low = 0                              | low = 0 
+        high = len(a) - 1                    | high = 2 
+        while True:                          |         | 
+            mid = low + high / 2             | mid = 1 | mid = 3 
+            v = a[mid]                       | v = 2   | IndexError: list index out of range 
+            if n == v:                       |         | 
+                return mid                   |         | 
+            if n < v:                        |         | 
+                high = mid - 1               |         | 
+            else:                            |         | 
+                low = mid + 1                | low = 2 | 
+        return -1                            | 
+                                             | 
+    i = search(4, [1, 2, 4])                 | IndexError: list index out of range 
 
 Oops, I get an IndexError. Without the live coding display, I would just get a
 traceback that shows where the error happened, but not how it happened. Now, I
@@ -244,83 +167,39 @@ value, and it's calculated at the top of the loop. The two values that go into
 it are both 2, so they should average to 2. Oh, I need parentheses to calculate
 the average.
 
-<table><tr><td>
-
-    def search(n, a):                       
-        low = 0
-        high = len(a) - 1
-        while True:
-            mid = (low + high) / 2
-            v = a[mid]
-            if n == v:
-                return mid
-            if n < v:
-                high = mid - 1
-            else:
-                low = mid + 1
-        return -1
-    
-    i = search(4, [1, 2, 4])
-    
-</td><td>
-
-    n = 4 a = [1, 2, 4]                     
-    low = 0
-    high = 2
-            |
-    mid = 1 | mid = 2
-    v = 2   | v = 4
-            |
-            | return 2
-            |
-            |
-            |
-    low = 2 |
-    
-    
-    i = 2
-    
-</td></tr></table>
+    def search(n, a):                        | n = 4 a = [1, 2, 4] 
+        low = 0                              | low = 0 
+        high = len(a) - 1                    | high = 2 
+        while True:                          |         | 
+            mid = (low + high) / 2           | mid = 1 | mid = 2 
+            v = a[mid]                       | v = 2   | v = 4 
+            if n == v:                       |         | 
+                return mid                   |         | return 2 
+            if n < v:                        |         | 
+                high = mid - 1               |         | 
+            else:                            |         | 
+                low = mid + 1                | low = 2 | 
+        return -1                            | 
+                                             | 
+    i = search(4, [1, 2, 4])                 | i = 2 
 
 What happens if we try to find a value that's not in the list?
 
-<table><tr><td>
-
-    def search(n, a):                       
-        low = 0
-        high = len(a) - 1
-        while True:
-            mid = (low + high) / 2
-            v = a[mid]
-            if n == v:
-                return mid
-            if n < v:
-                high = mid - 1
-            else:
-                low = mid + 1
-        return -1
-    
-    i = search(3, [1, 2, 4])
-    
-</td><td>
-
-    n = 3 a = [1, 2, 4]                     
-    low = 0
-    high = 2
-            |          |         |         |
-    mid = 1 | mid = 2  | mid = 1 | mid = 1 |
-    v = 2   | v = 4    | v = 4   | v = 4   |
-            |          |         |         |
-            |          |         |         |
-            |          |         |         |
-            | high = 1 |         |         |
-            |          |         |         |
-    low = 2 |          | low = 2 | low = 2 |
-    
-    
-    RuntimeError: live coding message limit
-    
-</td></tr></table>
+    def search(n, a):                        | n = 3 a = [1, 2, 4] 
+        low = 0                              | low = 0 
+        high = len(a) - 1                    | high = 2 
+        while True:                          |         |          |         |         | 
+            mid = (low + high) / 2           | mid = 1 | mid = 2  | mid = 1 | mid = 1 | 
+            v = a[mid]                       | v = 2   | v = 4    | v = 2   | v = 2   | 
+            if n == v:                       |         |          |         |         | 
+                return mid                   |         |          |         |         | 
+            if n < v:                        |         |          |         |         | 
+                high = mid - 1               |         | high = 1 |         |         | 
+            else:                            |         |          |         |         | 
+                low = mid + 1                | low = 2 |          | low = 2 | low = 2 | 
+        return -1                            | 
+                                             | 
+    i = search(3, [1, 2, 4])                 | RuntimeError: live coding message limit exceeded 
 
 I guess that while True wasn't such a good idea, we're stuck in an infinite
 loop. If you want to see some of the later loop runs, you can scroll over to
@@ -331,43 +210,21 @@ to exit from the second or third run. If you look at the end of the second run,
 you can see that high is lower than low. That means that we've searched all the
 way from both ends to meet in the middle, and it's time to give up.
 
-<table><tr><td>
-
-    def search(n, a):                       
-        low = 0
-        high = len(a) - 1
-        while low <= high:
-            mid = (low + high) / 2
-            v = a[mid]
-            if n == v:
-                return mid
-            if n < v:
-                high = mid - 1
-            else:
-                low = mid + 1
-        return -1
-    
-    i = search(3, [1, 2, 4])
-    
-</td><td>
-
-    n = 3 a = [1, 2, 4]                     
-    low = 0
-    high = 2
-            |
-    mid = 1 | mid = 2
-    v = 2   | v = 4
-            |
-            |
-            |
-            | high = 1
-            |
-    low = 2 |
-    return -1
-    
-    i = -1
-    
-</td></tr></table>
+    def search(n, a):                        | n = 3 a = [1, 2, 4] 
+        low = 0                              | low = 0 
+        high = len(a) - 1                    | high = 2 
+        while low <= high:                   |         | 
+            mid = (low + high) / 2           | mid = 1 | mid = 2 
+            v = a[mid]                       | v = 2   | v = 4 
+            if n == v:                       |         | 
+                return mid                   |         | 
+            if n < v:                        |         | 
+                high = mid - 1               |         | high = 1 
+            else:                            |         | 
+                low = mid + 1                | low = 2 | 
+        return -1                            | return -1 
+                                             | 
+    i = search(3, [1, 2, 4])                 | i = -1 
 
 At this point, I think I'm done. I can add a few entries and search for them to
 make sure everything is working. Also, if this were a real library module, I

@@ -10,7 +10,8 @@ the [tools folder][tools]. To learn more, read about [how it works][how].
 ![Screenshot of a star diagram][screenshot]
 
 Special thanks to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for
-contributing the Emacs support.
+contributing the Emacs support. Thanks to [all the contributors][hatrack] for
+helping in all kinds of ways.
 
 If you like this project, check out some of my [other projects][projects].
 
@@ -117,3 +118,4 @@ If you find the project useful, help us [make it better][contributing].
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
 [projects]: http://donkirkby.github.io/
 [contributing]: https://github.com/donkirkby/live-py-plugin/blob/master/CONTRIBUTING.md
+[hatrack]: https://labhr.github.io/hatrack/#repo=donkirkby/live-py-plugin

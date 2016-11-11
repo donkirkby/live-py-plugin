@@ -62,7 +62,7 @@ class Tracer(NodeTransformer):
     def _trace_print_function(self, existing_node):
         values = list(existing_node.args)
         formats = ['%r'] * len(values)
-        if existing_node.starargs is not None:
+        if hasattr(existing_node, 'starargs') and existing_node.starargs is not None:
             values.append(existing_node.starargs)
             formats.append('*%r')
         for keyword in existing_node.keywords:
@@ -242,7 +242,7 @@ class Tracer(NodeTransformer):
     def visit_Print(self, node):
         existing_node = self.generic_visit(node)
         values = existing_node.values
-        message_format = 'print' + ','.join([' %r']*len(values)) + ' '
+        message_format = 'print' + ','.join([' %r'] * len(values)) + ' '
         return self._create_context_call('add_message',
                                          [BinOp(left=Str(message_format),
                                                 op=Mod(),
@@ -520,8 +520,8 @@ class Tracer(NodeTransformer):
             value = Name(id='None', ctx=Load())
 
         return Yield(value=self._create_bare_context_call(
-                    'yield_value',
-                    [value, Num(n=existing_node.lineno)]))
+            'yield_value',
+            [value, Num(n=existing_node.lineno)]))
 
     def _trace_assignment_list(self, targets):
         """ Build a list of assignment calls based on the contents of targets.
@@ -617,6 +617,7 @@ class Tracer(NodeTransformer):
 
 
 class LineNumberCleaner(NodeTransformer):
+
     def __init__(self):
         self.max_line = 0
 
@@ -631,6 +632,7 @@ class LineNumberCleaner(NodeTransformer):
 
 
 class CodeTracer(object):
+
     def __init__(self, canvas=None):
         self.message_limit = 10000
         self.max_width = None
@@ -753,6 +755,7 @@ a[0] = 11 """
         self.assertMultiLineEqual(expected_report, report)
 
     class DummyTest(unittest.TestCase):
+
         def test_delegation(self):
             test_something(self)
 

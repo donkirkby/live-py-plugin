@@ -9,9 +9,9 @@ import types
 
 try:
     # Import some classes that are only available in Python 3.
-    from ast import arg  # @UnresolvedImport
+    from ast import arg, Starred  # @UnresolvedImport
 except:
-    arg = None  # If we're in Python 2, we just won't use them.
+    arg = Starred = None  # If we're in Python 2, we just won't use them.
 
 try:
     # Make Python 3.3 try class compatible with old versions.
@@ -60,10 +60,17 @@ class Tracer(NodeTransformer):
         return new_node
 
     def _trace_print_function(self, existing_node):
-        values = list(existing_node.args)
-        formats = ['%r'] * len(values)
-        if existing_node.starargs is not None:
-            values.append(existing_node.starargs)
+        starargs = getattr(existing_node, 'starargs', None)
+        values = []
+        formats = []
+        for a in existing_node.args:
+            if Starred is not None and isinstance(a, Starred):
+                starargs = a.value
+            else:
+                values.append(a)
+                formats.append('%r')
+        if starargs is not None:
+            values.append(starargs)
             formats.append('*%r')
         for keyword in existing_node.keywords:
             values.append(keyword.value)

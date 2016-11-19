@@ -4,3 +4,4 @@
 *~
 .tox
 .cache
+/.coverage

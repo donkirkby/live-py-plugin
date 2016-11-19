@@ -1,0 +1,23 @@
+language: python
+
+sudo: false
+
+matrix:
+  fast_finish: true
+  include:
+    - python: 2.7
+      env:
+      - TOX_ENV=py27
+    - python: 3.5
+      env:
+      - TOX_ENV=py35
+
+install:
+  - travis_retry pip install "virtualenv<14.0.0" "tox>=1.9" "coverage<4"
+
+script:
+  - tox -e $TOX_ENV
+
+after_success:
+  - pip install codecov
+  - codecov -e TOX_ENV

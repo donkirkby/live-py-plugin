@@ -28,9 +28,3 @@ class Canvas(object):
 
     def cget(self, option):
         return self.options[option]
-
-if __name__ == '__live_coding__':
-    canvas = Canvas(800, 600)
-    canvas.create_line(1, 2, 100, 200)
-    canvas.create_rectangle(5, 10, 500, 1000)
-    report = canvas.report

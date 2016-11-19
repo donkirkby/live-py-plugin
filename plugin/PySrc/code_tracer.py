@@ -443,11 +443,8 @@ class Tracer(NodeTransformer):
                 new_body.append(try_body.pop(0))
             line_numbers = set()
             self._find_line_numbers(new_node, line_numbers)
-            if line_numbers:
-                first_line_number = min(line_numbers)
-                last_line_number = max(line_numbers)
-            else:
-                first_line_number = last_line_number = 1
+            first_line_number = min(line_numbers)
+            last_line_number = max(line_numbers)
             handler_body = [self._create_context_call('exception')]
             handler = ExceptHandler(body=handler_body,
                                     lineno=last_line_number)
@@ -740,32 +737,3 @@ if __name__ == '__main__':
         print('end_canvas')
         print('.')
     print(code_report)
-
-elif __name__ == '__live_coding__':
-    import unittest
-
-    def test_something(self):
-        # SETUP
-        code = """\
-a = [1, 2, [3, 4]]
-a[0] += 1
-"""
-        expected_report = """\
-a = [1, 2, [3, 4]]
-a[0] = 11 """
-        # EXEC
-        report = CodeTracer().trace_code(code)
-
-        # VERIFY
-        self.assertMultiLineEqual(expected_report, report)
-
-    class DummyTest(unittest.TestCase):
-        def test_delegation(self):
-            test_something(self)
-
-    suite = unittest.TestSuite()
-    suite.addTest(DummyTest("test_delegation"))
-    test_results = unittest.TextTestRunner().run(suite)
-
-    print(test_results.errors)
-    print(test_results.failures)

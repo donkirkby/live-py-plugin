@@ -165,21 +165,85 @@ b = [10, 2, [3, 19]]
         # SETUP
         code = """\
 a = [1, 2, 3, 4, 5]
-a[1:4] = [20, 30]
+i, j = 1, 4
+a[i:j] = [20, 30]
 b = a
 a[2:] = [300]
 b = a
-a[:2] = [2000]
+a[:2] *= 2
+b = a
+a[:2] += [21]
 b = a
 """
         expected_report = """\
 a = [1, 2, 3, 4, 5]
+(i, j) = (1, 4)
 a[1:4] = [20, 30]
 b = [1, 20, 30, 5]
 a[2:] = [300]
 b = [1, 20, 300]
-a[:2] = [2000]
-b = [2000, 300] """
+a[:2] *= 2
+b = [1, 20, 1, 20, 300]
+a[:2] += [21]
+b = [1, 20, 21, 1, 20, 300] """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_slice_magic(self):
+        """ All augmented assignments on slices, possible with mocks. """
+        # SETUP
+        code = """\
+from mock import MagicMock
+
+
+class Foo(MagicMock):
+    def __repr__(self):
+        return 'Foo()'
+
+foo = Foo()
+foo[1] = 3
+foo[1:10] = 3
+foo[1:10:2] = 3
+foo[1:10] += 3
+foo[1:10] -= 3
+foo[1:10] *= 3
+foo[1:10] /= 3
+foo[1:10] //= 3
+foo[1:10] %= 3
+foo[1:10] **= 3
+foo[1:10] >>= 3
+foo[1:10] <<= 3
+foo[1:10] &= 3
+foo[1:10] ^= 3
+foo[1:10] |= 3
+"""
+        expected_report = """\
+
+
+
+
+
+
+
+foo = Foo()
+foo[1] = 3
+foo[1:10] = 3
+foo[1:10:2] = 3
+foo[1:10] += 3
+foo[1:10] -= 3
+foo[1:10] *= 3
+foo[1:10] /= 3
+foo[1:10] //= 3
+foo[1:10] %= 3
+foo[1:10] **= 3
+foo[1:10] >>= 3
+foo[1:10] <<= 3
+foo[1:10] &= 3
+foo[1:10] ^= 3
+foo[1:10] |= 3 """
         # EXEC
         report = CodeTracer().trace_code(code)
 

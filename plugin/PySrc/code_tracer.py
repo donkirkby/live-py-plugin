@@ -1,7 +1,9 @@
-from ast import (fix_missing_locations, iter_fields, parse, Assign, AST,
-                 Attribute, BinOp, Call, ExceptHandler, Expr, ImportFrom,
-                 Index, List, Load, Mod, Name, NodeTransformer, Num, Raise,
-                 Return, Slice, Store, Str, Subscript, Tuple, Yield)
+from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
+                 Attribute, BinOp, BitAnd, BitOr, BitXor, Call, Div,
+                 ExceptHandler, Expr, FloorDiv, ImportFrom, Index, List, Load,
+                 LShift, Mod, Mult, Name, NodeTransformer, Num, Pow, Raise,
+                 Return, RShift, Slice, Store, Str, Sub, Subscript, Tuple,
+                 Yield)
 from copy import deepcopy
 import sys
 import traceback
@@ -27,6 +29,19 @@ CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
 PSEUDO_FILENAME = '<live coding source>'
 SCOPE_NAME = '__live_coding__'
+
+OPERATOR_CHARS = {Add: '+',
+                  Sub: '-',
+                  Mult: '*',
+                  Div: '/',
+                  FloorDiv: '//',
+                  Mod: '%',
+                  Pow: '**',
+                  RShift: '>>',
+                  LShift: '<<',
+                  BitAnd: '&',
+                  BitXor: '^',
+                  BitOr: '|'}
 
 
 class Tracer(NodeTransformer):
@@ -152,6 +167,7 @@ class Tracer(NodeTransformer):
             if index_to_get is not None:
                 index_to_get -= 1
         elif isinstance(sliceNode, Slice):
+            index_to_get = None
             if sliceNode.step is None:
                 step_text = ''
             else:
@@ -159,8 +175,6 @@ class Tracer(NodeTransformer):
                 sliceNode.step = self._wrap_assignment_index(
                     sliceNode.step,
                     index_to_get)
-                if index_to_get is not None:
-                    index_to_get -= 1
             if sliceNode.upper is None:
                 upper_text = ''
             else:
@@ -168,8 +182,6 @@ class Tracer(NodeTransformer):
                 sliceNode.upper = self._wrap_assignment_index(
                     sliceNode.upper,
                     index_to_get)
-                if index_to_get is not None:
-                    index_to_get -= 1
             if sliceNode.lower is None:
                 lower_text = ''
             else:
@@ -177,8 +189,6 @@ class Tracer(NodeTransformer):
                 sliceNode.lower = self._wrap_assignment_index(
                     sliceNode.lower,
                     index_to_get)
-                if index_to_get is not None:
-                    index_to_get -= 1
             format_text = '{}:{}{}'.format(lower_text, upper_text, step_text)
         else:
             format_text = '?'
@@ -305,19 +315,28 @@ class Tracer(NodeTransformer):
         first_line_number = min(line_numbers)
         last_line_number = max(line_numbers)
         new_nodes = []
-        format_string = (self._wrap_assignment_target(existing_node.target) +
-                         ' = {!r}')
+        try_body = [existing_node]
         new_nodes.append(self._create_context_call('start_assignment'))
-        self._wrap_assignment_target(read_target, index_to_get=-1)
-        read_target.ctx = Load()
-        set_assignment_value = self._create_context_call(
-            'set_assignment_value',
-            [read_target])
+        format_string = self._wrap_assignment_target(existing_node.target)
+        if ':' in format_string:
+            existing_node.value = self._create_bare_context_call(
+                'set_assignment_value',
+                [existing_node.value])
+            operator_char = OPERATOR_CHARS.get(type(existing_node.op), '?')
+            format_string += ' {}= {{!r}} '.format(operator_char)
+        else:
+            self._wrap_assignment_target(read_target, index_to_get=-1)
+            read_target.ctx = Load()
+            set_assignment_value = self._create_context_call(
+                'set_assignment_value',
+                [read_target])
+            try_body.append(set_assignment_value)
+            format_string += ' = {!r}'
         report_assignment = self._create_context_call(
             'report_assignment',
             [Str(s=format_string), Num(n=existing_node.lineno)])
         end_assignment = self._create_context_call('end_assignment')
-        try_body = [existing_node, set_assignment_value, report_assignment]
+        try_body.append(report_assignment)
         finally_body = [end_assignment]
         new_nodes.append(TryFinally(body=try_body,
                                     finalbody=finally_body,

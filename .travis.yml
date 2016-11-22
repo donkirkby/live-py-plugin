@@ -20,4 +20,4 @@ script:
 
 after_success:
   - pip install codecov
-  - codecov -e TOX_ENV --gcov-root plugin/PySrc
+  - codecov -e TOX_ENV --root plugin/PySrc --required

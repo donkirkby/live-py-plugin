@@ -1,9 +1,9 @@
 from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
-                 Attribute, BinOp, BitAnd, BitOr, BitXor, Call, Div,
-                 ExceptHandler, Expr, FloorDiv, ImportFrom, Index, List, Load,
-                 LShift, Mod, Mult, Name, NodeTransformer, Num, Pow, Raise,
-                 Return, RShift, Slice, Store, Str, Sub, Subscript, Tuple,
-                 Yield)
+                 Attribute, BinOp, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
+                 ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
+                 List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
+                 Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
+                 Tuple, Yield)
 from copy import deepcopy
 import sys
 import traceback
@@ -159,13 +159,18 @@ class Tracer(NodeTransformer):
             otherwise, wrap in get_assignment_index(index_to_get).
         @return: format_text, next_index_to_get
         """
-        if isinstance(sliceNode, Index):
-            sliceNode.value = self._wrap_assignment_index(
-                sliceNode.value,
-                index_to_get)
-            format_text = '{!r}'
-            if index_to_get is not None:
-                index_to_get -= 1
+        if isinstance(sliceNode, (Index, Ellipsis)):
+            if (isinstance(sliceNode, Ellipsis) or
+                    isinstance(sliceNode.value, Ellipsis)):
+                index_to_get = None
+                format_text = '...'
+            else:
+                sliceNode.value = self._wrap_assignment_index(
+                    sliceNode.value,
+                    index_to_get)
+                format_text = '{!r}'
+                if index_to_get is not None:
+                    index_to_get -= 1
         elif isinstance(sliceNode, Slice):
             index_to_get = None
             if sliceNode.step is None:
@@ -191,7 +196,10 @@ class Tracer(NodeTransformer):
                     index_to_get)
             format_text = '{}:{}{}'.format(lower_text, upper_text, step_text)
         else:
-            format_text = '?'
+            assert isinstance(sliceNode, ExtSlice)
+            index_to_get = None
+            format_text = ', '.join(self._wrap_slice(subslice)[0]
+                                    for subslice in sliceNode.dims)
         return format_text, index_to_get
 
     def visit_Call(self, node):

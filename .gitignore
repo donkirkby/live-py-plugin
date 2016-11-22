@@ -5,3 +5,4 @@
 .tox
 .cache
 /.coverage
+/coverage.xml

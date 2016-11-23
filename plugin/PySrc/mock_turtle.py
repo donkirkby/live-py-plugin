@@ -1,4 +1,3 @@
-from argparse import ArgumentError
 from collections import namedtuple
 import sys
 from turtle import TNavigator, TPen
@@ -165,7 +164,7 @@ class MockTurtle(TNavigator, TPen):
               align="left",
               font=("Arial", 8, "normal")):
         if move:
-            raise ArgumentError('move', 'Parameter is not supported.')
+            raise NotImplementedError('move parameter is not supported.')
         if align == 'left':
             anchor = 'sw'
         elif align == 'center':
@@ -180,6 +179,13 @@ class MockTurtle(TNavigator, TPen):
         self.screen.cv.create_text(self.xcor() + self.__xoff,
                                    -self.ycor() + self.__yoff,
                                    **kwargs)
+
+    def _update(self, *args, **kwargs):
+        if not self._pencolor.startswith('#'):
+            self._pencolor = self._colorstr(self._pencolor)
+        if not self._fillcolor.startswith('#'):
+            self._fillcolor = self._colorstr(self._fillcolor)
+        return super(MockTurtle, self)._update(*args, **kwargs)
 
     def _colorstr(self, color):
         """Return color string corresponding to args.

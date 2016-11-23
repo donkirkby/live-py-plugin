@@ -65,7 +65,7 @@ create_line
     0
     350
     0
-    fill='black'
+    fill='#000000'
     pensize=1
 """
 
@@ -225,6 +225,68 @@ create_text
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
+    def test_write_center(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_text
+    100
+    0
+    anchor='s'
+    fill='black'
+    font=('Arial', 8, 'normal')
+    text='Bob'
+"""
+
+        # EXEC
+        t = MockTurtle()
+        t.fd(100)
+        t.write('Bob', align='center')
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_write_right(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_text
+    100
+    0
+    anchor='se'
+    fill='black'
+    font=('Arial', 8, 'normal')
+    text='Bob'
+"""
+
+        # EXEC
+        t = MockTurtle()
+        t.fd(100)
+        t.write('Bob', align='right')
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_write_move(self):
+        """ Not supported yet """
+        t = MockTurtle()
+        with self.assertRaises(NotImplementedError):
+            t.write('Bob', move=True)
+
     def test_color(self):
         # SETUP
         expected_report = """\
@@ -239,6 +301,86 @@ create_line
         # EXEC
         t = MockTurtle()
         t.color(1.0, 0.0, 0.5)
+        t.fd(100)
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_color_name(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#0000ff'
+    pensize=1"""
+
+        # EXEC
+        t = MockTurtle()
+        t.color('blue')
+        t.fd(100)
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_color_bad(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#000000'
+    pensize=1"""
+
+        # EXEC
+        t = MockTurtle()
+        t.color((1.0, 0.0))  # Only two numbers, fails to black.
+        t.fd(100)
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_color_bad_range(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#000000'
+    pensize=1"""
+
+        # EXEC
+        t = MockTurtle()
+        t.color(1.0, 0.0, 1.5)  # Over 1.0 not allowed, fails to black.
+        t.fd(100)
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+
+    def test_pen_dict(self):
+        # SETUP
+        expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#0000ff'
+    pensize=1"""
+
+        # EXEC
+        t = MockTurtle()
+        t.pen(pencolor=(0, 0, 1.0))
         t.fd(100)
         report = t.report
 
@@ -305,6 +447,22 @@ create_line
 
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
+
+    def test_is_filling(self):
+        # SETUP
+
+        # EXEC
+        t = MockTurtle()
+        is_filling1 = t.fill()
+        t.begin_fill()
+        is_filling2 = t.fill()
+        t.end_fill()
+        is_filling3 = t.fill()
+
+        # VERIFY
+        self.assertFalse(is_filling1)
+        self.assertTrue(is_filling2)
+        self.assertFalse(is_filling3)
 
     def test_forgotten_end_fill(self):
         # SETUP
@@ -546,3 +704,12 @@ create_line
 
         self.maxDiff = None
         self.assertEqual(expected_report.splitlines(), report)
+
+    def test_bad_attribute(self):
+        # SETUP
+
+        # EXEC
+        t = MockTurtle()
+
+        # VERIFY
+        self.assertFalse(hasattr(t, 'bogus'))

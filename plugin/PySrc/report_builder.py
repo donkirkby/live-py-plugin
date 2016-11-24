@@ -139,9 +139,12 @@ class ReportBuilder(object):
 
     def report_assignment(self, format_string, line_number):
         assignment = self.assignments[-1]
-        display = format_string.format(*(assignment.indexes +
-                                         [assignment.value]))
-        if not display.endswith('>'):
+        try:
+            display = format_string.format(*(assignment.indexes +
+                                             [assignment.value]))
+        except Exception:
+            display = None
+        if display is not None and not display.endswith('>'):
             self.add_message(display + ' ', line_number)
 
     def exception(self):

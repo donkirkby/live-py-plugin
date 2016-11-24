@@ -1,3 +1,4 @@
+import argparse
 from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  Attribute, BinOp, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
@@ -669,11 +670,6 @@ class CodeTracer(object):
         MockTurtle.monkey_patch(canvas)
         self.environment = {'__name__': SCOPE_NAME}
 
-    def trace_canvas(self, source):
-        exec(source, self.environment, self.environment)
-
-        return '\n'.join(self.turtle.screen.cv.report)
-
     def trace_turtle(self, source):
         exec(source, self.environment, self.environment)
 
@@ -730,8 +726,8 @@ class CodeTracer(object):
 
         return builder.report()
 
-if __name__ == '__main__':
-    import argparse
+
+def main():
     parser = argparse.ArgumentParser(description='Trace Python code.')
     parser.add_argument('-c',
                         '--canvas',
@@ -764,3 +760,6 @@ if __name__ == '__main__':
         print('end_canvas')
         print('.')
     print(code_report)
+
+if __name__ == '__main__':
+    main()

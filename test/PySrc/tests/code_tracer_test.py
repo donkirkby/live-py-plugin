@@ -1,6 +1,8 @@
 from sys import version_info
 
-from code_tracer import CodeTracer
+from mock import call, DEFAULT, patch
+
+from code_tracer import CodeTracer, main
 from mock_turtle import MockTurtle
 from report_builder_test import ReportTestCase
 
@@ -900,26 +902,6 @@ x = 11 """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    def test_trace_canvas(self):
-        # SETUP
-        code = """\
-from turtle import *
-
-d = 100
-forward(d)
-"""
-        expected_report = """\
-
-
-d = 100
-"""
-        tracer = CodeTracer()
-
-        # EXEC
-        report = tracer.trace_code(code)
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
     def test_turtle(self):
         # SETUP
         code = """\
@@ -1425,3 +1407,17 @@ f.l = [0, 20] """
         report = CodeTracer().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py'])
+    def test_main(self, stdin, stdout):
+        code = """\
+i = 1
+"""
+        expected_report = """\
+i = 1 """
+        stdin.read.return_value = code
+
+        main()
+
+        self.assertEqual([call(expected_report), call('\n')],
+                         stdout.write.call_args_list)

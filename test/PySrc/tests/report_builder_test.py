@@ -40,12 +40,12 @@ x = 5
         # SETUP
         expected_report = ''
 
-        class class_without_repr(object):
+        class ClassWithoutRepr(object):
             pass
 
         # EXEC
         builder = ReportBuilder()
-        builder.assign(name='x', value=class_without_repr(), line_number=2)
+        builder.assign(name='x', value=ClassWithoutRepr(), line_number=2)
         report = builder.report()
 
         # VERIFY
@@ -53,19 +53,35 @@ x = 5
 
     def test_assign_object_with_multiline_repr(self):
         # SETUP
-        expected_report = 'm = multiline_class(1, 2) '
+        expected_report = 'm = MultilineClass(1, 2) '
 
-        class multiline_class(object):
+        class MultilineClass(object):
             def __init__(self, x, y):
                 self.x = x
                 self.y = y
 
             def __repr__(self):
-                return "multiline_class(%r,\n%r)" % (self.x, self.y)
+                return "MultilineClass(%r,\n%r)" % (self.x, self.y)
 
         # EXEC
         builder = ReportBuilder()
-        builder.assign(name='m', value=multiline_class(1, 2), line_number=1)
+        builder.assign(name='m', value=MultilineClass(1, 2), line_number=1)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_assign_object_with_repr_exception(self):
+        # SETUP
+        expected_report = ''
+
+        class BadReprClass(object):
+            def __repr__(self):
+                raise NotImplementedError()
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.assign(name='m', value=BadReprClass(), line_number=1)
         report = builder.report()
 
         # VERIFY

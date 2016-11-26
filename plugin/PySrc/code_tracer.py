@@ -119,7 +119,7 @@ class Tracer(NodeTransformer):
         context.get_assignment_index().
         @param index_to_get: if this is None, wrap in add_assignment_index(),
             otherwise, wrap in get_assignment_index(index_to_get).
-        @return: string
+        @return: string, or None if no assignment can be reported.
         """
         slice_text, next_index = self._wrap_slice(subscript.slice,
                                                   index_to_get)
@@ -132,8 +132,11 @@ class Tracer(NodeTransformer):
         elif isinstance(value, Attribute):
             value_text = '.'.join(self._get_attribute_names(value))
         else:
-            value_text = "..."
-        format_text = '{}[{}]'.format(value_text, slice_text)
+            value_text = None
+        if value_text is None:
+            format_text = None
+        else:
+            format_text = '{}[{}]'.format(value_text, slice_text)
         return format_text
 
     def _wrap_assignment_index(self, index_node, index_to_get):
@@ -300,11 +303,12 @@ class Tracer(NodeTransformer):
             'set_assignment_value',
             [existing_node.value])
         new_nodes.append(self._create_context_call('start_assignment'))
-        report_assignment = self._create_context_call(
-            'report_assignment',
-            [Str(s=format_string), Num(n=existing_node.lineno)])
+        try_body = [existing_node]
+        if format_string is not None:
+            try_body.append(self._create_context_call(
+                'report_assignment',
+                [Str(s=format_string), Num(n=existing_node.lineno)]))
         end_assignment = self._create_context_call('end_assignment')
-        try_body = [existing_node, report_assignment]
         finally_body = [end_assignment]
         new_nodes.append(TryFinally(body=try_body,
                                     finalbody=finally_body,
@@ -327,25 +331,25 @@ class Tracer(NodeTransformer):
         try_body = [existing_node]
         new_nodes.append(self._create_context_call('start_assignment'))
         format_string = self._wrap_assignment_target(existing_node.target)
-        if ':' in format_string:
-            existing_node.value = self._create_bare_context_call(
-                'set_assignment_value',
-                [existing_node.value])
-            operator_char = OPERATOR_CHARS.get(type(existing_node.op), '?')
-            format_string += ' {}= {{!r}} '.format(operator_char)
-        else:
-            self._wrap_assignment_target(read_target, index_to_get=-1)
-            read_target.ctx = Load()
-            set_assignment_value = self._create_context_call(
-                'set_assignment_value',
-                [read_target])
-            try_body.append(set_assignment_value)
-            format_string += ' = {!r}'
-        report_assignment = self._create_context_call(
-            'report_assignment',
-            [Str(s=format_string), Num(n=existing_node.lineno)])
+        if format_string is not None:
+            if ':' in format_string:
+                existing_node.value = self._create_bare_context_call(
+                    'set_assignment_value',
+                    [existing_node.value])
+                operator_char = OPERATOR_CHARS.get(type(existing_node.op), '?')
+                format_string += ' {}= {{!r}} '.format(operator_char)
+            else:
+                self._wrap_assignment_target(read_target, index_to_get=-1)
+                read_target.ctx = Load()
+                set_assignment_value = self._create_context_call(
+                    'set_assignment_value',
+                    [read_target])
+                try_body.append(set_assignment_value)
+                format_string += ' = {!r}'
+            try_body.append(self._create_context_call(
+                'report_assignment',
+                [Str(s=format_string), Num(n=existing_node.lineno)]))
         end_assignment = self._create_context_call('end_assignment')
-        try_body.append(report_assignment)
         finally_body = [end_assignment]
         new_nodes.append(TryFinally(body=try_body,
                                     finalbody=finally_body,
@@ -443,6 +447,12 @@ class Tracer(NodeTransformer):
             if arg and isinstance(target, arg) and target.arg == 'self':
                 continue
             new_node.body.append(self._trace_assignment(target, node.lineno))
+        if new_node.args.vararg is not None:
+            new_node.body.append(
+                self._trace_assignment(new_node.args.vararg, node.lineno))
+        if new_node.args.kwarg is not None:
+            new_node.body.append(
+                self._trace_assignment(new_node.args.kwarg, node.lineno))
 
         handler_body = [self._create_context_call('exception'),
                         Raise()]
@@ -580,16 +590,17 @@ class Tracer(NodeTransformer):
         lineno = getattr(target, 'lineno', default_lineno)
         # name, value, line number
         if isinstance(target, Name):
-            args = [Str(s=target.id),
-                    Name(id=target.id, ctx=Load()),
-                    Num(n=lineno)]
+            arg_name = target.id
         elif arg and isinstance(target, arg):
-            args = [Str(s=target.arg),
-                    Name(id=target.arg, ctx=Load()),
-                    Num(n=lineno)]
+            arg_name = target.arg
+        elif isinstance(target, str):
+            arg_name = target
         else:
             raise TypeError('Unknown target: %s' % target)
 
+        args = [Str(s=arg_name),
+                Name(id=arg_name, ctx=Load()),
+                Num(n=lineno)]
         return self._create_context_call('assign', args)
 
     def _wrap_assignment_target(self, target, index_to_get=None):
@@ -600,7 +611,7 @@ class Tracer(NodeTransformer):
         context.add_assignment_index() or context.get_assignment_index().
         @param index_to_get: if this is None, wrap in add_assignment_index(),
             otherwise, wrap in get_assignment_index(index_to_get).
-        @return: string
+        @return: string, or None if no assignment can be reported.
         """
         if isinstance(target, Name):
             return target.id
@@ -619,11 +630,15 @@ class Tracer(NodeTransformer):
 
         For example, "x = {!r}" for a single target, "x = y = {!r}" for
         multiple targets, or "x[{!r}] = {!r} for an indexed target.
-        @return: string
+        @return: string, or None if no assignment can be reported.
         """
         strings = []
         for target in targets:
-            strings.append(self._wrap_assignment_target(target))
+            format_text = self._wrap_assignment_target(target)
+            if format_text is not None:
+                strings.append(format_text)
+        if not strings:
+            return None
         strings.append('{!r}')  # for assignment value
         return ' = '.join(strings)
 

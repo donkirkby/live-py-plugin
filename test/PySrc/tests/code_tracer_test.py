@@ -688,6 +688,30 @@ n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
+    def test_infinite_recursion_by_width(self):
+        # SETUP
+        code = """\
+def foo(n):
+    foo(n+1)
+
+foo(0)
+"""
+        expected_report = """\
+n = 0 | n = 1 | n = 2 |
+      |       |       |
+
+RuntimeError: live coding message limit exceeded
+"""
+        tracer = CodeTracer()
+        tracer.max_width = 20
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.maxDiff = None
+        self.assertReportEqual(expected_report, report)
+
     def test_infinite_loop_pass(self):
         # SETUP
         code = """\
@@ -1074,6 +1098,38 @@ Foo().x = 2
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_assign_to_expression(self):
+        # SETUP
+        code = """\
+a = [1, 2, 3]
+
+(a or None)[1] = 20
+"""
+        expected_report = """\
+a = [1, 2, 3]
+"""
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_augmented_assign_to_expression(self):
+        # SETUP
+        code = """\
+a = [1, 2, 3]
+
+(a or None)[1] += 20
+"""
+        expected_report = """\
+a = [1, 2, 3]
+"""
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_method_of_anonymous_object(self):
         # SETUP
         code = """\
@@ -1336,6 +1392,34 @@ print(*args)
 
 args = ['Bob', 23]
 print(*['Bob', 23]) """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_display_star_args(self):
+        code = """\
+def foo(*args):
+    pass
+
+foo('Bob', 1)
+"""
+        expected_report = """\
+args = ('Bob', 1) """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_display_kwargs(self):
+        code = """\
+def foo(**kwargs):
+    pass
+
+foo(name='Bob')
+"""
+        expected_report = """\
+kwargs = {'name': 'Bob'} """
 
         report = CodeTracer().trace_code(code)
 

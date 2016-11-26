@@ -21,7 +21,7 @@ to show you what's happening inside it. To try it yourself, visit
 ![running the turtle code in a window][turtle_window]
 
 Python already comes with a turtle module, so what's the difference? To use the
-regular turtle, I need to add a call to `main_loop()`, and then I need to save
+regular turtle, I need to add a call to `mainloop()`, and then I need to save
 and run. Every time I make a change to the code, I need to save and run to see
 the result. Of course, I don't do that every time. Instead, I predict the result
 by running through the code in my head. One of this project's main goals for

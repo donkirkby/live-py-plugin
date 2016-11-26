@@ -38,7 +38,7 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 3. Open plugin/plugin.xml and feature/feature.xml, and increment the Version
     field in each file.
 4. Commit the version changes, and push to GitHub.
-5. Check out the `gh-pages` branch with the update project nested inside, and
+5. Look in the `docs` folder with the update project nested inside, and
     open the update project's `site.xml`.
 6. Click the Add Feature... button, type "live", select `live_py_feature`
     from the list, and click OK.

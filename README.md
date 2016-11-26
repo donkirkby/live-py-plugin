@@ -1,6 +1,9 @@
 live-py-plugin
 ==============
 
+[![Build Status]][travis]
+[![Code Coverage]][codecov]
+
 Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.
 
 To see how to use it, watch the [demo video][video] or read the 
@@ -15,6 +18,10 @@ helping in all kinds of ways.
 
 If you like this project, check out some of my [other projects][projects].
 
+[Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
+[travis]: https://travis-ci.org/live-py-plugin
+[Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
+[codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
 [how]: http://donkirkby.github.io/live-py-plugin/howitworks
 [screenshot]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
 [akaihola]: https://github.com/akaihola

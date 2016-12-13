@@ -370,7 +370,7 @@ n = foo(10)
 """
         expected_report = """\
 x = 10
-return None
+
 
 n = None """
         tracer = CodeTracer()
@@ -1314,6 +1314,29 @@ for x in foo():
 yield None
 
 x = None """
+
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_yield_with_return(self):
+        # SETUP
+        code = """\
+def foo():
+    yield 1
+    return
+
+for x in foo():
+    pass
+"""
+        expected_report = """\
+
+yield 1
+
+
+x = 1 """
 
         # EXEC
         report = CodeTracer().trace_code(code)

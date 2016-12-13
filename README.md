@@ -39,8 +39,8 @@ Installing the Eclipse plugin
 5. Open any Python file, and from the Live Coding menu, choose Start Live Coding.
    You should see an extra panel on the right that shows the results of running
    your code.
-6. To try the turtle graphics features, open the Window menu, and choose 
-   Show View: Other.... Then under PyDev, click Live Coding Canvas and click OK.
+6. To try the turtle graphics features, open the Live Coding menu, and choose
+    Start Live Turtle. The panel on the right shows the turtle graphics display.
 
 If you don't want to use the Eclipse marketplace, you can also install from the
 [update site][update].

@@ -1,0 +1,31 @@
+<idea-plugin version="2">
+  <id>io.github.donkirkby.livepycharm</id>
+  <name>Live Coding in Python</name>
+  <version>2.14.0</version>
+  <vendor email="support@yourcompany.com" url="http://donkirkby.github.io/live-py-plugin">YourCompany</vendor>
+
+  <description><![CDATA[
+      Lets you run your Python code as you type it.
+    ]]></description>
+
+  <change-notes><![CDATA[
+      First version in PyCharm.
+    ]]>
+  </change-notes>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="145.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <depends>com.intellij.modules.python</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileEditorProvider implementation="io.github.donkirkby.livepycharm.SplitFileEditorProvider"/>
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+  </actions>
+
+</idea-plugin>

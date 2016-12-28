@@ -6,6 +6,7 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
                  Tuple, Yield)
 from copy import deepcopy
+import imp
 import sys
 import traceback
 import types
@@ -21,6 +22,11 @@ try:
     TryFinally = TryExcept = sys.modules['ast'].Try
 except:
     from ast import TryExcept, TryFinally
+
+try:
+    from itertools import izip_longest
+except ImportError:
+    from itertools import zip_longest as izip_longest
 
 from canvas import Canvas
 from mock_turtle import MockTurtle
@@ -685,12 +691,58 @@ class CodeTracer(object):
         MockTurtle.monkey_patch(canvas)
         self.environment = {'__name__': SCOPE_NAME}
 
+    def run_python_file(self, filename, args):
+        """Run a python file as if it were the main program on the command line.
+
+        `filename` is the path to the file to execute.
+        `args` is the argument array to present as sys.argv, including the
+        first element naming the file being executed.
+
+        This is based on code from coverage.py, by Ned Batchelder.
+        https://bitbucket.org/ned/coveragepy
+        """
+        # Create a module to serve as __main__
+        old_main_mod = sys.modules['__main__']
+        main_mod = imp.new_module('__main__')
+        sys.modules['__main__'] = main_mod
+        main_mod.__file__ = filename
+        # TODO: main_mod.__builtins__ = BUILTINS
+
+        # Set sys.argv properly.
+        old_argv = sys.argv
+        sys.argv = args
+
+        try:
+            code = self.make_code_from_py(filename)
+
+            # Execute the code object.
+            exec(code, main_mod.__dict__)
+        finally:
+            # Restore the old __main__
+            sys.modules['__main__'] = old_main_mod
+
+            # Restore the old argv and path
+            sys.argv = old_argv
+
+    def make_code_from_py(self, filename):
+        """Get source from `filename` and make a code object of it."""
+        with open(filename, 'rU') as f:
+            source = f.read()
+
+        # We have the source.  `compile` still needs the last line to be clean,
+        # so make sure it is, then compile a code object from it.
+        if not source or source[-1] != '\n':
+            source += '\n'
+        code = compile(source, filename, "exec")
+
+        return code
+
     def trace_turtle(self, source):
         exec(source, self.environment, self.environment)
 
         return '\n'.join(MockTurtle.get_all_reports())
 
-    def trace_code(self, source, module_name=None):
+    def trace_code(self, source, module_name=None, dump=False, driver=None):
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
 
@@ -705,7 +757,7 @@ class CodeTracer(object):
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
             self.environment[CONTEXT_NAME] = builder
-            if module_name is None:
+            if not driver:
                 environment = self.environment
             else:
                 mod = types.ModuleType(module_name)
@@ -715,6 +767,8 @@ class CodeTracer(object):
                 mod.__dict__.update(self.environment)
                 environment = mod.__dict__
             exec(code, environment)
+            if driver:
+                self.run_python_file(driver[0], driver)
             for value in environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
@@ -739,7 +793,23 @@ class CodeTracer(object):
 #                print('=== Unexpected Exception in tracing code ===')
 #                traceback.print_exception(etype, value, tb)
 
-        return builder.report()
+        report = builder.report()
+        if dump:
+            source_lines = source.splitlines()
+            report_lines = report.splitlines()
+            dump_lines = []
+            source_width = max(map(len, source_lines))
+            indent = 4
+            for source_line, report_line in izip_longest(source_lines,
+                                                         report_lines,
+                                                         fillvalue=''):
+                line = (indent * ' ' + source_line +
+                        (source_width-len(source_line))*' ' +
+                        ' | ' + report_line)
+                dump_lines.append(line)
+            report = '\n'.join(dump_lines)
+
+        return report
 
 
 def main():
@@ -758,16 +828,34 @@ def main():
                         type=int,
                         default=600,
                         help='height of the canvas in pixels')
-    parser.add_argument('-m',
-                        '--module',
-                        help='install traced code as a module with this name')
+    parser.add_argument('-d',
+                        '--dump',
+                        action='store_true',
+                        help='dump source code with report')
+    parser.add_argument('source',
+                        nargs='?',
+                        default='-',
+                        help='source file to trace, or - for stdin')
+    parser.add_argument('module',
+                        nargs='?',
+                        help='load traced code as a module with this name')
+    parser.add_argument('driver',
+                        nargs=argparse.REMAINDER,
+                        help='script to call traced code, plus any arguments')
 
     args = parser.parse_args()
-    code = sys.stdin.read()
+    if args.source == '-':
+        code = sys.stdin.read()
+    else:
+        with open(args.source, 'rU') as source:
+            code = source.read()
     canvas = Canvas(args.width, args.height)
     tracer = CodeTracer(canvas)
     tracer.max_width = 200000
-    code_report = tracer.trace_code(code, module_name=args.module)
+    code_report = tracer.trace_code(code,
+                                    dump=args.dump,
+                                    module_name=args.module,
+                                    driver=args.driver)
     turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:
         print('start_canvas')

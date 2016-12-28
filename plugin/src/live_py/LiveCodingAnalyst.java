@@ -10,7 +10,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -127,6 +129,8 @@ public class LiveCodingAnalyst {
     private HashMap<String, Color> colorMap = new HashMap<String, Color>();
     private SashForm splitter;
     private Mode mode = Mode.Hidden;
+    private Pattern launchPattern = Pattern.compile(
+            "#\\s*__live_launch__\\s*=\\s*(.*)$", Pattern.MULTILINE);
 
     /**
      * This callback inserts a new composite inside the standard window
@@ -323,7 +327,8 @@ public class LiveCodingAnalyst {
      */
     private void analyseDocument(String sourceCode, Rectangle bounds) {
         try {
-            Process process = launchProcess(bounds);
+            List<String> driverArguments = getDriverArguments(sourceCode);
+            Process process = launchProcess(bounds, driverArguments);
             if (process == null)
             {
                 return;
@@ -366,6 +371,14 @@ public class LiveCodingAnalyst {
         }
     }
 
+    private List<String> getDriverArguments(String sourceCode) {
+        Matcher matcher = launchPattern.matcher(sourceCode);
+        if (matcher.find()) {
+            return Arrays.asList(matcher.group(1).split(" "));
+        }
+        return new ArrayList<>();
+    }
+
     private int countLines(String text) {
         Matcher matcher = 
                 Pattern.compile("\n|\r\n|\n\r").matcher(text);
@@ -403,7 +416,9 @@ public class LiveCodingAnalyst {
         });
     }
 
-    private Process launchProcess(Rectangle bounds) throws IOException {
+    private Process launchProcess(
+            Rectangle bounds,
+            List<String> driverArguments) throws IOException {
         checkScriptPath();
         if(mainViewer == null){
             return null;
@@ -423,16 +438,6 @@ public class LiveCodingAnalyst {
         AbstractRunner runner = UniversalRunner.getRunner(nature);
         File editorFile = pyEdit.getEditorFile();
         ArrayList<String> argumentList = new ArrayList<String>();
-        try {
-            String moduleName = getModuleName(pyEdit, nature);
-            argumentList.add("-m");
-            argumentList.add(moduleName);
-        } catch (CoreException e) {
-            if(DEBUG){
-                System.out.println("Can't determine module name: "
-                        + e.getMessage());
-            }
-        }
         if (bounds != null) {
             argumentList.add("-c");
             argumentList.add("-x");
@@ -440,6 +445,19 @@ public class LiveCodingAnalyst {
             argumentList.add("-y");
             argumentList.add(Integer.toString(bounds.height));
         }
+        if (driverArguments.size() > 0) {
+            argumentList.add("-"); // source code from stdin
+            try {
+                String moduleName = getModuleName(pyEdit, nature);
+                argumentList.add(moduleName);
+            } catch (CoreException e) {
+                if(DEBUG){
+                    System.out.println("Can't determine module name: "
+                            + e.getMessage());
+                }
+            }
+            argumentList.addAll(driverArguments);
+        } 
         String[] arguments = 
                 (String[])argumentList.toArray(new String[argumentList.size()]);
         Tuple<Process, String> tuple = runner.createProcess(

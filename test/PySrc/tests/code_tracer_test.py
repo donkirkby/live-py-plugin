@@ -1,3 +1,4 @@
+import os
 from sys import version_info
 
 from mock import call, DEFAULT, patch
@@ -5,6 +6,11 @@ from mock import call, DEFAULT, patch
 from code_tracer import CodeTracer, main
 from mock_turtle import MockTurtle
 from report_builder_test import ReportTestCase
+
+EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
+                                   'example_driver.py')
+EXAMPLE_SOURCE_PATH = os.path.join(os.path.dirname(__file__),
+                                   'example_source.py')
 
 
 class CodeTracerTest(ReportTestCase):
@@ -1528,3 +1534,81 @@ i = 1 """
 
         self.assertEqual([call(expected_report), call('\n')],
                          stdout.write.call_args_list)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py',
+                                                                '--dump'])
+    def test_dump_arg(self, stdin, stdout):
+        code = """\
+i = 1 + 1
+"""
+        expected_report = """\
+    i = 1 + 1 | i = 2 """
+        stdin.read.return_value = code
+
+        main()
+
+        self.assertEqual([call(expected_report), call('\n')],
+                         stdout.write.call_args_list)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--dump',
+        EXAMPLE_SOURCE_PATH])
+    def test_source_file_arg(self, stdin, stdout):
+        expected_report = """\
+    def foo(x):                       | x = 3
+        return x + 1                  | return 4
+                                      |
+    if __name__ == '__live_coding__': |
+        y = foo(3)                    | y = 4
+"""
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        EXAMPLE_DRIVER_PATH])
+    def test_driver(self, stdin, stdout):
+        source = """\
+def foo(x):
+    return x + 1
+"""
+        expected_report = """\
+x = 42
+return 43
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        EXAMPLE_DRIVER_PATH,
+        '99'])
+    def test_driver_args(self, stdin, stdout):
+        source = """\
+import sys
+def foo(x):
+    return sys.argv[1:]
+"""
+        expected_report = """\
+
+x = 42
+return ['99']
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)

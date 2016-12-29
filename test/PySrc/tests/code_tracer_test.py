@@ -1637,3 +1637,67 @@ return ['99']
 
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        '-m',
+        'example_package.driver_in_package'])
+    def test_driver_in_package(self, stdin, stdout):
+        source = """\
+def foo(x):
+    return 42
+"""
+        expected_report = """\
+x = 'from driver in package'
+return 42
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        '-m',
+        'bogus'])
+    def test_unknown_driver_module(self, stdin, stdout):
+        source = ""
+        if version_info.major >= 3:
+            expected_report = "ImportError: No module named 'bogus'"
+        else:
+            expected_report = "ImportError: No module named bogus"
+
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        '-m',
+        'example_package'])
+    def test_driver_package(self, stdin, stdout):
+        source = """\
+def foo(x):
+    return 42
+"""
+        expected_report = """\
+x = 'from package __main__.py'
+return 42
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)

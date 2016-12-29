@@ -716,11 +716,6 @@ class CodeTracer(object):
                 searchpath = None  # "top-level search" in imp.find_module()
             openfile, pathname, _ = imp.find_module(name, searchpath)
 
-            # Complain if this is a magic non-file module.
-            if openfile is None and pathname is None:
-                raise ImportError(
-                    "module does not live in a file: %r" % modulename)
-
             # If `modulename` is actually a package, not a mere module,
             # then we pretend to be Python 2.7 and try running its
             # __main__.py script.

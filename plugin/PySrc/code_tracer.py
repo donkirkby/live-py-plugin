@@ -812,10 +812,14 @@ class CodeTracer(object):
                 environment = mod.__dict__
             exec(code, environment)
             if driver:
-                if module:
-                    self.run_python_module(driver[0], driver)
-                else:
-                    self.run_python_file(driver[0], driver)
+                try:
+                    if module:
+                        self.run_python_module(driver[0], driver)
+                    else:
+                        self.run_python_file(driver[0], driver)
+                except:
+                    if not (builder.message_count or builder.history):
+                        raise
             for value in environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()

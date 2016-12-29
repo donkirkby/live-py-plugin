@@ -1701,3 +1701,55 @@ return 42
 
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--canvas'])
+    def test_canvas_main(self, stdin, stdout):
+        source = """\
+from turtle import *
+forward(100)
+"""
+        expected_report = """\
+start_canvas
+create_line
+    400
+    300
+    500
+    300
+    fill='black'
+    pensize=1
+end_canvas
+.
+
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = ''.join(call_args[0][0]
+                         for call_args in stdout.write.call_args_list)
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        EXAMPLE_DRIVER_PATH])
+    def test_exception_with_driver(self, stdin, stdout):
+        source = """\
+import sys
+def foo(x):
+    sys.exit('Bad stuff.')
+"""
+        expected_report = """\
+
+x = 42
+SystemExit: Bad stuff.
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)

@@ -10,6 +10,7 @@ import imp
 import sys
 import traceback
 import types
+import os
 
 try:
     # Import some classes that are only available in Python 3.
@@ -691,21 +692,68 @@ class CodeTracer(object):
         MockTurtle.monkey_patch(canvas)
         self.environment = {'__name__': SCOPE_NAME}
 
-    def run_python_file(self, filename, args):
+    def run_python_module(self, modulename, args):
+        """Run a python module, as though with ``python -m name args...``.
+
+        `modulename` is the name of the module, possibly a dot-separated name.
+        `args` is the argument array to present as sys.argv, including the
+        first element naming the module being executed.
+
+        This is based on code from coverage.py, by Ned Batchelder.
+        https://bitbucket.org/ned/coveragepy
+        """
+        openfile = None
+        glo, loc = globals(), locals()
+        try:
+            # Search for the module - inside its parent package, if any -
+            # using standard import mechanics.
+            if '.' in modulename:
+                packagename, name = modulename.rsplit('.', 1)
+                package = __import__(packagename, glo, loc, ['__path__'])
+                searchpath = package.__path__
+            else:
+                packagename, name = None, modulename
+                searchpath = None  # "top-level search" in imp.find_module()
+            openfile, pathname, _ = imp.find_module(name, searchpath)
+
+            # Complain if this is a magic non-file module.
+            if openfile is None and pathname is None:
+                raise ImportError(
+                    "module does not live in a file: %r" % modulename)
+
+            # If `modulename` is actually a package, not a mere module,
+            # then we pretend to be Python 2.7 and try running its
+            # __main__.py script.
+            if openfile is None:
+                packagename = modulename
+                name = '__main__'
+                package = __import__(packagename, glo, loc, ['__path__'])
+                searchpath = package.__path__
+                openfile, pathname, _ = imp.find_module(name, searchpath)
+        finally:
+            if openfile:
+                openfile.close()
+
+        # Finally, hand the file off to run_python_file for execution.
+        pathname = os.path.abspath(pathname)
+        args[0] = pathname
+        self.run_python_file(pathname, args, package=packagename)
+
+    def run_python_file(self, filename, args, package=None):
         """Run a python file as if it were the main program on the command line.
 
         `filename` is the path to the file to execute.
         `args` is the argument array to present as sys.argv, including the
-        first element naming the file being executed.
-
-        This is based on code from coverage.py, by Ned Batchelder.
-        https://bitbucket.org/ned/coveragepy
+        first element naming the file being executed. `package` is the name of
+        the enclosing package, if any.
         """
         # Create a module to serve as __main__
         old_main_mod = sys.modules['__main__']
         main_mod = imp.new_module('__main__')
         sys.modules['__main__'] = main_mod
         main_mod.__file__ = filename
+        if package:
+            main_mod.__package__ = package
         # TODO: main_mod.__builtins__ = BUILTINS
 
         # Set sys.argv properly.
@@ -729,10 +777,6 @@ class CodeTracer(object):
         with open(filename, 'rU') as f:
             source = f.read()
 
-        # We have the source.  `compile` still needs the last line to be clean,
-        # so make sure it is, then compile a code object from it.
-        if not source or source[-1] != '\n':
-            source += '\n'
         code = compile(source, filename, "exec")
 
         return code
@@ -742,7 +786,12 @@ class CodeTracer(object):
 
         return '\n'.join(MockTurtle.get_all_reports())
 
-    def trace_code(self, source, module_name=None, dump=False, driver=None):
+    def trace_code(self,
+                   source,
+                   load_as=None,
+                   module=None,
+                   dump=False,
+                   driver=None):
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
 
@@ -760,15 +809,18 @@ class CodeTracer(object):
             if not driver:
                 environment = self.environment
             else:
-                mod = types.ModuleType(module_name)
-                sys.modules[module_name] = mod
+                mod = types.ModuleType(load_as)
+                sys.modules[load_as] = mod
                 # Any reason to set mod.__file__?
 
                 mod.__dict__.update(self.environment)
                 environment = mod.__dict__
             exec(code, environment)
             if driver:
-                self.run_python_file(driver[0], driver)
+                if module:
+                    self.run_python_module(driver[0], driver)
+                else:
+                    self.run_python_file(driver[0], driver)
             for value in environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
@@ -832,11 +884,15 @@ def main():
                         '--dump',
                         action='store_true',
                         help='dump source code with report')
+    parser.add_argument('-m',
+                        '--module',
+                        action='store_true',
+                        help='driver is an importable module, not a script')
     parser.add_argument('source',
                         nargs='?',
                         default='-',
                         help='source file to trace, or - for stdin')
-    parser.add_argument('module',
+    parser.add_argument('load_as',
                         nargs='?',
                         help='load traced code as a module with this name')
     parser.add_argument('driver',
@@ -844,6 +900,9 @@ def main():
                         help='script to call traced code, plus any arguments')
 
     args = parser.parse_args()
+    if args.driver and args.driver[0] in ('-m', '--module'):
+        args.module = True
+        args.driver = args.driver[1:]
     if args.source == '-':
         code = sys.stdin.read()
     else:
@@ -854,7 +913,8 @@ def main():
     tracer.max_width = 200000
     code_report = tracer.trace_code(code,
                                     dump=args.dump,
-                                    module_name=args.module,
+                                    load_as=args.load_as,
+                                    module=args.module,
                                     driver=args.driver)
     turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:

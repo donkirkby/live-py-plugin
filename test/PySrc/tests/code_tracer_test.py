@@ -1612,3 +1612,28 @@ return ['99']
 
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        '-m',
+        'example_driver',
+        '99'])
+    def test_driver_module(self, stdin, stdout):
+        source = """\
+import sys
+def foo(x):
+    return sys.argv[1:]
+"""
+        expected_report = """\
+
+x = 42
+return ['99']
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)

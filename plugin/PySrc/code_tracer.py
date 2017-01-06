@@ -600,10 +600,10 @@ class Tracer(NodeTransformer):
             arg_name = target.id
         elif arg and isinstance(target, arg):
             arg_name = target.arg
-        elif isinstance(target, str):
-            arg_name = target
         else:
-            raise TypeError('Unknown target: %s' % target)
+            assert_message = 'Target type was {}.'.format(type(target))
+            assert isinstance(target, str), assert_message
+            arg_name = target
 
         args = [Str(s=arg_name),
                 Name(id=arg_name, ctx=Load()),
@@ -627,10 +627,10 @@ class Tracer(NodeTransformer):
         if isinstance(target, Tuple) or isinstance(target, List):
             target_names = map(self._wrap_assignment_target, target.elts)
             return '({})'.format(', '.join(target_names))
-        if isinstance(target, Attribute):
-            names = self._get_attribute_names(target)
-            return '.'.join(names)
-        return '?'
+        assert_message = 'Assignment target had type {}.'.format(type(target))
+        assert isinstance(target, Attribute), assert_message
+        names = self._get_attribute_names(target)
+        return '.'.join(names)
 
     def _wrap_assignment_targets(self, targets):
         """ Build string describing assignment targets and wrap indexes.

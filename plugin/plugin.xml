@@ -113,6 +113,7 @@
                   commandId="live-py.commands.start"
                   icon="icons/media-play-3x.png"
                   id="live-py.toolbars.start"
+                  style="pulldown"
                   tooltip="Start Live Coding">
             </command>
             <command
@@ -128,6 +129,12 @@
                   tooltip="Stop Live Coding">
             </command>
          </toolbar>
+      </menuContribution>
+      <menuContribution
+            locationURI="menu:live-py.toolbars.start">
+            <dynamic
+                  id="live-py.menus.startlist"
+                  class="live_py.StartMenuContribution"/>
       </menuContribution>
    </extension>
    <extension

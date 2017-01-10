@@ -19,8 +19,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.variables.IStringVariableManager;
+import org.eclipse.core.variables.VariablesPlugin;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -113,6 +119,7 @@ public class LiveCodingAnalyst {
         public Rectangle bounds;
     }
 
+    private ILog log = Activator.getDefault().getLog();
     private ISourceViewer mainViewer;
     private IDocument mainDocument;
     private Document displayDocument;
@@ -129,8 +136,7 @@ public class LiveCodingAnalyst {
     private HashMap<String, Color> colorMap = new HashMap<String, Color>();
     private SashForm splitter;
     private Mode mode = Mode.Hidden;
-    private Pattern launchPattern = Pattern.compile(
-            "#\\s*__live_launch__\\s*=\\s*(.*)$", Pattern.MULTILINE);
+    private ILaunchConfiguration launchConfig;
 
     /**
      * This callback inserts a new composite inside the standard window
@@ -372,11 +378,44 @@ public class LiveCodingAnalyst {
     }
 
     private List<String> getDriverArguments(String sourceCode) {
-        Matcher matcher = launchPattern.matcher(sourceCode);
-        if (matcher.find()) {
-            return Arrays.asList(matcher.group(1).split(" "));
+        List<String> argumentList = new ArrayList<String>();
+        ILaunchConfiguration launchConfig = this.launchConfig;
+        if (launchConfig == null) {
+            return argumentList;
         }
-        return new ArrayList<>();
+        try {
+            //String launchType = launchConfig.getType().getIdentifier();
+            //final String testType =
+            //        "org.python.pydev.debug.unittestLaunchConfigurationType";
+            //if (launchType.equals(testType)) {
+            //    argumentList.add("-m");
+            //    argumentList.add("unittest");
+            //}
+            //String name = launchConfig.getType().getName();
+            //Map<String, Object> attributes = launchConfig.getAttributes();
+            //Object[] entries = attributes.entrySet().toArray();
+            String driverScript = launchConfig.getAttribute(
+                    "org.eclipse.ui.externaltools.ATTR_LOCATION",
+                    "");
+            IStringVariableManager variableManager = 
+                    VariablesPlugin.getDefault().getStringVariableManager();
+            driverScript = variableManager.performStringSubstitution(driverScript);
+            //String driverWorkDir = launchConfig.getAttribute(
+            //        "org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY",
+            //        "");
+            String driverArgs = launchConfig.getAttribute(
+                    "org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS",
+                    "");
+            argumentList.add(driverScript);
+            argumentList.addAll(Arrays.asList(driverArgs.split(" ")));
+        } catch (CoreException e) {
+            log.log(new Status(
+                    IStatus.ERROR,
+                    Activator.PLUGIN_ID,
+                    "Can't read launch configuration.",
+                    e));
+        }
+        return argumentList;
     }
 
     private int countLines(String text) {
@@ -451,10 +490,11 @@ public class LiveCodingAnalyst {
                 String moduleName = getModuleName(pyEdit, nature);
                 argumentList.add(moduleName);
             } catch (CoreException e) {
-                if(DEBUG){
-                    System.out.println("Can't determine module name: "
-                            + e.getMessage());
-                }
+                log.log(new Status(
+                        IStatus.ERROR,
+                        Activator.PLUGIN_ID,
+                        "Can't determine module name.",
+                        e));
             }
             argumentList.addAll(driverArguments);
         } 
@@ -761,5 +801,13 @@ public class LiveCodingAnalyst {
             colorMap.put(fill, newForeground);
         }
         return newForeground;
+    }
+
+    public ILaunchConfiguration getLaunchConfig() {
+        return launchConfig;
+    }
+
+    public void setLaunchConfig(ILaunchConfiguration launchConfig) {
+        this.launchConfig = launchConfig;
     }
 }

@@ -57,7 +57,7 @@ public class StartMenuContribution extends ContributionItem {
         add(menu, index++, null);
         String[] typeNames = {
                 "org.python.pydev.debug.regularLaunchConfigurationType",
-                // "org.python.pydev.debug.unittestLaunchConfigurationType"
+                "org.python.pydev.debug.unittestLaunchConfigurationType"
         };
         ILaunchManager launchManager = DebugPlugin.getDefault().getLaunchManager();
         for (String typeName : typeNames) {

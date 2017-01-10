@@ -333,8 +333,7 @@ public class LiveCodingAnalyst {
      */
     private void analyseDocument(String sourceCode, Rectangle bounds) {
         try {
-            List<String> driverArguments = getDriverArguments(sourceCode);
-            Process process = launchProcess(bounds, driverArguments);
+            Process process = launchProcess(bounds);
             if (process == null)
             {
                 return;
@@ -377,37 +376,51 @@ public class LiveCodingAnalyst {
         }
     }
 
-    private List<String> getDriverArguments(String sourceCode) {
+    private List<String> getDriverArguments(IPythonNature nature) {
         List<String> argumentList = new ArrayList<String>();
         ILaunchConfiguration launchConfig = this.launchConfig;
         if (launchConfig == null) {
             return argumentList;
         }
         try {
-            //String launchType = launchConfig.getType().getIdentifier();
-            //final String testType =
-            //        "org.python.pydev.debug.unittestLaunchConfigurationType";
-            //if (launchType.equals(testType)) {
-            //    argumentList.add("-m");
-            //    argumentList.add("unittest");
-            //}
-            //String name = launchConfig.getType().getName();
-            //Map<String, Object> attributes = launchConfig.getAttributes();
-            //Object[] entries = attributes.entrySet().toArray();
             String driverScript = launchConfig.getAttribute(
                     "org.eclipse.ui.externaltools.ATTR_LOCATION",
                     "");
             IStringVariableManager variableManager = 
                     VariablesPlugin.getDefault().getStringVariableManager();
             driverScript = variableManager.performStringSubstitution(driverScript);
+            String launchType = launchConfig.getType().getIdentifier();
+            final String testType =
+                    "org.python.pydev.debug.unittestLaunchConfigurationType";
+            if ( ! launchType.equals(testType)) {
+                argumentList.add(driverScript);
+            }
+            else {
+                argumentList.add("-m");
+                argumentList.add("unittest");
+                final String moduleName =
+                        getModuleName(new File(driverScript), nature);
+                final String selectedTests = launchConfig.getAttribute(
+                        "org.python.pydev.debug.ATTR_UNITTEST_TESTS",
+                        "");
+                if (selectedTests.length() == 0) {
+                    argumentList.add(moduleName);
+                }
+                else {
+                    for (String testName : selectedTests.split(",")) {
+                        argumentList.add(moduleName + "." + testName);
+                    }
+                }
+            }
             //String driverWorkDir = launchConfig.getAttribute(
             //        "org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY",
             //        "");
             String driverArgs = launchConfig.getAttribute(
                     "org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS",
                     "");
-            argumentList.add(driverScript);
-            argumentList.addAll(Arrays.asList(driverArgs.split(" ")));
+            if (driverArgs.length() > 0) {
+                argumentList.addAll(Arrays.asList(driverArgs.split(" ")));
+            }
         } catch (CoreException e) {
             log.log(new Status(
                     IStatus.ERROR,
@@ -455,9 +468,7 @@ public class LiveCodingAnalyst {
         });
     }
 
-    private Process launchProcess(
-            Rectangle bounds,
-            List<String> driverArguments) throws IOException {
+    private Process launchProcess(Rectangle bounds) throws IOException {
         checkScriptPath();
         if(mainViewer == null){
             return null;
@@ -484,10 +495,13 @@ public class LiveCodingAnalyst {
             argumentList.add("-y");
             argumentList.add(Integer.toString(bounds.height));
         }
+        List<String> driverArguments = getDriverArguments(nature);
         if (driverArguments.size() > 0) {
             argumentList.add("-"); // source code from stdin
             try {
-                String moduleName = getModuleName(pyEdit, nature);
+                String moduleName = getModuleName(
+                        pyEdit.getEditorFile(),
+                        nature);
                 argumentList.add(moduleName);
             } catch (CoreException e) {
                 log.log(new Status(
@@ -518,9 +532,8 @@ public class LiveCodingAnalyst {
         return null;
     }
 
-    private String getModuleName(PyEdit pyEdit, IPythonNature nature)
+    private String getModuleName(File file, IPythonNature nature)
             throws CoreException {
-        File editorFile = pyEdit.getEditorFile();
         IPythonPathNature pythonPathNature = nature.getPythonPathNature();
         String pythonPath = pythonPathNature.getOnlyProjectPythonPathStr(true);
         int pipeIndex = pythonPath.indexOf('|');
@@ -528,7 +541,7 @@ public class LiveCodingAnalyst {
             pythonPath = pythonPath.substring(0, pipeIndex);
         }
         java.nio.file.Path filePath;
-        filePath = Paths.get(pythonPath).relativize(editorFile.toPath());
+        filePath = Paths.get(pythonPath).relativize(file.toPath());
         String moduleName = "";
         for (java.nio.file.Path component : filePath) {
             if (moduleName.length() > 0) {

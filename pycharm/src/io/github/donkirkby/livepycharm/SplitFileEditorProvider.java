@@ -4,8 +4,10 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PythonFileType;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -56,8 +58,12 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
     @NotNull
     @Override
     public Builder createEditorAsync(@NotNull final Project project, @NotNull final VirtualFile file) {
+        LightVirtualFile displayFile = new LightVirtualFile(
+                file.getName(),
+                FileTypes.PLAIN_TEXT,
+                "Some text\nto start with");
         final Builder firstBuilder = getBuilderFromEditorProvider(myFirstProvider, project, file);
-        final Builder secondBuilder = getBuilderFromEditorProvider(mySecondProvider, project, file);
+        final Builder secondBuilder = getBuilderFromEditorProvider(mySecondProvider, project, displayFile);
 
         return new Builder() {
             @Override

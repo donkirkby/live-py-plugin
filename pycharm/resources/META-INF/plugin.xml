@@ -23,8 +23,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider
             implementation="io.github.donkirkby.livepycharm.SplitFileEditorProvider"/>
-    <typedHandler
-            implementation="io.github.donkirkby.livepycharm.TypedHandler"/>
   </extensions>
 
   <actions>

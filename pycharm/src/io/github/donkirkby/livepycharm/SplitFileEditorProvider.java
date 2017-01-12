@@ -1,6 +1,9 @@
 package io.github.donkirkby.livepycharm;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
@@ -61,8 +64,19 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
                 file.getName(),
                 FileTypes.PLAIN_TEXT,
                 "created for " + file.getName() + "\n");
-        Document document = FileDocumentManager.getInstance().getDocument(displayFile);
-        TypedHandler.registerDocument(file, document);
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        Document displayDocument = FileDocumentManager.getInstance().getDocument(displayFile);
+        if (document != null && displayDocument != null) {
+            document.addDocumentListener(new DocumentAdapter() {
+                @Override
+                public void documentChanged(DocumentEvent e) {
+                    ApplicationManager.getApplication().runWriteAction(
+                            () -> displayDocument.insertString(
+                                    displayDocument.getTextLength(),
+                                    "doc changed: " + e.getNewFragment() + "\n"));
+                }
+            });
+        }
         final Builder firstBuilder = getBuilderFromEditorProvider(myFirstProvider, project, file);
         final Builder secondBuilder = getBuilderFromEditorProvider(mySecondProvider, project, displayFile);
 

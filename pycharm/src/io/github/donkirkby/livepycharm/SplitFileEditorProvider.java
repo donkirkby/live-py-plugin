@@ -1,7 +1,7 @@
 package io.github.donkirkby.livepycharm;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -29,7 +29,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
 
     public SplitFileEditorProvider() {
         myFirstProvider = new PsiAwareTextEditorProvider();
-        mySecondProvider = new PsiAwareTextEditorProvider(); // TODO: new display
+        mySecondProvider = new PsiAwareTextEditorProvider();
 
         myEditorTypeId = "live-pycharm";
     }
@@ -51,7 +51,6 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
     @NotNull
     @Override
     public String getEditorTypeId() {
-        FileEditorProviderManagerImpl x = null;
         return myEditorTypeId;
     }
 
@@ -61,7 +60,9 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
         LightVirtualFile displayFile = new LightVirtualFile(
                 file.getName(),
                 FileTypes.PLAIN_TEXT,
-                "Some text\nto start with");
+                "created for " + file.getName() + "\n");
+        Document document = FileDocumentManager.getInstance().getDocument(displayFile);
+        TypedHandler.registerDocument(file, document);
         final Builder firstBuilder = getBuilderFromEditorProvider(myFirstProvider, project, file);
         final Builder secondBuilder = getBuilderFromEditorProvider(mySecondProvider, project, displayFile);
 

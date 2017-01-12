@@ -6,3 +6,6 @@
 .cache
 /.coverage
 /coverage.xml
+/pycharm/.idea/shelf
+/pycharm/out
+/pycharm/.idea/workspace.xml

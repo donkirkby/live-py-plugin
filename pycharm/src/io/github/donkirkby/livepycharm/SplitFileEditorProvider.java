@@ -1,14 +1,17 @@
 package io.github.donkirkby.livepycharm;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
-import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PythonFileType;
@@ -59,31 +62,69 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
 
     @NotNull
     @Override
-    public Builder createEditorAsync(@NotNull final Project project, @NotNull final VirtualFile file) {
+    public Builder createEditorAsync(
+            @NotNull final Project project,
+            @NotNull final VirtualFile file) {
         LightVirtualFile displayFile = new LightVirtualFile(
                 file.getName(),
                 FileTypes.PLAIN_TEXT,
                 "created for " + file.getName() + "\n");
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        Document displayDocument = FileDocumentManager.getInstance().getDocument(displayFile);
-        if (document != null && displayDocument != null) {
-            document.addDocumentListener(new DocumentAdapter() {
-                @Override
-                public void documentChanged(DocumentEvent e) {
-                    ApplicationManager.getApplication().runWriteAction(
-                            () -> displayDocument.insertString(
-                                    displayDocument.getTextLength(),
-                                    "doc changed: " + e.getNewFragment() + "\n"));
-                }
-            });
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        Document mainDocument = documentManager.getDocument(file);
+        Document displayDocument = documentManager.getDocument(displayFile);
+        if (mainDocument != null && displayDocument != null) {
+            mainDocument.addDocumentListener(new LiveCodingAnalyst(
+                    displayDocument));
         }
-        final Builder firstBuilder = getBuilderFromEditorProvider(myFirstProvider, project, file);
-        final Builder secondBuilder = getBuilderFromEditorProvider(mySecondProvider, project, displayFile);
+        final Builder firstBuilder =
+                getBuilderFromEditorProvider(myFirstProvider, project, file);
+        final Builder secondBuilder =
+                getBuilderFromEditorProvider(mySecondProvider, project, displayFile);
 
         return new Builder() {
+            private Editor mainEditor;
+            private Editor displayEditor;
+
             @Override
             public FileEditor build() {
-                return createSplitEditor(firstBuilder.build(), secondBuilder.build());
+                Disposable disposable = () -> {};
+                EditorFactory.getInstance().addEditorFactoryListener(
+                        new EditorFactoryAdapter() {
+                            @Override
+                            public void editorCreated(@NotNull EditorFactoryEvent event) {
+                                Editor editor = event.getEditor();
+                                Document document = editor.getDocument();
+                                if (document == mainDocument) {
+                                    mainEditor = editor;
+                                } else if (document == displayDocument) {
+                                    displayEditor = editor;
+                                }
+                            }
+                        },
+                        disposable
+                );
+                try {
+                    FileEditor editor = createSplitEditor(
+                            firstBuilder.build(),
+                            secondBuilder.build());
+                    Editor mainEditor = this.mainEditor;
+                    Editor displayEditor = this.displayEditor;
+                    if (mainEditor != null && displayEditor != null) {
+                        mainEditor.getScrollingModel().addVisibleAreaListener(
+                                e -> {
+                                    ScrollingModel mainScroll =
+                                            mainEditor.getScrollingModel();
+                                    ScrollingModel displayScroll =
+                                            displayEditor.getScrollingModel();
+                                    displayScroll.scrollVertically(
+                                            mainScroll.getVerticalScrollOffset() -
+                                            displayScroll.getVerticalScrollOffset());
+                                });
+                    }
+                    return editor;
+                } finally {
+                    Disposer.dispose(disposable);
+                }
             }
         };
     }

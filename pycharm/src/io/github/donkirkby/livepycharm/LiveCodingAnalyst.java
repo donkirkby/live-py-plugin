@@ -28,6 +28,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
                     String line;
                     try {
                         while (null != (line = reader.readLine())) {
+                            line = line.replaceAll("^\\s*", "");
                             if (line.length() > 0) {
                                 builder.append(line.substring(0, 1));
                                 int n = line.length();

@@ -117,8 +117,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
                                     ScrollingModel displayScroll =
                                             displayEditor.getScrollingModel();
                                     displayScroll.scrollVertically(
-                                            mainScroll.getVerticalScrollOffset() -
-                                            displayScroll.getVerticalScrollOffset());
+                                            mainScroll.getVerticalScrollOffset());
                                 });
                     }
                     return editor;

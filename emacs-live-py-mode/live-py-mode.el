@@ -26,6 +26,7 @@
 (defvar live-py-timer)
 (defvar live-py-output-buffer)
 (defvar live-py-output-window)
+(defvar live-py-driver)
 
 (defun live-py-after-change-function (start stop len)
   "Run the buffer through the code tracer and show results in the trace buffer."
@@ -37,7 +38,15 @@
   "Trace the Python code using code_tracer.py."
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
          (buffer-dir (file-name-directory (buffer-file-name)))
-         (command-line (concat "python " tracer-path))
+         (command-line-start (concat "python " tracer-path))
+	 (command-line (if live-py-driver
+			   (concat
+			    command-line-start
+			    " - "
+			    (file-name-base buffer-file-name)
+			    " "
+			    live-py-driver)
+			   command-line-start))
          (pythonpath (concat "PYTHONPATH=" buffer-dir))
          (process-environment (cons pythonpath process-environment))
          )
@@ -87,13 +96,23 @@
        (split-window-horizontally))
   (set-window-buffer live-py-output-window live-py-output-buffer))
 
+(defun live-py-set-driver()
+  "Prompt user to enter the driver command, with input history support."
+  (interactive)
+  (setq live-py-driver (read-string "Type the driver command:"))
+  (live-py-after-change-function 0 0 0))
+
 
 ;;;###autoload
 (define-minor-mode live-py-mode
   "Minor mode to do on-the-fly Python tracing.
 When called interactively, toggles the minor mode.
 With arg, turn mode on if and only if arg is positive."
-  :group 'live-py-mode :lighter live-py-mode-line
+  :group 'live-py-mode
+  :lighter " live"
+  :keymap (let ((map (make-sparse-keymap)))
+	    (define-key map (kbd "C-c d") 'live-py-set-driver)
+	                map)
   (unless (buffer-file-name)
     (error "Current buffer has no associated file!"))
   (cond
@@ -108,6 +127,7 @@ With arg, turn mode on if and only if arg is positive."
                  (make-temp-name "")
                  "*"))
     (set (make-local-variable 'live-py-timer) nil)
+    (set (make-local-variable 'live-py-driver) nil)
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (live-py-show-output-window)
     (live-py-after-change-function 0 0 0)

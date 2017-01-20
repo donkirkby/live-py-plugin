@@ -3,9 +3,12 @@ from sys import version_info
 
 from mock import call, DEFAULT, patch
 
-from code_tracer import CodeTracer, main
+from code_tracer import CodeTracer, main, FileSwallower
 from mock_turtle import MockTurtle
 from report_builder_test import ReportTestCase
+import sys
+from unittest import TestCase
+from mock import Mock
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_driver.py')
@@ -1028,6 +1031,48 @@ print('x')
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    @patch('sys.stdout')
+    def test_stdout(self, mock_stdout):
+        # SETUP
+        code = """\
+import sys
+s = 'x'
+sys.stdout.write(s)
+"""
+        expected_report = """\
+
+s = 'x'
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+        mock_stdout.write.assert_not_called()
+
+    @patch('sys.stderr')
+    def test_stderr(self, mock_stderr):
+        # SETUP
+        code = """\
+import sys
+s = 'x'
+sys.stderr.write(s)
+"""
+        expected_report = """\
+
+s = 'x'
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+        mock_stderr.write.assert_not_called()
+
     def test_assign_tuple(self):
         # SETUP
         code = """\
@@ -1521,6 +1566,18 @@ f.l = [0, 20] """
 
         self.assertReportEqual(expected_report, report)
 
+
+class CodeTracerMainTest(ReportTestCase):
+    def setUp(self):
+        super(CodeTracerMainTest, self).setUp()
+        for module_name in ('example_source',
+                            'example_package',
+                            'example_package.__main__',
+                            'example_package.lib_in_package',
+                            'example_driver'):
+            if module_name in sys.modules:
+                del sys.modules[module_name]
+
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py'])
     def test_main(self, stdin, stdout):
         code = """\
@@ -1630,6 +1687,28 @@ def foo(x):
 
 x = 42
 return ['99']
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_package.lib_in_package',
+        '-m',
+        'example_driver'])
+    def test_lib_in_package(self, stdin, stdout):
+        source = """\
+def add_message(s):
+    return s + ' Received'
+"""
+        expected_report = """\
+s = 'from driver'
+return 'from driver Received'
 """
         stdin.read.return_value = source
 
@@ -1753,3 +1832,15 @@ SystemExit: Bad stuff.
 
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
+
+
+class FileSwallowerTest(TestCase):
+    def test_mock(self):
+        mock_file = Mock()
+        swallower = FileSwallower(mock_file)
+
+        swallower.write()
+        swallower.flush()
+
+        mock_file.write.assert_not_called()
+        mock_file.flush.assert_called_once()

@@ -27,6 +27,9 @@
 (defvar live-py-output-buffer)
 (defvar live-py-output-window)
 (defvar live-py-driver)
+(defvar live-py-module)
+(defvar live-py-dir)
+(defvar live-py-path)
 
 (defun live-py-after-change-function (start stop len)
   "Run the buffer through the code tracer and show results in the trace buffer."
@@ -43,13 +46,14 @@
 			   (concat
 			    command-line-start
 			    " - "
-			    (file-name-base buffer-file-name)
+			    live-py-module
 			    " "
 			    live-py-driver)
 			   command-line-start))
-         (pythonpath (concat "PYTHONPATH=" buffer-dir))
+         (pythonpath (concat "PYTHONPATH=" (or live-py-path live-py-dir)))
          (process-environment (cons pythonpath process-environment))
-         )
+	 (default-directory live-py-dir)
+	 )
     (shell-command-on-region 1
                              (+ (buffer-size) 1)
                              command-line
@@ -89,6 +93,7 @@
   "Show the live-py output window."
   (delete-other-windows)
   (get-buffer-create live-py-output-buffer)
+  (toggle-truncate-lines 1)
   (with-current-buffer live-py-output-buffer
     (toggle-truncate-lines 1)
     (setq-local show-trailing-whitespace nil))
@@ -102,6 +107,35 @@
   (setq live-py-driver (read-string "Type the driver command:"))
   (live-py-after-change-function 0 0 0))
 
+(defun live-py-set-dir()
+  "Prompt user to enter the working dir."
+  (interactive)
+  (setq live-py-dir (directory-file-name
+		     (expand-file-name
+		      (read-directory-name
+		       "Working directory:"
+		       nil
+		       nil
+		       t))))
+  (unless (string-prefix-p live-py-dir buffer-file-name)
+    (error "Working directory must be a parent of %s." buffer-file-name))
+  (setq live-py-module (file-name-base buffer-file-name))
+  (setq live-py-parent (directory-file-name
+			(file-name-directory buffer-file-name)))
+  (while (not (string= live-py-parent live-py-dir))
+    (setq live-py-module (concat
+			  (file-name-nondirectory live-py-parent)
+			  "."
+			  live-py-module))
+    (setq live-py-parent (directory-file-name
+			  (file-name-directory live-py-parent))))
+  (setq live-py-dir (file-name-as-directory live-py-dir))
+  (live-py-after-change-function 0 0 0))
+
+(defun live-py-set-path()
+  "Prompt user to enter extra directories for the Python path."
+  (interactive)
+  (setq live-py-path (read-string "PYTHONPATH:")))
 
 ;;;###autoload
 (define-minor-mode live-py-mode
@@ -112,7 +146,9 @@ With arg, turn mode on if and only if arg is positive."
   :lighter " live"
   :keymap (let ((map (make-sparse-keymap)))
 	    (define-key map (kbd "C-c d") 'live-py-set-driver)
-	                map)
+	    (define-key map (kbd "C-c w") 'live-py-set-dir)
+	    (define-key map (kbd "C-c p") 'live-py-set-path)
+	    map)
   (unless (buffer-file-name)
     (error "Current buffer has no associated file!"))
   (cond
@@ -128,6 +164,9 @@ With arg, turn mode on if and only if arg is positive."
                  "*"))
     (set (make-local-variable 'live-py-timer) nil)
     (set (make-local-variable 'live-py-driver) nil)
+    (set (make-local-variable 'live-py-module) (file-name-base buffer-file-name))
+    (set (make-local-variable 'live-py-dir) (file-name-directory buffer-file-name))
+    (set (make-local-variable 'live-py-path) nil)
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (live-py-show-output-window)
     (live-py-after-change-function 0 0 0)
@@ -139,6 +178,7 @@ With arg, turn mode on if and only if arg is positive."
     (remove-hook 'post-command-hook 'live-py-check-to-scroll t)
     (kill-buffer live-py-output-buffer)
     (delete-window live-py-output-window)
+    (toggle-truncate-lines 0)
     )
    )
   )

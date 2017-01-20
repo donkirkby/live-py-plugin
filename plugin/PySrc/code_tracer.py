@@ -5,12 +5,14 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
                  Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
                  Tuple, Yield)
+from contextlib import contextmanager
 from copy import deepcopy
 import imp
 import sys
 import traceback
 import types
 import os
+import importlib
 
 try:
     # Import some classes that are only available in Python 3.
@@ -690,7 +692,7 @@ class CodeTracer(object):
         self.max_width = None
         self.keepalive = False
         MockTurtle.monkey_patch(canvas)
-        self.environment = {'__name__': SCOPE_NAME}
+        self.environment = {}
 
     def run_python_module(self, modulename, args):
         """Run a python module, as though with ``python -m name args...``.
@@ -776,6 +778,35 @@ class CodeTracer(object):
 
         return code
 
+    @contextmanager
+    def swallow_output(self):
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        try:
+            sys.stdout = FileSwallower(old_stdout)
+            sys.stderr = FileSwallower(old_stderr)
+            yield
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
+    def run_instrumented_module(self, code, module_name):
+        new_mod = imp.new_module(module_name)
+        sys.modules[module_name] = new_mod
+        # TODO: new_mod.__file__ = filename
+        if '.' in module_name:
+            package_name = module_name.rsplit('.', 1)[0]
+            importlib.import_module(package_name)
+        else:
+            package_name = None
+        new_mod.__package__ = package_name
+
+        new_mod.__dict__.update(self.environment)
+        self.environment = new_mod.__dict__
+
+        with self.swallow_output():
+            exec(code, self.environment)
+
     def trace_turtle(self, source):
         exec(source, self.environment, self.environment)
 
@@ -801,26 +832,18 @@ class CodeTracer(object):
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
             self.environment[CONTEXT_NAME] = builder
-            if not driver:
-                environment = self.environment
-            else:
-                mod = types.ModuleType(load_as)
-                sys.modules[load_as] = mod
-                # Any reason to set mod.__file__?
-
-                mod.__dict__.update(self.environment)
-                environment = mod.__dict__
-            exec(code, environment)
+            self.run_instrumented_module(code, load_as or SCOPE_NAME)
             if driver:
                 try:
-                    if module:
-                        self.run_python_module(driver[0], driver)
-                    else:
-                        self.run_python_file(driver[0], driver)
+                    with self.swallow_output():
+                        if module:
+                            self.run_python_module(driver[0], driver)
+                        else:
+                            self.run_python_file(driver[0], driver)
                 except:
                     if not (builder.message_count or builder.history):
                         raise
-            for value in environment.values():
+            for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
         except SyntaxError:
@@ -861,6 +884,17 @@ class CodeTracer(object):
             report = '\n'.join(dump_lines)
 
         return report
+
+
+class FileSwallower(object):
+    def __init__(self, target):
+        self.target = target
+
+    def write(self, *args, **kwargs):
+        pass
+
+    def __getattr__(self, name):
+        return getattr(self.target, name)
 
 
 def main():

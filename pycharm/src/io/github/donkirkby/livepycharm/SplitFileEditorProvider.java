@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.jetbrains.python.PythonFileType;
@@ -20,7 +19,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public class SplitFileEditorProvider implements AsyncFileEditorProvider {
-
     private static final String FIRST_EDITOR = "first_editor";
     private static final String SECOND_EDITOR = "second_editor";
     private static final String SPLIT_LAYOUT = "split_layout";
@@ -74,6 +72,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
         Document displayDocument = documentManager.getDocument(displayFile);
         if (mainDocument != null && displayDocument != null) {
             mainDocument.addDocumentListener(new LiveCodingAnalyst(
+                    file,
                     displayDocument));
         }
         final Builder firstBuilder =
@@ -103,27 +102,23 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
                         },
                         disposable
                 );
-                try {
-                    FileEditor editor = createSplitEditor(
-                            firstBuilder.build(),
-                            secondBuilder.build());
-                    Editor mainEditor = this.mainEditor;
-                    Editor displayEditor = this.displayEditor;
-                    if (mainEditor != null && displayEditor != null) {
-                        mainEditor.getScrollingModel().addVisibleAreaListener(
-                                e -> {
-                                    ScrollingModel mainScroll =
-                                            mainEditor.getScrollingModel();
-                                    ScrollingModel displayScroll =
-                                            displayEditor.getScrollingModel();
-                                    displayScroll.scrollVertically(
-                                            mainScroll.getVerticalScrollOffset());
-                                });
-                    }
-                    return editor;
-                } finally {
-                    Disposer.dispose(disposable);
+                FileEditor editor = createSplitEditor(
+                        firstBuilder.build(),
+                        secondBuilder.build());
+                Editor mainEditor = this.mainEditor;
+                Editor displayEditor = this.displayEditor;
+                if (mainEditor != null && displayEditor != null) {
+                    mainEditor.getScrollingModel().addVisibleAreaListener(
+                            e -> {
+                                ScrollingModel mainScroll =
+                                        mainEditor.getScrollingModel();
+                                ScrollingModel displayScroll =
+                                        displayEditor.getScrollingModel();
+                                displayScroll.scrollVertically(
+                                        mainScroll.getVerticalScrollOffset());
+                            });
                 }
+                return editor;
             }
         };
     }

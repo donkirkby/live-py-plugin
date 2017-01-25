@@ -1,45 +1,59 @@
 package io.github.donkirkby.livepycharm;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 
 public class LiveCodingAnalyst extends DocumentAdapter {
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
-    private Document displayDocument;
+    private final VirtualFile mainFile;
+    private final Document displayDocument;
 
-    LiveCodingAnalyst(Document displayDocument) {
+    LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument) {
+        this.mainFile = mainFile;
         this.displayDocument = displayDocument;
     }
 
     @Override
     public void documentChanged(DocumentEvent e) {
+        StringBuilder builder = new StringBuilder();
+        File plugins = new File(PathManager.getPluginsPath());
+        File livePyPath = new File(plugins, "livepy");
+        File pySrc = new File(livePyPath, "classes");
+        File codeTracer = new File(pySrc, "code_tracer.py");
+        File workingDir = new File(
+                mainFile.getParent().getPath());
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                "python",
+                codeTracer.getAbsolutePath())
+                .directory(workingDir)
+                .redirectInput(ProcessBuilder.Redirect.PIPE)
+                .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                .redirectErrorStream(true);
+        try {
+            Process process = processBuilder.start();
+            OutputStream outputStream = process.getOutputStream();
+            outputStream.write(e.getDocument().getText().getBytes());
+            outputStream.close();
+            InputStream inputStream = process.getInputStream();
+            BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while (null != (line = reader.readLine())) {
+                builder.append(line);
+                builder.append("\n");
+            }
+        } catch (IOException ex) {
+            log.error("Report failed.", ex);
+        }
+
         ApplicationManager.getApplication().runWriteAction(
-                () -> {
-                    StringBuilder builder = new StringBuilder();
-                    BufferedReader reader = new BufferedReader(
-                            new StringReader(e.getDocument().getText()));
-                    String line;
-                    try {
-                        while (null != (line = reader.readLine())) {
-                            line = line.replaceAll("^\\s*", "");
-                            if (line.length() > 0) {
-                                builder.append(line.substring(0, 1));
-                                int n = line.length();
-                                builder.append(line.substring(n - 1, n));
-                            }
-                            builder.append("\n");
-                        }
-                    } catch (IOException ex) {
-                        log.error("Report failed.", ex);
-                    }
-                    displayDocument.setText(builder.toString());
-                });
+                () -> displayDocument.setText(builder.toString()));
     }
 }

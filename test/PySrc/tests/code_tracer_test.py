@@ -1582,15 +1582,17 @@ class CodeTracerMainTest(ReportTestCase):
     def test_main(self, stdin, stdout):
         code = """\
 i = 1
+name = __name__
 """
         expected_report = """\
-i = 1 """
+i = 1
+name = '__live_coding__' """
         stdin.read.return_value = code
 
         main()
 
-        self.assertEqual([call(expected_report), call('\n')],
-                         stdout.write.call_args_list)
+        self.assertReportEqual(expected_report,
+                               stdout.write.call_args_list[0][0][0])
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py',
                                                                 '--dump'])
@@ -1633,10 +1635,12 @@ i = 1 + 1
     def test_driver(self, stdin, stdout):
         source = """\
 def foo(x):
+    name = __name__
     return x + 1
 """
         expected_report = """\
 x = 42
+name = 'example_source'
 return 43
 """
         stdin.read.return_value = source
@@ -1704,10 +1708,12 @@ return ['99']
     def test_lib_in_package(self, stdin, stdout):
         source = """\
 def add_message(s):
+    package = __package__
     return s + ' Received'
 """
         expected_report = """\
 s = 'from driver'
+package = 'example_package'
 return 'from driver Received'
 """
         stdin.read.return_value = source
@@ -1773,6 +1779,40 @@ def foo(x):
         expected_report = """\
 x = 'from package __main__.py'
 return 42
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-f',
+        '/path/to/foo.py'])
+    def test_dunder_file(self, stdin, stdout):
+        source = """\
+filename = __file__
+"""
+        expected_report = """\
+filename = '/path/to/foo.py'
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py'])
+    def test_dunder_file_not_set(self, stdin, stdout):
+        source = """\
+filename = __file__
+"""
+        expected_report = """\
+NameError: name '__file__' is not defined
 """
         stdin.read.return_value = source
 

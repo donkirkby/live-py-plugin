@@ -751,7 +751,6 @@ class CodeTracer(object):
         main_mod.__file__ = filename
         if package:
             main_mod.__package__ = package
-        # TODO: main_mod.__builtins__ = BUILTINS
 
         # Set sys.argv properly.
         old_argv = sys.argv
@@ -790,10 +789,11 @@ class CodeTracer(object):
             sys.stdout = old_stdout
             sys.stderr = old_stderr
 
-    def run_instrumented_module(self, code, module_name):
+    def run_instrumented_module(self, code, module_name, filename):
         new_mod = imp.new_module(module_name)
         sys.modules[module_name] = new_mod
-        # TODO: new_mod.__file__ = filename
+        if filename is not None:
+            new_mod.__file__ = filename
         if '.' in module_name:
             package_name = module_name.rsplit('.', 1)[0]
             importlib.import_module(package_name)
@@ -817,7 +817,8 @@ class CodeTracer(object):
                    load_as=None,
                    module=None,
                    dump=False,
-                   driver=None):
+                   driver=None,
+                   filename=None):
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
 
@@ -832,7 +833,7 @@ class CodeTracer(object):
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
             self.environment[CONTEXT_NAME] = builder
-            self.run_instrumented_module(code, load_as or SCOPE_NAME)
+            self.run_instrumented_module(code, load_as or SCOPE_NAME, filename)
             if driver:
                 try:
                     with self.swallow_output():
@@ -917,6 +918,9 @@ def main():
                         '--dump',
                         action='store_true',
                         help='dump source code with report')
+    parser.add_argument('-f',
+                        '--filename',
+                        help='file name to save in __file__')
     parser.add_argument('-m',
                         '--module',
                         action='store_true',
@@ -948,7 +952,8 @@ def main():
                                     dump=args.dump,
                                     load_as=args.load_as,
                                     module=args.module,
-                                    driver=args.driver)
+                                    driver=args.driver,
+                                    filename=args.filename)
     turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:
         print('start_canvas')

@@ -488,6 +488,8 @@ public class LiveCodingAnalyst {
         AbstractRunner runner = UniversalRunner.getRunner(nature);
         File editorFile = pyEdit.getEditorFile();
         ArrayList<String> argumentList = new ArrayList<String>();
+        argumentList.add("-f");
+        argumentList.add(editorFile.getAbsolutePath());
         if (bounds != null) {
             argumentList.add("-c");
             argumentList.add("-x");

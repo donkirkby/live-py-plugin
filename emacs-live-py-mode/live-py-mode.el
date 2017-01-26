@@ -30,6 +30,7 @@
 (defvar live-py-module)
 (defvar live-py-dir)
 (defvar live-py-path)
+(defvar live-py-version)
 
 (defun live-py-after-change-function (start stop len)
   "Run the buffer through the code tracer and show results in the trace buffer."
@@ -41,7 +42,12 @@
   "Trace the Python code using code_tracer.py."
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
          (buffer-dir (file-name-directory (buffer-file-name)))
-         (command-line-start (concat "python " tracer-path))
+         (command-line-start (concat
+			      live-py-version
+			      " "
+			      tracer-path
+			      " -f "
+			      buffer-file-name))
 	 (command-line (if live-py-driver
 			   (concat
 			    command-line-start
@@ -102,13 +108,22 @@
   (set-window-buffer live-py-output-window live-py-output-buffer))
 
 (defun live-py-set-driver()
-  "Prompt user to enter the driver command, with input history support."
+  "Prompt user to enter the driver command, with input history support.
+To use a unit test, set the driver to something like this:
+-m unittest mymodule.MyTest.test_method"
   (interactive)
   (setq live-py-driver (read-string "Type the driver command:"))
   (live-py-after-change-function 0 0 0))
 
+(defun live-py-set-version()
+  "Prompt user to enter the python command, with input history support.
+Typical values are 'python' or 'python3'."
+  (interactive)
+  (setq live-py-version (read-shell-command "Type the python command:"))
+  (live-py-after-change-function 0 0 0))
+
 (defun live-py-set-dir()
-  "Prompt user to enter the working dir."
+  "Prompt user to enter the working directory."
   (interactive)
   (setq live-py-dir (directory-file-name
 		     (expand-file-name
@@ -141,13 +156,15 @@
 (define-minor-mode live-py-mode
   "Minor mode to do on-the-fly Python tracing.
 When called interactively, toggles the minor mode.
-With arg, turn mode on if and only if arg is positive."
+With arg, turn mode on if and only if arg is positive.
+\\{live-py-mode-map}"
   :group 'live-py-mode
   :lighter " live"
   :keymap (let ((map (make-sparse-keymap)))
 	    (define-key map (kbd "C-c d") 'live-py-set-driver)
 	    (define-key map (kbd "C-c w") 'live-py-set-dir)
 	    (define-key map (kbd "C-c p") 'live-py-set-path)
+	    (define-key map (kbd "C-c v") 'live-py-set-version)
 	    map)
   (unless (buffer-file-name)
     (error "Current buffer has no associated file!"))
@@ -167,6 +184,7 @@ With arg, turn mode on if and only if arg is positive."
     (set (make-local-variable 'live-py-module) (file-name-base buffer-file-name))
     (set (make-local-variable 'live-py-dir) (file-name-directory buffer-file-name))
     (set (make-local-variable 'live-py-path) nil)
+    (set (make-local-variable 'live-py-version) "python")
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (live-py-show-output-window)
     (live-py-after-change-function 0 0 0)

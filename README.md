@@ -6,6 +6,11 @@ live-py-plugin
 
 Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.
 
+[Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
+[travis]: https://travis-ci.org/live-py-plugin
+[Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
+[codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
+
 To see how to use it, watch the [demo video][video] or read the 
 [getting started page][starting]. You might also find some useful examples in
 the [tools folder][tools]. To learn more, read about [how it works][how].
@@ -18,10 +23,6 @@ helping in all kinds of ways.
 
 If you like this project, check out some of my [other projects][projects].
 
-[Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
-[travis]: https://travis-ci.org/live-py-plugin
-[Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
-[codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
 [how]: http://donkirkby.github.io/live-py-plugin/howitworks
 [screenshot]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
 [akaihola]: https://github.com/akaihola
@@ -41,6 +42,15 @@ Installing the Eclipse plugin
    your code.
 6. To try the turtle graphics features, open the Live Coding menu, and choose
     Start Live Turtle. The panel on the right shows the turtle graphics display.
+7. You can also use another script or a unit test to drive your live code.
+    Run your driver script or unit test as usual in Eclipse, then click on the
+    small arrow next to the big live coding arrow in the toolbar. You should see
+    all the different Python and unit test launches listed there. Click on the
+    one you want, and it will call the live version of your code. To run a
+    single unit test method, open the test file, and type
+    <kbd>Ctrl</kbd>+<kbd>F9</kbd>, then choose the test method you want to run.
+    Edit your run configurations to give the new configuration a meaningful name,
+    then choose it from the live coding arrow's menu.
 
 If you don't want to use the Eclipse marketplace, you can also install from the
 [update site][update].
@@ -69,6 +79,11 @@ section, but the next section gives instructions for installing without MELPA.
 6. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.
    You should see an extra window on the right that shows the results of running
    your code.
+7. Type `C-h m` and scroll down to the **Live-Py** section to see all the
+    advanced features that let you run other versions of Python or drive your
+    live coding from another script or a unit test.
+
+[melpa]: https://melpa.org/#/getting-started
 
 Installing the Emacs mode without MELPA
 ---------------------------------------
@@ -93,8 +108,9 @@ Installing the Emacs mode without MELPA
 6. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.
    You should see an extra window on the right that shows the results of running
    your code.
-
-[melpa]: https://melpa.org/#/getting-started
+7. Type `C-h m` and scroll down to the **Live-Py** section to see all the
+    advanced features that let you run other versions of Python or drive your
+    live coding from another script or a unit test.
 
 Uninstalling the Emacs mode
 ---------------------------

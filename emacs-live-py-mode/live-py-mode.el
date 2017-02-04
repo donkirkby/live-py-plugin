@@ -161,10 +161,10 @@ With arg, turn mode on if and only if arg is positive.
   :group 'live-py-mode
   :lighter " live"
   :keymap (let ((map (make-sparse-keymap)))
-	    (define-key map (kbd "C-c d") 'live-py-set-driver)
-	    (define-key map (kbd "C-c w") 'live-py-set-dir)
-	    (define-key map (kbd "C-c p") 'live-py-set-path)
-	    (define-key map (kbd "C-c v") 'live-py-set-version)
+	    (define-key map (kbd "C-c M-d") 'live-py-set-driver)
+	    (define-key map (kbd "C-c M-w") 'live-py-set-dir)
+	    (define-key map (kbd "C-c M-p") 'live-py-set-path)
+	    (define-key map (kbd "C-c M-v") 'live-py-set-version)
 	    map)
   (unless (buffer-file-name)
     (error "Current buffer has no associated file!"))

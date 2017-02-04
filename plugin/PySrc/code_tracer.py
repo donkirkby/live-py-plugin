@@ -372,15 +372,17 @@ class Tracer(NodeTransformer):
         descendants.
 
         line_numbers is a set that all the line numbers will be added to."""
+        if FormattedValue is not None and isinstance(node, FormattedValue):
+            # FormattedValue is a separate code block with its own line nums.
+            return
+
         line_number = getattr(node, 'lineno', None)
         if line_number is not None:
             line_numbers.add(line_number)
         for _, value in iter_fields(node):
             if isinstance(value, list):
                 for item in value:
-                    if (isinstance(item, AST) and
-                            (FormattedValue is None or
-                             not isinstance(item, FormattedValue))):
+                    if isinstance(item, AST):
                         self._find_line_numbers(item, line_numbers)
             elif isinstance(value, AST):
                 self._find_line_numbers(value, line_numbers)

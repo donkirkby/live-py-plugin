@@ -1598,6 +1598,29 @@ z = 'The answer is 42.' """
 
         self.assertReportEqual(expected_report, report)
 
+    @skipIf(sys.version_info < (3, 6),
+            'f-strings not supported before Python 3.6.')
+    def test_simple_f_string_in_function(self):
+        code = """\
+y = 42
+
+def foo(x):
+    return f'{x}'
+
+z = foo(y)
+"""
+        expected_report = """\
+y = 42
+
+x = 42
+return '42'
+
+z = '42' """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
 
 class CodeTracerMainTest(ReportTestCase):
     def setUp(self):

@@ -8,32 +8,29 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
 from contextlib import contextmanager
 from copy import deepcopy
 import imp
+from pydoc import locate
 import sys
 import traceback
 import types
 import os
 import importlib
 
-try:
-    # Import some classes that are only available in Python 3.
-    from ast import arg, Starred  # @UnresolvedImport
-except:
-    arg = Starred = None  # If we're in Python 2, we just won't use them.
-
-try:
-    # Make Python 3.3 try class compatible with old versions.
-    TryFinally = TryExcept = sys.modules['ast'].Try
-except:
-    from ast import TryExcept, TryFinally
-
-try:
-    from itertools import izip_longest
-except ImportError:
-    from itertools import zip_longest as izip_longest
-
 from canvas import Canvas
 from mock_turtle import MockTurtle
 from report_builder import ReportBuilder
+
+# Import some classes that are only available in Python 3.
+arg = locate('ast.arg')
+Starred = locate('ast.Starred')
+FormattedValue = locate('ast.FormattedValue')
+TryExcept = locate('ast.TryExcept')
+TryFinally = locate('ast.TryFinally')
+if TryExcept is None:
+    # Make Python 3.3 try class compatible with old versions.
+    TryFinally = TryExcept = locate('ast.Try')
+
+izip_longest = (locate('itertools.izip_longest') or
+                locate('itertools.zip_longest'))
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
@@ -381,7 +378,9 @@ class Tracer(NodeTransformer):
         for _, value in iter_fields(node):
             if isinstance(value, list):
                 for item in value:
-                    if isinstance(item, AST):
+                    if (isinstance(item, AST) and
+                            (FormattedValue is None or
+                             not isinstance(item, FormattedValue))):
                         self._find_line_numbers(item, line_numbers)
             elif isinstance(value, AST):
                 self._find_line_numbers(value, line_numbers)

@@ -7,7 +7,7 @@ from code_tracer import CodeTracer, main, FileSwallower
 from mock_turtle import MockTurtle
 from report_builder_test import ReportTestCase
 import sys
-from unittest import TestCase
+from unittest import TestCase, skipIf
 from mock import Mock
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
@@ -588,22 +588,16 @@ f = 'Worse stuff' """
     def test_multiline_error(self):
         # SETUP
         code = """\
-quality = ''
-for c in ['a',
-          None]:
-    quality += c
+quality = 0
+for c in ['1',
+          'x']:
+    quality += int(c)
 """
         expected_report = """\
-quality = ''
-c = 'a'       | c = None
-              |
-quality = 'a' | TypeError:"""
-        if version_info.major >= 3:
-            expected_report += (
-                " Can't convert 'NoneType' object to str implicitly")
-        else:
-            expected_report += (
-                " cannot concatenate 'str' and 'NoneType' objects")
+quality = 0
+c = '1'     | c = 'x'
+            |
+quality = 1 | ValueError: invalid literal for int() with base 10: 'x' """
         tracer = CodeTracer()
 
         # EXEC
@@ -1561,6 +1555,44 @@ del f.l[1]
 
 f.l = [0, 10, 20]
 f.l = [0, 20] """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    @skipIf(sys.version_info < (3, 6),
+            'f-strings not supported before Python 3.6.')
+    def test_f_string(self):
+        code = """\
+x = 42
+s = f'The answer is {x}.'
+"""
+        expected_report = """\
+x = 42
+s = 'The answer is 42.' """
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    @skipIf(sys.version_info < (3, 6),
+            'f-strings not supported before Python 3.6.')
+    def test_f_string_in_function(self):
+        code = """\
+y = 42
+
+def foo(x):
+    return f'The answer is {x}.'
+
+z = foo(y)
+"""
+        expected_report = """\
+y = 42
+
+x = 42
+return 'The answer is 42.'
+
+z = 'The answer is 42.' """
 
         report = CodeTracer().trace_code(code)
 

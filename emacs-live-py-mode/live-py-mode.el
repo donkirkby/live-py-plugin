@@ -60,6 +60,7 @@
          (process-environment (cons pythonpath process-environment))
 	 (default-directory live-py-dir)
 	 )
+    ;; Update and last but not least display `live-py-output-buffer'.
     (shell-command-on-region 1
                              (+ (buffer-size) 1)
                              command-line
@@ -92,6 +93,7 @@
                               scroll-down-command
                               beginning-of-buffer
                               end-of-buffer))
+         (set-window-buffer live-py-output-window live-py-output-buffer)
          (live-py-synchronize-scroll))))
 
 

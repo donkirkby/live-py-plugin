@@ -24,7 +24,7 @@
 ;;; Code:
 
 (defvar live-py-timer)
-(defvar live-py-output-buffer)
+(defvar live-py-output-buffer nil "The name of the output buffer.")
 (defvar live-py-output-window)
 (defvar live-py-driver)
 (defvar live-py-module)
@@ -58,15 +58,19 @@
 			   command-line-start))
          (pythonpath (concat "PYTHONPATH=" (or live-py-path live-py-dir)))
          (process-environment (cons pythonpath process-environment))
-	 (default-directory live-py-dir)
-	 )
-    ;; Update and last but not least display `live-py-output-buffer'.
+         (default-directory live-py-dir)
+         (reused-buffer (buffer-live-p
+                         (and live-py-output-buffer
+                              (get-buffer live-py-output-buffer)))))
+    ;; Create (or recreate) if necessary, update and last but not least
+    ;; display output buffer.
     (shell-command-on-region 1
                              (+ (buffer-size) 1)
                              command-line
-                             live-py-output-buffer))
-  (with-current-buffer live-py-output-buffer
-    (setq buffer-read-only 1))
+                             live-py-output-buffer)
+    (with-current-buffer live-py-output-buffer
+      (setq buffer-read-only 1)
+      (unless reused-buffer (toggle-truncate-lines 1))))
   (live-py-synchronize-scroll)
   (set 'live-py-timer nil))
 
@@ -76,6 +80,7 @@
   (let ((code-window-start (+ (count-lines 1 (window-start)) 1))
         (position (line-number-at-pos)))
     (unless (window-valid-p live-py-output-window)
+      ;; Recreate output window.
       (live-py-show-output-window))
     (with-selected-window live-py-output-window
       (goto-line code-window-start)
@@ -85,6 +90,11 @@
 
 (defun live-py-check-to-scroll ()
   "Check `this-command' to see if a scroll is to be done."
+  ;; Take extra care to not let this function run into a non-handled error.
+  ;; On such an error the debugger will not be entered to not block Emacs
+  ;; interactivity when `debug-on-error' is active, so it is easily possible
+  ;; to miss the error. And on such an error the function will be removed
+  ;; from `post-command-hook' which can be quite confusing.
   (cond ((memq this-command '(next-line
                               previous-line
                               scroll-up
@@ -93,9 +103,17 @@
                               scroll-down-command
                               beginning-of-buffer
                               end-of-buffer))
-         (set-window-buffer live-py-output-window live-py-output-buffer)
-         (live-py-synchronize-scroll))))
-
+         (if (buffer-live-p (and live-py-output-buffer
+                                 (get-buffer live-py-output-buffer)))
+             (progn
+               (unless (window-valid-p live-py-output-window)
+                 ;; Recreate output window.
+                 (live-py-show-output-window))
+               (set-window-buffer live-py-output-window
+                                  live-py-output-buffer)
+               (live-py-synchronize-scroll))
+           ;; Recreate output buffer and output window.
+           (live-py-trace)))))
 
 (defun live-py-show-output-window ()
   "Show the live-py output window."
@@ -196,8 +214,9 @@ With arg, turn mode on if and only if arg is positive.
    (t
     (remove-hook 'after-change-functions 'live-py-after-change-function t)
     (remove-hook 'post-command-hook 'live-py-check-to-scroll t)
-    (kill-buffer live-py-output-buffer)
-    (delete-window live-py-output-window)
+    (ignore-errors (kill-buffer live-py-output-buffer))
+    (when (window-valid-p live-py-output-window)
+      (delete-window live-py-output-window))
     (toggle-truncate-lines 0)
     )
    )

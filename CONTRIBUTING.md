@@ -46,6 +46,24 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 8. Commit the new version files, push, and create a release on GitHub.
 9. Update the version number on the [Eclipse marketplace][mkt].
 
+Debugging live-py-mode in Emacs
+-------------------------------
+For the cases where the window splitting changes automatically and often it
+is recommended to log the debug messages to stdout of the shell where Emacs
+was started with something like
+
+    (defun stdout (format-string &rest args)
+      "Pass the arguments to `format' and print the result to stdout."
+      (append-to-file (apply #'format format-string args)
+                      nil
+                      "/dev/stdout"))
+
+as examining an often disappearing Messages buffer can become annoying. For
+an example to log the existence of the output buffer and output window see
+the attachment in
+https://github.com/donkirkby/live-py-plugin/issues/100
+Using a second Emacs frame for the Messages buffer would probably also work.
+
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [g+]: http://google.com/+donkirkby
 [pde]: https://eclipse.org/pde/

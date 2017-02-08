@@ -31,12 +31,13 @@
 (defvar live-py-dir)
 (defvar live-py-path)
 (defvar live-py-version)
+(defvar live-py-window-start-pos)
+(defvar live-py-point-line-nr)
 
 (defun live-py-after-change-function (start stop len)
   "Run the buffer through the code tracer and show results in the trace buffer."
   (when live-py-timer (cancel-timer live-py-timer))
   (set 'live-py-timer (run-at-time 0.5 nil 'live-py-trace)))
-
 
 (defun live-py-trace ()
   "Trace the Python code using code_tracer.py."
@@ -71,49 +72,45 @@
     (with-current-buffer live-py-output-buffer
       (setq buffer-read-only 1)
       (unless reused-buffer (toggle-truncate-lines 1))))
-  (live-py-synchronize-scroll)
+  (live-py-synchronize-scroll (window-start) (line-number-at-pos))
   (set 'live-py-timer nil))
 
-
-(defun live-py-synchronize-scroll ()
-  "Synchronise scrolling between Python and live-py buffers."
-  (let ((code-window-start (+ (count-lines 1 (window-start)) 1))
-        (position (line-number-at-pos)))
+(defun live-py-synchronize-scroll (window-start-pos point-line-nr)
+  "Synchronise scrolling between Python and live-py buffers.
+Pass (window-start) to WINDOW-START-POS and (line-number-at-pos)
+to POINT-LINE-NR."
+  (let ((window-start-line-nr (+ (count-lines 1 window-start-pos) 1)))
     (unless (window-valid-p live-py-output-window)
       ;; Recreate output window.
       (live-py-show-output-window))
     (with-selected-window live-py-output-window
-      (goto-line code-window-start)
+      (goto-line window-start-line-nr)
       (recenter-top-bottom 0)
-      (goto-line position))))
-
+      (goto-line point-line-nr))))
 
 (defun live-py-check-to-scroll ()
-  "Check `this-command' to see if a scroll is to be done."
+  "Check if a scroll is to be done."
   ;; Take extra care to not let this function run into a non-handled error.
   ;; On such an error the debugger will not be entered to not block Emacs
   ;; interactivity when `debug-on-error' is active, so it is easily possible
   ;; to miss the error. And on such an error the function will be removed
   ;; from `post-command-hook' which can be quite confusing.
-  (cond ((memq this-command '(next-line
-                              previous-line
-                              scroll-up
-                              scroll-up-command
-                              scroll-down
-                              scroll-down-command
-                              beginning-of-buffer
-                              end-of-buffer))
-         (if (buffer-live-p (and live-py-output-buffer
-                                 (get-buffer live-py-output-buffer)))
-             (progn
-               (unless (window-valid-p live-py-output-window)
-                 ;; Recreate output window.
-                 (live-py-show-output-window))
-               (set-window-buffer live-py-output-window
-                                  live-py-output-buffer)
-               (live-py-synchronize-scroll))
-           ;; Recreate output buffer and output window.
-           (live-py-trace)))))
+  (let ((window-start-pos (window-start))
+        (point-line-nr (line-number-at-pos)))
+    (unless (and (= live-py-window-start-pos window-start-pos)
+                 (= live-py-point-line-nr point-line-nr))
+      (set (make-local-variable 'live-py-window-start-pos) window-start-pos)
+      (set (make-local-variable 'live-py-point-line-nr) point-line-nr)
+      (if (buffer-live-p (and live-py-output-buffer
+                              (get-buffer live-py-output-buffer)))
+          (progn
+            (unless (window-valid-p live-py-output-window)
+              ;; Recreate output window.
+              (live-py-show-output-window))
+            (set-window-buffer live-py-output-window live-py-output-buffer)
+            (live-py-synchronize-scroll window-start-pos point-line-nr))
+        ;; Recreate output buffer and if necessary the output window.
+        (live-py-trace)))))
 
 (defun live-py-show-output-window ()
   "Show the live-py output window."
@@ -205,11 +202,12 @@ With arg, turn mode on if and only if arg is positive.
     (set (make-local-variable 'live-py-dir) (file-name-directory buffer-file-name))
     (set (make-local-variable 'live-py-path) nil)
     (set (make-local-variable 'live-py-version) "python")
+    (set (make-local-variable 'live-py-window-start-pos) -1)
+    (set (make-local-variable 'live-py-point-line-nr) -1)
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (live-py-show-output-window)
     (live-py-after-change-function 0 0 0)
-    (add-hook 'post-command-hook 'live-py-check-to-scroll nil t)
-    )
+    (add-hook 'post-command-hook 'live-py-check-to-scroll nil t))
    ;; Turning the mode OFF.
    (t
     (remove-hook 'after-change-functions 'live-py-after-change-function t)
@@ -217,10 +215,7 @@ With arg, turn mode on if and only if arg is positive.
     (ignore-errors (kill-buffer live-py-output-buffer))
     (when (window-valid-p live-py-output-window)
       (delete-window live-py-output-window))
-    (toggle-truncate-lines 0)
-    )
-   )
-  )
+    (toggle-truncate-lines 0))))
 
 (provide 'live-py-mode)
 

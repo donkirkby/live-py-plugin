@@ -60,8 +60,8 @@ was started with something like
 
 as examining an often disappearing Messages buffer can become annoying. For
 an example to log the existence of the output buffer and output window see
-the attachment in
-https://github.com/donkirkby/live-py-plugin/issues/100
+the attachment in [issue 100][100].
+
 Using a second Emacs frame for the Messages buffer would probably also work.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
@@ -72,3 +72,4 @@ Using a second Emacs frame for the Messages buffer would probably also work.
 [pdrel]: http://pydev.org/history_pydev.html
 [pyrel]: https://www.python.org/downloads/
 [mkt]: https://marketplace.eclipse.org/content/live-coding-python/edit
+[100]: https://github.com/donkirkby/live-py-plugin/issues/100

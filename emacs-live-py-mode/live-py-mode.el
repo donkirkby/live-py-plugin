@@ -43,20 +43,21 @@
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
          (buffer-dir (file-name-directory (buffer-file-name)))
          (command-line-start (concat
-			      live-py-version
+			      (shell-quote-argument live-py-version)
 			      " "
-			      tracer-path
+			      (shell-quote-argument tracer-path)
 			      " -f "
-			      buffer-file-name))
+			      (shell-quote-argument buffer-file-name)))
 	 (command-line (if live-py-driver
 			   (concat
 			    command-line-start
 			    " - "
 			    live-py-module
 			    " "
-			    live-py-driver)
+			    (shell-quote-argument live-py-driver))
 			   command-line-start))
-         (pythonpath (concat "PYTHONPATH=" (or live-py-path live-py-dir)))
+         (pythonpath (concat "PYTHONPATH=" (shell-quote-argument
+					    (or live-py-path live-py-dir))))
          (process-environment (cons pythonpath process-environment))
          (default-directory live-py-dir)
          (reused-buffer (buffer-live-p

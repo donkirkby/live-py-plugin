@@ -170,6 +170,11 @@ Typical values are 'python' or 'python3'."
   (interactive)
   (setq live-py-path (read-string "PYTHONPATH:")))
 
+(defun live-py-mode-off ()
+  "Wrapper function to turn the mode off."
+  (interactive) ; Allow binding to a key
+  (live-py-mode 0))
+
 ;;;###autoload
 (define-minor-mode live-py-mode
   "Minor mode to do on-the-fly Python tracing.
@@ -205,6 +210,7 @@ With arg, turn mode on if and only if arg is positive.
     (set (make-local-variable 'live-py-version) "python")
     (set (make-local-variable 'live-py-window-start-pos) -1)
     (set (make-local-variable 'live-py-point-line-nr) -1)
+    (add-hook 'kill-buffer-hook 'live-py-mode-off nil t)
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (live-py-show-output-window)
     (live-py-after-change-function 0 0 0)
@@ -213,6 +219,7 @@ With arg, turn mode on if and only if arg is positive.
    (t
     (remove-hook 'after-change-functions 'live-py-after-change-function t)
     (remove-hook 'post-command-hook 'live-py-check-to-scroll t)
+    (remove-hook 'kill-buffer-hook 'live-py-mode-off t)
     (ignore-errors (kill-buffer live-py-output-buffer))
     (when (window-valid-p live-py-output-window)
       (delete-window live-py-output-window))

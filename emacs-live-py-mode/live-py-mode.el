@@ -28,6 +28,7 @@
 (defvar live-py-output-window)
 (defvar live-py-driver)
 (defvar live-py-module)
+(defvar live-py-parent)
 (defvar live-py-dir)
 (defvar live-py-path)
 (defvar live-py-version)
@@ -64,38 +65,64 @@
          (reused-buffer (buffer-live-p
                          (and live-py-output-buffer
                               (get-buffer live-py-output-buffer)))))
-    ;; Create (or recreate) if necessary, update and last but not least
-    ;; display output buffer.
-    (shell-command-on-region 1
-                             (+ (buffer-size) 1)
-                             command-line
-                             live-py-output-buffer)
+    (save-restriction
+      (widen)
+      ;; Create (or recreate) if necessary, update and last but not least
+      ;; display output buffer.
+      (shell-command-on-region 1
+                               (1+ (buffer-size))
+                               command-line
+                               live-py-output-buffer))
     (with-current-buffer live-py-output-buffer
       (setq buffer-read-only 1)
-      (unless reused-buffer (toggle-truncate-lines 1))))
-  (live-py-synchronize-scroll (window-start) (line-number-at-pos))
-  (set 'live-py-timer nil))
+      (unless reused-buffer (toggle-truncate-lines 1)))
+    (live-py-synchronize-scroll
+     (line-number-at-pos (window-start)) (line-number-at-pos))
+    (set 'live-py-timer nil)))
 
-(defun live-py-synchronize-scroll (window-start-pos point-line-nr)
-  "Synchronise scrolling between Python and live-py buffers.
-Pass (window-start) to WINDOW-START-POS and (line-number-at-pos)
-to POINT-LINE-NR."
-  (let ((window-start-line-nr (+ (count-lines 1 window-start-pos) 1)))
+(defun live-py-synchronize-scroll (window-start-line-nr point-line-nr)
+  "Synchronize scrolling between Python and output buffer.
+
+Pass the possibly reused (line-number-at-pos (window-start)) to
+WINDOW-START-LINE-NR and (line-number-at-pos) to POINT-LINE-NR,
+both are relative to (point-min). Numbering starts at 1 for all
+*-LINE-NR in this function signature and body.
+
+When the Python buffer is narrowed the output buffer remains
+aligned but will not hide the part after the narrowing."
+  (let ((point-min-pos (point-min))
+        (point-min-line-nr 1))
+    (unless (= 1 point-min-pos)
+      ;; Compensate for narrowing.
+      (save-restriction
+        (widen)
+        (setq point-min-line-nr (line-number-at-pos point-min-pos))))
     (unless (window-valid-p live-py-output-window)
       ;; Recreate output window.
       (live-py-show-output-window))
     (with-selected-window live-py-output-window
-      (goto-line window-start-line-nr)
+      (goto-char 1)
+      (forward-line (+ point-min-line-nr window-start-line-nr -2))
       (recenter-top-bottom 0)
-      (goto-line point-line-nr))))
+      (forward-line (- point-line-nr window-start-line-nr)))))
 
 (defun live-py-check-to-scroll ()
-  "Check if a scroll is to be done."
+  "Check if window start or point have to be synchronized."
   ;; Take extra care to not let this function run into a non-handled error.
   ;; On such an error the debugger will not be entered to not block Emacs
   ;; interactivity when `debug-on-error' is active, so it is easily possible
   ;; to miss the error. And on such an error the function will be removed
   ;; from `post-command-hook' which can be quite confusing.
+
+  ;; `window-start' is for some reason not up to date after
+  ;; `post-command-hook' in at least these situations:
+  ;; - For a few commands like `narrow-to-region' or `viper-goto-line'.
+  ;; - Repeated `next-line' towards the end of the Python buffer: The output
+  ;;   buffer suddenly lags one line behind.
+  ;; See also "calculating new window-start/end without redisplay"
+  ;; http://stackoverflow.com/questions/23923371 )
+  (when (memq this-command '(narrow-to-region next-line viper-goto-line))
+    (redisplay))
   (let ((window-start-pos (window-start))
         (point-line-nr (line-number-at-pos)))
     (unless (and (= live-py-window-start-pos window-start-pos)
@@ -109,7 +136,8 @@ to POINT-LINE-NR."
               ;; Recreate output window.
               (live-py-show-output-window))
             (set-window-buffer live-py-output-window live-py-output-buffer)
-            (live-py-synchronize-scroll window-start-pos point-line-nr))
+            (live-py-synchronize-scroll
+             (line-number-at-pos window-start-pos) point-line-nr))
         ;; Recreate output buffer and if necessary the output window.
         (live-py-trace)))))
 

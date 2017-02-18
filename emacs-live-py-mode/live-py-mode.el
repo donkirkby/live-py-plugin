@@ -56,7 +56,7 @@
 			    " - "
 			    live-py-module
 			    " "
-			    (shell-quote-argument live-py-driver))
+			    live-py-driver)
 			   command-line-start))
          (pythonpath (concat "PYTHONPATH=" (shell-quote-argument
 					    (or live-py-path live-py-dir))))

@@ -1,8 +1,24 @@
 from collections import namedtuple
+import imp
 import sys
-from turtle import TNavigator, TPen
 
 from canvas import Canvas
+
+try:
+    if sys.version_info.major >= 3:
+        tkinter_name = 'tkinter'
+        import tkinter as tk
+    else:
+        tkinter_name = 'Tkinter'
+        import Tkinter as tk
+except ImportError:
+    tk = sys.modules[tkinter_name] = imp.new_module(tkinter_name)
+    tk.Frame = tk.Canvas = tk.Tk = object
+    tk.mainloop = lambda *args, **kwargs: None
+    tk.simpledialog = imp.new_module(tkinter_name)
+    sys.modules[tkinter_name + '.simpledialog'] = tk.simpledialog
+
+from turtle import TNavigator, TPen
 
 
 class MockTurtle(TNavigator, TPen):

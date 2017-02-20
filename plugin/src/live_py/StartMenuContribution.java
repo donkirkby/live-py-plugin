@@ -1,5 +1,8 @@
 package live_py;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ILog;
@@ -59,6 +62,7 @@ public class StartMenuContribution extends ContributionItem {
                 "org.python.pydev.debug.regularLaunchConfigurationType",
                 "org.python.pydev.debug.unittestLaunchConfigurationType"
         };
+        ArrayList<ILaunchConfiguration> pythonConfigs = new ArrayList<>();
         ILaunchManager launchManager = DebugPlugin.getDefault().getLaunchManager();
         for (String typeName : typeNames) {
             ILaunchConfigurationType launchConfigType =
@@ -69,7 +73,7 @@ public class StartMenuContribution extends ContributionItem {
                 for (ILaunchConfiguration launchConfig : launchConfigurations) {
                     if (launchConfig.getType().getIdentifier().startsWith(
                             "org.python.pydev")) {
-                        add(menu, index++, launchConfig);
+                    	pythonConfigs.add(launchConfig);
                     }
                 }
             } catch (CoreException e) {
@@ -80,6 +84,16 @@ public class StartMenuContribution extends ContributionItem {
                         e));
             }
         }
-
+        pythonConfigs.sort(new Comparator<ILaunchConfiguration>() {
+        	@Override
+        	public int compare(
+        			ILaunchConfiguration config1,
+        			ILaunchConfiguration config2) {
+        		return config1.getName().compareTo(config2.getName());
+        	}
+        });
+        for (ILaunchConfiguration launchConfig : pythonConfigs) {
+            add(menu, index++, launchConfig);
+		}
     }
 }

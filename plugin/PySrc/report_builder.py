@@ -154,7 +154,13 @@ class ReportBuilder(object):
         entries = traceback.extract_tb(tb)
         if entries:
             _, line_number, _, _ = entries[0]
-            self.add_message(message, line_number)
+            try:
+                old_limit, self.message_limit = self.message_limit, None
+                old_width, self.max_width = self.max_width, None
+                self.add_message(message, line_number)
+            finally:
+                self.message_limit = old_limit
+                self.max_width = old_width
 
     def return_value(self, value, line_number):
         self.add_message('return %s ' % repr(value), line_number)
@@ -185,6 +191,7 @@ class ReportBuilder(object):
         return DeletionTarget(name, target, line_number, self)
 
     def report(self):
+        self.max_width = None
         for frame in self.history:
             first_line, last_line = frame.stack_block
             self.start_block(first_line, last_line)

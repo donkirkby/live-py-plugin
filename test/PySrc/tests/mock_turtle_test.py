@@ -1,8 +1,8 @@
-import turtle
 import unittest
 
 from canvas import Canvas
 from mock_turtle import MockTurtle
+import turtle
 
 
 class MockTurtleTest(unittest.TestCase):
@@ -102,8 +102,8 @@ create_line
 
         # EXEC
         MockTurtle.monkey_patch(canvas=Canvas(expected_width, expected_height))
-        width = turtle.window_width()
-        height = turtle.window_height()
+        width = turtle.window_width()  # @UndefinedVariable
+        height = turtle.window_height()  # @UndefinedVariable
 
         # VERIFY
         self.assertEqual(expected_width, width)
@@ -634,7 +634,7 @@ create_line
     pensize=1
 """
 
-        turtle.fd(100)
+        turtle.fd(100)  # @UndefinedVariable
         report = MockTurtle.get_all_reports()
 
         self.assertEqual(expected_report.splitlines(), report)

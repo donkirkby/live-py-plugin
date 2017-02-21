@@ -700,8 +700,8 @@ def foo(n):
 foo(0)
 """
         expected_report = """\
-n = 0 | n = 1 | n = 2 |
-      |       |       |
+n = 0                                            | n = 1                                            | n = 2                                            |
+RuntimeError: live coding message limit exceeded | RuntimeError: live coding message limit exceeded | RuntimeError: live coding message limit exceeded |
 
 RuntimeError: live coding message limit exceeded
 """
@@ -722,7 +722,6 @@ while True:
     pass
 """
         expected_report = """\
-
 RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
         tracer.message_limit = 3
@@ -745,7 +744,7 @@ foo()
 """
         expected_report = """\
 
-
+RuntimeError: live coding message limit exceeded
 
 
 RuntimeError: live coding message limit exceeded """
@@ -1803,15 +1802,19 @@ return 42
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '-',
-        'example_source',
-        '-m',
-        'bogus'])
-    def test_unknown_driver_module(self, stdin, stdout):
-        source = ""
-        if version_info.major >= 3:
-            expected_report = "ImportError: No module named 'bogus'"
-        else:
-            expected_report = "ImportError: No module named bogus"
+        'foo',
+        EXAMPLE_DRIVER_PATH,
+        'fail',
+        'badly'])
+    def test_driver_fails(self, stdin, stdout):
+        source = """\
+s = 'Hello, World!'
+"""
+        expected_report = """\
+s = 'Hello, World!' | --------------------------------- |
+                    | AssertionError: ['fail', 'badly'] |
+                    | --------------------------------- |
+"""
 
         stdin.read.return_value = source
 

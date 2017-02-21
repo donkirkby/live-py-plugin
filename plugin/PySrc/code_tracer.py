@@ -836,15 +836,11 @@ class CodeTracer(object):
             self.environment[CONTEXT_NAME] = builder
             self.run_instrumented_module(code, load_as or SCOPE_NAME, filename)
             if driver:
-                try:
-                    with self.swallow_output():
-                        if module:
-                            self.run_python_module(driver[0], driver)
-                        else:
-                            self.run_python_file(driver[0], driver)
-                except:
-                    if not (builder.message_count or builder.history):
-                        raise
+                with self.swallow_output():
+                    if module:
+                        self.run_python_module(driver[0], driver)
+                    else:
+                        self.run_python_file(driver[0], driver)
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
@@ -860,12 +856,16 @@ class CodeTracer(object):
             messages = traceback.format_exception_only(etype, value)
             message = messages[-1].strip() + ' '
             entries = traceback.extract_tb(tb)
-            for filename, line_number, _, _ in entries:
+            for filename, _, _, _ in entries:
                 if filename == PSEUDO_FILENAME:
-                    builder.add_extra_message(message, line_number)
                     is_reported = True
             if not is_reported:
-                builder.add_message(message, 1)
+                builder.start_block(1, 3)
+                header = '-' * (len(message) - 1) + ' '
+                builder.add_message(header, 1)
+                builder.add_message(message, 2)
+                builder.add_message(header, 3)
+                builder.start_block(1, 3)
 #                print('=== Unexpected Exception in tracing code ===')
 #                traceback.print_exception(etype, value, tb)
 

@@ -807,6 +807,11 @@ class CodeTracer(object):
 
         with self.swallow_output():
             exec(code, self.environment)
+            
+    def split_lines(self, messages):
+        for message in messages:
+            for line in message.splitlines():
+                yield line
 
     def trace_turtle(self, source):
         exec(source, self.environment, self.environment)
@@ -859,15 +864,26 @@ class CodeTracer(object):
             for filename, _, _, _ in entries:
                 if filename == PSEUDO_FILENAME:
                     is_reported = True
-            if not is_reported:
-                builder.start_block(1, 3)
-                header = '-' * (len(message) - 1) + ' '
+            while not is_reported and tb is not None:
+                frame = tb.tb_frame
+                code = frame.f_code
+                filename = code.co_filename
+                if __file__ not in (filename, filename + 'c'):
+                    break
+                tb = tb.tb_next
+            if not is_reported and tb is not None:
+                messages = traceback.format_exception(etype, value, tb)
+                messages = list(self.split_lines(messages))
+                block_size = len(messages) + 2
+                builder.start_block(1, block_size)
+                message_width = 1
+                for lineno, message in enumerate(messages, 2):
+                    message_width = max(len(message), message_width)
+                    builder.add_message(message, lineno)
+                header = '-' * message_width + ' '
                 builder.add_message(header, 1)
-                builder.add_message(message, 2)
-                builder.add_message(header, 3)
-                builder.start_block(1, 3)
-#                print('=== Unexpected Exception in tracing code ===')
-#                traceback.print_exception(etype, value, tb)
+                builder.add_message(header, block_size)
+                builder.start_block(1, block_size)
 
         report = builder.report()
         if dump:

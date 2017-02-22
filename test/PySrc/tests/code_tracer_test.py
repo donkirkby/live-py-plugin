@@ -9,6 +9,7 @@ from report_builder_test import ReportTestCase
 import sys
 from unittest import TestCase, skipIf
 from mock import Mock
+import re
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_driver.py')
@@ -17,6 +18,10 @@ EXAMPLE_SOURCE_PATH = os.path.join(os.path.dirname(__file__),
 
 
 class CodeTracerTest(ReportTestCase):
+    def setUp(self):
+        super(CodeTracerTest, self).setUp()
+        self.maxDiff = None
+
     def tearDown(self):
         MockTurtle.remove_monkey_patch()
 
@@ -497,8 +502,6 @@ n = Decimal('10') """
         report = tracer.trace_code(code)
 
         # VERIFY
-#        self.maxDiff = None
-#        self.assertEqual([], tracer.log)
         self.assertReportEqual(expected_report, report)
 
     def test_runtime_error(self):
@@ -667,7 +670,6 @@ n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_infinite_loop_by_width(self):
@@ -688,7 +690,6 @@ n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_infinite_recursion_by_width(self):
@@ -712,7 +713,6 @@ RuntimeError: live coding message limit exceeded
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_infinite_loop_pass(self):
@@ -730,7 +730,6 @@ RuntimeError: live coding message limit exceeded """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_infinite_loop_pass_in_function(self):
@@ -755,7 +754,6 @@ RuntimeError: live coding message limit exceeded """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_set_attribute(self):
@@ -779,7 +777,6 @@ dog.name = 'Spot' """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_set_attribute_item(self):
@@ -853,7 +850,6 @@ dog.name = 'Spot' """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_repr(self):
@@ -885,7 +881,6 @@ animal = Dog('Spot') """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_module_name(self):
@@ -909,7 +904,6 @@ y = 13 """
         report = tracer.trace_code(code)
 
         # VERIFY
-        self.maxDiff = None
         self.assertReportEqual(expected_report, report)
 
     def test_lambda(self):
@@ -1624,6 +1618,7 @@ z = '42' """
 class CodeTracerMainTest(ReportTestCase):
     def setUp(self):
         super(CodeTracerMainTest, self).setUp()
+        self.maxDiff = None
         for module_name in ('example_source',
                             'example_package',
                             'example_package.__main__',
@@ -1811,9 +1806,12 @@ return 42
 s = 'Hello, World!'
 """
         expected_report = """\
-s = 'Hello, World!' | --------------------------------- |
-                    | AssertionError: ['fail', 'badly'] |
-                    | --------------------------------- |
+s = 'Hello, World!' | ---------------------------------------------------- |
+                    | Traceback (most recent call last):                   |
+                    |   File "path/example_driver.py", line 6, in <module> |
+                    |     assert 'fail' not in sys.argv, sys.argv[1:]      |
+                    | AssertionError: ['fail', 'badly']                    |
+                    | ---------------------------------------------------- |
 """
 
         stdin.read.return_value = source
@@ -1821,7 +1819,14 @@ s = 'Hello, World!' | --------------------------------- |
         main()
 
         report = stdout.write.call_args_list[0][0][0]
+        report = self.trim_exception(report)
+        expected_report = self.trim_exception(expected_report)
         self.assertReportEqual(expected_report, report)
+
+    def trim_exception(self, report):
+        report = re.sub(r"( |-)+\| *$", "", report, flags=re.MULTILINE)
+        report = report.replace('path/example_driver.py', EXAMPLE_DRIVER_PATH)
+        return report
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',

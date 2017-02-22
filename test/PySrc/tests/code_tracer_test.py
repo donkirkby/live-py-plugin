@@ -1823,8 +1823,33 @@ s = 'Hello, World!' | ---------------------------------------------------- |
         expected_report = self.trim_exception(expected_report)
         self.assertReportEqual(expected_report, report)
 
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'foo',
+        'bogus_driver.py'])
+    def test_bad_driver(self, stdin, stdout):
+        source = """\
+s = 'Yo!'
+"""
+        expected_report = """\
+s = 'Yo!' | --------------------------------------------------------------- |
+          | IOError: [Errno 2] No such file or directory: 'bogus_driver.py' |
+          | --------------------------------------------------------------- |
+"""
+
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        report = self.trim_exception(report)
+        expected_report = self.trim_exception(expected_report)
+        self.assertReportEqual(expected_report, report)
+
     def trim_exception(self, report):
         report = re.sub(r"( |-)+\| *$", "", report, flags=re.MULTILINE)
+        report = report.replace("IOError", "FileNotFoundError")
         report = report.replace('path/example_driver.py', EXAMPLE_DRIVER_PATH)
         return report
 

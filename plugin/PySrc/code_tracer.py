@@ -871,8 +871,11 @@ class CodeTracer(object):
                 if __file__ not in (filename, filename + 'c'):
                     break
                 tb = tb.tb_next
-            if not is_reported and tb is not None:
-                messages = traceback.format_exception(etype, value, tb)
+            if not is_reported:
+                if tb:
+                    messages = traceback.format_exception(etype, value, tb)
+                else:
+                    messages = traceback.format_exception_only(etype, value)
                 messages = list(self.split_lines(messages))
                 block_size = len(messages) + 2
                 builder.start_block(1, block_size)

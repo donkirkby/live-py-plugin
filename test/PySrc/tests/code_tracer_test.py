@@ -1847,6 +1847,89 @@ s = 'Yo!' | --------------------------------------------------------------- |
         expected_report = self.trim_exception(expected_report)
         self.assertReportEqual(expected_report, report)
 
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'foo',
+        '-m',
+        'unittest',
+        'foo'])
+    def test_unittest_driver_passes(self, stdin, stdout):
+        source = """\
+from unittest import TestCase
+
+def get_foo(x):
+    return x + 5
+
+class FooTest(TestCase):
+    def test_get_foo(self):
+        y = get_foo(10)
+        self.assertEqual(15, y)
+"""
+        expected_report = """\
+------------ |
+unittest: OK |
+------------ | | x = 10
+               | return 15
+
+
+
+y = 15
+"""
+
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        report = self.trim_exception(report)
+        expected_report = self.trim_exception(expected_report)
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'foo',
+        '-m',
+        'unittest',
+        'foo'])
+    def test_unittest_driver_fails(self, stdin, stdout):
+        source = """\
+from unittest import TestCase
+
+def get_foo(x):
+    return x + 500
+
+class FooTest(TestCase):
+    def test_get_foo(self):
+        y = get_foo(10)
+        self.assertEqual(15, y)
+"""
+        expected_report = """\
+---------------------- |
+unittest: (failures=1) |
+---------------------- | | x = 10
+                         | return 510
+
+
+
+y = 510
+AssertionError: 15 != 510
+"""
+        # TODO: Remove this special case.
+        if sys.version_info < (3, 0):
+            expected_report = expected_report.replace('(failures=1)',
+                                                      'FAIL        ')
+
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        report = self.trim_exception(report)
+        expected_report = self.trim_exception(expected_report)
+        self.assertReportEqual(expected_report, report)
+
     def trim_exception(self, report):
         report = re.sub(r"( |-)+\| *$", "", report, flags=re.MULTILINE)
         report = report.replace("IOError", "FileNotFoundError")

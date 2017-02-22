@@ -818,6 +818,21 @@ class CodeTracer(object):
 
         return '\n'.join(MockTurtle.get_all_reports())
 
+
+    def report_driver_result(self, builder, messages):
+        messages = list(self.split_lines(messages))
+        block_size = len(messages) + 2
+        builder.start_block(1, block_size)
+        message_width = 1
+        for lineno, message in enumerate(messages, 2):
+            message_width = max(len(message), message_width)
+            builder.add_message(message, lineno)
+        
+        header = '-' * message_width + ' '
+        builder.add_message(header, 1)
+        builder.add_message(header, block_size)
+        builder.start_block(1, block_size)
+
     def trace_code(self,
                    source,
                    load_as=None,
@@ -843,7 +858,17 @@ class CodeTracer(object):
             if driver:
                 with self.swallow_output():
                     if module:
-                        self.run_python_module(driver[0], driver)
+                        module_name = driver[0]
+                        try:
+                            self.run_python_module(module_name, driver)
+                        except SystemExit as ex:
+                            if module_name != 'unittest':
+                                raise
+                            result = (sys.stderr.last_line or
+                                      ex.code and 'FAIL        ' or 'OK') 
+                                
+                            result = 'unittest: ' + result
+                            self.report_driver_result(builder, [result])
                     else:
                         self.run_python_file(driver[0], driver)
             for value in self.environment.values():
@@ -859,7 +884,6 @@ class CodeTracer(object):
             builder.message_limit = None  # make sure we don't hit limit
             builder.max_width = None  # make sure we don't hit limit
             messages = traceback.format_exception_only(etype, value)
-            message = messages[-1].strip() + ' '
             entries = traceback.extract_tb(tb)
             for filename, _, _, _ in entries:
                 if filename == PSEUDO_FILENAME:
@@ -876,17 +900,7 @@ class CodeTracer(object):
                     messages = traceback.format_exception(etype, value, tb)
                 else:
                     messages = traceback.format_exception_only(etype, value)
-                messages = list(self.split_lines(messages))
-                block_size = len(messages) + 2
-                builder.start_block(1, block_size)
-                message_width = 1
-                for lineno, message in enumerate(messages, 2):
-                    message_width = max(len(message), message_width)
-                    builder.add_message(message, lineno)
-                header = '-' * message_width + ' '
-                builder.add_message(header, 1)
-                builder.add_message(header, block_size)
-                builder.start_block(1, block_size)
+                self.report_driver_result(builder, messages)
 
         report = builder.report()
         if dump:
@@ -910,9 +924,13 @@ class CodeTracer(object):
 class FileSwallower(object):
     def __init__(self, target):
         self.target = target
+        self.last_line = None
 
     def write(self, *args, **kwargs):
-        pass
+        text = args and str(args[0]) or ''
+        lines = text.strip().splitlines()
+        if lines:
+            self.last_line = lines[-1]
 
     def __getattr__(self, name):
         return getattr(self.target, name)

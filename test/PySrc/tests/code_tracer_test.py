@@ -1816,7 +1816,8 @@ s = 'Hello, World!' | ---------------------------------------------------- |
 
         stdin.read.return_value = source
 
-        main()
+        with self.assertRaises(SystemExit):
+            main()
 
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
@@ -1840,7 +1841,8 @@ s = 'Yo!' | --------------------------------------------------------------- |
 
         stdin.read.return_value = source
 
-        main()
+        with self.assertRaises(SystemExit):
+            main()
 
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
@@ -1923,8 +1925,10 @@ AssertionError: 15 != 510
 
         stdin.read.return_value = source
 
-        main()
+        with self.assertRaises(SystemExit) as ctx:
+            main()
 
+        self.assertEqual(1, ctx.exception.code)
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
         expected_report = self.trim_exception(expected_report)
@@ -2039,7 +2043,8 @@ SystemExit: Bad stuff.
 """
         stdin.read.return_value = source
 
-        main()
+        with self.assertRaises(SystemExit):
+            main()
 
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)

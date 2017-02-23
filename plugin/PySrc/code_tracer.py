@@ -842,6 +842,7 @@ class CodeTracer(object):
                    filename=None):
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
+        self.return_code = 0
 
         try:
             tree = parse(source)
@@ -864,6 +865,7 @@ class CodeTracer(object):
                         except SystemExit as ex:
                             if module_name != 'unittest':
                                 raise
+                            self.return_code = ex.code
                             result = (sys.stderr.last_line or
                                       ex.code and 'FAIL        ' or 'OK') 
                                 
@@ -879,6 +881,7 @@ class CodeTracer(object):
             messages = traceback.format_exception_only(type(ex), ex)
             builder.add_message(messages[-1].strip() + ' ', ex.lineno)
         except:
+            self.return_code = 1
             etype, value, tb = sys.exc_info()
             is_reported = False
             builder.message_limit = None  # make sure we don't hit limit
@@ -999,6 +1002,8 @@ def main():
         print('end_canvas')
         print('.')
     print(code_report)
+    if tracer.return_code:
+        exit(tracer.return_code)
 
 if __name__ == '__main__':
     main()

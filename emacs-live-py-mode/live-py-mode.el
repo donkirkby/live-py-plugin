@@ -34,6 +34,7 @@
 (defvar live-py-version)
 (defvar live-py-window-start-pos)
 (defvar live-py-point-line-nr)
+(defvar live-py-lighter)
 
 (defun live-py-after-change-function (start stop len)
   "Run the buffer through the code tracer and show results in the trace buffer."
@@ -69,10 +70,13 @@
       (widen)
       ;; Create (or recreate) if necessary, update and last but not least
       ;; display output buffer.
-      (shell-command-on-region 1
-                               (1+ (buffer-size))
-                               command-line
-                               live-py-output-buffer))
+      (if (eq 0
+              (shell-command-on-region 1
+                                       (1+ (buffer-size))
+                                       command-line
+                                       live-py-output-buffer))
+          (setq live-py-lighter " live")
+        (setq live-py-lighter " live(FAIL)")))
     (with-current-buffer live-py-output-buffer
       (setq buffer-read-only 1)
       (unless reused-buffer (toggle-truncate-lines 1)))
@@ -210,7 +214,7 @@ When called interactively, toggles the minor mode.
 With arg, turn mode on if and only if arg is positive.
 \\{live-py-mode-map}"
   :group 'live-py-mode
-  :lighter " live"
+  :lighter live-py-lighter
   :keymap (let ((map (make-sparse-keymap)))
 	    (define-key map (kbd "C-c M-d") 'live-py-set-driver)
 	    (define-key map (kbd "C-c M-w") 'live-py-set-dir)

@@ -1,15 +1,15 @@
+import doctest
 import os
+import re
+import sys
 from sys import version_info
+from unittest import TestCase, skipIf
 
-from mock import call, DEFAULT, patch
+from mock import call, DEFAULT, patch, Mock
 
 from code_tracer import CodeTracer, main, FileSwallower
 from mock_turtle import MockTurtle
 from report_builder_test import ReportTestCase
-import sys
-from unittest import TestCase, skipIf
-from mock import Mock
-import re
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_driver.py')
@@ -1918,7 +1918,6 @@ unittest: (failures=1) |
 y = 510
 AssertionError: 15 != 510
 """
-        # TODO: Remove this special case.
         if sys.version_info < (3, 0):
             expected_report = expected_report.replace('(failures=1)',
                                                       'FAIL        ')
@@ -1934,10 +1933,63 @@ AssertionError: 15 != 510
         expected_report = self.trim_exception(expected_report)
         self.assertReportEqual(expected_report, report)
 
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'foo',
+        '-m',
+        'doctest',
+        'foo.py'])
+    def test_doctest_driver_fails(self, stdin, stdout):
+        source = """\
+
+
+
+
+
+
+def get_foo(x):
+    ''' Example for doctest.
+    
+    >>> get_foo(42)
+    942
+    '''
+    return x + 500
+"""
+        expected_report = """\
+------------------------------------------------ |
+Traceback (most recent call last):               |
+  File "path/doctest.py", line 9999, in <module> |
+    sys.exit(_test())                            |
+SystemExit: 1                                    |
+------------------------------------------------ |
+x = 42
+
+
+
+
+
+return 542
+"""
+
+        stdin.read.return_value = source
+        stdout.encoding = None
+
+        with self.assertRaises(SystemExit):
+            main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        expected_report = self.trim_exception(expected_report)
+        report = self.trim_exception(report)
+        self.assertReportEqual(expected_report, report)
+
     def trim_exception(self, report):
         report = re.sub(r"( |-)+\| *$", "", report, flags=re.MULTILINE)
+        report = re.sub(r"\d\d+", "9999", report)
         report = report.replace("IOError", "FileNotFoundError")
         report = report.replace('path/example_driver.py', EXAMPLE_DRIVER_PATH)
+        report = report.replace('path/doctest.py',
+                                str(doctest.__file__).strip('c'))
         return report
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
@@ -1991,7 +2043,8 @@ NameError: name '__file__' is not defined
 """
         stdin.read.return_value = source
 
-        main()
+        with self.assertRaises(SystemExit):
+            main()
 
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
@@ -2040,6 +2093,22 @@ def foo(x):
 
 x = 42
 SystemExit: Bad stuff.
+"""
+        stdin.read.return_value = source
+
+        with self.assertRaises(SystemExit):
+            main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py'])
+    def test_syntax_error(self, stdin, stdout):
+        source = """\
+def missing_body():
+"""
+        expected_report = """\
+SyntaxError: unexpected EOF while parsing
 """
         stdin.read.return_value = source
 

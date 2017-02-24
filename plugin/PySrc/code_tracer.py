@@ -449,6 +449,9 @@ class Tracer(NodeTransformer):
         context_assign = Assign(targets=[Name(id=CONTEXT_NAME, ctx=Store())],
                                 value=start_frame_call)
         new_node.body = [context_assign]
+        if isinstance(try_body[0], Expr) and isinstance(try_body[0].value, Str):
+            # Move docstring back to top of function.
+            new_node.body.insert(0, try_body.pop(0))
 
         # trace function parameter values
         for target in new_node.args.args:
@@ -493,7 +496,8 @@ class Tracer(NodeTransformer):
             self._find_line_numbers(new_node, line_numbers)
             first_line_number = min(line_numbers)
             last_line_number = max(line_numbers)
-            handler_body = [self._create_context_call('exception')]
+            handler_body = [self._create_context_call('exception'),
+                            Raise()]
             handler = ExceptHandler(body=handler_body,
                                     lineno=last_line_number)
             new_body.append(TryExcept(body=try_body,
@@ -867,8 +871,8 @@ class CodeTracer(object):
                                 raise
                             self.return_code = ex.code
                             result = (sys.stderr.last_line or
-                                      ex.code and 'FAIL        ' or 'OK') 
-                                
+                                      ex.code and 'FAIL        ' or 'OK')
+
                             result = 'unittest: ' + result
                             self.report_driver_result(builder, [result])
                     else:
@@ -877,15 +881,14 @@ class CodeTracer(object):
                 if isinstance(value, types.GeneratorType):
                     value.close()
         except SyntaxError:
+            self.return_code = 1
             ex = sys.exc_info()[1]
             messages = traceback.format_exception_only(type(ex), ex)
             builder.add_message(messages[-1].strip() + ' ', ex.lineno)
-        except:
-            self.return_code = 1
+        except BaseException as ex:
+            self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()
             is_reported = False
-            builder.message_limit = None  # make sure we don't hit limit
-            builder.max_width = None  # make sure we don't hit limit
             messages = traceback.format_exception_only(etype, value)
             entries = traceback.extract_tb(tb)
             for filename, _, _, _ in entries:

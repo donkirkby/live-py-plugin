@@ -1985,7 +1985,7 @@ return 542
 
     def trim_exception(self, report):
         report = re.sub(r"( |-)+\| *$", "", report, flags=re.MULTILINE)
-        report = re.sub(r"\d\d+", "9999", report)
+        report = re.sub(r"line \d+", "line 9999", report)
         report = report.replace("IOError", "FileNotFoundError")
         report = report.replace('path/example_driver.py', EXAMPLE_DRIVER_PATH)
         report = report.replace('path/doctest.py',

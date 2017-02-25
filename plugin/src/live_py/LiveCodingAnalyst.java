@@ -53,6 +53,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.commands.ICommandService;
 import org.osgi.framework.Bundle;
 import org.python.pydev.core.IPythonNature;
 import org.python.pydev.core.IPythonPathNature;
@@ -136,6 +138,7 @@ public class LiveCodingAnalyst {
     private HashMap<String, Color> colorMap = new HashMap<String, Color>();
     private SashForm splitter;
     private Mode mode = Mode.Hidden;
+    private boolean isPassing = false;
     private ILaunchConfiguration launchConfig;
 
     /**
@@ -218,6 +221,20 @@ public class LiveCodingAnalyst {
 
         return editorContent;
     }
+
+    /**
+     * The current display mode.
+     */
+    public Mode getMode() {
+		return mode;
+	}
+    
+    /**
+     * True if the last analysis didn't raise any errors.
+     */
+    public boolean isPassing() {
+		return isPassing;
+	}
     
     /**
      * Copy the style settings from the main viewer to the display
@@ -367,6 +384,7 @@ public class LiveCodingAnalyst {
                 reader.close();
                 errorReader.close();
             }
+            isPassing = process.waitFor() == 0;
         } catch (Exception e) {
             String message = e.getMessage();
             if (message == null) {
@@ -463,6 +481,11 @@ public class LiveCodingAnalyst {
                             horizontalTarget);
                     horizontalPosition =
                             displayViewer.getTextWidget().getHorizontalPixel();
+                }
+                IWorkbenchWindow workbenchWindow = Activator.getDefault().getWorkbench().getActiveWorkbenchWindow();
+				ICommandService commandService = workbenchWindow.getService(ICommandService.class);
+                if (commandService != null) {
+                    commandService.refreshElements("live-py.commands.start", null);
                 }
             }
         });

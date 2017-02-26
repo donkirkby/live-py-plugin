@@ -1,7 +1,5 @@
 package live_py;
 
-import live_py.LiveCodingAnalyst.Mode;
-
 import java.util.Map;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -9,12 +7,10 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.IElementUpdater;
 import org.eclipse.ui.menus.UIElement;
-import org.python.pydev.editor.PyEdit;
+
+import live_py.LiveCodingAnalyst.Mode;
 
 /**
  * Show the live coding display.
@@ -22,10 +18,15 @@ import org.python.pydev.editor.PyEdit;
  *
  */
 public class StartHandler extends AbstractHandler implements IElementUpdater {
+	public static final String COMMAND_ID = "live-py.commands.start";
+	
     private ILaunchConfiguration launchConfig;
-    private ImageDescriptor inactiveIcon = Activator.getImageDescriptor("icons/media-play-3x.png");
-    private ImageDescriptor passIcon = Activator.getImageDescriptor("icons/media-play-3x-pass.png");
-    private ImageDescriptor failIcon = Activator.getImageDescriptor("icons/media-play-3x-fail.png");
+    private ImageDescriptor inactiveIcon =
+    		Activator.getImageDescriptor("icons/media-play-3x.png");
+    private ImageDescriptor passIcon =
+    		Activator.getImageDescriptor("icons/media-play-3x-pass.png");
+    private ImageDescriptor failIcon =
+    		Activator.getImageDescriptor("icons/media-play-3x-fail.png");
     
     public StartHandler() {
     }
@@ -40,29 +41,22 @@ public class StartHandler extends AbstractHandler implements IElementUpdater {
     
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        final LiveCodingAnalyst analyst = getAnalyst();
+        final LiveCodingAnalyst analyst = LiveCodingAnalyst.getActiveAnalyst();
         if (analyst != null) {
         	analyst.setMode(Mode.Display);
         	analyst.setLaunchConfig(launchConfig);
 		}
+        Activator.getDefault().refreshElements(TurtleHandler.COMMAND_ID);
         return null;
     }
 
-	private LiveCodingAnalyst getAnalyst() {
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-        IEditorPart editor = window.getActivePage().getActiveEditor();
-        LiveCodingAnalyst analyst = null;
-        if (editor instanceof PyEdit) {
-			analyst = PyEditDecorator.getAnalyst((PyEdit) editor);
-        }
-		return analyst;
-	}
-
 	@Override
-	public void updateElement(UIElement element, @SuppressWarnings("rawtypes") Map parameters) {
-		LiveCodingAnalyst analyst = getAnalyst();
+	public void updateElement(
+			UIElement element,
+			@SuppressWarnings("rawtypes") Map parameters) {
+		LiveCodingAnalyst analyst = LiveCodingAnalyst.getActiveAnalyst();
 		ImageDescriptor chosenIcon = 
-				analyst.getMode() == LiveCodingAnalyst.Mode.Hidden
+				analyst.getMode() != LiveCodingAnalyst.Mode.Display
 				? inactiveIcon
 				: analyst.isPassing()
 				? passIcon

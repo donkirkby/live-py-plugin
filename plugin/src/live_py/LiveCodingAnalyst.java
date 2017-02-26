@@ -53,8 +53,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.PlatformUI;
 import org.osgi.framework.Bundle;
 import org.python.pydev.core.IPythonNature;
 import org.python.pydev.core.IPythonPathNature;
@@ -115,6 +116,16 @@ public class LiveCodingAnalyst {
         analysisThread.start();
     }
     
+	public static LiveCodingAnalyst getActiveAnalyst() {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        IEditorPart editor = window.getActivePage().getActiveEditor();
+        LiveCodingAnalyst analyst = null;
+        if (editor instanceof PyEdit) {
+			analyst = PyEditDecorator.getAnalyst((PyEdit) editor);
+        }
+		return analyst;
+	}
+
     private class AnalysisTask {
         public String sourceCode;
         public LiveCodingAnalyst analyst;
@@ -465,6 +476,7 @@ public class LiveCodingAnalyst {
             public void run() {
                 if (mode == Mode.Turtle) {
                     redraw();
+                    Activator.getDefault().refreshElements(TurtleHandler.COMMAND_ID);
                 }
                 else {
                     final int horizontalNow =
@@ -481,11 +493,7 @@ public class LiveCodingAnalyst {
                             horizontalTarget);
                     horizontalPosition =
                             displayViewer.getTextWidget().getHorizontalPixel();
-                }
-                IWorkbenchWindow workbenchWindow = Activator.getDefault().getWorkbench().getActiveWorkbenchWindow();
-				ICommandService commandService = workbenchWindow.getService(ICommandService.class);
-                if (commandService != null) {
-                    commandService.refreshElements("live-py.commands.start", null);
+                    Activator.getDefault().refreshElements(StartHandler.COMMAND_ID);
                 }
             }
         });

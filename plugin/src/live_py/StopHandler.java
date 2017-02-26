@@ -23,6 +23,8 @@ public class StopHandler extends AbstractHandler {
         if (editor instanceof PyEdit) {
             PyEditDecorator.getAnalyst((PyEdit) editor).setMode(Mode.Hidden);
         }
+        Activator.getDefault().refreshElements(StartHandler.COMMAND_ID);
+        Activator.getDefault().refreshElements(TurtleHandler.COMMAND_ID);
         return null;
     }
 }

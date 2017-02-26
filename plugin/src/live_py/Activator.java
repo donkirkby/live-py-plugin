@@ -1,6 +1,8 @@
 package live_py;
 
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -37,6 +39,17 @@ public class Activator extends AbstractUIPlugin {
 	public void stop(BundleContext context) throws Exception {
 		plugin = null;
 		super.stop(context);
+	}
+
+	/**
+	 * Refresh any elements registered against the command with the given id.
+	 */
+	public void refreshElements(String commandId) {
+		IWorkbenchWindow workbenchWindow = getWorkbench().getActiveWorkbenchWindow();
+		ICommandService commandService = workbenchWindow.getService(ICommandService.class);
+	    if (commandService != null) {
+			commandService.refreshElements(commandId, null);
+	    }
 	}
 
 	/**

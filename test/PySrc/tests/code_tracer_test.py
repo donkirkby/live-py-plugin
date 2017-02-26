@@ -1614,6 +1614,33 @@ z = '42' """
 
         self.assertReportEqual(expected_report, report)
 
+    def test_module_in_package(self):
+        code = """\
+from unittest import TestCase
+
+
+class FooTest(TestCase):
+    def test_foo(self):
+        s = __package__
+        self.assertEqual('example_package', s)
+"""
+        expected_report = """\
+
+
+
+
+
+s = 'example_package'
+"""
+
+        report = CodeTracer().trace_code(code,
+                                         load_as='example_package.foo',
+                                         module=True,
+                                         driver=['unittest',
+                                                 'example_package.foo'])
+
+        self.assertReportEqual(expected_report, report)
+
 
 class CodeTracerMainTest(ReportTestCase):
     def setUp(self):
@@ -1869,10 +1896,10 @@ class FooTest(TestCase):
         self.assertEqual(15, y)
 """
         expected_report = """\
------------- |
-unittest: OK |
------------- | | x = 10
-               | return 15
+
+
+x = 10
+return 15
 
 
 

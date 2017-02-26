@@ -800,8 +800,9 @@ class CodeTracer(object):
         if filename is not None:
             new_mod.__file__ = filename
         if '.' in module_name:
-            package_name = module_name.rsplit('.', 1)[0]
+            package_name, child_name = module_name.rsplit('.', 1)
             importlib.import_module(package_name)
+            setattr(sys.modules[package_name], child_name, new_mod)
         else:
             package_name = None
         new_mod.__package__ = package_name
@@ -840,10 +841,21 @@ class CodeTracer(object):
     def trace_code(self,
                    source,
                    load_as=None,
-                   module=None,
+                   module=False,
                    dump=False,
                    driver=None,
                    filename=None):
+        """ Trace a module of source code, possibly by running a driver script.
+        
+        :param str source: the source code to trace
+        :param str load_as: the module name to load the source code as
+        :param bool module: True if the driver is a module name instead of a
+        file name
+        :param bool dump: True if the source code should be included in the
+        output
+        :param str driver: the driver script's file name or module name
+        :param str filename: the file name of the source code
+        """
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
         self.return_code = 0
@@ -867,14 +879,15 @@ class CodeTracer(object):
                         try:
                             self.run_python_module(module_name, driver)
                         except SystemExit as ex:
-                            if module_name != 'unittest':
-                                raise
-                            self.return_code = ex.code
-                            result = (sys.stderr.last_line or
-                                      ex.code and 'FAIL        ' or 'OK')
-
-                            result = 'unittest: ' + result
-                            self.report_driver_result(builder, [result])
+                            if ex.code:
+                                if module_name != 'unittest':
+                                    raise
+                                self.return_code = ex.code
+                                result = (sys.stderr.last_line or
+                                          'FAIL        ')
+    
+                                result = 'unittest: ' + result
+                                self.report_driver_result(builder, [result])
                     else:
                         self.run_python_file(driver[0], driver)
             for value in self.environment.values():

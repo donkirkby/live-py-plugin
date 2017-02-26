@@ -169,19 +169,19 @@ To use a unit test, set the driver to something like this:
   "Prompt user to enter the python command, with input history support.
 Typical values are 'python' or 'python3'."
   (interactive)
-  (setq live-py-version (read-shell-command "Type the python command:"))
+  (setq live-py-version (expand-file-name
+                         (read-shell-command "Type the python command:")))
   (live-py-after-change-function 0 0 0))
 
 (defun live-py-set-dir()
   "Prompt user to enter the working directory."
   (interactive)
   (setq live-py-dir (directory-file-name
-		     (expand-file-name
-		      (read-directory-name
-		       "Working directory:"
-		       nil
-		       nil
-		       t))))
+                     (read-directory-name
+                      "Working directory:"
+                      nil
+                      nil
+                      t)))
   (unless (string-prefix-p live-py-dir buffer-file-name)
     (error "Working directory must be a parent of %s." buffer-file-name))
   (setq live-py-module (file-name-base buffer-file-name))
@@ -200,7 +200,8 @@ Typical values are 'python' or 'python3'."
 (defun live-py-set-path()
   "Prompt user to enter extra directories for the Python path."
   (interactive)
-  (setq live-py-path (read-string "PYTHONPATH:")))
+  (setq live-py-path (expand-file-name
+                      (read-string "PYTHONPATH:"))))
 
 (defun live-py-mode-off ()
   "Wrapper function to turn the mode off."

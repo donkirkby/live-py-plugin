@@ -1,4 +1,4 @@
-;;; live-py-mode.el --- Live Coding in Python
+;;; live-py-mode.el --- Live Coding in Python -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015 Don Kirkby
 
@@ -37,14 +37,15 @@
 (defvar live-py-lighter)
 
 (defun live-py-after-change-function (start stop len)
-  "Run the buffer through the code tracer and show results in the trace buffer."
+  "After a delay run the buffer through the code tracer and show trace.
+START, STOP and LEN are required by `after-change-functions' but unused."
+  (ignore start stop len)
   (when live-py-timer (cancel-timer live-py-timer))
   (set 'live-py-timer (run-at-time 0.5 nil 'live-py-trace)))
 
 (defun live-py-trace ()
   "Trace the Python code using code_tracer.py."
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
-         (buffer-dir (file-name-directory (buffer-file-name)))
          (command-line-start (concat
 			      (shell-quote-argument live-py-version)
 			      " "
@@ -183,7 +184,8 @@ Typical values are 'python' or 'python3'."
                       nil
                       t)))
   (unless (string-prefix-p live-py-dir buffer-file-name)
-    (error "Working directory must be a parent of %s." buffer-file-name))
+    (user-error "Working directory must be a parent of %s"
+                buffer-file-name))
   (setq live-py-module (file-name-base buffer-file-name))
   (setq live-py-parent (directory-file-name
 			(file-name-directory buffer-file-name)))
@@ -223,7 +225,7 @@ With arg, turn mode on if and only if arg is positive.
 	    (define-key map (kbd "C-c M-v") 'live-py-set-version)
 	    map)
   (unless (buffer-file-name)
-    (error "Current buffer has no associated file!"))
+    (user-error "Current buffer has no associated file"))
   (cond
 
    ;; Turning the mode ON.

@@ -30,7 +30,7 @@
 ;; Internal variables.
 (defvar live-py-output-window nil)
 (defvar-local live-py-timer nil)
-(defvar-local live-py-output-buffer nil "The name of the output buffer.")
+(defvar-local live-py-trace-buffer nil "The name of the trace buffer.")
 (defvar-local live-py-module nil)
 (defvar-local live-py-parent nil)
 (defvar-local live-py-window-start-pos nil)
@@ -42,9 +42,9 @@
 START, STOP and LEN are required by `after-change-functions' but unused."
   (ignore start stop len)
   (when live-py-timer (cancel-timer live-py-timer))
-  (setq-local live-py-timer (run-at-time 0.5 nil 'live-py-trace)))
+  (setq-local live-py-timer (run-at-time 0.5 nil 'live-py-trace-update)))
 
-(defun live-py-trace ()
+(defun live-py-trace-update ()
   "Trace the Python code using code_tracer.py."
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
          (command-line-start (concat
@@ -66,21 +66,21 @@ START, STOP and LEN are required by `after-change-functions' but unused."
          (process-environment (cons pythonpath process-environment))
          (default-directory live-py-dir)
          (reused-buffer (buffer-live-p
-                         (and live-py-output-buffer
-                              (get-buffer live-py-output-buffer)))))
+                         (and live-py-trace-buffer
+                              (get-buffer live-py-trace-buffer)))))
     (save-restriction
       (widen)
       (setq-local
        live-py-lighter
        ;; Create (or recreate) if necessary, update and last but not least
-       ;; display output buffer.
+       ;; display the trace buffer.
        (if (eq 0 (shell-command-on-region 1
                                           (1+ (buffer-size))
                                           command-line
-                                          live-py-output-buffer))
+                                          live-py-trace-buffer))
            " live"
          " live(FAIL)")))
-    (with-current-buffer live-py-output-buffer
+    (with-current-buffer live-py-trace-buffer
       (setq-local buffer-read-only 1)
       (unless reused-buffer (toggle-truncate-lines 1)))
     (live-py-synchronize-scroll
@@ -88,14 +88,14 @@ START, STOP and LEN are required by `after-change-functions' but unused."
     (setq-local live-py-timer nil)))
 
 (defun live-py-synchronize-scroll (window-start-line-nr point-line-nr)
-  "Synchronize scrolling between Python and output buffer.
+  "Synchronize scrolling between Python buffer and trace buffer.
 
 Pass the possibly reused (line-number-at-pos (window-start)) to
 WINDOW-START-LINE-NR and (line-number-at-pos) to POINT-LINE-NR,
 both are relative to (point-min). Numbering starts at 1 for all
 *-LINE-NR in this function signature and body.
 
-When the Python buffer is narrowed the output buffer remains
+When the Python buffer is narrowed the trace buffer remains
 aligned but will not hide the part after the narrowing."
   (let ((point-min-pos (point-min))
         (point-min-line-nr 1))
@@ -124,7 +124,7 @@ aligned but will not hide the part after the narrowing."
   ;; `window-start' is for some reason not up to date after
   ;; `post-command-hook' in at least these situations:
   ;; - For a few commands like `narrow-to-region' or `viper-goto-line'.
-  ;; - Repeated `next-line' towards the end of the Python buffer: The output
+  ;; - Repeated `next-line' towards the end of the Python buffer: The trace
   ;;   buffer suddenly lags one line behind.
   ;; See also "calculating new window-start/end without redisplay"
   ;; http://stackoverflow.com/questions/23923371 )
@@ -136,28 +136,28 @@ aligned but will not hide the part after the narrowing."
                  (= live-py-point-line-nr point-line-nr))
       (setq-local live-py-window-start-pos window-start-pos)
       (setq-local live-py-point-line-nr point-line-nr)
-      (if (buffer-live-p (and live-py-output-buffer
-                              (get-buffer live-py-output-buffer)))
+      (if (buffer-live-p (and live-py-trace-buffer
+                              (get-buffer live-py-trace-buffer)))
           (progn
             (unless (window-valid-p live-py-output-window)
               ;; Recreate output window.
               (live-py-show-output-window))
-            (set-window-buffer live-py-output-window live-py-output-buffer)
+            (set-window-buffer live-py-output-window live-py-trace-buffer)
             (live-py-synchronize-scroll
              (line-number-at-pos window-start-pos) point-line-nr))
-        ;; Recreate output buffer and if necessary the output window.
-        (live-py-trace)))))
+        ;; Recreate the trace buffer and if necessary the output window.
+        (live-py-trace-update)))))
 
 (defun live-py-show-output-window ()
   "Show the live-py output window."
   (delete-other-windows)
-  (get-buffer-create live-py-output-buffer)
+  (get-buffer-create live-py-trace-buffer)
   (toggle-truncate-lines 1)
-  (with-current-buffer live-py-output-buffer
+  (with-current-buffer live-py-trace-buffer
     (toggle-truncate-lines 1)
     (setq-local show-trailing-whitespace nil))
   (setq live-py-output-window (split-window-horizontally))
-  (set-window-buffer live-py-output-window live-py-output-buffer))
+  (set-window-buffer live-py-output-window live-py-trace-buffer))
 
 (defun live-py-set-driver()
   "Prompt user to enter the driver command, with input history support.
@@ -233,9 +233,9 @@ With arg, turn mode on if and only if arg is positive.
    (live-py-mode
     (setq live-py-dir (file-name-directory buffer-file-name)
           live-py-version "python")
-    ;; Create a unique name for the trace output buffer.
-    (setq-local live-py-output-buffer
-                (concat "*live-py-output_"
+    ;; Create a unique name for the trace buffer.
+    (setq-local live-py-trace-buffer
+                (concat "*live-py-trace_"
                         (file-name-nondirectory (buffer-file-name))
                         "_"
                         (make-temp-name "")
@@ -253,7 +253,7 @@ With arg, turn mode on if and only if arg is positive.
     (remove-hook 'after-change-functions 'live-py-after-change-function t)
     (remove-hook 'post-command-hook 'live-py-check-to-scroll t)
     (remove-hook 'kill-buffer-hook 'live-py-mode-off t)
-    (ignore-errors (kill-buffer live-py-output-buffer))
+    (ignore-errors (kill-buffer live-py-trace-buffer))
     (when (window-valid-p live-py-output-window)
       (delete-window live-py-output-window))
     (toggle-truncate-lines 0))))

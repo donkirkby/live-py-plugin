@@ -41,11 +41,18 @@
   "After a delay run the buffer through the code tracer and show trace.
 START, STOP and LEN are required by `after-change-functions' but unused."
   (ignore start stop len)
-  (when live-py-timer (cancel-timer live-py-timer))
+  (if live-py-timer
+      (cancel-timer live-py-timer)
+    (setq-local live-py-lighter " Live-D") ; D for delaying
+    ;; Here it seems not necessary to `force-mode-line-update'.
+    (redisplay))
   (setq-local live-py-timer (run-at-time 0.5 nil 'live-py-trace-update)))
 
 (defun live-py-trace-update ()
   "Trace the Python code using code_tracer.py."
+  (setq-local live-py-lighter " Live-T") ; T for tracing
+  (force-mode-line-update)
+  (redisplay)
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
          (command-line-start (concat
 			      (shell-quote-argument live-py-version)
@@ -78,8 +85,8 @@ START, STOP and LEN are required by `after-change-functions' but unused."
                                           (1+ (buffer-size))
                                           command-line
                                           live-py-trace-buffer))
-           " live"
-         " live(FAIL)")))
+           " Live-t" ; t for trace ready
+         " Live-FAIL")))
     (with-current-buffer live-py-trace-buffer
       (setq-local buffer-read-only 1)
       (unless reused-buffer (toggle-truncate-lines 1)))

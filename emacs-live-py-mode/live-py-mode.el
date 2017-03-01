@@ -7,7 +7,7 @@
 ;; URL: http://donkirkby.github.io/live-py-plugin/
 ;; Version: 2015
 ;; X-Original-Version: 2.8.1
-;; Package-Requires: ((emacs "24.1"))
+;; Package-Requires: ((emacs "24.3"))
 
 ;; This program is distributed under the Eclipse Public License - v 1.0
 ;; For more information see https://www.eclipse.org/legal/epl-v10.html
@@ -18,30 +18,31 @@
 ;; If that doesn't work, put the following in your Emacs configuration file:
 ;;
 ;;   (require 'live-py-mode)
-;;
-;; Requirements: Emacs 24.
 
 ;;; Code:
 
-(defvar live-py-timer)
-(defvar live-py-output-buffer nil "The name of the output buffer.")
-(defvar live-py-output-window)
-(defvar live-py-driver)
-(defvar live-py-module)
-(defvar live-py-parent)
-(defvar live-py-dir)
-(defvar live-py-path)
-(defvar live-py-version)
-(defvar live-py-window-start-pos)
-(defvar live-py-point-line-nr)
-(defvar live-py-lighter)
+;; User variables. The decision if local or not has to be left to the user.
+(defvar live-py-driver nil)
+(defvar live-py-dir nil)
+(defvar live-py-path nil)
+(defvar live-py-version nil)
+
+;; Internal variables.
+(defvar live-py-output-window nil)
+(defvar-local live-py-timer nil)
+(defvar-local live-py-output-buffer nil "The name of the output buffer.")
+(defvar-local live-py-module nil)
+(defvar-local live-py-parent nil)
+(defvar-local live-py-window-start-pos nil)
+(defvar-local live-py-point-line-nr nil)
+(defvar-local live-py-lighter nil)
 
 (defun live-py-after-change-function (start stop len)
   "After a delay run the buffer through the code tracer and show trace.
 START, STOP and LEN are required by `after-change-functions' but unused."
   (ignore start stop len)
   (when live-py-timer (cancel-timer live-py-timer))
-  (set 'live-py-timer (run-at-time 0.5 nil 'live-py-trace)))
+  (setq-local live-py-timer (run-at-time 0.5 nil 'live-py-trace)))
 
 (defun live-py-trace ()
   "Trace the Python code using code_tracer.py."
@@ -69,21 +70,22 @@ START, STOP and LEN are required by `after-change-functions' but unused."
                               (get-buffer live-py-output-buffer)))))
     (save-restriction
       (widen)
-      ;; Create (or recreate) if necessary, update and last but not least
-      ;; display output buffer.
-      (if (eq 0
-              (shell-command-on-region 1
-                                       (1+ (buffer-size))
-                                       command-line
-                                       live-py-output-buffer))
-          (setq live-py-lighter " live")
-        (setq live-py-lighter " live(FAIL)")))
+      (setq-local
+       live-py-lighter
+       ;; Create (or recreate) if necessary, update and last but not least
+       ;; display output buffer.
+       (if (eq 0 (shell-command-on-region 1
+                                          (1+ (buffer-size))
+                                          command-line
+                                          live-py-output-buffer))
+           " live"
+         " live(FAIL)")))
     (with-current-buffer live-py-output-buffer
-      (setq buffer-read-only 1)
+      (setq-local buffer-read-only 1)
       (unless reused-buffer (toggle-truncate-lines 1)))
     (live-py-synchronize-scroll
      (line-number-at-pos (window-start)) (line-number-at-pos))
-    (set 'live-py-timer nil)))
+    (setq-local live-py-timer nil)))
 
 (defun live-py-synchronize-scroll (window-start-line-nr point-line-nr)
   "Synchronize scrolling between Python and output buffer.
@@ -132,8 +134,8 @@ aligned but will not hide the part after the narrowing."
         (point-line-nr (line-number-at-pos)))
     (unless (and (= live-py-window-start-pos window-start-pos)
                  (= live-py-point-line-nr point-line-nr))
-      (set (make-local-variable 'live-py-window-start-pos) window-start-pos)
-      (set (make-local-variable 'live-py-point-line-nr) point-line-nr)
+      (setq-local live-py-window-start-pos window-start-pos)
+      (setq-local live-py-point-line-nr point-line-nr)
       (if (buffer-live-p (and live-py-output-buffer
                               (get-buffer live-py-output-buffer)))
           (progn
@@ -154,8 +156,7 @@ aligned but will not hide the part after the narrowing."
   (with-current-buffer live-py-output-buffer
     (toggle-truncate-lines 1)
     (setq-local show-trailing-whitespace nil))
-  (set (make-local-variable 'live-py-output-window)
-       (split-window-horizontally))
+  (setq live-py-output-window (split-window-horizontally))
   (set-window-buffer live-py-output-window live-py-output-buffer))
 
 (defun live-py-set-driver()
@@ -186,16 +187,16 @@ Typical values are 'python' or 'python3'."
   (unless (string-prefix-p live-py-dir buffer-file-name)
     (user-error "Working directory must be a parent of %s"
                 buffer-file-name))
-  (setq live-py-module (file-name-base buffer-file-name))
-  (setq live-py-parent (directory-file-name
-			(file-name-directory buffer-file-name)))
+  (setq-local live-py-module (file-name-base buffer-file-name))
+  (setq-local live-py-parent (directory-file-name
+                              (file-name-directory buffer-file-name)))
   (while (not (string= live-py-parent live-py-dir))
-    (setq live-py-module (concat
-			  (file-name-nondirectory live-py-parent)
-			  "."
-			  live-py-module))
-    (setq live-py-parent (directory-file-name
-			  (file-name-directory live-py-parent))))
+    (setq-local live-py-module (concat
+                                (file-name-nondirectory live-py-parent)
+                                "."
+                                live-py-module))
+    (setq-local live-py-parent (directory-file-name
+                                (file-name-directory live-py-parent))))
   (setq live-py-dir (file-name-as-directory live-py-dir))
   (live-py-after-change-function 0 0 0))
 
@@ -230,21 +231,18 @@ With arg, turn mode on if and only if arg is positive.
 
    ;; Turning the mode ON.
    (live-py-mode
-    ;; create a unique name for the trace output buffer
-    (set (make-local-variable 'live-py-output-buffer)
-         (concat "*live-py-output_"
-                 (file-name-nondirectory (buffer-file-name))
-                 "_"
-                 (make-temp-name "")
-                 "*"))
-    (set (make-local-variable 'live-py-timer) nil)
-    (set (make-local-variable 'live-py-driver) nil)
-    (set (make-local-variable 'live-py-module) (file-name-base buffer-file-name))
-    (set (make-local-variable 'live-py-dir) (file-name-directory buffer-file-name))
-    (set (make-local-variable 'live-py-path) nil)
-    (set (make-local-variable 'live-py-version) "python")
-    (set (make-local-variable 'live-py-window-start-pos) -1)
-    (set (make-local-variable 'live-py-point-line-nr) -1)
+    (setq live-py-dir (file-name-directory buffer-file-name)
+          live-py-version "python")
+    ;; Create a unique name for the trace output buffer.
+    (setq-local live-py-output-buffer
+                (concat "*live-py-output_"
+                        (file-name-nondirectory (buffer-file-name))
+                        "_"
+                        (make-temp-name "")
+                        "*"))
+    (setq-local live-py-module (file-name-base buffer-file-name))
+    (setq-local live-py-window-start-pos -1)
+    (setq-local live-py-point-line-nr -1)
     (add-hook 'kill-buffer-hook 'live-py-mode-off nil t)
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (live-py-show-output-window)

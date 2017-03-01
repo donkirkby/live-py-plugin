@@ -50,6 +50,8 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 
 (defun live-py-trace-update ()
   "Trace the Python code using code_tracer.py."
+  ;; For when called from elsewhere than `live-py-after-change-function'.
+  (when live-py-timer (cancel-timer live-py-timer))
   (setq-local live-py-lighter " Live-T") ; T for tracing
   (force-mode-line-update)
   (redisplay)
@@ -172,7 +174,7 @@ To use a unit test, set the driver to something like this:
 -m unittest mymodule.MyTest.test_method"
   (interactive)
   (setq live-py-driver (read-string "Type the driver command:"))
-  (live-py-after-change-function 0 0 0))
+  (live-py-trace-update))
 
 (defun live-py-set-version()
   "Prompt user to enter the python command, with input history support.
@@ -180,7 +182,7 @@ Typical values are 'python' or 'python3'."
   (interactive)
   (setq live-py-version (expand-file-name
                          (read-shell-command "Type the python command:")))
-  (live-py-after-change-function 0 0 0))
+  (live-py-trace-update))
 
 (defun live-py-set-dir()
   "Prompt user to enter the working directory."
@@ -205,7 +207,7 @@ Typical values are 'python' or 'python3'."
     (setq-local live-py-parent (directory-file-name
                                 (file-name-directory live-py-parent))))
   (setq live-py-dir (file-name-as-directory live-py-dir))
-  (live-py-after-change-function 0 0 0))
+  (live-py-trace-update))
 
 (defun live-py-set-path()
   "Prompt user to enter extra directories for the Python path."
@@ -253,7 +255,7 @@ With arg, turn mode on if and only if arg is positive.
     (add-hook 'kill-buffer-hook 'live-py-mode-off nil t)
     (add-hook 'after-change-functions 'live-py-after-change-function nil t)
     (live-py-show-output-window)
-    (live-py-after-change-function 0 0 0)
+    (live-py-trace-update)
     (add-hook 'post-command-hook 'live-py-check-to-scroll nil t))
    ;; Turning the mode OFF.
    (t

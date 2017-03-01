@@ -90,7 +90,7 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
         triggerLayoutChange(SplitEditorLayout.values()[newValue]);
     }
 
-    private void triggerLayoutChange(@NotNull SplitFileEditor.SplitEditorLayout newLayout) {
+    public void triggerLayoutChange(@NotNull SplitFileEditor.SplitEditorLayout newLayout) {
         if (mySplitEditorLayout == newLayout) {
             return;
         }

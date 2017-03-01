@@ -27,6 +27,13 @@
 
   <actions>
     <!-- Add your actions here -->
+      <action id="livepy.Start" class="io.github.donkirkby.livepycharm.StartAction" text="Start Live Coding"
+              description="Run Python code as you type it, and show variable values.">
+          <add-to-group group-id="RunMenu" anchor="after" relative-to-action="ChooseDebugConfiguration"/>
+      </action>
+    <action id="livepy.Stop" class="io.github.donkirkby.livepycharm.StopAction" text="Stop Live Coding">
+      <add-to-group group-id="RunMenu" anchor="after" relative-to-action="ChooseDebugConfiguration"/>
+    </action>
   </actions>
 
 </idea-plugin>

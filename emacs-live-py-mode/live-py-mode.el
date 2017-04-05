@@ -187,15 +187,18 @@ Typical values are 'python' or 'python3'."
 (defun live-py-set-dir()
   "Prompt user to enter the working directory."
   (interactive)
-  (setq live-py-dir (directory-file-name
-                     (read-directory-name
-                      "Working directory:"
-                      nil
-                      nil
-                      t)))
+  (setq live-py-dir (expand-file-name
+                     (directory-file-name
+                      (read-directory-name
+                       "Working directory:"
+                       nil
+                       nil
+                       t))))
+
   (unless (string-prefix-p live-py-dir buffer-file-name)
-    (user-error "Working directory must be a parent of %s"
-                buffer-file-name))
+    (user-error "Working directory %s must be a parent of %s."
+		live-py-dir
+		buffer-file-name))
   (setq-local live-py-module (file-name-base buffer-file-name))
   (setq-local live-py-parent (directory-file-name
                               (file-name-directory buffer-file-name)))
@@ -207,7 +210,8 @@ Typical values are 'python' or 'python3'."
     (setq-local live-py-parent (directory-file-name
                                 (file-name-directory live-py-parent))))
   (setq live-py-dir (file-name-as-directory live-py-dir))
-  (live-py-trace-update))
+  (live-py-trace-update)
+  (message "Working directory set to %s." live-py-dir))
 
 (defun live-py-set-path()
   "Prompt user to enter extra directories for the Python path."

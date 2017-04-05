@@ -72,6 +72,7 @@ To write a PyCharm plugin, you use IntelliJ [IDEA], and follow the [plugin devel
 9. In the new project, create a `.py` file. Then install the Python plugin when it prompts you. That will make you
     restart IDEA.
 10. Configure a Python SDK in the new project. It's in the File menu under Project Structure.
+
 [IDEA]: https://www.jetbrains.com/idea/download
 [idea-dev]: https://www.jetbrains.com/help/idea/2016.3/plugin-development-guidelines.html
 [idea-py]: https://plugins.jetbrains.com/idea/plugin/631-python

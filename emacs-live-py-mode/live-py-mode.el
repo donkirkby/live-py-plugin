@@ -26,6 +26,20 @@
 (defvar live-py-dir nil)
 (defvar live-py-path nil)
 (defvar live-py-version nil)
+(defvar live-py-lighter-delaying nil
+  "Lighter during the plugin state \"delaying\".
+For understanding purposes this can be set to for example \" Live-D\"
+when the other `live-py-lighter-*' are adapted too.")
+(defvar live-py-lighter-tracing nil
+  "Lighter during the plugin state \"tracing\".
+For understanding purposes this can be set to for example \" Live-T\".
+when the other `live-py-lighter-*' are adapted too.")
+(defvar live-py-lighter-ready " Live"
+  "Lighter during the plugin state \"trace ready\".
+For understanding purposes this can be set to for example \" Live-t\".
+when the other `live-py-lighter-*' are adapted too.")
+(defvar live-py-lighter-fail " Live-FAIL"
+  "Lighter during the plugin state \"failed\".")
 
 ;; Internal variables.
 (defvar live-py-output-window nil)
@@ -43,18 +57,20 @@ START, STOP and LEN are required by `after-change-functions' but unused."
   (ignore start stop len)
   (if live-py-timer
       (cancel-timer live-py-timer)
-    (setq-local live-py-lighter " Live-D") ; D for delaying
-    ;; Here it seems not necessary to `force-mode-line-update'.
-    (redisplay))
+    (when live-py-lighter-delaying
+      (setq-local live-py-lighter live-py-lighter-delaying)
+      ;; Here it seems not necessary to `force-mode-line-update'.
+      (redisplay)))
   (setq-local live-py-timer (run-at-time 0.5 nil 'live-py-trace-update)))
 
 (defun live-py-trace-update ()
   "Trace the Python code using code_tracer.py."
   ;; For when called from elsewhere than `live-py-after-change-function'.
   (when live-py-timer (cancel-timer live-py-timer))
-  (setq-local live-py-lighter " Live-T") ; T for tracing
-  (force-mode-line-update)
-  (redisplay)
+  (when live-py-lighter-tracing
+    (setq-local live-py-lighter live-py-lighter-tracing)
+    (force-mode-line-update)
+    (redisplay))
   (let* ((tracer-path (locate-file "code_tracer.py" load-path))
          (command-line-start (concat
 			      (shell-quote-argument live-py-version)
@@ -87,8 +103,10 @@ START, STOP and LEN are required by `after-change-functions' but unused."
                                           (1+ (buffer-size))
                                           command-line
                                           live-py-trace-buffer))
-           " Live-t" ; t for trace ready
-         " Live-FAIL")))
+           live-py-lighter-ready
+         live-py-lighter-fail))
+      (force-mode-line-update)
+      (redisplay))
     (with-current-buffer live-py-trace-buffer
       (setq-local buffer-read-only 1)
       (unless reused-buffer (toggle-truncate-lines 1)))
@@ -196,7 +214,7 @@ Typical values are 'python' or 'python3'."
                        t))))
 
   (unless (string-prefix-p live-py-dir buffer-file-name)
-    (user-error "Working directory %s must be a parent of %s."
+    (user-error "Working directory %s must be a parent of %s"
 		live-py-dir
 		buffer-file-name))
   (setq-local live-py-module (file-name-base buffer-file-name))

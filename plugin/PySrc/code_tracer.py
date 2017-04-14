@@ -634,7 +634,7 @@ class Tracer(NodeTransformer):
         if isinstance(target, Tuple) or isinstance(target, List):
             target_names = map(self._wrap_assignment_target, target.elts)
             return '({})'.format(', '.join(target_names))
-        if isinstance(target, Starred):
+        if Starred is not None and isinstance(target, Starred):
             return '*{}'.format(target.value.id)
         assert_message = 'Assignment target had type {}.'.format(type(target))
         assert isinstance(target, Attribute), assert_message

@@ -1168,6 +1168,21 @@ a = [1, 2, 3]
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_assign_starred(self):
+        # SETUP
+        code = """\
+*a, b = (2, 3)
+"""
+        expected_report = """\
+(*a, b) = (2, 3) """
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_method_of_anonymous_object(self):
         # SETUP
         code = """\

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.*;
@@ -18,6 +19,25 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument) {
         this.mainFile = mainFile;
         this.displayDocument = displayDocument;
+    }
+
+    public void start() {
+        Document mainDocument = getDocument();
+        if (mainDocument != null && displayDocument != null) {
+            mainDocument.addDocumentListener(this);
+        }
+    }
+
+    public void stop() {
+        Document mainDocument = getDocument();
+        if (mainDocument != null && displayDocument != null) {
+            mainDocument.removeDocumentListener(this);
+        }
+    }
+
+    private Document getDocument() {
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        return documentManager.getDocument(mainFile);
     }
 
     @Override

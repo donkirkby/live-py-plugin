@@ -2,13 +2,12 @@ package io.github.donkirkby.livepycharm;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBSplitter;
 import org.jetbrains.annotations.NotNull;
@@ -33,14 +32,18 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
     @NotNull
     private final JComponent myComponent;
     @NotNull
-    private SplitEditorLayout mySplitEditorLayout = SplitEditorLayout.SPLIT;
+    private SplitEditorLayout mySplitEditorLayout = SplitEditorLayout.FIRST;
+    private LiveCodingAnalyst myAnalyst;
 
     @NotNull
     private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
 
-    SplitFileEditor(@NotNull FileEditor mainEditor, @NotNull FileEditor secondEditor) {
+    SplitFileEditor(@NotNull FileEditor mainEditor,
+                    @NotNull FileEditor secondEditor,
+                    LiveCodingAnalyst analyst) {
         myMainEditor = mainEditor;
         mySecondEditor = secondEditor;
+        myAnalyst = analyst;
 
         myComponent = createComponent();
 
@@ -65,32 +68,14 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
         splitter.setFirstComponent(myMainEditor.getComponent());
         splitter.setSecondComponent(mySecondEditor.getComponent());
 
-
-//        myToolbarWrapper = new SplitEditorToolbar(splitter);
-//        if (myMainEditor instanceof TextEditor) {
-//            myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)((TextEditor)myMainEditor).getEditor().getGutter()));
-//        }
-//        if (mySecondEditor instanceof TextEditor) {
-//            myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)((TextEditor)mySecondEditor).getEditor().getGutter()));
-//        }
-
         final JPanel result = new JPanel(new BorderLayout());
-//        result.add(myToolbarWrapper, BorderLayout.NORTH);
         result.add(splitter, BorderLayout.CENTER);
         adjustEditorsVisibility();
 
         return result;
     }
 
-    public void triggerLayoutChange() {
-        final int oldValue = mySplitEditorLayout.ordinal();
-        final int N = SplitEditorLayout.values().length;
-        final int newValue = (oldValue + N - 1) % N;
-
-        triggerLayoutChange(SplitEditorLayout.values()[newValue]);
-    }
-
-    public void triggerLayoutChange(@NotNull SplitFileEditor.SplitEditorLayout newLayout) {
+    private void triggerLayoutChange(@NotNull SplitFileEditor.SplitEditorLayout newLayout) {
         if (mySplitEditorLayout == newLayout) {
             return;
         }
@@ -99,9 +84,14 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
         invalidateLayout();
     }
 
-    @NotNull
-    public SplitEditorLayout getCurrentEditorLayout() {
-        return mySplitEditorLayout;
+    void startAnalysis() {
+        myAnalyst.start();
+        triggerLayoutChange(SplitFileEditor.SplitEditorLayout.SPLIT);
+    }
+
+    void stopAnalysis() {
+        myAnalyst.stop();
+        triggerLayoutChange(SplitFileEditor.SplitEditorLayout.FIRST);
     }
 
     private void invalidateLayout() {
@@ -115,16 +105,6 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
     private void adjustEditorsVisibility() {
         myMainEditor.getComponent().setVisible(mySplitEditorLayout.showFirst);
         mySecondEditor.getComponent().setVisible(mySplitEditorLayout.showSecond);
-    }
-
-    @NotNull
-    public FileEditor getMainEditor() {
-        return myMainEditor;
-    }
-
-    @NotNull
-    public FileEditor getSecondEditor() {
-        return mySecondEditor;
     }
 
     @NotNull
@@ -226,6 +206,7 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
 
     @Override
     public void dispose() {
+        myAnalyst.stop();
         Disposer.dispose(myMainEditor);
         Disposer.dispose(mySecondEditor);
     }
@@ -317,7 +298,6 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
 
     public enum SplitEditorLayout {
         FIRST(true, false, "X"),
-        SECOND(false, true, "Y"),
         SPLIT(true, true, "Z");
 
         public final boolean showFirst;

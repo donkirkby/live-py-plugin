@@ -2,7 +2,10 @@ package io.github.donkirkby.livepycharm;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -40,10 +43,11 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
 
     SplitFileEditor(@NotNull FileEditor mainEditor,
                     @NotNull FileEditor secondEditor,
-                    LiveCodingAnalyst analyst) {
+                    VirtualFile file,
+                    Document displayDocument) {
         myMainEditor = mainEditor;
         mySecondEditor = secondEditor;
-        myAnalyst = analyst;
+        myAnalyst = new LiveCodingAnalyst(file, displayDocument, this);
 
         myComponent = createComponent();
 
@@ -53,6 +57,22 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
         if (mySecondEditor instanceof TextEditor) {
             mySecondEditor.putUserData(PARENT_SPLIT_KEY, this);
         }
+    }
+
+    @Nullable
+    static SplitFileEditor getSplitFileEditor(Editor editor) {
+        Project project = editor == null ? null : editor.getProject();
+        Document doc = editor == null ? null : editor.getDocument();
+        VirtualFile file =
+                doc == null
+                ? null
+                : FileDocumentManager.getInstance().getFile(doc);
+
+        SplitFileEditor splitFileEditor = null;
+        if (project != null && file != null) {
+            splitFileEditor = (SplitFileEditor) FileEditorManager.getInstance(project).getSelectedEditor(file);
+        }
+        return splitFileEditor;
     }
 
     @NotNull
@@ -136,7 +156,9 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
                 mySecondEditor.setState(compositeState.getSecondState());
             }
             if (compositeState.getSplitLayout() != null) {
-                mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
+                // We always want the editor to open without live display.
+                // mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
+                mySplitEditorLayout = SplitEditorLayout.FIRST;
                 invalidateLayout();
             }
         }
@@ -206,7 +228,6 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
 
     @Override
     public void dispose() {
-        myAnalyst.stop();
         Disposer.dispose(myMainEditor);
         Disposer.dispose(mySecondEditor);
     }

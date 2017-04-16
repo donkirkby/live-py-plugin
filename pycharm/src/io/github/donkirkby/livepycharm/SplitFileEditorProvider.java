@@ -70,9 +70,6 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
         Document mainDocument = documentManager.getDocument(file);
         Document displayDocument = documentManager.getDocument(displayFile);
-        LiveCodingAnalyst analyst = new LiveCodingAnalyst(
-                file,
-                displayDocument);
         final Builder firstBuilder =
                 getBuilderFromEditorProvider(myFirstProvider, project, file);
         final Builder secondBuilder =
@@ -103,7 +100,8 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
                 FileEditor editor = createSplitEditor(
                         firstBuilder.build(),
                         secondBuilder.build(),
-                        analyst);
+                        file,
+                        displayDocument);
                 Editor mainEditor = this.mainEditor;
                 Editor displayEditor = this.displayEditor;
                 if (mainEditor != null && displayEditor != null) {
@@ -176,8 +174,9 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider {
     private FileEditor createSplitEditor(
             @NotNull final FileEditor firstEditor,
             @NotNull FileEditor secondEditor,
-            LiveCodingAnalyst analyst) {
-        return new SplitFileEditor(firstEditor, secondEditor, analyst);
+            VirtualFile file,
+            Document displayDocument) {
+        return new SplitFileEditor(firstEditor, secondEditor, file, displayDocument);
     }
 
     @NotNull

@@ -1,5 +1,6 @@
 package io.github.donkirkby.livepycharm;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,33 +16,31 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
     private final VirtualFile mainFile;
     private final Document displayDocument;
+    private boolean isRunning;
 
-    LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument) {
+    LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument, Disposable parent) {
         this.mainFile = mainFile;
         this.displayDocument = displayDocument;
-    }
-
-    public void start() {
-        Document mainDocument = getDocument();
-        if (mainDocument != null && displayDocument != null) {
-            mainDocument.addDocumentListener(this);
-        }
-    }
-
-    public void stop() {
-        Document mainDocument = getDocument();
-        if (mainDocument != null && displayDocument != null) {
-            mainDocument.removeDocumentListener(this);
-        }
-    }
-
-    private Document getDocument() {
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
-        return documentManager.getDocument(mainFile);
+        Document document = documentManager.getDocument(mainFile);
+        if (document != null) {
+            document.addDocumentListener(this, parent);
+        }
+    }
+
+    void start() {
+        isRunning = true;
+    }
+
+    void stop() {
+        isRunning = false;
     }
 
     @Override
     public void documentChanged(DocumentEvent e) {
+        if ( ! isRunning) {
+            return;
+        }
         StringBuilder builder = new StringBuilder();
         File plugins = new File(PathManager.getPluginsPath());
         File livePyPath = new File(plugins, "livepy");

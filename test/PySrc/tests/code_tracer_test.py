@@ -1173,10 +1173,12 @@ a = [1, 2, 3]
     def test_assign_starred(self):
         # SETUP
         code = """\
-*a, b = (2, 3)
+a, *b = (1, 2, 3)
+print(b)
 """
         expected_report = """\
-(*a, b) = (2, 3) """
+(a, *b) = (1, 2, 3)
+print([2, 3]) """
         tracer = CodeTracer()
 
         # EXEC

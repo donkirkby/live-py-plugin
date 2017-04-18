@@ -29,8 +29,8 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 [Python][pyrel].
 
 1. Check that all the Java unit tests run.
-2. Check that all the Python unit tests run in the latest versions of both
-   Python 2 and Python 3.
+2. Use `tox` to check that all the Python unit tests run in the latest versions
+   of both Python 2 and Python 3.
 3. Open plugin/plugin.xml and feature/feature.xml, and increment the Version
     field in each file.
 4. Commit the version changes, and push to GitHub.

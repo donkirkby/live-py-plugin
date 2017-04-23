@@ -185,7 +185,7 @@ x = 50
   "The trace buffer shows the trace output from code_tracer.py"
   (live-py-test-with-temp-text-in-file live-py-test-source
     (should (equal '(t t) (live-py-test-truncate-lines)))
-    (with-selected-window (get-buffer-window live-py-trace-buffer)
+    (with-selected-window (get-buffer-window live-py-trace-name)
       (should (string= live-py-test-trace (buffer-string))))))
 
 (ert-deftest live-py-test/1-basic/2-move-or-scroll ()
@@ -208,27 +208,25 @@ x = 50
     (live-py-test-next-line)
     ;; Change these when narrowing is transferred to the trace buffer.
     (should (equal '(:s 2 3 :t 3 4) (live-py-test-buf file)))
-    (with-selected-window (get-buffer-window live-py-trace-buffer)
+    (with-selected-window (get-buffer-window live-py-trace-name)
       (should (string= live-py-test-trace (buffer-string))))))
 
 ;; Recreate the killed trace buffer.
 (defun live-py-test/2-recreate/1-buffer (file)
-  (kill-buffer live-py-trace-buffer)
+  (kill-buffer live-py-trace-name)
   (should (equal '(:s 2 3 :s 1 1) (live-py-test-buf file))))
 (ert-deftest live-py-test/2-recreate/1-buffer/edit ()
   (live-py-test-with-temp-text-in-file live-py-test-source
     (live-py-test/2-recreate/1-buffer file)
     (live-py-test-edit)
-    ;; TODO: Equal '(:s 2 3 :t 2 3) after fixing bug.
-    (should (equal '(:s 2 3 :s 2 3) (live-py-test-buf file)))))
+    (should (equal '(:s 2 3 :t 2 3) (live-py-test-buf file)))))
 (ert-deftest live-py-test/2-recreate/1-buffer/move ()
   (live-py-test-with-temp-text-in-file live-py-test-source
     (live-py-test/2-recreate/1-buffer file)
     (live-py-test-forward-char 5)
     (should (equal '(:s 2 3 :s 1 1) (live-py-test-buf file)))
     (live-py-test-next-line)
-    ;; TODO: Equal '(:s 2 4 :t 2 4) after fixing bug.
-    (should (equal '(:s 2 4 :s 2 4) (live-py-test-buf file)))))
+    (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
 ;; Recreate the deleted output window.
 (defun live-py-test/2-recreate/2-window (file)
@@ -249,7 +247,7 @@ x = 50
 
 ;; Recreate the killed trace buffer and the deleted output window.
 (defun live-py-test/2-recreate/3-buffer-and-window (file)
-  (kill-buffer live-py-trace-buffer)
+  (kill-buffer live-py-trace-name)
   (delete-other-windows)
   (should (equal '(:s 2 3) (live-py-test-buf file))))
 (ert-deftest live-py-test/2-recreate/3-buffer-and-window/edit ()
@@ -280,8 +278,7 @@ x = 50
   (live-py-test-with-temp-text-in-file live-py-test-source
     (let ((temp-buffer (live-py-test/3-other-window/1-browse-else file)))
       (live-py-test-edit)
-      ;; TODO: Equal '(:s 2 3 :t 2 3) after fixing bug.
-      (should (equal '(:s 2 3 :- 2 3) (live-py-test-buf file)))
+      (should (equal '(:s 2 3 :t 2 3) (live-py-test-buf file)))
       (kill-buffer temp-buffer))))
 (ert-deftest live-py-test/3-other-window/1-browse-else/move ()
   (live-py-test-with-temp-text-in-file live-py-test-source
@@ -301,8 +298,7 @@ x = 50
   (live-py-test-scroll-line 2)
   (live-py-test-next-line 2)
   (other-window 1)
-  ;; TODO: Equal '(:s 2 3 :s 3 5) after fixing bug.
-  (should (equal '(:s 2 3 :t 2 5) (live-py-test-buf file))))
+  (should (equal '(:s 2 3 :s 3 5) (live-py-test-buf file))))
 (ert-deftest live-py-test/3-other-window/2-browse-source/edit ()
   (live-py-test-with-temp-text-in-file live-py-test-source
     (live-py-test/3-other-window/2-browse-source file)
@@ -312,8 +308,7 @@ x = 50
   (live-py-test-with-temp-text-in-file live-py-test-source
     (live-py-test/3-other-window/2-browse-source file)
     (live-py-test-forward-char 5)
-    ;; TODO: Equal '(:s 2 3 :s 3 5) after fixing bug.
-    (should (equal '(:s 2 3 :t 2 3) (live-py-test-buf file)))
+    (should (equal '(:s 2 3 :s 3 5) (live-py-test-buf file)))
     (live-py-test-next-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
@@ -326,18 +321,16 @@ outdated in a later scroll sync."
     (switch-to-buffer file)
     (live-py-test-scroll-line)
     (live-py-test-next-line)
-    ;; TODO: Equal '(:s 2 4 :s 2 3) after fixing bug.
-    (should (equal '(:t 2 4 :s 2 3) (live-py-test-buf file)))
+    (should (equal '(:s 2 4 :s 2 3) (live-py-test-buf file)))
     (live-py-test-edit)
-    ;; TODO: Equal '(:s 2 4 :t 2 4) after fixing bug.
-    (should (equal '(:t 1 3 :s 2 3) (live-py-test-buf file)))))
+    (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
 ;; Abandon source in first window and swap it to the other window. When the
 ;; first window does not show the source buffer any more the other window
 ;; can take it over. Furthermore, respect a user's change of truncate-lines
 ;; in both buffers.
 (defun live-py-test/3-other-window/4-abandon-source-and-swap (file)
-  (switch-to-buffer live-py-trace-buffer)
+  (switch-to-buffer live-py-trace-name)
   (scroll-up 1)
   (other-window 1)
   (scroll-up 1)
@@ -351,8 +344,7 @@ outdated in a later scroll sync."
   (live-py-test-with-temp-text-in-file live-py-test-source
     (live-py-test/3-other-window/4-abandon-source-and-swap file)
     (live-py-test-edit)
-    ;; TODO: Equal '(:s 2 3 :t 2 3) after fixing bug.
-    (should (equal '(:s 2 3 :t 1 1) (live-py-test-buf file)))
+    (should (equal '(:s 2 3 :t 2 3) (live-py-test-buf file)))
     (should (equal '(nil nil) (live-py-test-truncate-lines)))))
 (ert-deftest live-py-test/3-other-window/4-abandon-source-and-swap/move ()
   (live-py-test-with-temp-text-in-file live-py-test-source
@@ -360,8 +352,7 @@ outdated in a later scroll sync."
     (live-py-test-forward-char 5)
     (should (equal '(:s 2 3 :t 3 3) (live-py-test-buf file)))
     (live-py-test-next-line)
-    ;; TODO: Equal '(:s 2 4 :t 2 4) after fixing bug.
-    (should (equal '(:t 2 4 :t 3 3) (live-py-test-buf file)))
+    (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))
     (should (equal '(nil nil) (live-py-test-truncate-lines)))))
 
 ;; Local Variables:

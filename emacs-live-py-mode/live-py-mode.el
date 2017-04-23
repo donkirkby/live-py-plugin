@@ -49,6 +49,7 @@ when the other `live-py-lighter-*' are adapted too.")
   "Lighter during the plugin state \"failed\".")
 
 ;; Internal variables.
+(defvar-local live-py-truncate-lines-original nil)
 (defvar-local live-py-source-last-active-window nil
   "Window where the source buffer was active the last time.
 Can be different to the current window showing the source buffer
@@ -127,7 +128,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
       (redisplay))
     (with-current-buffer live-py-trace-name
       (setq-local buffer-read-only 1)
-      (unless reused-buffer (toggle-truncate-lines 1)))
+      (unless reused-buffer (setq-local truncate-lines t)))
     (live-py-update-scroll
      (line-number-at-pos (window-start)) (line-number-at-pos))))
 
@@ -141,14 +142,14 @@ both are relative to (point-min). Numbering starts at 1 for all
 
 When the source buffer is narrowed the trace buffer remains
 aligned but will not hide the part after the narrowing."
-  (let ((output-window (get-buffer-window live-py-trace-name))
-        (point-min-pos (point-min))
-        (point-min-line-nr 1))
-    (unless (= 1 point-min-pos)
-      ;; Compensate for narrowing.
-      (save-restriction
-        (widen)
-        (setq point-min-line-nr (line-number-at-pos point-min-pos))))
+  (let* ((output-window (get-buffer-window live-py-trace-name))
+         (point-min-pos (point-min))
+         (point-min-line-nr (if (= 1 point-min-pos)
+                                1
+                              ;; Compensate for narrowing.
+                              (save-restriction
+                                (widen)
+                                (line-number-at-pos point-min-pos)))))
     (unless output-window
       (live-py-create-output-window))
     (with-selected-window output-window
@@ -198,10 +199,10 @@ aligned but will not hide the part after the narrowing."
 (defun live-py-create-output-window ()
   "Create the output window."
   (delete-other-windows)
+  (setq-local truncate-lines t)
   (get-buffer-create live-py-trace-name)
-  (toggle-truncate-lines 1)
   (with-current-buffer live-py-trace-name
-    (toggle-truncate-lines 1)
+    (setq-local truncate-lines t)
     (setq-local show-trailing-whitespace nil))
   (set-window-buffer (split-window-horizontally) live-py-trace-name))
 
@@ -271,11 +272,11 @@ With arg, turn mode on if and only if arg is positive.
   :group 'live-py-mode
   :lighter live-py-lighter
   :keymap (let ((map (make-sparse-keymap)))
-	    (define-key map (kbd "C-c M-d") 'live-py-set-driver)
-	    (define-key map (kbd "C-c M-w") 'live-py-set-dir)
-	    (define-key map (kbd "C-c M-p") 'live-py-set-path)
-	    (define-key map (kbd "C-c M-v") 'live-py-set-version)
-	    map)
+            (define-key map (kbd "C-c M-d") #'live-py-set-driver)
+            (define-key map (kbd "C-c M-w") #'live-py-set-dir)
+            (define-key map (kbd "C-c M-p") #'live-py-set-path)
+            (define-key map (kbd "C-c M-v") #'live-py-set-version)
+            map)
   (unless (buffer-file-name)
     (user-error "Current buffer has no associated file"))
   (cond
@@ -286,6 +287,7 @@ With arg, turn mode on if and only if arg is positive.
           live-py-version "python")
 
     ;; Internal variables.
+    (setq-local live-py-truncate-lines-original truncate-lines)
     (setq-local live-py-source-last-active-window (get-buffer-window))
     ;; Create a unique name for the trace buffer.
     (setq-local live-py-trace-name
@@ -298,19 +300,21 @@ With arg, turn mode on if and only if arg is positive.
     (setq-local live-py-timer nil)
     (setq-local live-py-window-start-pos -1)
     (setq-local live-py-point-line-nr -1)
-    (add-hook 'kill-buffer-hook 'live-py-mode-off nil t)
-    (add-hook 'after-change-functions 'live-py-after-change-function nil t)
-    (add-hook 'post-command-hook 'live-py-post-command-function nil t)
+    (setq-local live-py-lighter live-py-lighter-fail)
+
+    (add-hook 'kill-buffer-hook #'live-py-mode-off nil t)
+    (add-hook 'after-change-functions #'live-py-after-change-function nil t)
+    (add-hook 'post-command-hook #'live-py-post-command-function nil t)
     (live-py-update-all))
    ;; Turning the mode OFF.
    (t
-    (remove-hook 'after-change-functions 'live-py-after-change-function t)
-    (remove-hook 'post-command-hook 'live-py-post-command-function t)
-    (remove-hook 'kill-buffer-hook 'live-py-mode-off t)
+    (remove-hook 'after-change-functions #'live-py-after-change-function t)
+    (remove-hook 'post-command-hook #'live-py-post-command-function t)
+    (remove-hook 'kill-buffer-hook #'live-py-mode-off t)
     (let ((output-window (get-buffer-window live-py-trace-name)))
       (when output-window (delete-window output-window)))
     (ignore-errors (kill-buffer live-py-trace-name))
-    (toggle-truncate-lines 0))))
+    (setq-local truncate-lines live-py-truncate-lines-original))))
 
 (provide 'live-py-mode)
 

@@ -26,6 +26,13 @@
 (defvar live-py-dir nil)
 (defvar live-py-path nil)
 (defvar live-py-version nil)
+(defvar live-py-update-all-delay 0.5
+  "Minimum inactivity time after change in source buffer before update.
+Floating point number with seconds.
+
+Every change in the source buffer starts or restarts the timer
+with this delay. As soon as it fires the trace buffer will be
+updated. Set it to nil during automatic tests.")
 (defvar live-py-lighter-delaying nil
   "Lighter during the plugin state \"delaying\".
 For understanding purposes this can be set to for example \" Live-D\"
@@ -52,7 +59,7 @@ when the other `live-py-lighter-*' are adapted too.")
 (defvar-local live-py-lighter nil)
 
 (defun live-py-after-change-function (start stop len)
-  "After a delay run the buffer through the code tracer and show trace.
+  "Start or restart timer to run `live-py-trace-update'.
 START, STOP and LEN are required by `after-change-functions' but unused."
   (ignore start stop len)
   (if live-py-timer
@@ -61,12 +68,18 @@ START, STOP and LEN are required by `after-change-functions' but unused."
       (setq-local live-py-lighter live-py-lighter-delaying)
       ;; Here it seems not necessary to `force-mode-line-update'.
       (redisplay)))
-  (setq-local live-py-timer (run-at-time 0.5 nil 'live-py-trace-update)))
+  (if live-py-update-all-delay
+      (setq-local live-py-timer (run-at-time live-py-update-all-delay
+                                             nil
+                                             #'live-py-trace-update))
+    (live-py-trace-update)))
 
 (defun live-py-trace-update ()
   "Trace the Python code using code_tracer.py."
   ;; For when called from elsewhere than `live-py-after-change-function'.
   (when live-py-timer (cancel-timer live-py-timer))
+  ;; For `live-py-lighter' in `live-py-after-change-function'.
+  (setq-local live-py-timer nil)
   (when live-py-lighter-tracing
     (setq-local live-py-lighter live-py-lighter-tracing)
     (force-mode-line-update)
@@ -85,7 +98,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 			    live-py-module
 			    " "
 			    live-py-driver)
-			   command-line-start))
+                         command-line-start))
          (pythonpath (concat "PYTHONPATH=" (shell-quote-argument
 					    (or live-py-path live-py-dir))))
          (process-environment (cons pythonpath process-environment))
@@ -272,6 +285,7 @@ With arg, turn mode on if and only if arg is positive.
                         (make-temp-name "")
                         "*"))
     (setq-local live-py-module (file-name-base buffer-file-name))
+    (setq-local live-py-timer nil)
     (setq-local live-py-window-start-pos -1)
     (setq-local live-py-point-line-nr -1)
     (add-hook 'kill-buffer-hook 'live-py-mode-off nil t)
@@ -290,5 +304,11 @@ With arg, turn mode on if and only if arg is positive.
     (toggle-truncate-lines 0))))
 
 (provide 'live-py-mode)
+
+;; Local Variables:
+;;   coding: us-ascii-unix
+;;   fill-column: 76
+;;   indent-tabs-mode: nil
+;; End:
 
 ;;; live-py-mode.el ends here

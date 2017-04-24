@@ -26,6 +26,7 @@ install:
 
 script:
   - tox -e $TOX_ENV
+  - emacs -Q -nw -L emacs-live-py-mode -L plugin/PySrc -l live-py-mode.el -l live-py-test.el -f ert-run-tests-batch-and-exit
 
 after_success:
   - pip install codecov

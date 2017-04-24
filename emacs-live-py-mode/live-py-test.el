@@ -15,8 +15,8 @@
 
 ;; To run all Emacs regression tests (ERT) in a shell:
 ;; emacs -Q -nw \
-;;     -L live-py-plugin/emacs-live-py-mode \
-;;     -L live-py-plugin/plugin/PySrc \
+;;     -L emacs-live-py-mode \
+;;     -L plugin/PySrc \
 ;;     -l live-py-mode.el \
 ;;     -l live-py-test.el \
 ;;     -f ert-run-tests-batch-and-exit

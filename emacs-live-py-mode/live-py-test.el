@@ -66,6 +66,7 @@
 
 (require 'cl-extra)
 (require 'ert)
+(require 'live-py-mode)
 
 ;;; The framework for the testing
 
@@ -87,7 +88,7 @@ Within BODY the variable value FILE can be passed to
      ;; Change window start line and point line to 2 and 3, it keeps the
      ;; chance for a false test success lower than with 1 and 1.
      (live-py-test-scroll-line)
-     (live-py-test-next-line)
+     (live-py-test-forward-line)
      ;; Rule out again before running the tests.
      (should (equal '(:s 2 3 :t 2 3) (live-py-test-buf file)))
      ;; Run the tests.
@@ -146,10 +147,10 @@ Used to test the not update after moving point."
   ;; Trigger the update with nothing more than `post-command-hook'.
   (run-hooks 'post-command-hook))
 
-(defun live-py-test-next-line (&optional lines)
+(defun live-py-test-forward-line (&optional lines)
   "Move point down LINES lines.
 Used to test the update after moving point."
-  (next-line lines)
+  (forward-line lines)
   ;; Trigger the update with nothing more than `post-command-hook'.
   (run-hooks 'post-command-hook))
 
@@ -191,7 +192,7 @@ x = 50
 (ert-deftest live-py-test/1-basic/2-move-or-scroll ()
   "Move point or scroll in the source buffer."
   (live-py-test-with-temp-text-in-file live-py-test-source
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))
     (live-py-test-scroll-line)
     (should (equal '(:s 3 4 :t 3 4) (live-py-test-buf file)))
@@ -201,11 +202,11 @@ x = 50
 (ert-deftest live-py-test/1-basic/3-narrow-to-region ()
   "Narrowing the source must at least compensate the trace alignment."
   (live-py-test-with-temp-text-in-file live-py-test-source
-    (live-py-test-next-line -1)
+    (live-py-test-forward-line -1)
     (should (equal '(:s 2 2 :t 2 2) (live-py-test-buf file)))
     (narrow-to-region (point) (save-excursion (forward-line 3) (point)))
     (live-py-test-scroll-line)
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     ;; Change these when narrowing is transferred to the trace buffer.
     (should (equal '(:s 2 3 :t 3 4) (live-py-test-buf file)))
     (with-selected-window (get-buffer-window live-py-trace-name)
@@ -225,7 +226,7 @@ x = 50
     (live-py-test/2-recreate/1-buffer file)
     (live-py-test-forward-char 5)
     (should (equal '(:s 2 3 :s 1 1) (live-py-test-buf file)))
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
 ;; Recreate the deleted output window.
@@ -242,7 +243,7 @@ x = 50
     (live-py-test/2-recreate/2-window file)
     (live-py-test-forward-char 5)
     (should (equal '(:s 2 3) (live-py-test-buf file)))
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
 ;; Recreate the killed trace buffer and the deleted output window.
@@ -260,7 +261,7 @@ x = 50
     (live-py-test/2-recreate/3-buffer-and-window file)
     (live-py-test-forward-char 5)
     (should (equal '(:s 2 3) (live-py-test-buf file)))
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
 ;; Keep source in first window, browse something else in the other window
@@ -285,7 +286,7 @@ x = 50
     (let ((temp-buffer (live-py-test/3-other-window/1-browse-else file)))
       (live-py-test-forward-char 5)
       (should (equal '(:s 2 3 :- 7 9) (live-py-test-buf file)))
-      (live-py-test-next-line)
+      (live-py-test-forward-line)
       (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))
       (kill-buffer temp-buffer))))
 
@@ -296,7 +297,7 @@ x = 50
   (other-window 1)
   (switch-to-buffer file)
   (live-py-test-scroll-line 2)
-  (live-py-test-next-line 2)
+  (live-py-test-forward-line 2)
   (other-window 1)
   (should (equal '(:s 2 3 :s 3 5) (live-py-test-buf file))))
 (ert-deftest live-py-test/3-other-window/2-browse-source/edit ()
@@ -309,7 +310,7 @@ x = 50
     (live-py-test/3-other-window/2-browse-source file)
     (live-py-test-forward-char 5)
     (should (equal '(:s 2 3 :s 3 5) (live-py-test-buf file)))
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
 (ert-deftest live-py-test/3-other-window/3-keep-source-and-swap ()
@@ -320,7 +321,7 @@ outdated in a later scroll sync."
     (other-window 1)
     (switch-to-buffer file)
     (live-py-test-scroll-line)
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     (should (equal '(:s 2 4 :s 2 3) (live-py-test-buf file)))
     (live-py-test-edit)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
@@ -334,7 +335,7 @@ outdated in a later scroll sync."
   (scroll-up 1)
   (other-window 1)
   (scroll-up 1)
-  (next-line)
+  (forward-line)
   (setq-local truncate-lines nil)
   (should (equal '(:t 3 4 :t 3 3) (live-py-test-buf file)))
   (switch-to-buffer file)
@@ -351,7 +352,7 @@ outdated in a later scroll sync."
     (live-py-test/3-other-window/4-abandon-source-and-swap file)
     (live-py-test-forward-char 5)
     (should (equal '(:s 2 3 :t 3 3) (live-py-test-buf file)))
-    (live-py-test-next-line)
+    (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))
     (should (equal '(nil nil) (live-py-test-truncate-lines)))))
 

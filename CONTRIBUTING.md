@@ -83,21 +83,12 @@ Install the `live-py-mode` package as described in the README file, then replace
 `~/.emacs.d/elpa/live-py-mode-X.Y` with symbolic links to your git repository.
 
 ### Debugging live-py-mode in Emacs ###
-For the cases where the window splitting changes automatically and often it
-is recommended to log the debug messages to stdout of the shell where Emacs
-was started with something like
+When adding temporary debugging messages it is recommended to open a second
+Emacs frame for the Messages buffer by typing `C-x 5 2` in the Messages
+buffer.
 
-    (defun stdout (format-string &rest args)
-      "Pass the arguments to `format' and print the result to stdout."
-      (append-to-file (apply #'format format-string args)
-                      nil
-                      "/dev/stdout"))
-
-as examining an often disappearing Messages buffer can become annoying. For
-an example to log the existence of the output buffer and output window see
-the attachment in [issue 100][100].
-
-Using a second Emacs frame for the Messages buffer would probably also work.
+Run the commands listed in `.travis.yml` in the section "script:" manually
+to check for compiler warnings and test regressions.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [g+]: http://google.com/+donkirkby

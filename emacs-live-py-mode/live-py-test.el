@@ -64,7 +64,7 @@
 
 ;;; Code:
 
-(require 'cl-extra)
+(require 'cl-lib)
 (require 'ert)
 (require 'live-py-mode)
 

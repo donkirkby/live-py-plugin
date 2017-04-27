@@ -6,7 +6,7 @@
 ;; Keywords: live coding
 ;; URL: http://donkirkby.github.io/live-py-plugin/
 ;; Version: 2017
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "24.4"))
 
 ;; This program is distributed under the Eclipse Public License - v 1.0
 ;; For more information see https://www.eclipse.org/legal/epl-v10.html

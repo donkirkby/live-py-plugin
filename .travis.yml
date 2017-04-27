@@ -24,7 +24,7 @@ matrix:
 
 install:
   - travis_retry pip install "virtualenv<14.0.0" "tox>=1.9" "coverage<4"
-
+  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
 script:
   - tox -e $TOX_ENV
   - emacs --version

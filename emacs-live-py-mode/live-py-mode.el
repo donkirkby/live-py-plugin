@@ -26,6 +26,13 @@
 (defvar live-py-dir nil)
 (defvar live-py-path nil)
 (defvar live-py-version nil)
+(defvar live-py-update-all-delay 0.5
+  "Minimum inactivity time after change in source buffer before update.
+Floating point number with seconds.
+
+Every change in the source buffer starts or restarts the timer
+with this delay. As soon as it fires the trace buffer will be
+updated. Set it to nil during automatic tests.")
 (defvar live-py-lighter-delaying nil
   "Lighter during the plugin state \"delaying\".
 For understanding purposes this can be set to for example \" Live-D\"
@@ -42,9 +49,14 @@ when the other `live-py-lighter-*' are adapted too.")
   "Lighter during the plugin state \"failed\".")
 
 ;; Internal variables.
-(defvar live-py-output-window nil)
+(defvar-local live-py-truncate-lines-original nil)
+(defvar-local live-py-source-last-active-window nil
+  "Window where the source buffer was active the last time.
+Can be different to the current window showing the source buffer
+if the source buffer was last active in an other window that sill
+exists and still shows the source buffer.")
+(defvar-local live-py-trace-name nil)
 (defvar-local live-py-timer nil)
-(defvar-local live-py-trace-buffer nil "The name of the trace buffer.")
 (defvar-local live-py-module nil)
 (defvar-local live-py-parent nil)
 (defvar-local live-py-window-start-pos nil)
@@ -52,7 +64,7 @@ when the other `live-py-lighter-*' are adapted too.")
 (defvar-local live-py-lighter nil)
 
 (defun live-py-after-change-function (start stop len)
-  "After a delay run the buffer through the code tracer and show trace.
+  "Start or restart timer to run `live-py-update-all'.
 START, STOP and LEN are required by `after-change-functions' but unused."
   (ignore start stop len)
   (if live-py-timer
@@ -61,12 +73,18 @@ START, STOP and LEN are required by `after-change-functions' but unused."
       (setq-local live-py-lighter live-py-lighter-delaying)
       ;; Here it seems not necessary to `force-mode-line-update'.
       (redisplay)))
-  (setq-local live-py-timer (run-at-time 0.5 nil 'live-py-trace-update)))
+  (if live-py-update-all-delay
+      (setq-local live-py-timer (run-at-time live-py-update-all-delay
+                                             nil
+                                             #'live-py-update-all))
+    (live-py-update-all)))
 
-(defun live-py-trace-update ()
-  "Trace the Python code using code_tracer.py."
+(defun live-py-update-all ()
+  "Update trace buffer and output window."
   ;; For when called from elsewhere than `live-py-after-change-function'.
   (when live-py-timer (cancel-timer live-py-timer))
+  ;; For `live-py-lighter' in `live-py-after-change-function'.
+  (setq-local live-py-timer nil)
   (when live-py-lighter-tracing
     (setq-local live-py-lighter live-py-lighter-tracing)
     (force-mode-line-update)
@@ -85,106 +103,108 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 			    live-py-module
 			    " "
 			    live-py-driver)
-			   command-line-start))
+                         command-line-start))
          (pythonpath (concat "PYTHONPATH=" (shell-quote-argument
 					    (or live-py-path live-py-dir))))
          (process-environment (cons pythonpath process-environment))
          (default-directory live-py-dir)
-         (reused-buffer (buffer-live-p
-                         (and live-py-trace-buffer
-                              (get-buffer live-py-trace-buffer)))))
+         (reused-buffer (buffer-live-p (get-buffer live-py-trace-name))))
+    ;; Don't let `shell-command-on-region' handle the window split, care
+    ;; only with `live-py-create-output-window' to do it as required.
+    (unless (get-buffer-window live-py-trace-name)
+      (live-py-create-output-window))
     (save-restriction
       (widen)
       (setq-local
        live-py-lighter
-       ;; Create (or recreate) if necessary, update and last but not least
-       ;; display the trace buffer.
+       ;; Update the trace buffer.
        (if (eq 0 (shell-command-on-region 1
                                           (1+ (buffer-size))
                                           command-line
-                                          live-py-trace-buffer))
+                                          live-py-trace-name))
            live-py-lighter-ready
          live-py-lighter-fail))
       (force-mode-line-update)
       (redisplay))
-    (with-current-buffer live-py-trace-buffer
+    (with-current-buffer live-py-trace-name
       (setq-local buffer-read-only 1)
-      (unless reused-buffer (toggle-truncate-lines 1)))
-    (live-py-synchronize-scroll
-     (line-number-at-pos (window-start)) (line-number-at-pos))
-    (setq-local live-py-timer nil)))
+      (unless reused-buffer (setq-local truncate-lines t)))
+    (live-py-update-scroll
+     (line-number-at-pos (window-start)) (line-number-at-pos))))
 
-(defun live-py-synchronize-scroll (window-start-line-nr point-line-nr)
-  "Synchronize scrolling between Python buffer and trace buffer.
+(defun live-py-update-scroll (window-start-line-nr point-line-nr)
+  "Update window start and point of trace buffer to that of source buffer.
 
 Pass the possibly reused (line-number-at-pos (window-start)) to
 WINDOW-START-LINE-NR and (line-number-at-pos) to POINT-LINE-NR,
 both are relative to (point-min). Numbering starts at 1 for all
 *-LINE-NR in this function signature and body.
 
-When the Python buffer is narrowed the trace buffer remains
+When the source buffer is narrowed the trace buffer remains
 aligned but will not hide the part after the narrowing."
-  (let ((point-min-pos (point-min))
-        (point-min-line-nr 1))
-    (unless (= 1 point-min-pos)
-      ;; Compensate for narrowing.
-      (save-restriction
-        (widen)
-        (setq point-min-line-nr (line-number-at-pos point-min-pos))))
-    (unless (window-valid-p live-py-output-window)
-      ;; Recreate output window.
-      (live-py-show-output-window))
-    (with-selected-window live-py-output-window
+  (let* ((output-window (get-buffer-window live-py-trace-name))
+         (point-min-pos (point-min))
+         (point-min-line-nr (if (= 1 point-min-pos)
+                                1
+                              ;; Compensate for narrowing.
+                              (save-restriction
+                                (widen)
+                                (line-number-at-pos point-min-pos)))))
+    (unless output-window
+      (live-py-create-output-window))
+    (with-selected-window output-window
       (goto-char 1)
       (forward-line (+ point-min-line-nr window-start-line-nr -2))
       (recenter-top-bottom 0)
-      (forward-line (- point-line-nr window-start-line-nr)))))
+      (forward-line (- point-line-nr window-start-line-nr)))
+    (set-window-buffer output-window live-py-trace-name)))
 
-(defun live-py-check-to-scroll ()
-  "Check if window start or point have to be synchronized."
+(defun live-py-post-command-function ()
+  "Update window start and point of trace buffer if necessary."
   ;; Take extra care to not let this function run into a non-handled error.
   ;; On such an error the debugger will not be entered to not block Emacs
   ;; interactivity when `debug-on-error' is active, so it is easily possible
   ;; to miss the error. And on such an error the function will be removed
-  ;; from `post-command-hook' which can be quite confusing.
-
-  ;; `window-start' is for some reason not up to date after
-  ;; `post-command-hook' in at least these situations:
-  ;; - For a few commands like `narrow-to-region' or `viper-goto-line'.
-  ;; - Repeated `next-line' towards the end of the Python buffer: The trace
-  ;;   buffer suddenly lags one line behind.
-  ;; See also "calculating new window-start/end without redisplay"
-  ;; http://stackoverflow.com/questions/23923371 )
+  ;; from `post-command-hook' which is confusing when not noticed.
   (when (memq this-command '(narrow-to-region next-line viper-goto-line))
+    ;; `window-start' is for some reason not up to date after
+    ;; `post-command-hook' in at least these situations:
+    ;; - For a few commands like `narrow-to-region' or `viper-goto-line'.
+    ;; - `next-line' towards the end of the source buffer: The trace buffer
+    ;;   suddenly lags one line behind.
+    ;; See also "calculating new window-start/end without redisplay"
+    ;; http://stackoverflow.com/questions/23923371
     (redisplay))
-  (let ((window-start-pos (window-start))
+  (let ((window (get-buffer-window))
+        (window-start-pos (window-start))
         (point-line-nr (line-number-at-pos)))
-    (unless (and (= live-py-window-start-pos window-start-pos)
-                 (= live-py-point-line-nr point-line-nr))
-      (setq-local live-py-window-start-pos window-start-pos)
-      (setq-local live-py-point-line-nr point-line-nr)
-      (if (buffer-live-p (and live-py-trace-buffer
-                              (get-buffer live-py-trace-buffer)))
-          (progn
-            (unless (window-valid-p live-py-output-window)
-              ;; Recreate output window.
-              (live-py-show-output-window))
-            (set-window-buffer live-py-output-window live-py-trace-buffer)
-            (live-py-synchronize-scroll
-             (line-number-at-pos window-start-pos) point-line-nr))
-        ;; Recreate the trace buffer and if necessary the output window.
-        (live-py-trace-update)))))
+    (when (or
+           ;; Are we still in the window where the source buffer was active
+           ;; the last time?
+           (equal live-py-source-last-active-window window)
+           ;; Has the window where the source buffer was active the last
+           ;; time been deleted or has it ceased to show the source buffer?
+           (not (equal (window-buffer live-py-source-last-active-window)
+                       (current-buffer))))
+      (setq-local live-py-source-last-active-window window)
+      (unless (and (= live-py-window-start-pos window-start-pos)
+                   (= live-py-point-line-nr point-line-nr))
+        (setq-local live-py-window-start-pos window-start-pos)
+        (setq-local live-py-point-line-nr point-line-nr)
+        (if (get-buffer-window live-py-trace-name)
+            (live-py-update-scroll
+             (line-number-at-pos window-start-pos) point-line-nr)
+          (live-py-update-all))))))
 
-(defun live-py-show-output-window ()
-  "Show the live-py output window."
+(defun live-py-create-output-window ()
+  "Create the output window."
   (delete-other-windows)
-  (get-buffer-create live-py-trace-buffer)
-  (toggle-truncate-lines 1)
-  (with-current-buffer live-py-trace-buffer
-    (toggle-truncate-lines 1)
+  (setq-local truncate-lines t)
+  (get-buffer-create live-py-trace-name)
+  (with-current-buffer live-py-trace-name
+    (setq-local truncate-lines t)
     (setq-local show-trailing-whitespace nil))
-  (setq live-py-output-window (split-window-horizontally))
-  (set-window-buffer live-py-output-window live-py-trace-buffer))
+  (set-window-buffer (split-window-horizontally) live-py-trace-name))
 
 (defun live-py-set-driver()
   "Prompt user to enter the driver command, with input history support.
@@ -192,7 +212,7 @@ To use a unit test, set the driver to something like this:
 -m unittest mymodule.MyTest.test_method"
   (interactive)
   (setq live-py-driver (read-string "Type the driver command:"))
-  (live-py-trace-update))
+  (live-py-update-all))
 
 (defun live-py-set-version()
   "Prompt user to enter the python command, with input history support.
@@ -200,7 +220,7 @@ Typical values are 'python' or 'python3'."
   (interactive)
   (setq live-py-version (expand-file-name
                          (read-shell-command "Type the python command:")))
-  (live-py-trace-update))
+  (live-py-update-all))
 
 (defun live-py-set-dir()
   "Prompt user to enter the working directory."
@@ -228,7 +248,7 @@ Typical values are 'python' or 'python3'."
     (setq-local live-py-parent (directory-file-name
                                 (file-name-directory live-py-parent))))
   (setq live-py-dir (file-name-as-directory live-py-dir))
-  (live-py-trace-update)
+  (live-py-update-all)
   (message "Working directory set to %s." live-py-dir))
 
 (defun live-py-set-path()
@@ -247,48 +267,61 @@ Typical values are 'python' or 'python3'."
   "Minor mode to do on-the-fly Python tracing.
 When called interactively, toggles the minor mode.
 With arg, turn mode on if and only if arg is positive.
+
 \\{live-py-mode-map}"
   :group 'live-py-mode
   :lighter live-py-lighter
   :keymap (let ((map (make-sparse-keymap)))
-	    (define-key map (kbd "C-c M-d") 'live-py-set-driver)
-	    (define-key map (kbd "C-c M-w") 'live-py-set-dir)
-	    (define-key map (kbd "C-c M-p") 'live-py-set-path)
-	    (define-key map (kbd "C-c M-v") 'live-py-set-version)
-	    map)
+            (define-key map (kbd "C-c M-d") #'live-py-set-driver)
+            (define-key map (kbd "C-c M-w") #'live-py-set-dir)
+            (define-key map (kbd "C-c M-p") #'live-py-set-path)
+            (define-key map (kbd "C-c M-v") #'live-py-set-version)
+            map)
   (unless (buffer-file-name)
     (user-error "Current buffer has no associated file"))
   (cond
-
    ;; Turning the mode ON.
    (live-py-mode
+    ;; User variables.
     (setq live-py-dir (file-name-directory buffer-file-name)
           live-py-version "python")
+
+    ;; Internal variables.
+    (setq-local live-py-truncate-lines-original truncate-lines)
+    (setq-local live-py-source-last-active-window (get-buffer-window))
     ;; Create a unique name for the trace buffer.
-    (setq-local live-py-trace-buffer
+    (setq-local live-py-trace-name
                 (concat "*live-py-trace_"
                         (file-name-nondirectory (buffer-file-name))
                         "_"
                         (make-temp-name "")
                         "*"))
     (setq-local live-py-module (file-name-base buffer-file-name))
+    (setq-local live-py-timer nil)
     (setq-local live-py-window-start-pos -1)
     (setq-local live-py-point-line-nr -1)
-    (add-hook 'kill-buffer-hook 'live-py-mode-off nil t)
-    (add-hook 'after-change-functions 'live-py-after-change-function nil t)
-    (live-py-show-output-window)
-    (live-py-trace-update)
-    (add-hook 'post-command-hook 'live-py-check-to-scroll nil t))
+    (setq-local live-py-lighter live-py-lighter-fail)
+
+    (add-hook 'kill-buffer-hook #'live-py-mode-off nil t)
+    (add-hook 'after-change-functions #'live-py-after-change-function nil t)
+    (add-hook 'post-command-hook #'live-py-post-command-function nil t)
+    (live-py-update-all))
    ;; Turning the mode OFF.
    (t
-    (remove-hook 'after-change-functions 'live-py-after-change-function t)
-    (remove-hook 'post-command-hook 'live-py-check-to-scroll t)
-    (remove-hook 'kill-buffer-hook 'live-py-mode-off t)
-    (ignore-errors (kill-buffer live-py-trace-buffer))
-    (when (window-valid-p live-py-output-window)
-      (delete-window live-py-output-window))
-    (toggle-truncate-lines 0))))
+    (remove-hook 'after-change-functions #'live-py-after-change-function t)
+    (remove-hook 'post-command-hook #'live-py-post-command-function t)
+    (remove-hook 'kill-buffer-hook #'live-py-mode-off t)
+    (let ((output-window (get-buffer-window live-py-trace-name)))
+      (when output-window (delete-window output-window)))
+    (ignore-errors (kill-buffer live-py-trace-name))
+    (setq-local truncate-lines live-py-truncate-lines-original))))
 
 (provide 'live-py-mode)
+
+;; Local Variables:
+;;   coding: us-ascii-unix
+;;   fill-column: 76
+;;   indent-tabs-mode: nil
+;; End:
 
 ;;; live-py-mode.el ends here

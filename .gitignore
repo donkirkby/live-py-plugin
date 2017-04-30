@@ -1,6 +1,7 @@
 .metadata
 *.pyc
 *.class
+*.elc
 *~
 .tox
 .cache

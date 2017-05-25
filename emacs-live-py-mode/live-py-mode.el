@@ -26,6 +26,7 @@
 (defvar live-py-dir nil)
 (defvar live-py-path nil)
 (defvar live-py-version nil)
+(defvar live-py-args "")
 (defvar live-py-update-all-delay 0.5
   "Minimum inactivity time after change in source buffer before update.
 Floating point number with seconds.
@@ -93,6 +94,8 @@ START, STOP and LEN are required by `after-change-functions' but unused."
          (command-line-start (concat
 			      (shell-quote-argument live-py-version)
 			      " "
+                              live-py-args
+                              " "
 			      (shell-quote-argument tracer-path)
 			      " -f "
 			      (shell-quote-argument buffer-file-name)))
@@ -222,6 +225,13 @@ Typical values are 'python' or 'python3'."
                          (read-shell-command "Type the python command:")))
   (live-py-update-all))
 
+(defun live-py-set-args()
+  "Prompt user to enter arguments for the python command, with input history support.
+One possible value is '-Q new'."
+  (interactive)
+  (setq live-py-args (read-shell-command "Type the python arguments:"))
+  (live-py-update-all))
+
 (defun live-py-set-dir()
   "Prompt user to enter the working directory."
   (interactive)
@@ -276,6 +286,7 @@ With arg, turn mode on if and only if arg is positive.
             (define-key map (kbd "C-c M-w") #'live-py-set-dir)
             (define-key map (kbd "C-c M-p") #'live-py-set-path)
             (define-key map (kbd "C-c M-v") #'live-py-set-version)
+            (define-key map (kbd "C-c M-a") #'live-py-set-args)
             map)
   (unless (buffer-file-name)
     (user-error "Current buffer has no associated file"))

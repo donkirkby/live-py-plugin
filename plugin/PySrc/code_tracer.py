@@ -8,7 +8,6 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
 from contextlib import contextmanager
 from copy import deepcopy
 import imp
-from pydoc import locate
 import sys
 import traceback
 import types
@@ -20,17 +19,25 @@ from mock_turtle import MockTurtle
 from report_builder import ReportBuilder
 
 # Import some classes that are only available in Python 3.
-arg = locate('ast.arg')
-Starred = locate('ast.Starred')
-FormattedValue = locate('ast.FormattedValue')
-TryExcept = locate('ast.TryExcept')
-TryFinally = locate('ast.TryFinally')
-if TryExcept is None:
+try:
+    from ast import arg, Starred
+except ImportError:
+    arg = Starred = None
+try:
+    from ast import FormattedValue
+except ImportError:
+    FormattedValue = None
+try:
+    from ast import TryExcept, TryFinally
+except ImportError:
     # Make Python 3.3 try class compatible with old versions.
-    TryFinally = TryExcept = locate('ast.Try')
+    from ast import Try as TryExcept
+    TryFinally = TryExcept
 
-izip_longest = (locate('itertools.izip_longest') or
-                locate('itertools.zip_longest'))
+try:
+    from itertools import izip_longest
+except ImportError:
+    from itertools import zip_longest as izip_longest
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'

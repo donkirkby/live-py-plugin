@@ -803,17 +803,29 @@ class CodeTracer(object):
             sys.stdout = old_stdout
             sys.stderr = old_stderr
 
-    def run_instrumented_module(self, code, module_name, filename):
+    def run_instrumented_module(self, code, module_name, filename, is_own_driver):
+        """ Run the code that has been instrumented for live coding.
+        
+        :param code: compiled code for the module
+        :param module_name: name of the module to load in sys.modules, or None
+            to load it as the main live coding module
+        :param filename: the name of the file this code came from
+        :param is_own_driver: True if this module should be loaded as the main
+            module, but in a package.
+        """
+        if module_name is not None and '.' in module_name:
+            package_name, child_name = module_name.rsplit('.', 1)
+        else:
+            package_name = None
+        if is_own_driver or module_name is None:
+            module_name = SCOPE_NAME
         new_mod = imp.new_module(module_name)
         sys.modules[module_name] = new_mod
         if filename is not None:
             new_mod.__file__ = filename
-        if '.' in module_name:
-            package_name, child_name = module_name.rsplit('.', 1)
+        if package_name is not None:
             importlib.import_module(package_name)
             setattr(sys.modules[package_name], child_name, new_mod)
-        else:
-            package_name = None
         new_mod.__package__ = package_name
 
         new_mod.__dict__.update(self.environment)
@@ -880,10 +892,13 @@ class CodeTracer(object):
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
             self.environment[CONTEXT_NAME] = builder
-            self.run_instrumented_module(code, load_as or SCOPE_NAME, filename)
-            if driver:
+            is_own_driver = module and driver and driver[0] == load_as
+            self.run_instrumented_module(code, load_as, filename, is_own_driver)
+            if driver and not is_own_driver:
                 with self.swallow_output():
-                    if module:
+                    if not module:
+                        self.run_python_file(driver[0], driver)
+                    else:
                         module_name = driver[0]
                         try:
                             self.run_python_module(module_name, driver)
@@ -897,8 +912,6 @@ class CodeTracer(object):
     
                                 result = 'unittest: ' + result
                                 self.report_driver_result(builder, [result])
-                    else:
-                        self.run_python_file(driver[0], driver)
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()

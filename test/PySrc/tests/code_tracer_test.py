@@ -1660,6 +1660,23 @@ s = 'example_package'
 
         self.assertReportEqual(expected_report, report)
 
+    def test_module_is_own_driver(self):
+        code = """\
+s = __package__
+s = __name__
+"""
+        expected_report = """\
+s = 'example_package'
+s = '__live_coding__'
+"""
+
+        report = CodeTracer().trace_code(code,
+                                         load_as='example_package.foo',
+                                         module=True,
+                                         driver=['example_package.foo'])
+
+        self.assertReportEqual(expected_report, report)
+
 
 class CodeTracerMainTest(ReportTestCase):
     def setUp(self):

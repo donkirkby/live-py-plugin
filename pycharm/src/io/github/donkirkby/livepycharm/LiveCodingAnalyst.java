@@ -44,17 +44,23 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         StringBuilder builder = new StringBuilder();
         File plugins = new File(PathManager.getPluginsPath());
         File livePyPath = new File(plugins, "livepy");
-        File pySrc = new File(livePyPath, "classes");
-        File codeTracer = new File(pySrc, "code_tracer.py");
+        File pythonPath;
+        if (livePyPath.isDirectory()) {
+            pythonPath = new File(livePyPath, "classes");
+        } else {
+            pythonPath = new File(plugins, "livepy.jar");
+        }
         File workingDir = new File(
                 mainFile.getParent().getPath());
         ProcessBuilder processBuilder = new ProcessBuilder(
                 "python",
-                codeTracer.getAbsolutePath())
+                "-m",
+                "code_tracer")
                 .directory(workingDir)
                 .redirectInput(ProcessBuilder.Redirect.PIPE)
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectErrorStream(true);
+        processBuilder.environment().put("PYTHONPATH", pythonPath.getAbsolutePath());
         try {
             Process process = processBuilder.start();
             OutputStream outputStream = process.getOutputStream();

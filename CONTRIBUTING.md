@@ -39,13 +39,17 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 6. Click the Add Feature... button, type "live", select `live_py_feature`
     from the list, and click OK.
 7. Drag `live_py_feature` under the devtools group, and click the Build button.
-8. Commit the new version files, push, and create a release on GitHub.
+8. Commit the new version files, push, and create a release on GitHub. (Finish
+    the PyCharm release before marking the release on GitHub, if you're releasing
+    both).
 9. Update the version number on the [Eclipse marketplace][mkt].
 
 ## PyCharm Development ##
-To write a PyCharm plugin, you use IntelliJ [IDEA], and follow the [plugin development guidelines][idea-dev].
+There is also a PyCharm version of the plugin. You can work on it with
+IntelliJ [IDEA], and follow the [plugin development guidelines][idea-dev].
 
-1. Download and install it, then open the `live-py-plugin/pycharm` project.
+### Running from Source Code ###
+1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm` project.
 2. Install the [Python plugin][idea-py]. It will probably prompt you when you open the project.
 3. Use Git to clone the IDEA source code. (It takes a while.)
 
@@ -73,10 +77,28 @@ To write a PyCharm plugin, you use IntelliJ [IDEA], and follow the [plugin devel
     restart IDEA.
 10. Configure a Python SDK in the new project. It's in the File menu under Project Structure.
 
+### Creating an Install Package for the PyCharm plugin ###
+1. Check that all of the Python unit tests pass, by running tox.
+2. Update the version number in `pycharm/resources/META-INF/plugin.xml`
+3. Right-click the plugin module in the Project view and select Prepare Plugin
+    Module 'livepy' For Deployment in the context menu.
+4. Install the new plugin jar into your IntelliJ or PyCharm. Sometimes it
+    behaves differently as a jar. From the File menu, choose Settings....
+5. Navigate down to the plugins section, and click the Install plugin from
+    disk... button.
+6. Select the jar file you just created, and click the Restart button.
+7. Once it restarts, open a Python file, and check that live coding works.
+8. Commit the version number changes, push, and create a release on GitHub. (Finish
+    the Eclipse release before marking the release on GitHub, if you're releasing
+    both).
+9. Upload the jar file to the plugin repository by clicking the Update plugin
+    button on the [plugin page].
+
 [IDEA]: https://www.jetbrains.com/idea/download
 [idea-dev]: https://www.jetbrains.com/help/idea/2016.3/plugin-development-guidelines.html
 [idea-py]: https://plugins.jetbrains.com/idea/plugin/631-python
 [configure]: https://www.jetbrains.com/help/idea/2016.3/configuring-intellij-platform-plugin-sdk.html
+[plugin page]: https://plugins.jetbrains.com/plugin/9742
 
 ## Emacs Development ##
 Install the `live-py-mode` package as described in the README file, then replace all the files in

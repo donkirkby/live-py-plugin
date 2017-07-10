@@ -147,6 +147,7 @@ When the source buffer is narrowed the trace buffer remains
 aligned but will not hide the part after the narrowing."
   (let* ((output-window (get-buffer-window live-py-trace-name))
          (point-min-pos (point-min))
+         (scroll-margin 0)
          (point-min-line-nr (if (= 1 point-min-pos)
                                 1
                               ;; Compensate for narrowing.

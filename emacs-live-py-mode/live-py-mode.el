@@ -146,22 +146,17 @@ both are relative to (point-min). Numbering starts at 1 for all
 When the source buffer is narrowed the trace buffer remains
 aligned but will not hide the part after the narrowing."
   (let* ((output-window (get-buffer-window live-py-trace-name))
-         (point-min-pos (point-min))
-         (scroll-margin 0)
-         (point-min-line-nr (if (= 1 point-min-pos)
-                                1
-                              ;; Compensate for narrowing.
-                              (save-restriction
-                                (widen)
-                                (line-number-at-pos point-min-pos)))))
+         (point-min-line-nr (count-lines 1 (point-min)))
+         (window-start-line-nr (+ point-min-line-nr window-start-line-nr -1))
+         (point-line-nr (+ point-min-line-nr point-line-nr -1)))
     (unless output-window
-      (live-py-create-output-window))
+      (live-py-create-output-window)
+      (set-window-buffer output-window live-py-trace-name))
     (with-selected-window output-window
       (goto-char 1)
-      (forward-line (+ point-min-line-nr window-start-line-nr -2))
+      (forward-line window-start-line-nr)
       (recenter-top-bottom 0)
-      (forward-line (- point-line-nr window-start-line-nr)))
-    (set-window-buffer output-window live-py-trace-name)))
+      (forward-line (- point-line-nr window-start-line-nr)))))
 
 (defun live-py-post-command-function ()
   "Update window start and point of trace buffer if necessary."
@@ -170,7 +165,7 @@ aligned but will not hide the part after the narrowing."
   ;; interactivity when `debug-on-error' is active, so it is easily possible
   ;; to miss the error. And on such an error the function will be removed
   ;; from `post-command-hook' which is confusing when not noticed.
-  (when (memq this-command '(narrow-to-region next-line viper-goto-line))
+  (when (memq this-command '(narrow-to-region next-line previous-line viper-goto-line))
     ;; `window-start' is for some reason not up to date after
     ;; `post-command-hook' in at least these situations:
     ;; - For a few commands like `narrow-to-region' or `viper-goto-line'.
@@ -207,6 +202,7 @@ aligned but will not hide the part after the narrowing."
   (get-buffer-create live-py-trace-name)
   (with-current-buffer live-py-trace-name
     (setq-local truncate-lines t)
+    (setq-local scroll-margin 0)
     (setq-local show-trailing-whitespace nil))
   (set-window-buffer (split-window-horizontally) live-py-trace-name))
 

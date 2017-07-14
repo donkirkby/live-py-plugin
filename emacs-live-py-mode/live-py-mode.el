@@ -125,7 +125,14 @@ START, STOP and LEN are required by `after-change-functions' but unused."
                                           (1+ (buffer-size))
                                           command-line
                                           live-py-trace-name))
-           live-py-lighter-ready
+           (progn
+             ;; Append empty lines to match source buffer line count
+             (let ((source-line-count (count-lines 1 (1+ (buffer-size)))))
+               (with-current-buffer live-py-trace-name
+                 (goto-char (point-max))
+                 (newline (- source-line-count (count-lines 1 (point-max))))))
+
+             live-py-lighter-ready)
          live-py-lighter-fail))
       (force-mode-line-update)
       (redisplay))

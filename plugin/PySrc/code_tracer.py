@@ -943,7 +943,7 @@ class CodeTracer(object):
                     messages = traceback.format_exception_only(etype, value)
                 self.report_driver_result(builder, messages)
 
-        report = builder.report()
+        report = builder.report(source.count('\n'))
         if dump:
             source_lines = source.splitlines()
             report_lines = report.splitlines()

@@ -190,7 +190,7 @@ class ReportBuilder(object):
     def record_delete(self, name, target, line_number):
         return DeletionTarget(name, target, line_number, self)
 
-    def report(self):
+    def report(self, total_lines):
         self.max_width = None
         for frame in self.history:
             first_line, last_line = frame.stack_block
@@ -201,6 +201,7 @@ class ReportBuilder(object):
                     line_number = i+1
                     self.add_message(message, line_number)
         self.history = []
+        self._check_line_count(total_lines)
         return '\n'.join(self.messages)
 
     def _check_line_count(self, line_count):

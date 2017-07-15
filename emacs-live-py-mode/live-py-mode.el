@@ -125,14 +125,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
                                           (1+ (buffer-size))
                                           command-line
                                           live-py-trace-name))
-           (progn
-             ;; Append empty lines to match source buffer line count
-             (let ((source-line-count (count-lines 1 (1+ (buffer-size)))))
-               (with-current-buffer live-py-trace-name
-                 (goto-char (point-max))
-                 (newline (- source-line-count (count-lines 1 (point-max))))))
-
-             live-py-lighter-ready)
+           live-py-lighter-ready
          live-py-lighter-fail))
       (force-mode-line-update)
       (redisplay))
@@ -157,13 +150,13 @@ aligned but will not hide the part after the narrowing."
          (window-start-line-nr (+ point-min-line-nr window-start-line-nr -1))
          (point-line-nr (+ point-min-line-nr point-line-nr -1)))
     (unless output-window
-      (live-py-create-output-window)
-      (set-window-buffer output-window live-py-trace-name))
+      (live-py-create-output-window))
     (with-selected-window output-window
       (goto-char 1)
       (forward-line window-start-line-nr)
       (recenter-top-bottom 0)
-      (forward-line (- point-line-nr window-start-line-nr)))))
+      (forward-line (- point-line-nr window-start-line-nr)))
+    (set-window-buffer output-window live-py-trace-name)))
 
 (defun live-py-post-command-function ()
   "Update window start and point of trace buffer if necessary."
@@ -172,7 +165,7 @@ aligned but will not hide the part after the narrowing."
   ;; interactivity when `debug-on-error' is active, so it is easily possible
   ;; to miss the error. And on such an error the function will be removed
   ;; from `post-command-hook' which is confusing when not noticed.
-  (when (memq this-command '(narrow-to-region next-line previous-line viper-goto-line))
+  (when (memq this-command '(narrow-to-region next-line viper-goto-line))
     ;; `window-start' is for some reason not up to date after
     ;; `post-command-hook' in at least these situations:
     ;; - For a few commands like `narrow-to-region' or `viper-goto-line'.

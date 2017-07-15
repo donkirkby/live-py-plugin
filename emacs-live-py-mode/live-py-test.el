@@ -168,8 +168,8 @@ x = 3 * 10
 x = 4 * 10
 x = 5 * 10
 # Suppress the message about guessing python-indent-offset.
-if None:
-    None
+def foo():
+    pass
 ")
 
 (defconst live-py-test-trace
@@ -178,6 +178,9 @@ x = 20
 x = 30 
 x = 40 
 x = 50 
+
+
+
 ")
 
 ;;; Test the use cases

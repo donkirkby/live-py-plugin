@@ -955,6 +955,7 @@ mainloop()
 """
         expected_report = """\
 
+
 """
         tracer = CodeTracer()
 
@@ -1129,7 +1130,11 @@ class Foo(object):
 
 Foo().x = 2
 """
-        expected_report = ""
+        expected_report = """\
+
+
+
+"""
         # EXEC
         report = CodeTracer().trace_code(code)
 
@@ -1145,6 +1150,7 @@ a = [1, 2, 3]
 """
         expected_report = """\
 a = [1, 2, 3]
+
 """
         # EXEC
         report = CodeTracer().trace_code(code)
@@ -1161,6 +1167,7 @@ a = [1, 2, 3]
 """
         expected_report = """\
 a = [1, 2, 3]
+
 """
         # EXEC
         report = CodeTracer().trace_code(code)
@@ -1485,7 +1492,10 @@ def foo(*args):
 foo('Bob', 1)
 """
         expected_report = """\
-args = ('Bob', 1) """
+args = ('Bob', 1)
+
+
+"""
 
         report = CodeTracer().trace_code(code)
 
@@ -1499,7 +1509,10 @@ def foo(**kwargs):
 foo(name='Bob')
 """
         expected_report = """\
-kwargs = {'name': 'Bob'} """
+kwargs = {'name': 'Bob'}
+
+
+"""
 
         report = CodeTracer().trace_code(code)
 
@@ -2131,6 +2144,7 @@ create_line
     pensize=1
 end_canvas
 .
+
 
 """
         stdin.read.return_value = source

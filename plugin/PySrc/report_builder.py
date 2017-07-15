@@ -190,7 +190,7 @@ class ReportBuilder(object):
     def record_delete(self, name, target, line_number):
         return DeletionTarget(name, target, line_number, self)
 
-    def report(self, total_lines):
+    def report(self, total_lines=0):
         self.max_width = None
         for frame in self.history:
             first_line, last_line = frame.stack_block

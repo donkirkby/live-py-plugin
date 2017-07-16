@@ -121,6 +121,37 @@ steps:
 2. Revert additions to `~/.emacs.d/init.el` or `~/.emacs`.
 3. Restart Emacs.
 
+Installing the PyCharm plugin
+-----------------------------
+The PyCharm plugin is very new, and doesn't work well yet. Try it out if you're
+adventurous, and report any bugs you find. So far, the Emacs mode seems to be
+the most popular way to use live coding in Python.
+
+This assumes you already have [PyCharm] installed, you have configured a
+Python interpreter, and you can run a Python script normally.
+
+1. From the File menu, choose Settings....
+2. Click on the Plugins section.
+3. Click the Browse Repositories... button.
+4. Type live coding in the search box, and click on the "Live Coding in Python"
+    entry in the list below.
+5. Click the green Install button on the right.
+6. Click the Restart PyCharm button.
+7. Close all the dialog boxes by clicking OK, then let PyCharm restart when it
+    asks.
+8. Open a Python file.
+9. From the Run menu, choose Start Live Coding.
+
+Uninstalling the PyCharm plugin
+-------------------------------
+1. From the File menu, choose Settings....
+2. Click on the Plugins section.
+3. In the list of plugins, click on Live Coding in Python.
+4. Click the Uninstall button on the right.
+5. Click the Restart PyCharm button.
+6. Close all the dialog boxes by clicking OK, then let PyCharm restart.
+
+
 Working Features
 ----------------
 - turtle graphics, including filled polygons (Eclipse only)

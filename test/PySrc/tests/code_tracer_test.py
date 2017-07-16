@@ -1107,6 +1107,21 @@ a, [b, c] = (1, (2, 3))
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_assign_generator_unpacked(self):
+        # SETUP
+        code = """\
+a, b = (3*i for i in range(2))
+"""
+        expected_report = """\
+(a, b) = (0, 3) """
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_assign_assignment(self):
         # SETUP
         code = """\
@@ -1114,6 +1129,27 @@ a = b = 2
 """
         expected_report = """\
 a = b = 2 """
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_assign_generator_assignment(self):
+        """ Can't convert to tuple for more than one assignment. """
+        # SETUP
+        code = """\
+a, b = c = (3*i for i in range(2))
+d = a, b
+e = list(c)
+"""
+        expected_report = """\
+
+d = (0, 3) 
+e = []
+"""
         tracer = CodeTracer()
 
         # EXEC

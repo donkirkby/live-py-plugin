@@ -312,6 +312,13 @@ class Tracer(NodeTransformer):
         new_nodes = []
         format_string = self._wrap_assignment_targets(
             existing_node.targets)
+        if (len(existing_node.targets) == 1 and
+                isinstance(existing_node.targets[0], Tuple)):
+            existing_node.value = Call(func=Name(id='tuple', ctx=Load()),
+                                       args=[existing_node.value],
+                                       keywords=[],
+                                       starargs=None,
+                                       kwargs=None)
         existing_node.value = self._create_bare_context_call(
             'set_assignment_value',
             [existing_node.value])

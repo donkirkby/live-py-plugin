@@ -1,6 +1,6 @@
 ;;; live-py-test.el --- Emacs regression tests -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 Michael Brand
+;; Copyright (C) 2017 Don Kirkby
 
 ;; Author: Michael Brand <michael.ch.brand@gmail.com>
 ;; Keywords: live coding
@@ -8,8 +8,8 @@
 ;; Version: 2017
 ;; Package-Requires: ((emacs "24.4"))
 
-;; This program is distributed under the Eclipse Public License - v 1.0
-;; For more information see https://www.eclipse.org/legal/epl-v10.html
+;; This program is distributed under the MIT License
+;; For more information see https://choosealicense.com/licenses/mit/
 
 ;;; Commentary:
 

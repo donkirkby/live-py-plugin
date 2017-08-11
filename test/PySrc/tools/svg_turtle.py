@@ -110,17 +110,19 @@ class SvgTurtle(TNavigator, TPen):
         if move:
             raise ValueError('move', 'Parameter is not supported.')
         font_name, font_size, font_style = font
+        font_size *= 1.65
         style = 'font-family: {}; font-size: {}; font-style: {};'.format(
             font_name,
             font_size,
             font_style)
 
         x, y = self._convert_position(self._position)
-        y += font[1] * 0.45
+        y -= font[1] * 0.45
         self.screen.cv.add(self.screen.cv.text(arg,
                                                insert=(x, y),
                                                text_anchor=ANCHOR_NAMES[align],
-                                               style=style))
+                                               style=style,
+                                               fill=self._pencolor))
 
     def _colorstr(self, color):
         """Return color string corresponding to args.

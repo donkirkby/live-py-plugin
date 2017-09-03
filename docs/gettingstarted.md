@@ -304,11 +304,11 @@ simplest code that could possibly work.
         return len(words)      | return 2
 
 Once the test passes, I can add another test method with another
-scenario. This one includes 'melon' and 'lemon' that are anagrams of
-each other, so they only count as one word.
+scenario. This one includes two copies of 'melon', so the number of unique
+words is still two.
 
-    def test_anagrams(self):
-        words = ['apple', 'melon', 'lemon']
+    def test_duplicate_words(self):
+        words = ['apple', 'melon', 'melon']
 
         n = count_anagrams(words)
 
@@ -317,17 +317,17 @@ each other, so they only count as one word.
 I could make the test pass now, but it's a little confusing when both
 tests are being displayed.
 
-                               | ---------------------- |
-                               | unittest: (failures=1) |
-                               | ---------------------- |
-    def count_anagrams(words): | words = ['apple', 'melon', 'lemon'] | words = ['apple', 'melon']
-        return len(words)      | return 3                            | return 2
+                               | ---------------------- | 
+                               | unittest: (failures=1) | 
+                               | ---------------------- | 
+    def count_anagrams(words): | words = ['apple', 'melon', 'melon'] | words = ['apple', 'melon'] 
+        return len(words)      | return 3                            | return 2 
 
 Instead, I'll convince Eclipse to just run the new test method. That
 becomes even more useful as we add more and more test methods. Open
 the test file, and press <kbd>Ctrl</kbd>+<kbd>F9</kbd>. That opens a
 dialog that lets you choose which test methods to run. Double click on
-`test_anagrams`, and it will run. Open the `anagrams.py` file, and
+`test_duplicate_words`, and it will run. Open the `anagrams.py` file, and
 click on the drop down menu next to the live coding button and choose
 the `test_anagrams (1)` configuration. Every time you choose a new
 test method to run, it will add a configuration to the list. When you
@@ -337,12 +337,29 @@ you can see the failing test on its own.
                                | ---------------------- |
                                | unittest: (failures=1) |
                                | ---------------------- |
-    def count_anagrams(words): | words = ['apple', 'melon', 'lemon']
+    def count_anagrams(words): | words = ['apple', 'melon', 'melon']
         return len(words)      | return 3
 
+To remove duplicates, just put all the words into a set before counting.
+
+    def count_anagrams(words): | words = ['apple', 'melon', 'melon'] 
+        anagrams = set()       | anagrams = set() 
+        for word in words:     | word = 'apple'       | word = 'melon'                | word = 'melon' 
+            anagrams.add(word) | anagrams = {'apple'} | anagrams = {'apple', 'melon'} | 
+        return len(anagrams)   | return 2 
+
+When you get to the second copy of 'melon', the set doesn't change.
+
 Now we get to the interesting part: detecting anagrams. One way is to
-sort the letters in each word. By putting the sorted words into a set,
-we can eliminate duplicates.
+sort the letters in each word.
+
+    def test_anagrams(self):
+        words = ['apple', 'melon', 'lemon']
+
+        n = count_anagrams(words)
+
+        self.assertEqual(2, n)
+
 
     def count_anagrams(words): | words = ['apple', 'melon', 'lemon']
         anagrams = set()       | anagrams = set()

@@ -54,7 +54,7 @@ when the other `live-py-lighter-*' are adapted too.")
 (defvar-local live-py-source-last-active-window nil
   "Window where the source buffer was active the last time.
 Can be different to the current window showing the source buffer
-if the source buffer was last active in an other window that sill
+if the source buffer was last active in another window that still
 exists and still shows the source buffer.")
 (defvar-local live-py-trace-name nil)
 (defvar-local live-py-timer nil)
@@ -62,6 +62,8 @@ exists and still shows the source buffer.")
 (defvar-local live-py-parent nil)
 (defvar-local live-py-window-start-pos nil)
 (defvar-local live-py-point-line-nr nil)
+(defvar-local live-py-display-col-nr nil)
+(defvar-local live-py-display-hscroll nil)
 (defvar-local live-py-lighter nil)
 
 (defun live-py-after-change-function (start stop len)
@@ -110,12 +112,23 @@ START, STOP and LEN are required by `after-change-functions' but unused."
          (pythonpath (concat "PYTHONPATH=" (shell-quote-argument
 					    (or live-py-path live-py-dir))))
          (process-environment (cons pythonpath process-environment))
-         (default-directory live-py-dir)
-         (reused-buffer (buffer-live-p (get-buffer live-py-trace-name))))
+         (default-directory live-py-dir))
     ;; Don't let `shell-command-on-region' handle the window split, care
     ;; only with `live-py-create-output-window' to do it as required.
     (unless (get-buffer-window live-py-trace-name)
       (live-py-create-output-window))
+    
+    (let ((output-window (get-buffer-window live-py-trace-name)))
+      (setq-local live-py-display-col-nr
+                  (if output-window
+                      (with-selected-window output-window
+                        (current-column))
+                    0))
+      (setq-local live-py-display-hscroll
+                  (if output-window
+                      (with-selected-window output-window
+                        (window-hscroll))
+                    0)))
     (save-restriction
       (widen)
       (setq-local
@@ -129,9 +142,6 @@ START, STOP and LEN are required by `after-change-functions' but unused."
          live-py-lighter-fail))
       (force-mode-line-update)
       (redisplay))
-    (with-current-buffer live-py-trace-name
-      (setq-local buffer-read-only 1)
-      (unless reused-buffer (setq-local truncate-lines t)))
     (live-py-update-scroll
      (line-number-at-pos (window-start)) (line-number-at-pos))))
 
@@ -148,15 +158,19 @@ aligned but will not hide the part after the narrowing."
   (let* ((output-window (get-buffer-window live-py-trace-name))
          (point-min-line-nr (count-lines 1 (point-min)))
          (window-start-line-nr (+ point-min-line-nr window-start-line-nr -1))
-         (point-line-nr (+ point-min-line-nr point-line-nr -1)))
+         (point-line-nr (+ point-min-line-nr point-line-nr -1))
+         (display-col-nr live-py-display-col-nr)
+         (display-hscroll live-py-display-hscroll))
     (unless output-window
       (live-py-create-output-window))
+    (set-window-buffer output-window live-py-trace-name)
     (with-selected-window output-window
-      (goto-char 1)
+      (goto-char (point-min))
       (forward-line window-start-line-nr)
-      (recenter-top-bottom 0)
-      (forward-line (- point-line-nr window-start-line-nr)))
-    (set-window-buffer output-window live-py-trace-name)))
+      (set-window-start output-window (point))
+      (forward-line (- point-line-nr window-start-line-nr))
+      (move-to-column display-col-nr t)
+      (set-window-hscroll output-window display-hscroll))))
 
 (defun live-py-post-command-function ()
   "Update window start and point of trace buffer if necessary."
@@ -176,7 +190,8 @@ aligned but will not hide the part after the narrowing."
     (redisplay))
   (let ((window (get-buffer-window))
         (window-start-pos (window-start))
-        (point-line-nr (line-number-at-pos)))
+        (point-line-nr (line-number-at-pos))
+        (output-window (get-buffer-window live-py-trace-name)))
     (when (or
            ;; Are we still in the window where the source buffer was active
            ;; the last time?
@@ -190,6 +205,16 @@ aligned but will not hide the part after the narrowing."
                    (= live-py-point-line-nr point-line-nr))
         (setq-local live-py-window-start-pos window-start-pos)
         (setq-local live-py-point-line-nr point-line-nr)
+        (setq-local live-py-display-col-nr
+                    (if output-window
+                        (with-selected-window output-window
+                          (current-column))
+                      0))
+        (setq-local live-py-display-hscroll
+                    (if output-window
+                        (with-selected-window output-window
+                          (window-hscroll))
+                      0))
         (if (get-buffer-window live-py-trace-name)
             (live-py-update-scroll
              (line-number-at-pos window-start-pos) point-line-nr)

@@ -120,4 +120,3 @@ to check for compiler warnings and test regressions.
 [pdrel]: http://pydev.org/history_pydev.html
 [pyrel]: https://www.python.org/downloads/
 [mkt]: https://marketplace.eclipse.org/content/live-coding-python/edit
-[100]: https://github.com/donkirkby/live-py-plugin/issues/100

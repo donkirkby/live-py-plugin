@@ -593,6 +593,14 @@ class Tracer(NodeTransformer):
                     'yield_value',
                     [value, Num(n=existing_node.lineno)]))
 
+    def visit_YieldFrom(self, node):
+        existing_node = self.generic_visit(node)
+        value = existing_node.value
+        existing_node.value = self._create_bare_context_call(
+            'yield_from',
+            [value, Num(n=existing_node.lineno)])
+        return existing_node
+
     def _trace_assignment_list(self, targets):
         """ Build a list of assignment calls based on the contents of targets.
         If targets is a single name, then return a list with one call.

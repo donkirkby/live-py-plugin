@@ -139,6 +139,43 @@ x = 5
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_message_limit(self):
+        # SETUP
+        expected_report = """\
+a = 10
+b = 20
+"""
+
+        # EXEC
+        builder = ReportBuilder(message_limit=2)
+        builder.assign('a', 10, 1)
+        builder.assign('b', 20, 2)
+        with self.assertRaisesRegexp(RuntimeError, r'message limit exceeded'):
+            builder.assign('c', 30, 3)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_message_limit_with_empty_blocks(self):
+        # SETUP
+        expected_report = """\
+
+
+
+
+"""
+
+        # EXEC
+        builder = ReportBuilder(message_limit=2)
+        frame = builder.start_frame(1, 5)
+        builder.start_block(1, 3)
+        builder.start_block(1, 3)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_return(self):
         # SETUP
         expected_value = 'bob'

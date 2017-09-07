@@ -174,6 +174,11 @@ class ReportBuilder(object):
         self.add_message('yield %s ' % display, line_number)
         return value
 
+    def yield_from(self, values, line_number):
+        for value in values:
+            self.start_block(line_number, line_number)
+            yield self.yield_value(value, line_number)
+
     def record_call(self,
                     names,
                     displays_before,
@@ -192,6 +197,7 @@ class ReportBuilder(object):
 
     def report(self, total_lines=0):
         self.max_width = None
+        self.message_limit = None
         for frame in self.history:
             first_line, last_line = frame.stack_block
             self.start_block(first_line, last_line)

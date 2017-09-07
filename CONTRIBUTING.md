@@ -31,8 +31,10 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 1. Check that all the Java unit tests run.
 2. Use `tox` to check that all the Python unit tests run in the latest versions
    of both Python 2 and Python 3.
-3. Open plugin/plugin.xml and feature/feature.xml, and increment the Version
-    field in each file.
+3. Open these files and increment the Version field in each file.
+    * `plugin/plugin.xml`
+    * `feature/feature.xml`
+    * `emacs-live-py-mode/live-py-mode.el`
 4. Commit the version changes, and push to GitHub.
 5. Look in the `docs` folder with the update project nested inside, and
     open the update project's `site.xml`.

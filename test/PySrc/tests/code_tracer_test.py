@@ -1421,6 +1421,41 @@ x = None """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    @skipIf(sys.version_info < (3, 3),
+            'yield from not supported before Python 3.3.')
+    def test_yield_from(self):
+        # SETUP
+        code = """\
+def foo(n):
+    yield 10 + n
+    yield 20 + n
+
+def bar():
+    for i in range(2):
+        yield from foo(i)
+
+for x in bar():
+    pass
+"""
+        expected_report = """\
+n = 0    | n = 1
+yield 10 | yield 11
+yield 20 | yield 21
+
+
+i = 0               | i = 1
+yield 10 | yield 20 | yield 11 | yield 21
+
+x = 10 | x = 20 | x = 11 | x = 21
+       |        |        |
+"""
+
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_yield_with_return(self):
         # SETUP
         code = """\

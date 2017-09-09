@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
+public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
 
     private static final String MY_PROPORTION_KEY = "SplitFileEditor.Proportion";
@@ -230,6 +231,25 @@ public class SplitFileEditor extends UserDataHolderBase implements FileEditor {
     public void dispose() {
         Disposer.dispose(myMainEditor);
         Disposer.dispose(mySecondEditor);
+    }
+
+    @NotNull
+    @Override
+    public Editor getEditor() {
+        TextEditor mainTextEditor = (TextEditor) myMainEditor;
+        return mainTextEditor.getEditor();
+    }
+
+    @Override
+    public boolean canNavigateTo(@NotNull Navigatable navigatable) {
+        TextEditor mainTextEditor = (TextEditor) myMainEditor;
+        return mainTextEditor.canNavigateTo(navigatable);
+    }
+
+    @Override
+    public void navigateTo(@NotNull Navigatable navigatable) {
+        TextEditor mainTextEditor = (TextEditor) myMainEditor;
+        mainTextEditor.navigateTo(navigatable);
     }
 
     static class MyFileEditorState implements FileEditorState {

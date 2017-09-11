@@ -39,6 +39,11 @@ public class LiveCodingAnalyst extends DocumentAdapter {
 
     void start() {
         isRunning = true;
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        Document document = documentManager.getDocument(mainFile);
+        if (document != null) {
+            schedule(document);
+        }
     }
 
     void stop() {
@@ -65,16 +70,19 @@ public class LiveCodingAnalyst extends DocumentAdapter {
 
         @Override
         public void onCanceled(@NotNull ProgressIndicator indicator) {
-            ProgressIndicatorUtils.scheduleWithWriteActionPriority(new AnalysisTask(document));
+            schedule(document);
         }
     }
 
     @Override
     public void documentChanged(DocumentEvent e) {
-        if ( ! isRunning) {
-            return;
+        if (isRunning) {
+            schedule(e.getDocument());
         }
-        ProgressIndicatorUtils.scheduleWithWriteActionPriority(new AnalysisTask(e.getDocument()));
+    }
+
+    private void schedule(Document document) {
+        ProgressIndicatorUtils.scheduleWithWriteActionPriority(new AnalysisTask(document));
     }
 
     private void displayResult(String display) {

@@ -71,7 +71,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
         SplitFileEditor splitFileEditor = null;
         if (project != null && file != null) {
-            splitFileEditor = (SplitFileEditor) FileEditorManager.getInstance(project).getSelectedEditor(file);
+            FileEditor selectedEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
+            if (selectedEditor instanceof SplitFileEditor) {
+                splitFileEditor = (SplitFileEditor) selectedEditor;
+            }
         }
         return splitFileEditor;
     }

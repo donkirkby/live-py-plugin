@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -18,7 +19,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class SplitFileEditorProvider implements AsyncFileEditorProvider {
+public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAware {
     private static final String FIRST_EDITOR = "first_editor";
     private static final String SECOND_EDITOR = "second_editor";
     private static final String SPLIT_LAYOUT = "split_layout";

@@ -1,6 +1,9 @@
 package live_py;
 
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.IPartListener2;
+import org.eclipse.ui.IPartService;
+import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -30,6 +33,44 @@ public class Activator extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
+		IWorkbenchWindow workbenchWindow = getWorkbench().getActiveWorkbenchWindow();
+		IPartService partService = workbenchWindow.getPartService();
+	    if (partService != null) {
+	    	partService.addPartListener(new IPartListener2() {
+				@Override
+				public void partVisible(IWorkbenchPartReference partRef) {
+				}
+				
+				@Override
+				public void partOpened(IWorkbenchPartReference partRef) {
+				}
+				
+				@Override
+				public void partInputChanged(IWorkbenchPartReference partRef) {
+				}
+				
+				@Override
+				public void partHidden(IWorkbenchPartReference partRef) {
+				}
+				
+				@Override
+				public void partDeactivated(IWorkbenchPartReference partRef) {
+				}
+				
+				@Override
+				public void partClosed(IWorkbenchPartReference partRef) {
+				}
+				
+				@Override
+				public void partBroughtToTop(IWorkbenchPartReference partRef) {
+				}
+				
+				@Override
+				public void partActivated(IWorkbenchPartReference partRef) {
+					refreshButtons();
+				}
+			});
+	    }
 	}
 
 	/*
@@ -50,6 +91,11 @@ public class Activator extends AbstractUIPlugin {
 	    if (commandService != null) {
 			commandService.refreshElements(commandId, null);
 	    }
+	}
+	
+	private void refreshButtons() {
+		refreshElements(StartHandler.COMMAND_ID);
+		refreshElements(TurtleHandler.COMMAND_ID);
 	}
 
 	/**

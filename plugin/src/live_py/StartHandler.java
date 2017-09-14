@@ -56,7 +56,8 @@ public class StartHandler extends AbstractHandler implements IElementUpdater {
 			@SuppressWarnings("rawtypes") Map parameters) {
 		LiveCodingAnalyst analyst = LiveCodingAnalyst.getActiveAnalyst();
 		ImageDescriptor chosenIcon = 
-				analyst.getMode() != LiveCodingAnalyst.Mode.Display
+				analyst == null || 
+					analyst.getMode() != LiveCodingAnalyst.Mode.Display
 				? inactiveIcon
 				: analyst.isPassing()
 				? passIcon

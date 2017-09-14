@@ -149,7 +149,7 @@ public class LiveCodingAnalyst {
     private HashMap<String, Color> colorMap = new HashMap<String, Color>();
     private SashForm splitter;
     private Mode mode = Mode.Hidden;
-    private boolean isPassing = false;
+    private volatile boolean isPassing = false;
     private ILaunchConfiguration launchConfig;
 
     /**
@@ -360,6 +360,7 @@ public class LiveCodingAnalyst {
      * @param document
      */
     private void analyseDocument(String sourceCode, Rectangle bounds) {
+    	String results;
         try {
             Process process = launchProcess(bounds);
             if (process == null)
@@ -379,7 +380,7 @@ public class LiveCodingAnalyst {
                     System.out.println("Writing: " + sourceCode);
                 }
                 
-                loadResults(reader, countLines(sourceCode));
+                results = loadResults(reader, countLines(sourceCode));
                 if (DEBUG) {
                     String line;
                     do
@@ -397,12 +398,12 @@ public class LiveCodingAnalyst {
             }
             isPassing = process.waitFor() == 0;
         } catch (Exception e) {
-            String message = e.getMessage();
-            if (message == null) {
-                message = e.toString();
+            results = e.getMessage();
+            if (results == null) {
+                results = e.toString();
             }
-            displayResults(message);
         }
+        displayResults(results);
     }
 
     private List<String> getDriverArguments(IPythonNature nature) {
@@ -588,7 +589,7 @@ public class LiveCodingAnalyst {
         return moduleName;
     }
 
-    private void loadResults(BufferedReader reader, int minLineCount) 
+    private String loadResults(BufferedReader reader, int minLineCount) 
             throws IOException {
         String line;
         StringWriter writer = new StringWriter();
@@ -623,7 +624,7 @@ public class LiveCodingAnalyst {
             printer.println();
             lineCount++;
         }
-        displayResults(writer.toString());
+        return writer.toString();
     }
     
     private void loadCanvasCommands(BufferedReader reader) {

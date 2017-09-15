@@ -243,7 +243,7 @@ To use a unit test, set the driver to something like this:
   "Prompt user to enter the python command, with input history support.
 Typical values are 'python' or 'python3'."
   (interactive)
-  (setq live-py-version (expand-file-name
+  (setq live-py-version (executable-find
                          (read-shell-command "Type the python command:")))
   (live-py-update-all))
 

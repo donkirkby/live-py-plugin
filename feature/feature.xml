@@ -2,7 +2,7 @@
 <feature
       id="live_py_feature"
       label="Live Coding in Python"
-      version="2.15.0.qualifier">
+      version="2.17.0.qualifier">
 
    <description>
       Run your Python code while you type. Displays variable state

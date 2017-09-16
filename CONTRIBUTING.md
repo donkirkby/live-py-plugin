@@ -35,7 +35,6 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
     * `plugin/plugin.xml`
     * `feature/feature.xml`
     * `emacs-live-py-mode/live-py-mode.el`
-4. Commit the version changes, and push to GitHub.
 5. Look in the `docs` folder with the update project nested inside, and
     open the update project's `site.xml`.
 6. Click the Add Feature... button, type "live", select `live_py_feature`

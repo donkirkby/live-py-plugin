@@ -496,7 +496,7 @@ love to hear about any other projects working on the same kind of tools.
 [square50]: http://donkirkby.github.com/live-py-plugin/images/demo_square50.png
 [square75]: http://donkirkby.github.com/live-py-plugin/images/demo_square75.png
 [livepy]: http://donkirkby.github.com/live-py-plugin/
-[video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
+[video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [turtle_window]: http://donkirkby.github.com/live-py-plugin/images/demo_turtle_window.png
 [star]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
 [pinwheel]: http://donkirkby.github.com/live-py-plugin/images/demo_pinwheel.png

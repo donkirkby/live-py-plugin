@@ -157,7 +157,7 @@ Working Features
 If you find the project useful, help us [make it better][contributing].
 
 [pydev]: http://pydev.org/download.html
-[video]: http://www.youtube.com/watch?v=LV3aFRHlAEQ
+[video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [starting]: http://donkirkby.github.com/live-py-plugin/gettingstarted
 [emacs]: http://www.gnu.org/software/emacs/
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools

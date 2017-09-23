@@ -41,10 +41,9 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
 
     @Override
     public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-        FileType fileType = file.getFileType();
         return myFirstProvider.accept(project, file) &&
                 mySecondProvider.accept(project, file) &&
-                fileType == PythonFileType.INSTANCE;
+                "py".equals(file.getExtension());
     }
 
     @NotNull

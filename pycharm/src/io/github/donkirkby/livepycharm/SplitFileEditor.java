@@ -121,10 +121,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
     private void invalidateLayout() {
         adjustEditorsVisibility();
-        // myToolbarWrapper.refresh();
         myComponent.repaint();
-
-        IdeFocusManager.findInstanceByComponent(myComponent).requestFocus(myComponent, true);
     }
 
     private void adjustEditorsVisibility() {

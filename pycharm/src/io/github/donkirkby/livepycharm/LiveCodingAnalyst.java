@@ -2,6 +2,7 @@ package io.github.donkirkby.livepycharm;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -16,6 +17,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,8 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     private final Document displayDocument;
     private boolean isRunning;
     private String prevSourceCode;  // last source code analysed without being cancelled
-    private PythonRunConfiguration pythonRunConfiguration;
+    private ArrayList<String> processArguments;
+    private String workingDir;
 
     LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument, Disposable parent) {
         this.mainFile = mainFile;
@@ -45,8 +48,51 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         }
     }
 
-    void start(PythonRunConfiguration configuration) {
-        pythonRunConfiguration = configuration;
+    void start(RunConfiguration runConfiguration) {
+        if (runConfiguration instanceof PythonRunConfiguration) {
+            PythonRunConfiguration pythonConfiguration =
+                    (PythonRunConfiguration) runConfiguration;
+            workingDir = pythonConfiguration.getWorkingDirectory();
+            processArguments = Lists.newArrayList(
+                    pythonConfiguration.getSdkHome(),
+                    "-m",
+                    "code_tracer");
+            String driverPath;
+            driverPath = pythonConfiguration.getScriptName();
+            String modulePath = mainFile.getCanonicalPath();
+            if (!driverPath.equals(modulePath)) {
+                processArguments.add("-"); // source code from stdin
+                String moduleName = getModuleName(
+                        new File(mainFile.getPath()),
+                        workingDir);
+                processArguments.add(moduleName);
+                processArguments.add(driverPath);
+                List<String> driverParameters = CommandLineUtil.toCommandLine(
+                        Lists.newArrayList(
+                                "echo",
+                                pythonConfiguration.getScriptParameters()));
+                driverParameters.remove(0);
+                processArguments.addAll(driverParameters);
+            }
+        } else if (runConfiguration instanceof PyUniversalUnitTestConfiguration) {
+            PyUniversalUnitTestConfiguration unitTestConfiguration =
+                    (PyUniversalUnitTestConfiguration) runConfiguration;
+            workingDir = unitTestConfiguration.getWorkingDirectory();
+            processArguments = Lists.newArrayList(
+                    unitTestConfiguration.getSdkHome(),
+                    "-m",
+                    "code_tracer");
+            processArguments.add("-"); // source code from stdin
+            String moduleName = getModuleName(
+                    new File(mainFile.getPath()),
+                    workingDir);
+            processArguments.add(moduleName);
+            processArguments.add("-m");
+            processArguments.add("unittest");
+            processArguments.add(unitTestConfiguration.getTarget().getTarget());
+        } else {
+            return;
+        }
         prevSourceCode = null;
         isRunning = true;
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
@@ -113,31 +159,9 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         } else {
             pythonPath = new File(plugins, "livepy.jar");
         }
-        File workingDir = new File(
-                mainFile.getParent().getPath());
-        String driverPath = pythonRunConfiguration.getScriptName();
-        String modulePath = mainFile.getCanonicalPath();
-        ArrayList<String> argumentList = Lists.newArrayList(
-                pythonRunConfiguration.getSdkHome(),
-                "-m",
-                "code_tracer");
-        if ( ! driverPath.equals(modulePath)) {
-            argumentList.add("-"); // source code from stdin
-            String moduleName = getModuleName(
-                    new File(mainFile.getPath()),
-                    pythonRunConfiguration);
-            argumentList.add(moduleName);
-            argumentList.add(driverPath);
-            List<String> driverParameters = CommandLineUtil.toCommandLine(
-                    Lists.newArrayList(
-                            "echo",
-                            pythonRunConfiguration.getScriptParameters()));
-            driverParameters.remove(0);
-            argumentList.addAll(driverParameters);
-        }
         ProcessBuilder processBuilder = new ProcessBuilder(
-                argumentList)
-                .directory(workingDir)
+                processArguments)
+                .directory(new File(workingDir))
                 .redirectInput(ProcessBuilder.Redirect.PIPE)
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectErrorStream(true);
@@ -172,8 +196,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
 
     private String getModuleName(
             File file,
-            PythonRunConfiguration pythonRunConfiguration) {
-        String pythonPath = pythonRunConfiguration.getWorkingDirectory();
+            String pythonPath) {
         Path pythonPath2 = Paths.get(pythonPath);
         Path filePath2 = file.toPath();
         Path filePath = pythonPath2.relativize(filePath2);

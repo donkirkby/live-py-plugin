@@ -1,5 +1,7 @@
 package io.github.donkirkby.livepycharm;
 
+import com.google.common.collect.Lists;
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -13,10 +15,15 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 
 public class LiveCodingAnalyst extends DocumentAdapter {
@@ -26,6 +33,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     private final Document displayDocument;
     private boolean isRunning;
     private String prevSourceCode;  // last source code analysed without being cancelled
+    private PythonRunConfiguration pythonRunConfiguration;
 
     LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument, Disposable parent) {
         this.mainFile = mainFile;
@@ -37,7 +45,9 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         }
     }
 
-    void start() {
+    void start(PythonRunConfiguration configuration) {
+        pythonRunConfiguration = configuration;
+        prevSourceCode = null;
         isRunning = true;
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
         Document document = documentManager.getDocument(mainFile);
@@ -105,10 +115,28 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         }
         File workingDir = new File(
                 mainFile.getParent().getPath());
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                "python",
+        String driverPath = pythonRunConfiguration.getScriptName();
+        String modulePath = mainFile.getCanonicalPath();
+        ArrayList<String> argumentList = Lists.newArrayList(
+                pythonRunConfiguration.getSdkHome(),
                 "-m",
-                "code_tracer")
+                "code_tracer");
+        if ( ! driverPath.equals(modulePath)) {
+            argumentList.add("-"); // source code from stdin
+            String moduleName = getModuleName(
+                    new File(mainFile.getPath()),
+                    pythonRunConfiguration);
+            argumentList.add(moduleName);
+            argumentList.add(driverPath);
+            List<String> driverParameters = CommandLineUtil.toCommandLine(
+                    Lists.newArrayList(
+                            "echo",
+                            pythonRunConfiguration.getScriptParameters()));
+            driverParameters.remove(0);
+            argumentList.addAll(driverParameters);
+        }
+        ProcessBuilder processBuilder = new ProcessBuilder(
+                argumentList)
                 .directory(workingDir)
                 .redirectInput(ProcessBuilder.Redirect.PIPE)
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
@@ -140,6 +168,26 @@ public class LiveCodingAnalyst extends DocumentAdapter {
 
         prevSourceCode = source;
         return output;
+    }
+
+    private String getModuleName(
+            File file,
+            PythonRunConfiguration pythonRunConfiguration) {
+        String pythonPath = pythonRunConfiguration.getWorkingDirectory();
+        Path pythonPath2 = Paths.get(pythonPath);
+        Path filePath2 = file.toPath();
+        Path filePath = pythonPath2.relativize(filePath2);
+        StringBuilder moduleName = new StringBuilder();
+        for (java.nio.file.Path component : filePath) {
+            if (moduleName.length() > 0) {
+                moduleName.append(".");
+            }
+            moduleName.append(component.getFileName());
+        }
+        if (moduleName.toString().endsWith(".py")) {
+            return moduleName.substring(0, moduleName.length() - 3);
+        }
+        return moduleName.toString();
     }
 
     @NotNull

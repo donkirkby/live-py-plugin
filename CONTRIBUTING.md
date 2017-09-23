@@ -105,6 +105,9 @@ IntelliJ [IDEA], and follow the [plugin development guidelines][idea-dev].
 Install the `live-py-mode` package as described in the README file, then replace all the files in
 `~/.emacs.d/elpa/live-py-mode-X.Y` with symbolic links to your git repository.
 
+Releases are built automatically on each commit, and published at [melpa.org].
+Stable releases are built from each tag.
+
 ### Debugging live-py-mode in Emacs ###
 When adding temporary debugging messages it is recommended to open a second
 Emacs frame for the Messages buffer by typing `C-x 5 2` in the Messages
@@ -121,3 +124,4 @@ to check for compiler warnings and test regressions.
 [pdrel]: http://pydev.org/history_pydev.html
 [pyrel]: https://www.python.org/downloads/
 [mkt]: https://marketplace.eclipse.org/content/live-coding-python/edit
+[melpa.org]: https://melpa.org

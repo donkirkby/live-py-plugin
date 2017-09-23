@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,8 +109,8 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         invalidateLayout();
     }
 
-    void startAnalysis() {
-        myAnalyst.start();
+    void startAnalysis(PythonRunConfiguration configuration) {
+        myAnalyst.start(configuration);
         triggerLayoutChange(SplitFileEditor.SplitEditorLayout.SPLIT);
     }
 

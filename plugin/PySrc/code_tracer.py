@@ -17,6 +17,7 @@ import importlib
 from canvas import Canvas
 from mock_turtle import MockTurtle
 from report_builder import ReportBuilder
+from random import seed
 
 # Import some classes that are only available in Python 3.
 try:
@@ -908,6 +909,7 @@ class CodeTracer(object):
 
             self.environment[CONTEXT_NAME] = builder
             is_own_driver = module and driver and driver[0] == load_as
+            seed(0)
             self.run_instrumented_module(code, load_as, filename, is_own_driver)
             if driver and not is_own_driver:
                 with self.swallow_output():

@@ -1717,6 +1717,32 @@ z = '42' """
 
         self.assertReportEqual(expected_report, report)
 
+    def test_random(self):
+        code = """\
+from random import randint
+
+i = randint(1, 100)
+j = randint(1, 100)
+"""
+        if sys.version_info < (3, 0):
+            expected_report = """\
+
+
+i = 85
+j = 76
+"""
+        else:
+            expected_report = """\
+
+
+i = 50
+j = 98
+"""
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
     def test_module_in_package(self):
         code = """\
 from unittest import TestCase

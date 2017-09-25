@@ -919,13 +919,13 @@ class CodeTracer(object):
                             self.run_python_module(module_name, driver)
                         except SystemExit as ex:
                             if ex.code:
-                                if module_name != 'unittest':
+                                if module_name not in ('unittest', 'pytest'):
                                     raise
                                 self.return_code = ex.code
                                 result = (sys.stderr.last_line or
                                           'FAIL        ')
     
-                                result = 'unittest: ' + result
+                                result = module_name + ': ' + result
                                 self.report_driver_result(builder, [result])
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -61,8 +62,10 @@ import org.python.pydev.core.IPythonNature;
 import org.python.pydev.core.IPythonPathNature;
 import org.python.pydev.core.MisconfigurationException;
 import org.python.pydev.core.log.Log;
+import org.python.pydev.debug.ui.launching.PythonRunnerConfig;
 import org.python.pydev.editor.PyEdit;
 import org.python.pydev.editor.codefolding.PySourceViewer;
+import org.python.pydev.pyunit.preferences.PyUnitPrefsPage2;
 import org.python.pydev.runners.UniversalRunner;
 import org.python.pydev.runners.UniversalRunner.AbstractRunner;
 import org.python.pydev.shared_core.bundle.BundleUtils;
@@ -426,25 +429,48 @@ public class LiveCodingAnalyst {
                 argumentList.add(driverScript);
             }
             else {
-                argumentList.add("-m");
-                argumentList.add("unittest");
-                final String moduleName =
-                        getModuleName(new File(driverScript), nature);
-                final String selectedTests = launchConfig.getAttribute(
+            	IProject project =
+            			PythonRunnerConfig.getProjectFromConfiguration(
+            					launchConfig);
+            	int testRunner = PyUnitPrefsPage2.getTestRunner(
+            			launchConfig,
+            			project);
+                String[] selectedTests = launchConfig.getAttribute(
                         "org.python.pydev.debug.ATTR_UNITTEST_TESTS",
-                        "");
-                if (selectedTests.length() == 0) {
-                    argumentList.add(moduleName);
-                }
-                else {
-                    for (String testName : selectedTests.split(",")) {
-                        argumentList.add(moduleName + "." + testName);
+                        "").split(",");
+                if (selectedTests.length == 0 || 
+                		(selectedTests.length == 1 &&
+                		 selectedTests[0].length() == 0)) {
+					selectedTests = null;
+				}
+            	if (testRunner == PyUnitPrefsPage2.TEST_RUNNER_PYDEV) {
+                    argumentList.add("-m");
+                    argumentList.add("unittest");
+                    final String moduleName =
+                            getModuleName(new File(driverScript), nature);
+                    if (selectedTests == null) {
+                        argumentList.add(moduleName);
                     }
-                }
+                    else {
+						for (String testName : selectedTests) {
+                            argumentList.add(moduleName + "." + testName);
+                        }
+                    }
+				} else if (testRunner == PyUnitPrefsPage2.TEST_RUNNER_PY_TEST) {
+					argumentList.add("-m");
+					argumentList.add("pytest");
+					if (selectedTests == null) {
+						argumentList.add(driverScript);
+					} else {
+						for (String testName : selectedTests) {
+							argumentList.add(
+									driverScript + "::" +
+									testName.replace(".", "::"));
+						}
+					}
+					// -m pytest test_anagrams.py::AnagramsTest::test test_anagrams.py::AnagramsTest::test_case
+				}
             }
-            //String driverWorkDir = launchConfig.getAttribute(
-            //        "org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY",
-            //        "");
             String driverArgs = launchConfig.getAttribute(
                     "org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS",
                     "");

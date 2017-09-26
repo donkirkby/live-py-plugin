@@ -45,7 +45,7 @@ class MockTurtle(TNavigator, TPen):
         cls.OriginalTurtle = turtle_module.Turtle
         turtle_module.Turtle = MockTurtle
         cls.original_mainloop = turtle_module.mainloop
-        turtle_module.mainloop = lambda: None
+        turtle_module.mainloop = turtle_module.done = lambda: None
         MockTurtle._screen = MockTurtle._Screen(canvas)
         MockTurtle._pen = MockTurtle()
 
@@ -55,7 +55,7 @@ class MockTurtle(TNavigator, TPen):
         if cls.OriginalTurtle is not None:
             turtle_module = sys.modules['turtle']
             turtle_module.Turtle = cls.OriginalTurtle
-            turtle_module.mainloop = cls.original_mainloop
+            turtle_module.mainloop = turtle_module.done = cls.original_mainloop
             MockTurtle._pen = cls.OriginalTurtle = cls.original_mainloop = None
             MockTurtle._screen = None
 

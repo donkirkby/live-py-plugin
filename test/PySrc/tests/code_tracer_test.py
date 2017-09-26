@@ -952,8 +952,10 @@ create_line
 from turtle import *
 
 mainloop()
+done()  # alias for mainloop()
 """
         expected_report = """\
+
 
 
 """

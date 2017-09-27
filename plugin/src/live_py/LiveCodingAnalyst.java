@@ -724,7 +724,7 @@ public class LiveCodingAnalyst {
     private void drawResult(GC gc) {
         // Clear the drawing
         Rectangle bounds = getBounds();
-        gc.fillRectangle(bounds);
+        gc.fillRectangle(0, 0, bounds.width, bounds.height);
         
         String message = null;
         ArrayList<CanvasCommand> canvasCommands = null;
@@ -775,6 +775,9 @@ public class LiveCodingAnalyst {
                 gc.setLineWidth(newLineWidth);
                 gc.setLineCap(SWT.CAP_ROUND);
             }
+            if (method.equals("bgcolor")) {
+                gc.fillRectangle(0, 0, bounds.width, bounds.height);
+			}
             if (method.equals("create_line")) {
                 gc.drawLine(
                         command.getCoordinate(0),

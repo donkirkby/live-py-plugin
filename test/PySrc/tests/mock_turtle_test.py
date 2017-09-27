@@ -408,6 +408,33 @@ create_line
 
         self.assertEqual(('black', 'black'), color)
 
+    def test_bgcolor(self):
+        # SETUP
+        expected_report = """\
+bgcolor
+    fill='#00ff00'
+    outline=''
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1"""
+
+        # EXEC
+        t = MockTurtle()
+        t.fd(100)
+        color1 = t.screen.bgcolor()
+        t.screen.bgcolor('green')
+        color2 = t.screen.bgcolor()
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report.splitlines(), report)
+        self.assertEqual('white', color1)
+        self.assertEqual('green', color2)
+
     def test_fill(self):
         # SETUP
         expected_report = """\

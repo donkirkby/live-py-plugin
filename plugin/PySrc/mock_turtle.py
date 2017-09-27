@@ -28,12 +28,21 @@ class MockTurtle(TNavigator, TPen):
                 canvas = Canvas()
             self.cv = canvas
             self.xscale = self.yscale = 1
+            self._config = {'bgcolor': None}
 
         def window_width(self):
             return self.cv.cget('width')
 
         def window_height(self):
             return self.cv.cget('height')
+        
+        def bgcolor(self, color=None):
+            if color is None:
+                bgcolor = self._config['bgcolor']
+                if bgcolor is None:
+                    return 'white'
+                return bgcolor
+            self._config['bgcolor'] = color
 
     _Stamp = namedtuple('Stamp', 'pos heading color')
     _screen = _pen = OriginalTurtle = original_mainloop = None
@@ -117,7 +126,14 @@ class MockTurtle(TNavigator, TPen):
                 instance._newLine()
                 instance._flush_lines()
                 instance._draw_stamps()
-            return self.screen.cv.report
+            report = self.screen.cv.report[:]
+            bgcolor = self.screen._config['bgcolor']
+            if bgcolor is not None:
+                bgcolorstr = self._colorstr(bgcolor)
+                report[:0] = ["bgcolor",
+                              "    fill={!r}".format(bgcolorstr),
+                              "    outline=''"]
+            return report
         raise AttributeError(name)
 
     def _draw_stamps(self):

@@ -25,6 +25,9 @@ public class StartAction extends AnAction {
         RunnerAndConfigurationSettings configuration = RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
         RunConfiguration runConfiguration = (configuration != null) ? configuration.getConfiguration() : null;
 
+        if (runConfiguration == null) {
+            return;
+        }
         splitFileEditor.startAnalysis(runConfiguration);
     }
 }

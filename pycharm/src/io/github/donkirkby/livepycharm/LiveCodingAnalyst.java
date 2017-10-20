@@ -1,6 +1,7 @@
 package io.github.donkirkby.livepycharm;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.Disposable;
@@ -17,7 +18,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.run.PythonRunConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
+import org.jdom.Attribute;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +27,9 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 
 public class LiveCodingAnalyst extends DocumentAdapter {
@@ -49,6 +53,8 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     }
 
     void start(RunConfiguration runConfiguration) {
+        // Python or Unittests
+        String factoryName = runConfiguration.getFactory().getName();
         if (runConfiguration instanceof PythonRunConfiguration) {
             PythonRunConfiguration pythonConfiguration =
                     (PythonRunConfiguration) runConfiguration;
@@ -74,12 +80,26 @@ public class LiveCodingAnalyst extends DocumentAdapter {
                 driverParameters.remove(0);
                 processArguments.addAll(driverParameters);
             }
-        } else if (runConfiguration instanceof PyUniversalUnitTestConfiguration) {
-            PyUniversalUnitTestConfiguration unitTestConfiguration =
-                    (PyUniversalUnitTestConfiguration) runConfiguration;
-            workingDir = unitTestConfiguration.getWorkingDirectory();
+        } else if ("Unittests".equals(factoryName)) {
+            Gson gson = new Gson();
+            Element element = new Element("dummy");
+            runConfiguration.writeExternal(element);
+            Map<String, String> options = new HashMap<>();
+            for (Element option : element.getChildren("option")) {
+                Attribute nameAttribute = option.getAttribute("name");
+                Attribute valueAttribute = option.getAttribute("value");
+                if (nameAttribute != null && valueAttribute != null) {
+                    options.put(
+                            nameAttribute.getValue(),
+                            valueAttribute.getValue());
+                }
+            }
+            // TODO: _new_targetType, _new_pattern, _new_additionalArguments
+            String target = gson.fromJson(options.get("_new_target"), String.class);
+
+            workingDir = options.get("WORKING_DIRECTORY");
             processArguments = Lists.newArrayList(
-                    unitTestConfiguration.getSdkHome(),
+                    options.get("SDK_HOME"),
                     "-m",
                     "code_tracer");
             processArguments.add("-"); // source code from stdin
@@ -89,7 +109,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             processArguments.add(moduleName);
             processArguments.add("-m");
             processArguments.add("unittest");
-            processArguments.add(unitTestConfiguration.getTarget().getTarget());
+            processArguments.add(target);
         } else {
             return;
         }

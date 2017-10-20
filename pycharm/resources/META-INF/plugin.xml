@@ -1,7 +1,7 @@
 <idea-plugin version="2">
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>2.18.0</version>
+    <version>2.18.1</version>
     <vendor url="http://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
@@ -11,6 +11,7 @@
 
     <change-notes><![CDATA[
       Supports driving live code from unit tests or other script.
+      Fixes incompatibility with latest PyCharm release.
     ]]>
     </change-notes>
 

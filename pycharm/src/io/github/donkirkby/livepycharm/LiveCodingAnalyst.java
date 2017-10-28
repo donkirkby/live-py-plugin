@@ -135,13 +135,13 @@ public class LiveCodingAnalyst extends DocumentAdapter {
 
         @Nullable
         @Override
-        public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+        public Continuation performInReadAction(
+                @NotNull ProgressIndicator indicator)
+                throws ProcessCanceledException {
             String sourceCode = document.getText();
             String display = null;
             try {
-                Future<Process> starter = pool.submit(
-                        () -> startProcess(sourceCode));
-                Process process = await(starter, indicator);
+                Process process = startProcess(sourceCode);
                 try {
                     Future<String> reader = pool.submit(
                             () -> readOutput(process));
@@ -150,9 +150,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
                     process.destroy();
                     throw ex;
                 }
-            } catch (ProcessCanceledException ex) {
-                return null;
-            } catch (InterruptedException | ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException | IOException ex) {
                 log.error("Report failed.", ex);
             }
             finish();
@@ -167,7 +165,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
                 throws ExecutionException, InterruptedException {
             while (true) {
                 try {
-                    return future.get(10, TimeUnit.MILLISECONDS);
+                    return future.get(50, TimeUnit.MILLISECONDS);
                 } catch (TimeoutException e) {
                     try {
                         indicator.checkCanceled();

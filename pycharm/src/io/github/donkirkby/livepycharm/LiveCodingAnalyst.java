@@ -38,7 +38,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     private final VirtualFile mainFile;
     private final Document displayDocument;
     private boolean isRunning;
-    private String prevSourceCode;  // last source code analysed without being cancelled
+    private boolean isBusy;
     private ArrayList<String> processArguments;
     private String workingDir;
 
@@ -113,12 +113,12 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         } else {
             return;
         }
-        prevSourceCode = null;
         isRunning = true;
+        finish();
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
         Document document = documentManager.getDocument(mainFile);
         if (document != null) {
-            schedule(document);
+            schedule(document, false);
         }
     }
 
@@ -137,40 +137,80 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         @Override
         public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
             String sourceCode = document.getText();
-            String display = analyseDocument(sourceCode, indicator);
+            String display = null;
+            try {
+                Future<Process> starter = pool.submit(
+                        () -> startProcess(sourceCode));
+                Process process = await(starter, indicator);
+                try {
+                    Future<String> reader = pool.submit(
+                            () -> readOutput(process));
+                    display = await(reader, indicator);
+                } catch (Exception ex) {
+                    process.destroy();
+                    throw ex;
+                }
+            } catch (ProcessCanceledException ex) {
+                return null;
+            } catch (InterruptedException | ExecutionException ex) {
+                log.error("Report failed.", ex);
+            }
+            finish();
             if (display == null) {
                 return null;
             }
-            return new Continuation(() -> displayResult(display));
+            final String finalDisplay = display;
+            return new Continuation(() -> displayResult(finalDisplay));
+        }
+
+        private <T> T await(Future<T> future, ProgressIndicator indicator)
+                throws ExecutionException, InterruptedException {
+            while (true) {
+                try {
+                    return future.get(10, TimeUnit.MILLISECONDS);
+                } catch (TimeoutException e) {
+                    try {
+                        indicator.checkCanceled();
+                    } catch (ProcessCanceledException ex) {
+                        final boolean mayInterrupt = true;
+                        future.cancel(mayInterrupt);
+                        throw ex;
+                    }
+                }
+            }
         }
 
         @Override
         public void onCanceled(@NotNull ProgressIndicator indicator) {
-            schedule(document);
+            schedule(document, true);
         }
     }
 
     @Override
     public void documentChanged(DocumentEvent e) {
         if (isRunning) {
-            schedule(e.getDocument());
+            schedule(e.getDocument(), false);
         }
     }
 
-    private void schedule(Document document) {
+    private synchronized void schedule(Document document, boolean isRestart) {
+        if (isBusy && ! isRestart) {
+            return;
+        }
+        isBusy = true;
         ProgressIndicatorUtils.scheduleWithWriteActionPriority(new AnalysisTask(document));
+    }
+
+    private synchronized void finish() {
+        isBusy = false;
     }
 
     private void displayResult(String display) {
         ApplicationManager.getApplication().runWriteAction(() -> displayDocument.setText(display));
     }
 
-    @Nullable
-    private synchronized String analyseDocument(String source, ProgressIndicator indicator) {
-        if (source.equals(prevSourceCode)) {
-            return null;
-        }
-        String output = "";
+    @NotNull
+    private Process startProcess(String sourceCode) throws IOException {
         File plugins = new File(PathManager.getPluginsPath());
         File livePyPath = new File(plugins, "livepy");
         File pythonPath;
@@ -186,32 +226,14 @@ public class LiveCodingAnalyst extends DocumentAdapter {
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .redirectErrorStream(true);
         processBuilder.environment().put("PYTHONPATH", pythonPath.getAbsolutePath());
-        try {
-            Process process = processBuilder.start();
-            OutputStream outputStream = process.getOutputStream();
-            outputStream.write(source.getBytes());
-            outputStream.close();
-            Future<String> reader = pool.submit(() -> readOutput(process));
-            boolean isWaiting = true;
-            while (isWaiting) {
-                try {
-                    output = reader.get(50, TimeUnit.MILLISECONDS);
-                    isWaiting = false;
-                } catch (TimeoutException e) {
-                    try {
-                        indicator.checkCanceled();
-                    } catch (ProcessCanceledException ex) {
-                        process.destroy();
-                        throw ex;
-                    }
-                }
-            }
-        } catch (IOException | InterruptedException | ExecutionException ex) {
-            log.error("Report failed.", ex);
+        Process process = processBuilder.start();
+        OutputStream outputStream = process.getOutputStream();
+        outputStream.write(sourceCode.getBytes());
+        outputStream.close();
+        if (Thread.interrupted()) {
+            process.destroy();
         }
-
-        prevSourceCode = source;
-        return output;
+        return process;
     }
 
     private String getModuleName(
@@ -234,7 +256,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     }
 
     @NotNull
-    private String readOutput(Process process) throws IOException {
+    private String readOutput(Process process) throws IOException, InterruptedException {
         InputStream inputStream = process.getInputStream();
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(inputStream));
@@ -244,6 +266,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             builder.append(line);
             builder.append("\n");
         }
+        process.waitFor();
         return builder.toString();
     }
 }

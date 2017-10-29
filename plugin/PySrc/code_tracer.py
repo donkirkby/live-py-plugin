@@ -95,6 +95,7 @@ class Tracer(NodeTransformer):
         formats = []
         for a in existing_node.args:
             if Starred is not None and isinstance(a, Starred):
+                # noinspection PyUnresolvedReferences
                 starargs = a.value
             else:
                 values.append(a)
@@ -878,20 +879,23 @@ class CodeTracer(object):
     def trace_code(self,
                    source,
                    load_as=None,
-                   module=False,
+                   is_module=False,
                    dump=False,
                    driver=None,
-                   filename=None):
+                   filename=None,
+                   bad_driver=None):
         """ Trace a module of source code, possibly by running a driver script.
         
         :param str source: the source code to trace
         :param str load_as: the module name to load the source code as
-        :param bool module: True if the driver is a module name instead of a
+        :param bool is_module: True if the driver is a module name instead of a
         file name
         :param bool dump: True if the source code should be included in the
         output
-        :param str driver: the driver script's file name or module name
+        :param list driver: the driver script's file name or module name and args
         :param str filename: the file name of the source code
+        :param str bad_driver: a message to display if the driver doesn't call
+        the module
         """
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
@@ -908,18 +912,22 @@ class CodeTracer(object):
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
             self.environment[CONTEXT_NAME] = builder
-            is_own_driver = module and driver and driver[0] == load_as
+            is_own_driver = is_module and driver and driver[0] == load_as
             seed(0)
             self.run_instrumented_module(code, load_as, filename, is_own_driver)
             if driver and not is_own_driver:
+                start_count = builder.message_count
                 with self.swallow_output():
-                    if not module:
+                    if not is_module:
                         self.run_python_file(driver[0], driver)
+                        end_count = builder.count_all_messages()
                     else:
                         module_name = driver[0]
                         try:
                             self.run_python_module(module_name, driver)
+                            end_count = builder.count_all_messages()
                         except SystemExit as ex:
+                            end_count = builder.count_all_messages()
                             if ex.code:
                                 if module_name not in ('unittest', 'pytest'):
                                     raise
@@ -929,6 +937,12 @@ class CodeTracer(object):
     
                                 result = module_name + ': ' + result
                                 self.report_driver_result(builder, [result])
+                if end_count == start_count:
+                    driver_name = os.path.basename(driver[0])
+                    message = (bad_driver or "{} doesn't call the {} module." 
+                               " Try a different driver.".format(driver_name,
+                                                                 load_as))
+                    self.report_driver_result(builder, [message])
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
@@ -1017,6 +1031,9 @@ def main():
     parser.add_argument('-f',
                         '--filename',
                         help='file name to save in __file__')
+    parser.add_argument('-b',
+                        '--bad_driver',
+                        help="message to display if driver doesn't call module")
     parser.add_argument('-m',
                         '--module',
                         action='store_true',
@@ -1047,9 +1064,10 @@ def main():
     code_report = tracer.trace_code(code,
                                     dump=args.dump,
                                     load_as=args.load_as,
-                                    module=args.module,
+                                    is_module=args.module,
                                     driver=args.driver,
-                                    filename=args.filename)
+                                    filename=args.filename,
+                                    bad_driver=args.bad_driver)
     turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:
         print('start_canvas')

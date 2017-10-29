@@ -454,5 +454,29 @@ RuntimeError: a b
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_message_count(self):
+        # SETUP
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.add_message('a', 1)
+        builder.add_message('b', 2)
+
+        # VERIFY
+        self.assertEqual(2, builder.message_count)
+
+    def test_count_all_messages(self):
+        # SETUP
+
+        # EXEC
+        builder = ReportBuilder()
+        frame = builder.start_frame(1, 2)
+        frame.add_message('a', 1)
+        frame.add_message('b', 2)
+
+        # VERIFY
+        self.assertEqual(0, builder.message_count)
+        self.assertEqual(2, builder.count_all_messages())
+
 if __name__ == '__main__':
     unittest.main()

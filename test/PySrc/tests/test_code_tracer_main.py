@@ -230,7 +230,7 @@ s = 'Hello, World!' | ---------------------------------------------------- |
         '-',
         'foo',
         'bogus_driver.py'])
-    def test_bad_driver(self, stdin, stdout):
+    def test_unknown_driver(self, stdin, stdout):
         source = """\
 s = 'Yo!'
 """
@@ -248,6 +248,63 @@ s = 'Yo!' | --------------------------------------------------------------- |
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
         expected_report = self.trim_exception(expected_report)
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        EXAMPLE_DRIVER_PATH,
+        'skip'])
+    def test_bad_driver(self, stdin, stdout):
+        source = """\
+def foo(x):
+    name = __name__
+    return x + 1
+
+BAR = 'baz'
+"""
+        expected_report = """\
+--------------------------------------------------------------------------------- |
+example_driver.py doesn't call the example_source module. Try a different driver. |
+--------------------------------------------------------------------------------- |
+
+BAR = 'baz'
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--bad_driver', "Run config 'example' is bad, try something else.",
+        '-',
+        'example_source',
+        EXAMPLE_DRIVER_PATH,
+        'skip'])
+    def test_bad_driver_message(self, stdin, stdout):
+        source = """\
+def foo(x):
+    name = __name__
+    return x + 1
+
+BAR = 'baz'
+"""
+        expected_report = """\
+------------------------------------------------ |
+Run config 'example' is bad, try something else. |
+------------------------------------------------ |
+
+BAR = 'baz'
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[

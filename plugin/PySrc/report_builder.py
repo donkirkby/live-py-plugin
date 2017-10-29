@@ -214,6 +214,11 @@ class ReportBuilder(object):
         while len(self.messages) < line_count:
             self.messages.append('')
 
+    def count_all_messages(self):
+        history_count = sum(frame.message_count for frame in self.history)
+        return self.message_count + history_count
+
+
 
 class DeletionTarget(object):
     def __init__(self, name, target, line_number, report_builder):

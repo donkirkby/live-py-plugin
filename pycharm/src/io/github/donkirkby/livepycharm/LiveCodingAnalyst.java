@@ -67,10 +67,13 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             driverPath = pythonConfiguration.getScriptName();
             String modulePath = mainFile.getCanonicalPath();
             if (!driverPath.equals(modulePath)) {
-                processArguments.add("-"); // source code from stdin
                 String moduleName = getModuleName(
                         new File(mainFile.getPath()),
                         workingDir);
+                String badDriverMessage = buildBadDriverMessage(runConfiguration, moduleName);
+                processArguments.add("--bad_driver");
+                processArguments.add(badDriverMessage);
+                processArguments.add("-"); // source code from stdin
                 processArguments.add(moduleName);
                 processArguments.add(driverPath);
                 List<String> driverParameters = CommandLineUtil.toCommandLine(
@@ -98,14 +101,17 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             String target = gson.fromJson(options.get("_new_target"), String.class);
 
             workingDir = options.get("WORKING_DIRECTORY");
+            String moduleName = getModuleName(
+                    new File(mainFile.getPath()),
+                    workingDir);
+            String badDriverMessage = buildBadDriverMessage(runConfiguration, moduleName);
             processArguments = Lists.newArrayList(
                     options.get("SDK_HOME"),
                     "-m",
                     "code_tracer");
+            processArguments.add("--bad_driver");
+            processArguments.add(badDriverMessage);
             processArguments.add("-"); // source code from stdin
-            String moduleName = getModuleName(
-                    new File(mainFile.getPath()),
-                    workingDir);
             processArguments.add(moduleName);
             processArguments.add("-m");
             processArguments.add("unittest");
@@ -120,6 +126,14 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         if (document != null) {
             schedule(document, false);
         }
+    }
+
+    private String buildBadDriverMessage(RunConfiguration runConfiguration, String moduleName) {
+        return String.format(
+                            "%s doesn't call the %s module." +
+                                    " Try a different run configuration.",
+                            runConfiguration.getName(),
+                            moduleName);
     }
 
     void stop() {

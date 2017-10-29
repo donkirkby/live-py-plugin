@@ -1758,7 +1758,7 @@ s = 'example_package'
 
         report = CodeTracer().trace_code(code,
                                          load_as='example_package.foo',
-                                         module=True,
+                                         is_module=True,
                                          driver=['unittest',
                                                  'example_package.foo'])
 
@@ -1776,7 +1776,7 @@ s = '__live_coding__'
 
         report = CodeTracer().trace_code(code,
                                          load_as='example_package.foo',
-                                         module=True,
+                                         is_module=True,
                                          driver=['example_package.foo'])
 
         self.assertReportEqual(expected_report, report)

@@ -8,12 +8,19 @@
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../plugin/PySrc">
-      <sourceFolder url="file://$MODULE_DIR$/../plugin/PySrc" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$">
+    <content url="file://$MODULE_DIR$/..">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../plugin/PySrc" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/.." type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/../.cache" />
+      <excludeFolder url="file://$MODULE_DIR$/../.tox" />
+      <excludeFolder url="file://$MODULE_DIR$/../docs" />
+      <excludeFolder url="file://$MODULE_DIR$/../emacs-live-py-mode" />
+      <excludeFolder url="file://$MODULE_DIR$/../feature" />
+      <excludeFolder url="file://$MODULE_DIR$/../plugin" />
+      <excludeFolder url="file://$MODULE_DIR$" />
+      <excludeFolder url="file://$MODULE_DIR$/../test" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

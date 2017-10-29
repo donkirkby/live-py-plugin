@@ -15,6 +15,7 @@ EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_driver.py')
 EXAMPLE_SOURCE_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_source.py')
+patch.multiple = patch.multiple  # Avoids PyCharm warnings.
 
 
 class CodeTracerTest(ReportTestCase):
@@ -701,13 +702,13 @@ def foo(n):
 foo(0)
 """
         expected_report = """\
-n = 0                                            | n = 1                                            | n = 2                                            |
-RuntimeError: live coding message limit exceeded | RuntimeError: live coding message limit exceeded | RuntimeError: live coding message limit exceeded |
+n = 0                                            | n = 1                                            |
+RuntimeError: live coding message limit exceeded | RuntimeError: live coding message limit exceeded |
 
 RuntimeError: live coding message limit exceeded
 """
         tracer = CodeTracer()
-        tracer.max_width = 20
+        tracer.max_width = 13
 
         # EXEC
         report = tracer.trace_code(code)
@@ -1845,6 +1846,7 @@ i = 1 + 1
     if __name__ == '__live_coding__': |
         y = foo(3)                    | y = 4
 """
+        stdin.read.return_value = ""
 
         main()
 
@@ -2158,8 +2160,9 @@ return 542
         report = self.trim_exception(report)
         self.assertReportEqual(expected_report, report)
 
-    def trim_exception(self, report):
-        report = re.sub(r"( |-)+\| *$", "", report, flags=re.MULTILINE)
+    @staticmethod
+    def trim_exception(report):
+        report = re.sub(r"([ -])+\| *$", "", report, flags=re.MULTILINE)
         report = re.sub(r"line \d+", "line 9999", report)
         report = report.replace("IOError", "FileNotFoundError")
         report = report.replace('path/example_driver.py', EXAMPLE_DRIVER_PATH)
@@ -2296,7 +2299,8 @@ SyntaxError: unexpected EOF while parsing
 
 
 class FileSwallowerTest(TestCase):
-    def test_mock(self):
+    @staticmethod
+    def test_mock():
         mock_file = Mock()
         swallower = FileSwallower(mock_file)
 

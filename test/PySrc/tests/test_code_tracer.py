@@ -9,7 +9,7 @@ from mock import call, DEFAULT, patch, Mock
 
 from code_tracer import CodeTracer, main, FileSwallower
 from mock_turtle import MockTurtle
-from report_builder_test import ReportTestCase
+from test_report_builder import ReportTestCase
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_driver.py')

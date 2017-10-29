@@ -3,7 +3,7 @@
   <component name="DevKit.ModuleBuildProperties" url="file://$MODULE_DIR$/resources/META-INF/plugin.xml" />
   <component name="FacetManager">
     <facet type="Python" name="Python">
-      <configuration sdkName="" />
+      <configuration sdkName="Python 3.6.2 virtualenv at live-py-plugin/.tox/py36" />
     </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -13,6 +13,8 @@
       <sourceFolder url="file://$MODULE_DIR$/../plugin/PySrc" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/.." type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../test/PySrc/tests" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../test/PySrc/tools" type="java-test-resource" />
       <excludeFolder url="file://$MODULE_DIR$/../.cache" />
       <excludeFolder url="file://$MODULE_DIR$/../.tox" />
       <excludeFolder url="file://$MODULE_DIR$/../docs" />
@@ -24,5 +26,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Python 3.6.2 virtualenv at live-py-plugin/.tox/py36 interpreter library" level="application" />
   </component>
 </module>

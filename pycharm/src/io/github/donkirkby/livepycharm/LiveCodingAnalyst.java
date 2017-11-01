@@ -1,6 +1,5 @@
 package io.github.donkirkby.livepycharm;
 
-import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -26,10 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 
 public class LiveCodingAnalyst extends DocumentAdapter {
@@ -39,7 +35,7 @@ public class LiveCodingAnalyst extends DocumentAdapter {
     private final Document displayDocument;
     private boolean isRunning;
     private boolean isBusy;
-    private ArrayList<String> processArguments;
+    private List<String> processArguments;
     private String workingDir;
 
     LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument, Disposable parent) {
@@ -59,10 +55,10 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             PythonRunConfiguration pythonConfiguration =
                     (PythonRunConfiguration) runConfiguration;
             workingDir = pythonConfiguration.getWorkingDirectory();
-            processArguments = Lists.newArrayList(
-                    pythonConfiguration.getSdkHome(),
-                    "-m",
-                    "code_tracer");
+            processArguments = new ArrayList<>();
+            processArguments.add(pythonConfiguration.getSdkHome());
+            processArguments.add("-m");
+            processArguments.add("code_tracer");
             String driverPath;
             driverPath = pythonConfiguration.getScriptName();
             String modulePath = mainFile.getCanonicalPath();
@@ -76,8 +72,9 @@ public class LiveCodingAnalyst extends DocumentAdapter {
                 processArguments.add("-"); // source code from stdin
                 processArguments.add(moduleName);
                 processArguments.add(driverPath);
+                // Split quoted arguments from script parameters.
                 List<String> driverParameters = CommandLineUtil.toCommandLine(
-                        Lists.newArrayList(
+                        Arrays.asList(
                                 "echo",
                                 pythonConfiguration.getScriptParameters()));
                 driverParameters.remove(0);
@@ -105,17 +102,17 @@ public class LiveCodingAnalyst extends DocumentAdapter {
                     new File(mainFile.getPath()),
                     workingDir);
             String badDriverMessage = buildBadDriverMessage(runConfiguration, moduleName);
-            processArguments = Lists.newArrayList(
+            processArguments = Arrays.asList(
                     options.get("SDK_HOME"),
                     "-m",
-                    "code_tracer");
-            processArguments.add("--bad_driver");
-            processArguments.add(badDriverMessage);
-            processArguments.add("-"); // source code from stdin
-            processArguments.add(moduleName);
-            processArguments.add("-m");
-            processArguments.add("unittest");
-            processArguments.add(target);
+                    "code_tracer",
+                    "--bad_driver",
+                    badDriverMessage,
+                    "-", // source code from stdin
+                    moduleName,
+                    "-m",
+                    "unittest",
+                    target);
         } else {
             return;
         }

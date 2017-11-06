@@ -366,10 +366,10 @@ class FooTest(TestCase):
         self.assertEqual(15, y)
 """
         expected_report = """\
----------------------- |
-unittest: (failures=1) |
----------------------- | | x = 10
-                         | return 510
+---------------- |
+SystemExit: True |
+---------------- | | x = 10
+                   | return 510
 
 
 
@@ -416,11 +416,11 @@ def get_foo(x):
 """
         expected_report = """\
 ------------------------------------------------ |
-Traceback (most recent call last):               |
-  File "path/doctest.py", line 9999, in <module> |
-    sys.exit(_test())                            |
 SystemExit: 1                                    |
 ------------------------------------------------ |
+
+
+
 x = 42
 
 
@@ -550,9 +550,9 @@ def foo(x):
     sys.exit('Bad stuff.')
 """
         expected_report = """\
-
-x = 42
-SystemExit: Bad stuff.
+---------------------- |
+SystemExit: Bad stuff. | x = 42
+---------------------- | SystemExit: Bad stuff.
 """
         stdin.read.return_value = source
 

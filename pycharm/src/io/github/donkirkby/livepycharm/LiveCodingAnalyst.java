@@ -62,7 +62,6 @@ public class LiveCodingAnalyst implements DocumentListener {
      * @return true if the analysis successfully started
      */
     boolean start(@Nullable Project project, @NotNull DataContext dataContext) {
-        log.warn("Starting.");
         if (project == null || project.isDisposed()) {
             return false;
         }
@@ -107,10 +106,14 @@ public class LiveCodingAnalyst implements DocumentListener {
                     "PYTHONPATH",
                     pythonPath.getAbsolutePath() + ":" + new File(driverPath).getParent());
             String modulePath = mainFile.getCanonicalPath();
+            boolean hasDriver = ! driverPath.equals(modulePath);
+            if ( ! hasDriver) {
+                paramsGroup.getParametersList().clearAll();
+            }
             int i = 0;
             paramsGroup.addParameterAt(i++, "-m");
             paramsGroup.addParameterAt(i++, "code_tracer");
-            if (!driverPath.equals(modulePath)) {
+            if (hasDriver) {
                 String moduleName = getModuleName(
                         new File(mainFile.getPath()),
                         workingDir);
@@ -205,7 +208,6 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     private CapturingProcessHandler startProcess(String sourceCode) throws ExecutionException, IOException {
-        log.warn("starting process.");
         final GeneralCommandLine commandLine = commandLineState.generateCommandLine(
                 new CommandLinePatcher[]{commandLinePatcher});
         final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);

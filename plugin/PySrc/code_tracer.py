@@ -918,25 +918,22 @@ class CodeTracer(object):
             if driver and not is_own_driver:
                 start_count = builder.message_count
                 with self.swallow_output():
-                    if not is_module:
-                        self.run_python_file(driver[0], driver)
-                        end_count = builder.count_all_messages()
-                    else:
-                        module_name = driver[0]
-                        try:
+                    try:
+                        if not is_module:
+                            self.run_python_file(driver[0], driver)
+                            end_count = builder.count_all_messages()
+                        else:
+                            module_name = driver[0]
                             self.run_python_module(module_name, driver)
                             end_count = builder.count_all_messages()
-                        except SystemExit as ex:
-                            end_count = builder.count_all_messages()
-                            if ex.code:
-                                if module_name not in ('unittest', 'pytest'):
-                                    raise
-                                self.return_code = ex.code
-                                result = (sys.stderr.last_line or
-                                          'FAIL        ')
-    
-                                result = module_name + ': ' + result
-                                self.report_driver_result(builder, [result])
+                    except SystemExit as ex:
+                        end_count = builder.count_all_messages()
+                        if ex.code:
+                            self.return_code = ex.code
+                            messages = traceback.format_exception_only(type(ex),
+                                                                       ex)
+                            message = messages[-1].strip()
+                            self.report_driver_result(builder, [message])
                 if end_count == start_count:
                     driver_name = os.path.basename(driver[0])
                     message = (bad_driver or "{} doesn't call the {} module." 

@@ -1,24 +1,32 @@
 package io.github.donkirkby.livepycharm;
 
-import com.google.gson.Gson;
-import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.run.PythonRunConfiguration;
-import org.jdom.Attribute;
-import org.jdom.Element;
+import com.jetbrains.python.run.CommandLinePatcher;
+import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,17 +34,16 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.*;
 
-public class LiveCodingAnalyst extends DocumentAdapter {
+public class LiveCodingAnalyst implements DocumentListener {
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
-    private static ExecutorService pool = Executors.newCachedThreadPool();
     private final VirtualFile mainFile;
     private final Document displayDocument;
     private boolean isRunning;
     private boolean isBusy;
-    private List<String> processArguments;
     private String workingDir;
+    private PythonCommandLineState commandLineState;
+    private CommandLinePatcher commandLinePatcher;
 
     LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument, Disposable parent) {
         this.mainFile = mainFile;
@@ -48,74 +55,72 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         }
     }
 
-    void start(RunConfiguration runConfiguration) {
-        // Python or Unittests
-        String factoryName = runConfiguration.getFactory().getName();
-        if (runConfiguration instanceof PythonRunConfiguration) {
-            PythonRunConfiguration pythonConfiguration =
-                    (PythonRunConfiguration) runConfiguration;
-            workingDir = pythonConfiguration.getWorkingDirectory();
-            processArguments = new ArrayList<>();
-            processArguments.add(pythonConfiguration.getSdkHome());
-            processArguments.add("-m");
-            processArguments.add("code_tracer");
-            String driverPath;
-            driverPath = pythonConfiguration.getScriptName();
+    /**
+     * Try to start a new analysis job.
+     * @param project the project for the current action
+     * @param dataContext the data context for the current action
+     * @return true if the analysis successfully started
+     */
+    boolean start(@Nullable Project project, @NotNull DataContext dataContext) {
+        log.warn("Starting.");
+        if (project == null || project.isDisposed()) {
+            return false;
+        }
+
+        RunnerAndConfigurationSettings configuration = RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
+        if (configuration == null) {
+            return false;
+        }
+        DefaultRunExecutor executor = new DefaultRunExecutor();
+        ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, configuration);
+        if (builder == null) {
+            return false;
+        }
+        ExecutionEnvironment environment = builder.activeTarget().dataContext(dataContext).build();
+        try {
+            RunProfileState state = environment.getState();
+            if (! (state instanceof PythonCommandLineState)) {
+                return false;
+            }
+            commandLineState = (PythonCommandLineState) state;
+        } catch (com.intellij.execution.ExecutionException e1) {
+            return false;
+        }
+        File plugins = new File(PathManager.getPluginsPath());
+        File livePyPath = new File(plugins, "livepy");
+        File pythonPath;
+        if (livePyPath.isDirectory()) {
+            pythonPath = new File(livePyPath, "classes");
+        } else {
+            pythonPath = new File(plugins, "livepy.jar");
+        }
+        commandLinePatcher = commandLine -> {
+            Map<String, String> environment1 = commandLine.getEnvironment();
+            ParamsGroup paramsGroup = commandLine.getParametersList().getParamsGroup(
+                    PythonCommandLineState.GROUP_SCRIPT);
+            if (paramsGroup == null) {
+                return;
+            }
+            workingDir = commandLine.getWorkDirectory().getAbsolutePath();
+            String driverPath = paramsGroup.getParametersList().get(0);
+            environment1.put(
+                    "PYTHONPATH",
+                    pythonPath.getAbsolutePath() + ":" + new File(driverPath).getParent());
             String modulePath = mainFile.getCanonicalPath();
+            int i = 0;
+            paramsGroup.addParameterAt(i++, "-m");
+            paramsGroup.addParameterAt(i++, "code_tracer");
             if (!driverPath.equals(modulePath)) {
                 String moduleName = getModuleName(
                         new File(mainFile.getPath()),
                         workingDir);
-                String badDriverMessage = buildBadDriverMessage(runConfiguration, moduleName);
-                processArguments.add("--bad_driver");
-                processArguments.add(badDriverMessage);
-                processArguments.add("-"); // source code from stdin
-                processArguments.add(moduleName);
-                processArguments.add(driverPath);
-                // Split quoted arguments from script parameters.
-                List<String> driverParameters = CommandLineUtil.toCommandLine(
-                        Arrays.asList(
-                                "echo",
-                                pythonConfiguration.getScriptParameters()));
-                driverParameters.remove(0);
-                processArguments.addAll(driverParameters);
+                String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
+                paramsGroup.addParameterAt(i++, "--bad_driver");
+                paramsGroup.addParameterAt(i++, badDriverMessage);
+                paramsGroup.addParameterAt(i++, "-"); // source code from stdin
+                paramsGroup.addParameterAt(i, moduleName);
             }
-        } else if ("Unittests".equals(factoryName)) {
-            Gson gson = new Gson();
-            Element element = new Element("dummy");
-            runConfiguration.writeExternal(element);
-            Map<String, String> options = new HashMap<>();
-            for (Element option : element.getChildren("option")) {
-                Attribute nameAttribute = option.getAttribute("name");
-                Attribute valueAttribute = option.getAttribute("value");
-                if (nameAttribute != null && valueAttribute != null) {
-                    options.put(
-                            nameAttribute.getValue(),
-                            valueAttribute.getValue());
-                }
-            }
-            // TODO: _new_targetType, _new_pattern, _new_additionalArguments
-            String target = gson.fromJson(options.get("_new_target"), String.class);
-
-            workingDir = options.get("WORKING_DIRECTORY");
-            String moduleName = getModuleName(
-                    new File(mainFile.getPath()),
-                    workingDir);
-            String badDriverMessage = buildBadDriverMessage(runConfiguration, moduleName);
-            processArguments = Arrays.asList(
-                    options.get("SDK_HOME"),
-                    "-m",
-                    "code_tracer",
-                    "--bad_driver",
-                    badDriverMessage,
-                    "-", // source code from stdin
-                    moduleName,
-                    "-m",
-                    "unittest",
-                    target);
-        } else {
-            return;
-        }
+        };
         isRunning = true;
         finish();
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
@@ -123,9 +128,12 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         if (document != null) {
             schedule(document, false);
         }
+        return true;
     }
 
-    private String buildBadDriverMessage(RunConfiguration runConfiguration, String moduleName) {
+    private String buildBadDriverMessage(
+            RunnerAndConfigurationSettings runConfiguration,
+            String moduleName) {
         return String.format(
                             "%s doesn't call the %s module." +
                                     " Try a different run configuration.",
@@ -152,16 +160,11 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             String sourceCode = document.getText();
             String display = null;
             try {
-                Process process = startProcess(sourceCode);
-                try {
-                    Future<String> reader = pool.submit(
-                            () -> readOutput(process));
-                    display = await(reader, indicator);
-                } catch (Exception ex) {
-                    process.destroy();
-                    throw ex;
-                }
-            } catch (InterruptedException | ExecutionException | IOException ex) {
+                CapturingProcessHandler processHandler = startProcess(sourceCode);
+                ProcessOutput processOutput =
+                        processHandler.runProcessWithProgressIndicator(indicator);
+                display = processOutput.getStdout();
+            } catch (ExecutionException | IOException ex) {
                 log.error("Report failed.", ex);
             }
             finish();
@@ -170,23 +173,6 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             }
             final String finalDisplay = display;
             return new Continuation(() -> displayResult(finalDisplay));
-        }
-
-        private <T> T await(Future<T> future, ProgressIndicator indicator)
-                throws ExecutionException, InterruptedException {
-            while (true) {
-                try {
-                    return future.get(50, TimeUnit.MILLISECONDS);
-                } catch (TimeoutException e) {
-                    try {
-                        indicator.checkCanceled();
-                    } catch (ProcessCanceledException ex) {
-                        final boolean mayInterrupt = true;
-                        future.cancel(mayInterrupt);
-                        throw ex;
-                    }
-                }
-            }
         }
 
         @Override
@@ -218,31 +204,22 @@ public class LiveCodingAnalyst extends DocumentAdapter {
         ApplicationManager.getApplication().runWriteAction(() -> displayDocument.setText(display));
     }
 
-    @NotNull
-    private Process startProcess(String sourceCode) throws IOException {
-        File plugins = new File(PathManager.getPluginsPath());
-        File livePyPath = new File(plugins, "livepy");
-        File pythonPath;
-        if (livePyPath.isDirectory()) {
-            pythonPath = new File(livePyPath, "classes");
-        } else {
-            pythonPath = new File(plugins, "livepy.jar");
+    private CapturingProcessHandler startProcess(String sourceCode) throws ExecutionException, IOException {
+        log.warn("starting process.");
+        final GeneralCommandLine commandLine = commandLineState.generateCommandLine(
+                new CommandLinePatcher[]{commandLinePatcher});
+        final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
+        try {
+            byte[] stdin = sourceCode.getBytes();
+            final OutputStream processInput = processHandler.getProcessInput();
+            assert processInput != null;
+            processInput.write(stdin);
+            processInput.close();
+            return processHandler;
+        } catch (IOException e) {
+            processHandler.destroyProcess();
+            throw e;
         }
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                processArguments)
-                .directory(new File(workingDir))
-                .redirectInput(ProcessBuilder.Redirect.PIPE)
-                .redirectOutput(ProcessBuilder.Redirect.PIPE)
-                .redirectErrorStream(true);
-        processBuilder.environment().put("PYTHONPATH", pythonPath.getAbsolutePath());
-        Process process = processBuilder.start();
-        OutputStream outputStream = process.getOutputStream();
-        outputStream.write(sourceCode.getBytes());
-        outputStream.close();
-        if (Thread.interrupted()) {
-            process.destroy();
-        }
-        return process;
     }
 
     private String getModuleName(
@@ -262,20 +239,5 @@ public class LiveCodingAnalyst extends DocumentAdapter {
             return moduleName.substring(0, moduleName.length() - 3);
         }
         return moduleName.toString();
-    }
-
-    @NotNull
-    private String readOutput(Process process) throws IOException, InterruptedException {
-        InputStream inputStream = process.getInputStream();
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(inputStream));
-        StringBuilder builder = new StringBuilder();
-        String line;
-        while (null != (line = reader.readLine())) {
-            builder.append(line);
-            builder.append("\n");
-        }
-        process.waitFor();
-        return builder.toString();
     }
 }

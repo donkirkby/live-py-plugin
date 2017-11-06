@@ -19,6 +19,10 @@ class ReportTestCase(unittest.TestCase):
 
 
 class ReportBuilderTest(ReportTestCase):
+    def setUp(self):
+        if not hasattr(self, 'assertRaisesRegex'):
+            self.assertRaisesRegex = self.assertRaisesRegexp
+
     def test_assign(self):
         # SETUP
         expected_value = 5
@@ -150,7 +154,7 @@ b = 20
         builder = ReportBuilder(message_limit=2)
         builder.assign('a', 10, 1)
         builder.assign('b', 20, 2)
-        with self.assertRaisesRegexp(RuntimeError, r'message limit exceeded'):
+        with self.assertRaisesRegex(RuntimeError, r'message limit exceeded'):
             builder.assign('c', 30, 3)
         report = builder.report()
 

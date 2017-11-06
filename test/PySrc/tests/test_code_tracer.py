@@ -1,5 +1,6 @@
 import sys
 from sys import version_info
+from tempfile import TemporaryFile
 from unittest import TestCase, skipIf
 
 from mock import patch, Mock
@@ -1783,13 +1784,38 @@ s = '__live_coding__'
 
 
 class FileSwallowerTest(TestCase):
-    @staticmethod
-    def test_mock():
-        mock_file = Mock()
-        swallower = FileSwallower(mock_file)
+    def test_temp_file(self):
+        expected_contents = 'before\nafter\n'
+        expected_last_line = 'line 2'
 
-        swallower.write()
-        swallower.flush()
+        with TemporaryFile('w+') as real_file:
+            real_file.write('before\n')
 
-        mock_file.write.assert_not_called()
-        mock_file.flush.assert_called_once()
+            swallower = FileSwallower(real_file)
+            swallower.write('line 1\n')
+            swallower.write('line 2\n')
+
+            real_file.write('after\n')
+            real_file.seek(0)
+            real_contents = real_file.read()
+        last_line = swallower.last_line
+
+        self.assertEqual(expected_contents, real_contents)
+        self.assertEqual(expected_last_line, last_line)
+
+    def test_buffer(self):
+        expected_contents = 'before\nafter\n'
+
+        with TemporaryFile('w+') as real_file:
+            real_file.write('before\n')
+
+            swallower = FileSwallower(real_file)
+            buffer = getattr(swallower, 'buffer', swallower)
+            buffer.write(b'line 1\n')
+            buffer.write(b'line 2\n')
+
+            real_file.write('after\n')
+            real_file.seek(0)
+            real_contents = real_file.read()
+
+        self.assertEqual(expected_contents, real_contents)

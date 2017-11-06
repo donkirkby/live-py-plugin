@@ -994,9 +994,13 @@ class CodeTracer(object):
 
 
 class FileSwallower(object):
-    def __init__(self, target):
+    def __init__(self, target, check_buffer=True):
         self.target = target
         self.last_line = None
+        if check_buffer:
+            buffer = getattr(target, 'buffer', None)
+            if buffer is not None:
+                self.buffer = FileSwallower(buffer, check_buffer=False)
 
     def write(self, *args, **kwargs):
         text = args and str(args[0]) or ''
@@ -1056,7 +1060,7 @@ def main():
     if args.source == '-':
         code = sys.stdin.read()
     else:
-        with open(args.source, 'rU') as source:
+        with open(args.source, 'r') as source:
             code = source.read()
     canvas = Canvas(args.width, args.height)
     tracer = CodeTracer(canvas)

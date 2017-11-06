@@ -1,8 +1,8 @@
 package io.github.donkirkby.livepycharm;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
 import org.jetbrains.annotations.NotNull;
@@ -109,9 +108,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         invalidateLayout();
     }
 
-    void startAnalysis(RunConfiguration configuration) {
-        myAnalyst.start(configuration);
-        triggerLayoutChange(SplitFileEditor.SplitEditorLayout.SPLIT);
+    void startAnalysis(@Nullable Project project, @NotNull DataContext dataContext) {
+        if (myAnalyst.start(project, dataContext)){
+            triggerLayoutChange(SplitFileEditor.SplitEditorLayout.SPLIT);
+        }
     }
 
     void stopAnalysis() {

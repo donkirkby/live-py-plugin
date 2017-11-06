@@ -1,7 +1,11 @@
 import unittest
 from canvas import Canvas
 
+
 class CanvasTest(unittest.TestCase):
+    def setUp(self):
+        if not hasattr(self, 'assertRaisesRegex'):
+            self.assertRaisesRegex = self.assertRaisesRegexp
 
     def test_create_line(self):
         # SETUP
@@ -46,7 +50,7 @@ create_rectangle
     def test_unknown_method(self):
         # EXEC
         canvas = Canvas()
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
                 AttributeError, 
                 "(Canvas instance|'Canvas' object) has no attribute 'create_wirple'"):
             canvas.create_wirple(1, 'floop')

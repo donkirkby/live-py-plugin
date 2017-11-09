@@ -114,7 +114,8 @@ class Tracer(NodeTransformer):
                                                                  ctx=Load())),
                                                Num(existing_node.lineno)])
 
-    def _get_attribute_names(self, attribute_node):
+    @staticmethod
+    def _get_attribute_names(attribute_node):
         names = []
         while isinstance(attribute_node, Attribute):
             names.insert(0, attribute_node.attr)
@@ -525,37 +526,23 @@ class Tracer(NodeTransformer):
             self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
 
+    # noinspection PyPep8Naming
     def visit_Lambda(self, node):
-        """ Instrument a lambda expression by displaying the parameter values.
-
-        We create calls to trace assignment to each argument, then wrap them
-        all in a tuple together with the original expression, and pull the
-        original expression out of the tuple.
-        """
-
         new_node = self.generic_visit(node)
 
         line_numbers = set()
         self._find_line_numbers(new_node, line_numbers)
 
-        # trace lambda argument values
-        calls = [getattr(self._trace_assignment(target, node.lineno),
-                         'value',
-                         None)
-                 for target in new_node.args.args
-                 if getattr(target, 'id', 'self') != 'self' or
-                 getattr(target, 'arg', 'self') != 'self']
-
-        args = [Num(n=min(line_numbers)),
-                Num(n=max(line_numbers))]
-        calls.insert(0, self._create_context_call('start_block', args).value)
-        calls.append(new_node.body)
-        new_node.body = Subscript(value=Tuple(elts=calls,
-                                              ctx=Load()),
-                                  slice=Index(value=Num(n=-1)),
-                                  ctx=Load())
+        new_args = [Num(n=min(line_numbers)),
+                    Num(n=max(line_numbers))]
+        new_args.extend(Name(id=old_arg.arg, ctx=Load())
+                        for old_arg in new_node.args.args)
+        new_args.append(new_node.body)
+        new_node.body = self._create_bare_context_call('report_lambda',
+                                                       new_args)
         return new_node
 
+    # noinspection PyPep8Naming
     def visit_Return(self, node):
         existing_node = self.generic_visit(node)
         value = existing_node.value
@@ -907,8 +894,8 @@ class CodeTracer(object):
             new_tree = Tracer().visit(tree)
             fix_missing_locations(new_tree)
             LineNumberCleaner().visit(new_tree)
-#             from ast import dump
-#             print(dump(new_tree, include_attributes=False))
+            # from ast import dump
+            # print(dump(new_tree, include_attributes=True))
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
             self.environment[CONTEXT_NAME] = builder

@@ -906,7 +906,7 @@ f = lambda n: n + 1
 x = f(10)
 """
         expected_report = """\
-n = 10
+(10 => 11)
 x = 11 """
         tracer = CodeTracer()
 

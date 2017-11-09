@@ -147,6 +147,19 @@ class ReportBuilder(object):
         if display is not None and not display.endswith('>'):
             self.add_message(display + ' ', line_number)
 
+    def report_lambda(self, first_line, last_line, *args):
+        """ Report lambda parameters and result, and return result.
+
+        :param first_line: where to display the message
+        :param last_line: range for the block markers
+        :param args: parameter values, followed by the result.
+        """
+        params = ', '.join(repr(arg) for arg in args[:-1])
+        result = args[-1]
+        self.start_block(first_line, last_line)
+        self.add_message('({} => {!r}) '.format(params, result), first_line)
+        return result
+
     def exception(self):
         etype, value, tb = sys.exc_info()
         messages = traceback.format_exception_only(etype, value)
@@ -217,7 +230,6 @@ class ReportBuilder(object):
     def count_all_messages(self):
         history_count = sum(frame.message_count for frame in self.history)
         return self.message_count + history_count
-
 
 
 class DeletionTarget(object):

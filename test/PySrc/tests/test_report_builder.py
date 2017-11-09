@@ -143,6 +143,51 @@ x = 5
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_lambda(self):
+        # SETUP
+        expected_report = '(23 => 24)'
+        min_line = max_line = 1
+
+        # EXEC
+        builder = ReportBuilder()
+        f = lambda x: builder.report_lambda(min_line, max_line, x, x+1)
+        y = f(23)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+        self.assertEqual(24, y)
+
+    def test_lambda_multiple_params(self):
+        # SETUP
+        expected_report = "('a', 'b' => 'ab')"
+        min_line = max_line = 1
+
+        # EXEC
+        builder = ReportBuilder()
+        f = lambda x, y: builder.report_lambda(min_line, max_line, x, y, x+y)
+        z = f('a', 'b')
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+        self.assertEqual('ab', z)
+
+    def test_lambda_multiple_calls(self):
+        # SETUP
+        expected_report = "('a', 'b' => 'ab') | (1, 2 => 3)"
+        min_line = max_line = 1
+
+        # EXEC
+        builder = ReportBuilder()
+        f = lambda x, y: builder.report_lambda(min_line, max_line, x, y, x+y)
+        f('a', 'b')
+        f(1, 2)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_message_limit(self):
         # SETUP
         expected_report = """\

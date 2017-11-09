@@ -167,6 +167,10 @@ public class LiveCodingAnalyst implements DocumentListener {
                 ProcessOutput processOutput =
                         processHandler.runProcessWithProgressIndicator(indicator);
                 display = processOutput.getStdout();
+                String stderr = processOutput.getStderr();
+                if (stderr.length() > 0) {
+                    log.error(stderr);
+                }
             } catch (ExecutionException | IOException ex) {
                 log.error("Report failed.", ex);
             }

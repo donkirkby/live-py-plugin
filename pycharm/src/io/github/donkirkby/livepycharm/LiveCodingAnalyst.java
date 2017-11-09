@@ -191,7 +191,16 @@ public class LiveCodingAnalyst implements DocumentListener {
     @Override
     public void documentChanged(DocumentEvent e) {
         if (isRunning) {
-            schedule(e.getDocument(), false);
+            FileDocumentManager documentManager =
+                    FileDocumentManager.getInstance();
+            Document[] unsavedDocuments = documentManager.getUnsavedDocuments();
+            Document eventDocument = e.getDocument();
+            for (Document unsavedDocument: unsavedDocuments) {
+                if (unsavedDocument != eventDocument) {
+                    documentManager.saveDocument(unsavedDocument);
+                }
+            }
+            schedule(eventDocument, false);
         }
     }
 

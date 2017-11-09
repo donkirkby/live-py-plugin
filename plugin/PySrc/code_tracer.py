@@ -533,10 +533,12 @@ class Tracer(NodeTransformer):
         line_numbers = set()
         self._find_line_numbers(new_node, line_numbers)
 
+        arg_names = (getattr(old_arg, 'id', getattr(old_arg, 'arg', None))
+                     for old_arg in new_node.args.args)
         new_args = [Num(n=min(line_numbers)),
                     Num(n=max(line_numbers))]
-        new_args.extend(Name(id=old_arg.arg, ctx=Load())
-                        for old_arg in new_node.args.args)
+        new_args.extend(Name(id=name, ctx=Load())
+                        for name in arg_names)
         new_args.append(new_node.body)
         new_node.body = self._create_bare_context_call('report_lambda',
                                                        new_args)

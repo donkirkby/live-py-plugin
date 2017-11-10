@@ -7,7 +7,7 @@
 .cache
 /.coverage
 /coverage.xml
-/pycharm/.idea/shelf
+/.idea/shelf
 /pycharm/out
-/pycharm/.idea/workspace.xml
+/.idea/workspace.xml
 /pycharm/livepy.jar

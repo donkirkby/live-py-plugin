@@ -19,12 +19,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Alarm;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.NotNull;
@@ -34,16 +33,19 @@ import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class LiveCodingAnalyst implements DocumentListener {
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
     private final VirtualFile mainFile;
     private final Document displayDocument;
     private boolean isRunning;
-    private boolean isBusy;
-    private String workingDir;
+    private static ExecutorService pool = Executors.newCachedThreadPool();
     private PythonCommandLineState commandLineState;
     private CommandLinePatcher commandLinePatcher;
+    private Alarm alarm = new Alarm();
+    private ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
 
     LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument, Disposable parent) {
         this.mainFile = mainFile;
@@ -100,7 +102,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             if (paramsGroup == null) {
                 return;
             }
-            workingDir = commandLine.getWorkDirectory().getAbsolutePath();
+            String workingDir = commandLine.getWorkDirectory().getAbsolutePath();
             String driverPath = paramsGroup.getParametersList().get(0);
             environment1.put(
                     "PYTHONPATH",
@@ -125,11 +127,10 @@ public class LiveCodingAnalyst implements DocumentListener {
             }
         };
         isRunning = true;
-        finish();
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
         Document document = documentManager.getDocument(mainFile);
         if (document != null) {
-            schedule(document, false);
+            schedule(document);
         }
         return true;
     }
@@ -148,46 +149,6 @@ public class LiveCodingAnalyst implements DocumentListener {
         isRunning = false;
     }
 
-    private class AnalysisTask extends ReadTask {
-        private Document document;
-
-        AnalysisTask(Document document) {
-            this.document = document;
-        }
-
-        @Nullable
-        @Override
-        public Continuation performInReadAction(
-                @NotNull ProgressIndicator indicator)
-                throws ProcessCanceledException {
-            String sourceCode = document.getText();
-            String display = null;
-            try {
-                CapturingProcessHandler processHandler = startProcess(sourceCode);
-                ProcessOutput processOutput =
-                        processHandler.runProcessWithProgressIndicator(indicator);
-                display = processOutput.getStdout();
-                String stderr = processOutput.getStderr();
-                if (stderr.length() > 0) {
-                    log.error(stderr);
-                }
-            } catch (ExecutionException | IOException ex) {
-                log.error("Report failed.", ex);
-            }
-            finish();
-            if (display == null) {
-                return null;
-            }
-            final String finalDisplay = display;
-            return new Continuation(() -> displayResult(finalDisplay));
-        }
-
-        @Override
-        public void onCanceled(@NotNull ProgressIndicator indicator) {
-            schedule(document, true);
-        }
-    }
-
     @Override
     public void documentChanged(DocumentEvent e) {
         if (isRunning) {
@@ -200,20 +161,43 @@ public class LiveCodingAnalyst implements DocumentListener {
                     documentManager.saveDocument(unsavedDocument);
                 }
             }
-            schedule(eventDocument, false);
+            schedule(eventDocument);
         }
     }
 
-    private synchronized void schedule(Document document, boolean isRestart) {
-        if (isBusy && ! isRestart) {
-            return;
+    private synchronized void analyse(Document document) {
+        progressIndicator.start();
+        try {
+            String sourceCode = document.getText();
+            String display = null;
+            try {
+                CapturingProcessHandler processHandler = startProcess(sourceCode);
+                ProcessOutput processOutput =
+                        processHandler.runProcessWithProgressIndicator(progressIndicator);
+                display = processOutput.getStdout();
+                String stderr = processOutput.getStderr();
+                if (stderr.length() > 0) {
+                    log.error(stderr);
+                }
+            } catch (ExecutionException | IOException ex) {
+                log.error("Report failed.", ex);
+            }
+            if (display == null || progressIndicator.isCanceled()) {
+                return;
+            }
+            final String finalDisplay = display;
+            ApplicationManager.getApplication().invokeLater(() -> displayResult(finalDisplay));
+        } finally {
+            progressIndicator.stop();
         }
-        isBusy = true;
-        ProgressIndicatorUtils.scheduleWithWriteActionPriority(new AnalysisTask(document));
     }
 
-    private synchronized void finish() {
-        isBusy = false;
+    private void schedule(Document document) {
+        if (progressIndicator.isRunning()) {
+            progressIndicator.cancel();
+        }
+        alarm.cancelAllRequests();
+        alarm.addRequest(() -> pool.submit(() -> analyse(document)), 300);
     }
 
     private void displayResult(String display) {

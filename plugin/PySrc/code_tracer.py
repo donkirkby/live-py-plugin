@@ -714,12 +714,10 @@ class CodeTracer(object):
         MockTurtle.monkey_patch(canvas)
         self.environment = {}
 
-    def run_python_module(self, modulename, args):
+    def run_python_module(self, modulename):
         """Run a python module, as though with ``python -m name args...``.
 
         `modulename` is the name of the module, possibly a dot-separated name.
-        `args` is the argument array to present as sys.argv, including the
-        first element naming the module being executed.
 
         This is based on code from coverage.py, by Ned Batchelder.
         https://bitbucket.org/ned/coveragepy
@@ -753,16 +751,12 @@ class CodeTracer(object):
 
         # Finally, hand the file off to run_python_file for execution.
         pathname = os.path.abspath(pathname)
-        args[0] = pathname
-        self.run_python_file(pathname, args, package=packagename)
+        self.run_python_file(pathname, package=packagename)
 
-    def run_python_file(self, filename, args, package=None):
+    def run_python_file(self, filename, package=None):
         """Run a python file as if it were the main program on the command line.
 
         `filename` is the path to the file to execute.
-        `args` is the argument array to present as sys.argv, including the
-        first element naming the file being executed. `package` is the name of
-        the enclosing package, if any.
         """
         # Create a module to serve as __main__
         old_main_mod = sys.modules['__main__']
@@ -772,10 +766,6 @@ class CodeTracer(object):
         if package:
             main_mod.__package__ = package
 
-        # Set sys.argv properly.
-        old_argv = sys.argv
-        sys.argv = args
-
         try:
             code = self.make_code_from_py(filename)
 
@@ -784,9 +774,6 @@ class CodeTracer(object):
         finally:
             # Restore the old __main__
             sys.modules['__main__'] = old_main_mod
-
-            # Restore the old argv and path
-            sys.argv = old_argv
 
     def make_code_from_py(self, filename):
         """Get source from `filename` and make a code object of it."""
@@ -867,7 +854,7 @@ class CodeTracer(object):
 
     def trace_code(self,
                    source,
-                   load_as=None,
+                   load_as=SCOPE_NAME,
                    is_module=False,
                    dump=False,
                    driver=None,
@@ -900,35 +887,22 @@ class CodeTracer(object):
             # print(dump(new_tree, include_attributes=True))
             code = compile(new_tree, PSEUDO_FILENAME, 'exec')
 
-            self.environment[CONTEXT_NAME] = builder
-            is_own_driver = is_module and driver and driver[0] == load_as
-            seed(0)
-            self.run_instrumented_module(code, load_as, filename, is_own_driver)
-            if driver and not is_own_driver:
-                start_count = builder.message_count
-                with self.swallow_output():
-                    try:
-                        if not is_module:
-                            self.run_python_file(driver[0], driver)
-                            end_count = builder.count_all_messages()
-                        else:
-                            module_name = driver[0]
-                            self.run_python_module(module_name, driver)
-                            end_count = builder.count_all_messages()
-                    except SystemExit as ex:
-                        end_count = builder.count_all_messages()
-                        if ex.code:
-                            self.return_code = ex.code
-                            messages = traceback.format_exception_only(type(ex),
-                                                                       ex)
-                            message = messages[-1].strip()
-                            self.report_driver_result(builder, [message])
-                if end_count == start_count:
-                    driver_name = os.path.basename(driver[0])
-                    message = (bad_driver or "{} doesn't call the {} module." 
-                               " Try a different driver.".format(driver_name,
-                                                                 load_as))
-                    self.report_driver_result(builder, [message])
+            # Set sys.argv properly.
+            old_argv = sys.argv
+            sys.argv = driver or [filename or load_as]
+
+            try:
+                self.run_code(code,
+                              builder,
+                              load_as,
+                              is_module,
+                              driver,
+                              filename,
+                              bad_driver)
+            finally:
+                # Restore the old argv and path
+                sys.argv = old_argv
+
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
@@ -978,6 +952,57 @@ class CodeTracer(object):
 
         return report
 
+    def run_code(self,
+                 code,
+                 builder,
+                 load_as,
+                 is_module,
+                 driver,
+                 filename,
+                 bad_driver):
+        """ Run the traced module, plus its driver.
+
+        :param code: the compiled code for the traced module
+        :param builder: the report builder
+        :param str load_as: the module name to load the source code as
+        :param bool is_module: True if the driver is a module name instead of a
+        file name
+        :param list driver: the driver script's file name or module name and args
+        :param str filename: the file name of the source code
+        :param str bad_driver: a message to display if the driver doesn't call
+        the module
+        """
+        self.environment[CONTEXT_NAME] = builder
+        is_own_driver = ((is_module and driver and driver[0] == load_as) or
+                         load_as == SCOPE_NAME)
+        seed(0)
+        self.run_instrumented_module(code, load_as, filename, is_own_driver)
+        if driver and not is_own_driver:
+            start_count = builder.message_count
+            with self.swallow_output():
+                try:
+                    if not is_module:
+                        self.run_python_file(driver[0])
+                        end_count = builder.count_all_messages()
+                    else:
+                        module_name = driver[0]
+                        self.run_python_module(module_name)
+                        end_count = builder.count_all_messages()
+                except SystemExit as ex:
+                    end_count = builder.count_all_messages()
+                    if ex.code:
+                        self.return_code = ex.code
+                        messages = traceback.format_exception_only(type(ex),
+                                                                   ex)
+                        message = messages[-1].strip()
+                        self.report_driver_result(builder, [message])
+            if end_count == start_count:
+                driver_name = os.path.basename(driver[0])
+                message = (bad_driver or "{} doesn't call the {} module."
+                                         " Try a different driver.".format(driver_name,
+                                                                           load_as))
+                self.report_driver_result(builder, [message])
+
 
 class FileSwallower(object):
     def __init__(self, target, check_buffer=True):
@@ -999,7 +1024,9 @@ class FileSwallower(object):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Trace Python code.')
+    parser = argparse.ArgumentParser(
+        description='Trace Python code.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-c',
                         '--canvas',
                         action='store_true',
@@ -1029,11 +1056,12 @@ def main():
                         action='store_true',
                         help='driver is an importable module, not a script')
     parser.add_argument('source',
-                        nargs='?',
+                        nargs=argparse.OPTIONAL,
                         default='-',
                         help='source file to trace, or - for stdin')
     parser.add_argument('load_as',
-                        nargs='?',
+                        nargs=argparse.OPTIONAL,
+                        default=SCOPE_NAME,
                         help='load traced code as a module with this name')
     parser.add_argument('driver',
                         nargs=argparse.REMAINDER,

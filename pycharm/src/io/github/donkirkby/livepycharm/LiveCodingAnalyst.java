@@ -109,23 +109,23 @@ public class LiveCodingAnalyst implements DocumentListener {
                     "PYTHONPATH",
                     pythonPath.getAbsolutePath() + ":" + new File(driverPath).getParent());
             String modulePath = mainFile.getCanonicalPath();
-            boolean hasDriver = ! driverPath.equals(modulePath);
-            if ( ! hasDriver) {
-                paramsGroup.getParametersList().clearAll();
+            if (modulePath == null) {
+                modulePath = mainFile.getPath();
             }
+            boolean hasDriver = ! driverPath.equals(modulePath);
             int i = 0;
             paramsGroup.addParameterAt(i++, "-m");
             paramsGroup.addParameterAt(i++, "code_tracer");
-            if (hasDriver) {
-                String moduleName = getModuleName(
-                        new File(mainFile.getPath()),
-                        workingDir);
-                String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
-                paramsGroup.addParameterAt(i++, "--bad_driver");
-                paramsGroup.addParameterAt(i++, badDriverMessage);
-                paramsGroup.addParameterAt(i++, "-"); // source code from stdin
-                paramsGroup.addParameterAt(i, moduleName);
-            }
+            String moduleName = hasDriver
+                    ? getModuleName(new File(mainFile.getPath()), workingDir)
+                    : "__live_coding__";
+            paramsGroup.addParameterAt(i++, "--filename");
+            paramsGroup.addParameterAt(i++, modulePath);
+            String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
+            paramsGroup.addParameterAt(i++, "--bad_driver");
+            paramsGroup.addParameterAt(i++, badDriverMessage);
+            paramsGroup.addParameterAt(i++, "-"); // source code from stdin
+            paramsGroup.addParameterAt(i, moduleName);
         };
         isRunning = true;
         FileDocumentManager documentManager = FileDocumentManager.getInstance();

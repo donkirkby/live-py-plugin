@@ -127,6 +127,28 @@ return ['99']
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '-',
+        '__live_coding__',
+        EXAMPLE_SOURCE_PATH,
+        '99'])
+    def test_args_no_driver(self, stdin, stdout):
+        source = """\
+import sys
+x = sys.argv[1:]
+"""
+        expected_report = """\
+
+x = ['99']
+"""
+        stdin.read.return_value = source
+
+        main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
         'example_source',
         '-m',
         'example_driver',
@@ -404,8 +426,6 @@ AssertionError: 15 != 510
 
 
 
-
-
 def get_foo(x):
     ''' Example for doctest.
     
@@ -418,8 +438,6 @@ def get_foo(x):
 ------------------------------------------------ |
 SystemExit: 1                                    |
 ------------------------------------------------ |
-
-
 
 x = 42
 

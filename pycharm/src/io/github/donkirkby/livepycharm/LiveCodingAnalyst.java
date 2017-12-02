@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -169,23 +170,26 @@ public class LiveCodingAnalyst implements DocumentListener {
         progressIndicator.start();
         try {
             String sourceCode = document.getText();
-            String display = null;
-            try {
-                CapturingProcessHandler processHandler = startProcess(sourceCode);
-                ProcessOutput processOutput =
-                        processHandler.runProcessWithProgressIndicator(progressIndicator);
-                display = processOutput.getStdout();
-                String stderr = processOutput.getStderr();
-                if (stderr.length() > 0) {
-                    log.error(stderr);
+            final String finalDisplay = ApplicationManager.getApplication().runReadAction(
+                    (Computable<String>) () -> {
+                String display = null;
+                try {
+                    CapturingProcessHandler processHandler = startProcess(sourceCode);
+                    ProcessOutput processOutput =
+                            processHandler.runProcessWithProgressIndicator(progressIndicator);
+                    display = processOutput.getStdout();
+                    String stderr = processOutput.getStderr();
+                    if (stderr.length() > 0) {
+                        log.error(stderr);
+                    }
+                } catch (Exception ex) {
+                    log.error("Report failed.", ex);
                 }
-            } catch (ExecutionException | IOException ex) {
-                log.error("Report failed.", ex);
-            }
-            if (display == null || progressIndicator.isCanceled()) {
+                return display;
+            });
+            if (finalDisplay == null || progressIndicator.isCanceled()) {
                 return;
             }
-            final String finalDisplay = display;
             ApplicationManager.getApplication().invokeLater(() -> displayResult(finalDisplay));
         } finally {
             progressIndicator.stop();

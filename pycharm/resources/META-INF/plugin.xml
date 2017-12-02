@@ -28,10 +28,14 @@
     </extensions>
 
     <actions>
-        <!-- Add your actions here -->
         <action id="livepy.Start" class="io.github.donkirkby.livepycharm.StartAction" text="Start Live Coding"
                 description="Run Python code as you type it, and show variable values."
                 icon="LivePythonIcons.MEDIA_PLAY">
+            <add-to-group group-id="RunnerActions" anchor="last"/>
+        </action>
+        <action id="livepy.Turtle" class="io.github.donkirkby.livepycharm.TurtleAction" text="Start Live Turtle"
+                description="Run Python code as you type it, and show turtle graphics."
+                icon="LivePythonIcons.TURTLE">
             <add-to-group group-id="RunnerActions" anchor="last"/>
         </action>
         <action id="livepy.Stop" class="io.github.donkirkby.livepycharm.StopAction" text="Stop Live Coding"

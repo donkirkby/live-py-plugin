@@ -36,11 +36,14 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     @NotNull
     private final JComponent myComponent;
     @NotNull
-    private SplitEditorLayout mySplitEditorLayout = SplitEditorLayout.FIRST;
+    private final JPanel turtleCanvas;
+    @NotNull
+    private SplitEditorLayout mySplitEditorLayout = SplitEditorLayout.SINGLE;
     private LiveCodingAnalyst myAnalyst;
 
     @NotNull
     private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
+    private JPanel displayCards;
 
     SplitFileEditor(@NotNull FileEditor mainEditor,
                     @NotNull FileEditor secondEditor,
@@ -49,6 +52,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         myMainEditor = mainEditor;
         mySecondEditor = secondEditor;
         myAnalyst = new LiveCodingAnalyst(file, displayDocument, this);
+        turtleCanvas = new TurtleCanvas();
 
         myComponent = createComponent();
 
@@ -57,6 +61,13 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         }
         if (mySecondEditor instanceof TextEditor) {
             mySecondEditor.putUserData(PARENT_SPLIT_KEY, this);
+        }
+    }
+
+    private class TurtleCanvas extends JPanel {
+        @Override
+        public void paint(Graphics graphics) {
+            graphics.drawArc(50, 50, 50, 50, 0, 360);
         }
     }
 
@@ -90,7 +101,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         final JBSplitter splitter = new JBSplitter(false, 0.5f, 0.15f, 0.85f);
         splitter.setSplitterProportionKey(MY_PROPORTION_KEY);
         splitter.setFirstComponent(myMainEditor.getComponent());
-        splitter.setSecondComponent(mySecondEditor.getComponent());
+        displayCards = new JPanel(new CardLayout());
+        displayCards.add(mySecondEditor.getComponent(), SplitEditorLayout.DISPLAY.toString());
+        displayCards.add(turtleCanvas, SplitEditorLayout.TURTLE.toString());
+        splitter.setSecondComponent(displayCards);
 
         final JPanel result = new JPanel(new BorderLayout());
         result.add(splitter, BorderLayout.CENTER);
@@ -110,13 +124,19 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
     void startAnalysis(@Nullable Project project, @NotNull DataContext dataContext) {
         if (myAnalyst.start(project, dataContext)){
-            triggerLayoutChange(SplitFileEditor.SplitEditorLayout.SPLIT);
+            triggerLayoutChange(SplitEditorLayout.DISPLAY);
+        }
+    }
+
+    void startTurtle(@Nullable Project project, @NotNull DataContext dataContext) {
+        if (myAnalyst.start(project, dataContext)){
+            triggerLayoutChange(SplitEditorLayout.TURTLE);
         }
     }
 
     void stopAnalysis() {
         myAnalyst.stop();
-        triggerLayoutChange(SplitFileEditor.SplitEditorLayout.FIRST);
+        triggerLayoutChange(SplitFileEditor.SplitEditorLayout.SINGLE);
     }
 
     private void invalidateLayout() {
@@ -125,8 +145,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     }
 
     private void adjustEditorsVisibility() {
-        myMainEditor.getComponent().setVisible(mySplitEditorLayout.showFirst);
-        mySecondEditor.getComponent().setVisible(mySplitEditorLayout.showSecond);
+        myMainEditor.getComponent().setVisible(true);
+        displayCards.setVisible(mySplitEditorLayout.showCards);
+        CardLayout cardLayout = (CardLayout) displayCards.getLayout();
+        cardLayout.show(displayCards, mySplitEditorLayout.toString());
     }
 
     @NotNull
@@ -160,7 +182,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             if (compositeState.getSplitLayout() != null) {
                 // We always want the editor to open without live display.
                 // mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
-                mySplitEditorLayout = SplitEditorLayout.FIRST;
+                mySplitEditorLayout = SplitEditorLayout.SINGLE;
                 invalidateLayout();
             }
         }
@@ -339,16 +361,16 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     }
 
     public enum SplitEditorLayout {
-        FIRST(true, false, "X"),
-        SPLIT(true, true, "Z");
+        SINGLE(false, "Single"),
+        DISPLAY(true, "Display"),
+        TURTLE(true, "Turtle");
 
-        public final boolean showFirst;
-        public final boolean showSecond;
+        public final boolean showCards;
         public final String presentationName;
 
-        SplitEditorLayout(boolean showFirst, boolean showSecond, String presentationName) {
-            this.showFirst = showFirst;
-            this.showSecond = showSecond;
+        SplitEditorLayout(boolean showCards,
+                          String presentationName) {
+            this.showCards = showCards;
             this.presentationName = presentationName;
         }
 

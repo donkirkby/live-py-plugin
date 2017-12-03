@@ -1,4 +1,4 @@
-package live_py;
+package io.github.donkirkby.livecanvas;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -6,16 +6,34 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Device;
-import org.eclipse.swt.graphics.Font;
-
 public class CanvasCommand {
 	private String name;
 	private ArrayList<Integer> coordinates = 
 			new ArrayList<Integer>();
 	private	Hashtable<String, String> options = 
 			new Hashtable<String, String>();
+	
+	public static class FontOptions {
+		private String name;
+		private int size;
+		private String[] styleNames;
+		
+		public FontOptions(String name, int size, String[] styleNames) {
+			this.name = name;
+			this.size = size;
+			this.styleNames = styleNames;
+		}
+		
+		public String getName() {
+			return name;
+		}
+		public int getSize() {
+			return size;
+		}
+		public String[] getStyleNames() {
+			return styleNames;
+		}
+	}
 
 	public String getName() {
 		return name;
@@ -48,7 +66,7 @@ public class CanvasCommand {
 		}
 		return copy;
 	}
-	public Font getFontOption(Device device, String name) {
+	public FontOptions getFontOptions(String name) {
 		String value = options.get(name);
 		if (value == null) {
 			return null;
@@ -61,15 +79,6 @@ public class CanvasCommand {
 		String fontName = matcher.group(1);
 		int size = Integer.parseInt(matcher.group(2));
 		String[] styleNames = matcher.group(3).split(" ");
-		int style = SWT.NORMAL;
-		for (String styleName : styleNames) {
-			if (styleName.equals("bold")) {
-				style += SWT.BOLD;
-			}
-			else if (styleName.equals("italic")) {
-				style += SWT.ITALIC;
-			}
-		}
-		return new Font(device, fontName, size, style);
+		return new FontOptions(fontName, size, styleNames);
 	}
 }

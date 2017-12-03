@@ -1,8 +1,9 @@
-package live_py;
+package io.github.donkirkby.livecanvas;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 
 public class CanvasReader {
 	private boolean DEBUG = false;
@@ -98,5 +99,20 @@ public class CanvasReader {
 		} catch (IOException ex) {
 			throw new RuntimeException(ex);
 		}
+	}
+
+	public ArrayList<CanvasCommand> readCommands() {
+		ArrayList<CanvasCommand> newCommands = new ArrayList<CanvasCommand>();
+		CanvasCommand command;
+		boolean isDone;
+		do {
+		    command = read();
+		
+		    isDone = command == null || command.getName().equals("end_canvas");
+		    if ( ! isDone) {
+		        newCommands.add(command);
+		    }
+		} while ( ! isDone);
+		return newCommands;
 	}
 }

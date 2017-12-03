@@ -27,6 +27,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
+import io.github.donkirkby.livecanvas.CanvasCommand;
+import io.github.donkirkby.livecanvas.CanvasReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +40,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class LiveCodingAnalyst implements DocumentListener {
+    public interface CanvasPainter {
+        void setCommands(List<CanvasCommand> commands);
+    }
+
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
     private final VirtualFile mainFile;
     private final Document displayDocument;
@@ -47,10 +53,15 @@ public class LiveCodingAnalyst implements DocumentListener {
     private CommandLinePatcher commandLinePatcher;
     private Alarm alarm = new Alarm();
     private ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
+    private CanvasPainter canvasPainter;
 
-    LiveCodingAnalyst(VirtualFile mainFile, Document displayDocument, Disposable parent) {
+    LiveCodingAnalyst(VirtualFile mainFile,
+                      Document displayDocument,
+                      Disposable parent,
+                      CanvasPainter painter) {
         this.mainFile = mainFile;
         this.displayDocument = displayDocument;
+        this.canvasPainter = painter;
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
         Document document = documentManager.getDocument(mainFile);
         if (document != null) {
@@ -124,6 +135,18 @@ public class LiveCodingAnalyst implements DocumentListener {
             String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
             paramsGroup.addParameterAt(i++, "--bad_driver");
             paramsGroup.addParameterAt(i++, badDriverMessage);
+            paramsGroup.addParameterAt(i++, "--canvas");
+            paramsGroup.addParameterAt(i++, "--width");
+            paramsGroup.addParameterAt(i++, Integer.toString(100));
+            paramsGroup.addParameterAt(i++, "--height");
+            paramsGroup.addParameterAt(i++, Integer.toString(200));
+//            if (bounds != null) {
+//                argumentList.add("-c");
+//                argumentList.add("-x");
+//                argumentList.add(Integer.toString(bounds.width));
+//                argumentList.add("-y");
+//                argumentList.add(Integer.toString(bounds.height));
+//            }
             paramsGroup.addParameterAt(i++, "-"); // source code from stdin
             paramsGroup.addParameterAt(i, moduleName);
         };
@@ -205,7 +228,31 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     private void displayResult(String display) {
-        ApplicationManager.getApplication().runWriteAction(() -> displayDocument.setText(display));
+        String canvasStart = String.format("start_canvas%n");
+        if (display.startsWith(canvasStart)) {
+            BufferedReader reader = new BufferedReader(new StringReader(display));
+            try {
+                reader.readLine();  // Skip first line.
+                CanvasReader canvasReader = new CanvasReader(reader);
+                canvasPainter.setCommands(canvasReader.readCommands());
+
+                StringWriter writer = new StringWriter();
+                PrintWriter printer = new PrintWriter(writer);
+                while (true) {
+                    String line = reader.readLine();
+                    if (line == null) {
+                        break;
+                    }
+                    printer.println(line);
+                }
+                display = writer.toString();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        final String finalDisplay = display;
+        ApplicationManager.getApplication().runWriteAction(
+                () -> displayDocument.setText(finalDisplay));
     }
 
     private CapturingProcessHandler startProcess(String sourceCode) throws ExecutionException, IOException {

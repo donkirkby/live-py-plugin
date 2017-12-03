@@ -44,6 +44,7 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Device;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Point;
@@ -72,6 +73,10 @@ import org.python.pydev.shared_core.bundle.BundleUtils;
 import org.python.pydev.shared_core.io.FileUtils;
 import org.python.pydev.shared_core.structure.Tuple;
 import org.python.pydev.shared_ui.editor.BaseEditor;
+
+import io.github.donkirkby.livecanvas.CanvasCommand;
+import io.github.donkirkby.livecanvas.CanvasCommand.FontOptions;
+import io.github.donkirkby.livecanvas.CanvasReader;
 
 
 /**
@@ -635,7 +640,7 @@ public class LiveCodingAnalyst {
                 }
                 else {
                     if (line.equals("start_canvas")) {
-                        loadCanvasCommands(reader);
+                    	canvasCommands = new CanvasReader(reader).readCommands();
                     }
                     else {
                         canvasCommands = new ArrayList<CanvasCommand>();
@@ -652,24 +657,8 @@ public class LiveCodingAnalyst {
         }
         return writer.toString();
     }
-    
-    private void loadCanvasCommands(BufferedReader reader) {
-        ArrayList<CanvasCommand> newCommands = new ArrayList<CanvasCommand>();
-        CanvasReader canvasReader = new CanvasReader(reader);
-        CanvasCommand command;
-        boolean isDone;
-        do {
-            command = canvasReader.read();
 
-            isDone = command == null || command.getName().equals("end_canvas");
-            if ( ! isDone) {
-                newCommands.add(command);
-            }
-        } while ( ! isDone);
-        canvasCommands = newCommands;
-    }
-
-    private void checkScriptPath() {
+	private void checkScriptPath() {
         if (scriptPath != null)
         {
             return;
@@ -778,7 +767,7 @@ public class LiveCodingAnalyst {
             if (method.equals("bgcolor")) {
                 gc.fillRectangle(0, 0, bounds.width, bounds.height);
 			}
-            if (method.equals("create_line")) {
+            else if (method.equals("create_line")) {
                 gc.drawLine(
                         command.getCoordinate(0),
                         command.getCoordinate(1),
@@ -803,7 +792,7 @@ public class LiveCodingAnalyst {
             }
             else if (method.equals("create_text")) {
                 Font oldFont = gc.getFont();
-                gc.setFont(command.getFontOption(gc.getDevice(), "font"));
+                gc.setFont(getFontOption(gc.getDevice(), command, "font"));
                 int textFlags = 
                         SWT.DRAW_TRANSPARENT + 
                         SWT.DRAW_DELIMITER + 
@@ -852,6 +841,21 @@ public class LiveCodingAnalyst {
         disposeColors();
     }
 
+    private Font getFontOption(Device device, CanvasCommand command, String name) {
+    	FontOptions fontOptions = command.getFontOptions(name);
+		int style = SWT.NORMAL;
+		for (String styleName : fontOptions.getStyleNames()) {
+			if (styleName.equals("bold")) {
+				style += SWT.BOLD;
+			}
+			else if (styleName.equals("italic")) {
+				style += SWT.ITALIC;
+			}
+		}
+		return new Font(device, fontOptions.getName(), fontOptions.getSize(), style);
+
+    }
+    
     private void disposeColors() {
         for (Color color : colorMap.values()) {
             color.dispose();

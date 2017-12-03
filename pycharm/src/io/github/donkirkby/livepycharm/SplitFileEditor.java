@@ -14,6 +14,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
+import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
@@ -51,8 +53,12 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     Document displayDocument) {
         myMainEditor = mainEditor;
         mySecondEditor = secondEditor;
-        myAnalyst = new LiveCodingAnalyst(file, displayDocument, this);
         turtleCanvas = new TurtleCanvas();
+        myAnalyst = new LiveCodingAnalyst(
+                file,
+                displayDocument,
+                this,
+                (LiveCodingAnalyst.CanvasPainter) turtleCanvas);
 
         myComponent = createComponent();
 
@@ -64,10 +70,39 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         }
     }
 
-    private class TurtleCanvas extends JPanel {
+    private class TurtleCanvas
+            extends JPanel
+            implements LiveCodingAnalyst.CanvasPainter {
+        private List<CanvasCommand> canvasCommands;
+
         @Override
-        public void paint(Graphics graphics) {
-            graphics.drawArc(50, 50, 50, 50, 0, 360);
+        public void setCommands(List<CanvasCommand> commands) {
+            this.canvasCommands = commands;
+            repaint();
+        }
+
+        @Override
+        public void paint(Graphics graphics)
+        {
+            Rectangle clipBounds = graphics.getClipBounds();
+            graphics.clearRect(
+                    clipBounds.x,
+                    clipBounds.y,
+                    clipBounds.width,
+                    clipBounds.height);
+            if (canvasCommands == null) {
+                return;
+            }
+            for (CanvasCommand command : canvasCommands) {
+                String method = command.getName();
+                if (method.equals("create_line")) {
+                    graphics.drawLine(
+                            command.getCoordinate(0),
+                            command.getCoordinate(1),
+                            command.getCoordinate(2),
+                            command.getCoordinate(3));
+                }
+            }
         }
     }
 

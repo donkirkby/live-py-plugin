@@ -3,11 +3,12 @@ package live_py;
 import java.io.BufferedReader;
 import java.io.StringReader;
 
-import org.eclipse.swt.graphics.Device;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.junit.Assert;
 import org.junit.Test;
+
+import io.github.donkirkby.livecanvas.CanvasCommand;
+import io.github.donkirkby.livecanvas.CanvasCommand.FontOptions;
+import io.github.donkirkby.livecanvas.CanvasReader;
 
 public class CanvasReaderTest {
 
@@ -58,18 +59,14 @@ public class CanvasReaderTest {
 		// SETUP
 		String input = "create_line\n    font=('Arial', 8, 'normal')\n";
 		BufferedReader reader = new BufferedReader(new StringReader(input));
-		Device device = null; // null is OK for test.
 		
 		// EXEC
 		CanvasReader canvasReader = new CanvasReader(reader);
 		CanvasCommand command = canvasReader.read();
-		Font font = command.getFontOption(device, "font");
+		FontOptions font = command.getFontOptions("font");
 		
 		// VERIFY
 		Assert.assertNotNull("font should be valid", font);
-		FontData[] entries = font.getFontData();
-		Assert.assertEquals("number of font entries", 1, entries.length);
-		FontData fontData = entries[0];
-		Assert.assertEquals("font name", "Arial", fontData.getName());
+		Assert.assertEquals("font name", "Arial", font.getName());
 	}
 }

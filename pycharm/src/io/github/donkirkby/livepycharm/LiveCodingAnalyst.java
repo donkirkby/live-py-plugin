@@ -32,16 +32,20 @@ import io.github.donkirkby.livecanvas.CanvasReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class LiveCodingAnalyst implements DocumentListener {
     public interface CanvasPainter {
         void setCommands(List<CanvasCommand> commands);
+
+        Rectangle getBounds();
     }
 
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
@@ -67,6 +71,10 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (document != null) {
             document.addDocumentListener(this, parent);
         }
+    }
+
+    Document getDisplayDocument() {
+        return displayDocument;
     }
 
     /**
@@ -125,6 +133,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             }
             boolean hasDriver = ! driverPath.equals(modulePath);
             int i = 0;
+            Rectangle bounds = canvasPainter.getBounds();
             paramsGroup.addParameterAt(i++, "-m");
             paramsGroup.addParameterAt(i++, "code_tracer");
             String moduleName = hasDriver
@@ -137,16 +146,9 @@ public class LiveCodingAnalyst implements DocumentListener {
             paramsGroup.addParameterAt(i++, badDriverMessage);
             paramsGroup.addParameterAt(i++, "--canvas");
             paramsGroup.addParameterAt(i++, "--width");
-            paramsGroup.addParameterAt(i++, Integer.toString(100));
+            paramsGroup.addParameterAt(i++, Integer.toString(bounds.width));
             paramsGroup.addParameterAt(i++, "--height");
-            paramsGroup.addParameterAt(i++, Integer.toString(200));
-//            if (bounds != null) {
-//                argumentList.add("-c");
-//                argumentList.add("-x");
-//                argumentList.add(Integer.toString(bounds.width));
-//                argumentList.add("-y");
-//                argumentList.add(Integer.toString(bounds.height));
-//            }
+            paramsGroup.addParameterAt(i++, Integer.toString(bounds.height));
             paramsGroup.addParameterAt(i++, "-"); // source code from stdin
             paramsGroup.addParameterAt(i, moduleName);
         };
@@ -229,7 +231,10 @@ public class LiveCodingAnalyst implements DocumentListener {
 
     private void displayResult(String display) {
         String canvasStart = String.format("start_canvas%n");
-        if (display.startsWith(canvasStart)) {
+        if ( ! display.startsWith(canvasStart)) {
+            canvasPainter.setCommands(null);
+        }
+        else {
             BufferedReader reader = new BufferedReader(new StringReader(display));
             try {
                 reader.readLine();  // Skip first line.

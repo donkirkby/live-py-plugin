@@ -5,6 +5,9 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -20,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -81,16 +85,44 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             repaint();
         }
 
+        void drawString(Graphics g, String text, int x, int y) {
+            for (String line : text.split("\n"))
+                g.drawString(line, x, y += g.getFontMetrics().getHeight());
+        }
+
         @Override
         public void paint(Graphics graphics)
         {
-            Rectangle clipBounds = graphics.getClipBounds();
+            Editor[] editors = EditorFactory.getInstance().getEditors(
+                    myAnalyst.getDisplayDocument());
+            if (editors.length >= 1) {
+                EditorImpl editor = (EditorImpl) editors[0];
+                graphics.setFont(editor.getColorsScheme().getFont(
+                        EditorFontType.PLAIN));
+            }
+            Rectangle bounds = getBounds();
             graphics.clearRect(
-                    clipBounds.x,
-                    clipBounds.y,
-                    clipBounds.width,
-                    clipBounds.height);
-            if (canvasCommands == null) {
+                    bounds.x,
+                    bounds.y,
+                    bounds.width,
+                    bounds.height);
+
+            String message = null;
+            if (canvasCommands == null || canvasCommands.size() == 0) {
+                message = "No turtle commands found.\n" +
+                        "For example:\n" +
+                        "from turtle import *\n" +
+                        "forward(100)";
+            }
+            if (message != null) {
+                String[] lines = message.split("\n");
+                FontMetrics fontMetrics = graphics.getFontMetrics();
+                Rectangle2D extent = fontMetrics.getStringBounds(lines[0], graphics);
+                drawString(
+                        graphics,
+                        message,
+                        (bounds.width - (int)extent.getWidth())/2,
+                        (bounds.height - (int)extent.getHeight()*4)/2);
                 return;
             }
             for (CanvasCommand command : canvasCommands) {

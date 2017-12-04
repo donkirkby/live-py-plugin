@@ -1,4 +1,4 @@
-package live_py;
+package io.github.donkirkby.livepy;
 
 /* Represents the text in an editor. Has methods for reading the currently
  * selected text and replacing it.

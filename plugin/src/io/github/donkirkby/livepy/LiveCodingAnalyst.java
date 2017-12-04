@@ -1,4 +1,4 @@
-package live_py;
+package io.github.donkirkby.livepy;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -774,21 +774,11 @@ public class LiveCodingAnalyst {
                         command.getCoordinate(2),
                         command.getCoordinate(3));
             }
-            else if (method.equals("create_rectangle")) {
-                gc.drawRectangle(
-                        command.getCoordinate(0),
-                        command.getCoordinate(1),
-                        command.getCoordinate(2) - command.getCoordinate(0),
-                        command.getCoordinate(3) - command.getCoordinate(1));
-            }
             else if (method.equals("create_polygon")) {
                 int[] coordinates = command.getAllCoordinates();
                 if (newBackground != null) {
                     gc.fillPolygon(coordinates);
                 }
-//              if (newForeground != null) {
-//                  gc.drawPolygon(coordinates);
-//              }
             }
             else if (method.equals("create_text")) {
                 Font oldFont = gc.getFont();

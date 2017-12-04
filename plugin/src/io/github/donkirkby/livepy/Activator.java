@@ -1,4 +1,4 @@
-package live_py;
+package io.github.donkirkby.livepy;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.IPartListener2;

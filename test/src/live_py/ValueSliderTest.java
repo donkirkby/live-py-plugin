@@ -3,6 +3,9 @@ package live_py;
 import org.junit.Assert;
 import org.junit.Test;
 
+import io.github.donkirkby.livepy.ValueSlider;
+import io.github.donkirkby.livepy.ValueSource;
+
 public class ValueSliderTest {
 
 	@Test

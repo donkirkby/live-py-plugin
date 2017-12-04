@@ -4,7 +4,7 @@
    <extension
          point="org.python.pydev.pydev_pyedit_listener">
       <pyedit_listener_participant
-            class="live_py.PyEditDecorator">
+            class="io.github.donkirkby.livepy.PyEditDecorator">
       </pyedit_listener_participant>
    </extension>
    <extension
@@ -32,7 +32,7 @@
    <extension
          point="org.eclipse.ui.handlers">
       <handler
-            class="live_py.StartHandler"
+            class="io.github.donkirkby.livepy.StartHandler"
             commandId="live-py.commands.start">
         <activeWhen>
             <with variable="activeEditorId">
@@ -41,7 +41,7 @@
         </activeWhen>
       </handler>
       <handler
-            class="live_py.TurtleHandler"
+            class="io.github.donkirkby.livepy.TurtleHandler"
             commandId="live-py.commands.turtle">
         <activeWhen>
             <with variable="activeEditorId">
@@ -50,7 +50,7 @@
         </activeWhen>
       </handler>
       <handler
-            class="live_py.StopHandler"
+            class="io.github.donkirkby.livepy.StopHandler"
             commandId="live-py.commands.stop">
         <activeWhen>
             <with variable="activeEditorId">
@@ -134,7 +134,7 @@
             locationURI="menu:live-py.toolbars.start">
             <dynamic
                   id="live-py.menus.startlist"
-                  class="live_py.StartMenuContribution"/>
+                  class="io.github.donkirkby.livepy.StartMenuContribution"/>
       </menuContribution>
    </extension>
    <extension

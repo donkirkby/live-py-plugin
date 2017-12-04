@@ -66,6 +66,24 @@ public class CanvasCommand {
 		}
 		return copy;
 	}
+	public int[] getXCoordinates() {
+		int[] copy = new int[coordinates.size()/2];
+		Iterator<Integer> itr = coordinates.iterator();
+		for (int i = 0; i < copy.length; i++) {
+			copy[i] = itr.next().intValue();
+			itr.next();
+		}
+		return copy;
+	}
+	public int[] getYCoordinates() {
+		int[] copy = new int[coordinates.size()/2];
+		Iterator<Integer> itr = coordinates.iterator();
+		for (int i = 0; i < copy.length; i++) {
+			itr.next();
+			copy[i] = itr.next().intValue();
+		}
+		return copy;
+	}
 	public FontOptions getFontOptions(String name) {
 		String value = options.get(name);
 		if (value == null) {

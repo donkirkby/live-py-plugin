@@ -53,6 +53,43 @@ public class CanvasReaderTest {
 		Assert.assertEquals("anchor", "SW", command1.getOption("anchor"));
 		Assert.assertNull("no second command expected", command2);
 	}
+
+	@Test
+	public void allCoordinates() {
+		// SETUP
+		CanvasCommand command = new CanvasCommand();
+		command.addCoordinate(100);
+		command.addCoordinate(101);
+		command.addCoordinate(200);
+		command.addCoordinate(201);
+		int[] expectedCoordinates = new int[] {100, 101, 200, 201};
+		
+		// EXEC
+		int[] allCoordinates = command.getAllCoordinates();
+		
+		// VERIFY
+		Assert.assertArrayEquals("coordinates", expectedCoordinates, allCoordinates);
+	}
+
+	@Test
+	public void xAndYCoordinates() {
+		// SETUP
+		CanvasCommand command = new CanvasCommand();
+		command.addCoordinate(100);
+		command.addCoordinate(101);
+		command.addCoordinate(200);
+		command.addCoordinate(201);
+		int[] expectedXCoordinates = new int[] {100, 200};
+		int[] expectedYCoordinates = new int[] {101, 201};
+		
+		// EXEC
+		int[] xCoordinates = command.getXCoordinates();
+		int[] yCoordinates = command.getYCoordinates();
+		
+		// VERIFY
+		Assert.assertArrayEquals("x coordinates", expectedXCoordinates, xCoordinates);
+		Assert.assertArrayEquals("y coordinates", expectedYCoordinates, yCoordinates);
+	}
 	
 	@Test
 	public void fontOption() {

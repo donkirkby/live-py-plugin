@@ -1,4 +1,4 @@
-package live_py;
+package io.github.donkirkby.livepy;
 
 import java.util.ArrayList;
 import java.util.List;

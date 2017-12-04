@@ -1,4 +1,4 @@
-package live_py;
+package io.github.donkirkby.livepy;
 
 import java.util.Map;
 
@@ -10,7 +10,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.commands.IElementUpdater;
 import org.eclipse.ui.menus.UIElement;
 
-import live_py.LiveCodingAnalyst.Mode;
+import io.github.donkirkby.livepy.LiveCodingAnalyst.Mode;
 
 /**
  * Show the live coding display.

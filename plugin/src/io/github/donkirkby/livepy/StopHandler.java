@@ -1,6 +1,4 @@
-package live_py;
-
-import live_py.LiveCodingAnalyst.Mode;
+package io.github.donkirkby.livepy;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -9,6 +7,8 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.python.pydev.editor.PyEdit;
+
+import io.github.donkirkby.livepy.LiveCodingAnalyst.Mode;
 
 /**
  * Stop the live coding display.

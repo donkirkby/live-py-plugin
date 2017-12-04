@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
@@ -85,14 +86,28 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             repaint();
         }
 
-        void drawString(Graphics g, String text, int x, int y) {
+        private void drawString(Graphics g, String text, int x, int y) {
             for (String line : text.split("\n"))
                 g.drawString(line, x, y += g.getFontMetrics().getHeight());
         }
 
+        private Color getColor(String fill) {
+            int rgb;
+            if ( fill == null || ! fill.startsWith("#")) {
+                rgb = 0;
+            }
+            else {
+                rgb = Integer.parseInt(fill.substring(1), 16);
+            }
+            return new JBColor(rgb, rgb);
+        }
+
+
+
         @Override
         public void paint(Graphics graphics)
         {
+            Graphics2D gc = (Graphics2D) graphics;
             Editor[] editors = EditorFactory.getInstance().getEditors(
                     myAnalyst.getDisplayDocument());
             if (editors.length >= 1) {
@@ -127,13 +142,57 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             }
             for (CanvasCommand command : canvasCommands) {
                 String method = command.getName();
-                if (method.equals("create_line")) {
+                String fill = command.getOption("fill");
+                String outline = command.getOption("outline");
+                String newLineWidthText = command.getOption("pensize");
+                Color oldColor = graphics.getColor();
+                Color newForeground = null;
+                Color newBackground = null;
+                Stroke oldStroke = gc.getStroke();
+                if (outline != null) {
+                    newForeground = getColor(outline);
+                    newBackground = getColor(fill);
+                }
+                else {
+                    newForeground = getColor(fill);
+                }
+                graphics.setColor(newForeground);
+                if (newLineWidthText != null) {
+                    Stroke newStroke = new BasicStroke(
+                            (int)Math.round(Double.parseDouble(newLineWidthText)),
+                            BasicStroke.CAP_ROUND,
+                            BasicStroke.JOIN_ROUND);
+                    gc.setStroke(newStroke);
+                }
+                if (method.equals("bgcolor")) {
+                    graphics.setColor(newBackground);
+                    graphics.fillRect(
+                            bounds.x,
+                            bounds.y,
+                            bounds.width,
+                            bounds.height);
+                }
+                else if (method.equals("create_line")) {
                     graphics.drawLine(
                             command.getCoordinate(0),
                             command.getCoordinate(1),
                             command.getCoordinate(2),
                             command.getCoordinate(3));
                 }
+                else if (method.equals("create_polygon")) {
+                    int[] xCoordinates = command.getXCoordinates();
+                    int[] yCoordinates = command.getYCoordinates();
+
+                    if (newBackground != null) {
+                        graphics.setColor(newBackground);
+                        graphics.fillPolygon(
+                                xCoordinates,
+                                yCoordinates,
+                                xCoordinates.length);
+                    }
+                }
+                graphics.setColor(oldColor);
+                gc.setStroke(oldStroke);
             }
         }
     }

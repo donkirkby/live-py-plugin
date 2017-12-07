@@ -86,11 +86,6 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             repaint();
         }
 
-        private void drawString(Graphics g, String text, int x, int y) {
-            for (String line : text.split("\n"))
-                g.drawString(line, x, y += g.getFontMetrics().getHeight());
-        }
-
         private Color getColor(String fill) {
             int rgb;
             if ( fill == null || ! fill.startsWith("#")) {
@@ -102,7 +97,69 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             return new JBColor(rgb, rgb);
         }
 
+        private Dimension drawText(
+                Graphics graphics,
+                String text,
+                int x,
+                int y,
+                boolean isDrawing) {
+            FontMetrics fontMetrics = graphics.getFontMetrics();
+            Rectangle2D tabBounds = fontMetrics.getStringBounds(
+                    "xxxxxxxx",
+                    graphics);
+            int tabWidth = (int) tabBounds.getWidth();
+            int height = 0, maxWidth = 0;
+            String[] lines = text.split("\n");
+            for (String line : lines) {
+                int width = 0;
+                String[] columns = line.split("\t");
+                for (String column : columns) {
+                    if (width != 0) {
+                        // Align to tab stop.
+                        width += tabWidth - width % tabWidth;
+                    }
+                    Rectangle2D columnBounds = fontMetrics.getStringBounds(
+                            column,
+                            graphics);
+                    if (isDrawing) {
+                        graphics.drawString(
+                                column,
+                                x + width,
+                                y + height + fontMetrics.getAscent());
+                    }
+                    width += columnBounds.getWidth();
+                }
+                height += fontMetrics.getHeight();
+                maxWidth = Math.max(maxWidth, width);
+            }
+            return new Dimension(maxWidth, height);
+        }
 
+        private void drawText(Graphics graphics, CanvasCommand command) {
+            Font oldFont = graphics.getFont();
+            Font font = getFontOption(command);
+            graphics.setFont(font);
+            int x = command.getCoordinate(0);
+            int y = command.getCoordinate(1);
+            String text = command.getOption("text");
+            Dimension textSize = drawText(graphics, text, x, y, false);
+            String anchor = command.getOption("anchor");
+            anchor = anchor == null ? "center" : anchor;
+            if (anchor.startsWith("s")) {
+                y -= textSize.getHeight();
+            } else if ( ! anchor.startsWith("n")) {
+                y -= textSize.getHeight() / 2;
+            } // else defaults to top
+
+            if (anchor.endsWith("e")) {
+                x -= textSize.getWidth();
+            } else if ( ! anchor.endsWith("w")) {
+                x -= textSize.getWidth() / 2;
+            } // else defaults to left side
+
+            drawText(graphics, text, x, y, true);
+            graphics.setFont(oldFont);
+        }
 
         @Override
         public void paint(Graphics graphics)
@@ -122,22 +179,18 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     bounds.width,
                     bounds.height);
 
-            String message = null;
             if (canvasCommands == null || canvasCommands.size() == 0) {
-                message = "No turtle commands found.\n" +
+                CanvasCommand command = new CanvasCommand();
+                command.addCoordinate(bounds.width/2);
+                command.addCoordinate(bounds.height/2);
+                command.setOption("font", "('Arial', 12, 'normal')");
+                command.setOption(
+                        "text",
+                        "No turtle commands found.\n" +
                         "For example:\n" +
                         "from turtle import *\n" +
-                        "forward(100)";
-            }
-            if (message != null) {
-                String[] lines = message.split("\n");
-                FontMetrics fontMetrics = graphics.getFontMetrics();
-                Rectangle2D extent = fontMetrics.getStringBounds(lines[0], graphics);
-                drawString(
-                        graphics,
-                        message,
-                        (bounds.width - (int)extent.getWidth())/2,
-                        (bounds.height - (int)extent.getHeight()*4)/2);
+                        "forward(100)");
+                drawText(graphics, command);
                 return;
             }
             for (CanvasCommand command : canvasCommands) {
@@ -146,7 +199,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 String outline = command.getOption("outline");
                 String newLineWidthText = command.getOption("pensize");
                 Color oldColor = graphics.getColor();
-                Color newForeground = null;
+                Color newForeground;
                 Color newBackground = null;
                 Stroke oldStroke = gc.getStroke();
                 if (outline != null) {
@@ -164,36 +217,57 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                             BasicStroke.JOIN_ROUND);
                     gc.setStroke(newStroke);
                 }
-                if (method.equals("bgcolor")) {
-                    graphics.setColor(newBackground);
-                    graphics.fillRect(
-                            bounds.x,
-                            bounds.y,
-                            bounds.width,
-                            bounds.height);
-                }
-                else if (method.equals("create_line")) {
-                    graphics.drawLine(
-                            command.getCoordinate(0),
-                            command.getCoordinate(1),
-                            command.getCoordinate(2),
-                            command.getCoordinate(3));
-                }
-                else if (method.equals("create_polygon")) {
-                    int[] xCoordinates = command.getXCoordinates();
-                    int[] yCoordinates = command.getYCoordinates();
-
-                    if (newBackground != null) {
+                switch (method) {
+                    case "bgcolor":
                         graphics.setColor(newBackground);
-                        graphics.fillPolygon(
-                                xCoordinates,
-                                yCoordinates,
-                                xCoordinates.length);
-                    }
+                        graphics.fillRect(
+                                bounds.x,
+                                bounds.y,
+                                bounds.width,
+                                bounds.height);
+                        break;
+                    case "create_line":
+                        graphics.drawLine(
+                                command.getCoordinate(0),
+                                command.getCoordinate(1),
+                                command.getCoordinate(2),
+                                command.getCoordinate(3));
+                        break;
+                    case "create_polygon":
+                        int[] xCoordinates = command.getXCoordinates();
+                        int[] yCoordinates = command.getYCoordinates();
+
+                        if (newBackground != null) {
+                            graphics.setColor(newBackground);
+                            graphics.fillPolygon(
+                                    xCoordinates,
+                                    yCoordinates,
+                                    xCoordinates.length);
+                        }
+                        break;
+                    case "create_text":
+                        drawText(gc, command);
+                        break;
                 }
                 graphics.setColor(oldColor);
                 gc.setStroke(oldStroke);
             }
+        }
+
+        private Font getFontOption(CanvasCommand command) {
+            CanvasCommand.FontOptions fontOptions =
+                    command.getFontOptions("font");
+            int style = Font.PLAIN;
+            for (String styleName : fontOptions.getStyleNames()) {
+                if (styleName.equals("bold")) {
+                    style |= Font.BOLD;
+                }
+                else if (styleName.equals("italic")) {
+                    style |= Font.ITALIC;
+                }
+            }
+            return new Font(fontOptions.getName(), style, fontOptions.getSize()*4/3 - 1);
+
         }
     }
 

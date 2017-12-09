@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Live-Py-Tests
 Bundle-SymbolicName: live-py-tests;singleton:=true
 Bundle-Version: 2.7.1.qualifier
-Bundle-Activator: live_py.Activator
+Bundle-Activator: io.github.donkirkby.livepy.Activator
 Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.ui.workbench.texteditor,

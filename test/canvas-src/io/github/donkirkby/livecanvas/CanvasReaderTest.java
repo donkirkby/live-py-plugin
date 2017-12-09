@@ -1,4 +1,4 @@
-package live_py;
+package io.github.donkirkby.livecanvas;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
@@ -6,9 +6,7 @@ import java.io.StringReader;
 import org.junit.Assert;
 import org.junit.Test;
 
-import io.github.donkirkby.livecanvas.CanvasCommand;
 import io.github.donkirkby.livecanvas.CanvasCommand.FontOptions;
-import io.github.donkirkby.livecanvas.CanvasReader;
 
 public class CanvasReaderTest {
 

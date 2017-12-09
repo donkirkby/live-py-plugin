@@ -8,17 +8,17 @@ import java.util.regex.Pattern;
 
 public class CanvasCommand {
 	private String name;
-	private ArrayList<Integer> coordinates = 
-			new ArrayList<Integer>();
-	private	Hashtable<String, String> options = 
-			new Hashtable<String, String>();
+	private ArrayList<Integer> coordinates =
+			new ArrayList<>();
+	private	Hashtable<String, String> options =
+			new Hashtable<>();
 	
 	public static class FontOptions {
 		private String name;
 		private int size;
 		private String[] styleNames;
 		
-		public FontOptions(String name, int size, String[] styleNames) {
+		FontOptions(String name, int size, String[] styleNames) {
 			this.name = name;
 			this.size = size;
 			this.styleNames = styleNames;
@@ -52,17 +52,17 @@ public class CanvasCommand {
 	public void addCoordinate(int value) {
 		coordinates.add(value);
 	}
-	public int getCoordinateCount() {
+	int getCoordinateCount() {
 		return coordinates.size();
 	}
 	public int getCoordinate(int index) {
 		return coordinates.get(index);
 	}
-	public int[] getAllCoordinates() {
+	int[] getAllCoordinates() {
 		int[] copy = new int[coordinates.size()];
 		Iterator<Integer> itr = coordinates.iterator();
 		for (int i = 0; i < copy.length; i++) {
-			copy[i] = itr.next().intValue();
+			copy[i] = itr.next();
 		}
 		return copy;
 	}
@@ -70,7 +70,7 @@ public class CanvasCommand {
 		int[] copy = new int[coordinates.size()/2];
 		Iterator<Integer> itr = coordinates.iterator();
 		for (int i = 0; i < copy.length; i++) {
-			copy[i] = itr.next().intValue();
+			copy[i] = itr.next();
 			itr.next();
 		}
 		return copy;
@@ -80,7 +80,7 @@ public class CanvasCommand {
 		Iterator<Integer> itr = coordinates.iterator();
 		for (int i = 0; i < copy.length; i++) {
 			itr.next();
-			copy[i] = itr.next().intValue();
+			copy[i] = itr.next();
 		}
 		return copy;
 	}

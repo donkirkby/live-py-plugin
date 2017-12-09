@@ -1,20 +1,16 @@
 package io.github.donkirkby.livepycharm;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.jetbrains.python.PythonFileType;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -113,11 +109,59 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                                         displayEditor.getScrollingModel();
                                 displayScroll.scrollVertically(
                                         mainScroll.getVerticalScrollOffset());
+                                updateDisplayFolding(mainEditor, displayEditor);
                             });
+                    displayEditor.getScrollingModel().addVisibleAreaListener(
+                            e -> {
+                                ScrollingModel displayScroll =
+                                        displayEditor.getScrollingModel();
+                                ScrollingModel mainScroll =
+                                        mainEditor.getScrollingModel();
+                                mainScroll.scrollVertically(
+                                        displayScroll.getVerticalScrollOffset());
+                            }
+                    );
+
+                    if (displayDocument != null) {
+                        displayDocument.addDocumentListener(new DocumentListener() {
+                            @Override
+                            public void documentChanged(DocumentEvent event) {
+                                updateDisplayFolding(mainEditor, displayEditor);
+                            }
+                        });
+                    }
                 }
                 return editor;
             }
         };
+    }
+
+    private void updateDisplayFolding(Editor mainEditor, Editor displayEditor) {
+        String mainText = mainEditor.getDocument().getText();
+        String displayText = displayEditor.getDocument().getText();
+        FoldRegion[] mainRegions =
+                mainEditor.getFoldingModel().getAllFoldRegions();
+        FoldingModel displayModel = displayEditor.getFoldingModel();
+        displayModel.runBatchFoldingOperation(() -> {
+            for (FoldRegion region : displayModel.getAllFoldRegions()) {
+                displayModel.removeFoldRegion(region);
+            }
+            for (FoldRegion mainRegion : mainRegions) {
+                if (!mainRegion.isExpanded()) {
+                    int startOffset = mainRegion.getStartOffset();
+                    int endOffset = mainRegion.getEndOffset();
+                    int startLine = StringUtil.offsetToLineNumber(mainText, startOffset);
+                    int endLine = StringUtil.offsetToLineNumber(mainText, endOffset);
+                    FoldRegion displayRegion = displayModel.addFoldRegion(
+                            StringUtil.lineColToOffset(displayText, startLine, 0),
+                            StringUtil.lineColToOffset(displayText, endLine, 0),
+                            "...");
+                    if (displayRegion != null) {
+                        displayRegion.setExpanded(false);
+                    }
+                }
+            }
+        });
     }
 
     @NotNull

@@ -6,6 +6,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 
 public class CanvasReader {
+	@SuppressWarnings("FieldCanBeLocal")
 	private boolean DEBUG = false;
 	private BufferedReader inputReader;
 	private String nextLine;
@@ -93,7 +94,7 @@ public class CanvasReader {
 		return value;
 	}
 
-	public void close() {
+	void close() {
 		try {
 			inputReader.close();
 		} catch (IOException ex) {
@@ -102,7 +103,7 @@ public class CanvasReader {
 	}
 
 	public ArrayList<CanvasCommand> readCommands() {
-		ArrayList<CanvasCommand> newCommands = new ArrayList<CanvasCommand>();
+		ArrayList<CanvasCommand> newCommands = new ArrayList<>();
 		CanvasCommand command;
 		boolean isDone;
 		do {

@@ -12,7 +12,11 @@ import sys
 import traceback
 import types
 import os
-import importlib
+from importlib import import_module
+try:
+    builtins = import_module('__builtin__')
+except ImportError:
+    import builtins
 
 from canvas import Canvas
 from mock_turtle import MockTurtle
@@ -706,6 +710,67 @@ class LineNumberCleaner(NodeTransformer):
         return self.generic_visit(node)
 
 
+class TracedModuleFinder(object):
+    def __init__(self,
+                 module_name,
+                 traced_code,
+                 environment,
+                 filename,
+                 is_own_driver):
+        """ Import the code that has been instrumented for live coding.
+
+        :param module_name: name of the module to load in sys.modules, or None
+        :param traced_code: compiled code for the module
+            to load it as the live coding module
+        :param environment: global variables for the module
+        :param filename: the name of the file this code came from
+        :param is_own_driver: True if this module should be loaded as the main
+            module, but in a package.
+        """
+        self.module_name = module_name
+        self.traced_code = traced_code
+        self.environment = environment
+        self.filename = filename
+        self.is_own_driver = is_own_driver
+
+    def find_module(self, fullname, path=None):
+        if (fullname == self.module_name or
+                (fullname == SCOPE_NAME and self.is_own_driver)):
+            return self
+
+    def load_module(self, fullname):
+        if '.' in self.module_name:
+            package_name, child_name = self.module_name.rsplit('.', 1)
+        else:
+            package_name = None
+        new_mod = imp.new_module(fullname)
+        sys.modules[fullname] = new_mod
+        new_mod.__builtins__ = builtins
+        if self.filename is not None:
+            new_mod.__file__ = self.filename
+        new_mod.__package__ = package_name
+
+        new_mod.__dict__.update(self.environment)
+        self.environment = new_mod.__dict__
+
+        with swallow_output():
+            exec(self.traced_code, self.environment)
+        return new_mod
+
+
+@contextmanager
+def swallow_output():
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    try:
+        sys.stdout = FileSwallower(old_stdout)
+        sys.stderr = FileSwallower(old_stderr)
+        yield
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+
+
 class CodeTracer(object):
     def __init__(self, canvas=None):
         self.message_limit = 10000
@@ -763,6 +828,7 @@ class CodeTracer(object):
         main_mod = imp.new_module('__main__')
         sys.modules['__main__'] = main_mod
         main_mod.__file__ = filename
+        main_mod.__builtins__ = builtins
         if package:
             main_mod.__package__ = package
 
@@ -784,49 +850,6 @@ class CodeTracer(object):
 
         return code
 
-    @contextmanager
-    def swallow_output(self):
-        old_stdout = sys.stdout
-        old_stderr = sys.stderr
-        try:
-            sys.stdout = FileSwallower(old_stdout)
-            sys.stderr = FileSwallower(old_stderr)
-            yield
-        finally:
-            sys.stdout = old_stdout
-            sys.stderr = old_stderr
-
-    def run_instrumented_module(self, code, module_name, filename, is_own_driver):
-        """ Run the code that has been instrumented for live coding.
-        
-        :param code: compiled code for the module
-        :param module_name: name of the module to load in sys.modules, or None
-            to load it as the main live coding module
-        :param filename: the name of the file this code came from
-        :param is_own_driver: True if this module should be loaded as the main
-            module, but in a package.
-        """
-        if module_name is not None and '.' in module_name:
-            package_name, child_name = module_name.rsplit('.', 1)
-        else:
-            package_name = None
-        if is_own_driver or module_name is None:
-            module_name = SCOPE_NAME
-        new_mod = imp.new_module(module_name)
-        sys.modules[module_name] = new_mod
-        if filename is not None:
-            new_mod.__file__ = filename
-        if package_name is not None:
-            importlib.import_module(package_name)
-            setattr(sys.modules[package_name], child_name, new_mod)
-        new_mod.__package__ = package_name
-
-        new_mod.__dict__.update(self.environment)
-        self.environment = new_mod.__dict__
-
-        with self.swallow_output():
-            exec(code, self.environment)
-            
     def split_lines(self, messages):
         for message in messages:
             for line in message.splitlines():
@@ -903,6 +926,15 @@ class CodeTracer(object):
                 # Restore the old argv and path
                 sys.argv = old_argv
 
+                # During testing, we import these modules for every test case,
+                # so force a reload. This is only likely to happen during testing.
+                for target in (load_as, SCOPE_NAME):
+                    if target in sys.modules:
+                        del sys.modules[target]
+                for i in reversed(range(len(sys.meta_path))):
+                    if isinstance(sys.meta_path[i], TracedModuleFinder):
+                        sys.meta_path.pop(i)
+
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
@@ -976,10 +1008,19 @@ class CodeTracer(object):
         is_own_driver = ((is_module and driver and driver[0] == load_as) or
                          load_as == SCOPE_NAME)
         seed(0)
-        self.run_instrumented_module(code, load_as, filename, is_own_driver)
-        if driver and not is_own_driver:
+        module_finder = TracedModuleFinder(load_as,
+                                           code,
+                                           self.environment,
+                                           filename,
+                                           is_own_driver)
+        sys.meta_path.insert(0, module_finder)
+        if is_own_driver:
+            import_module(SCOPE_NAME)
+        elif not driver:
+            import_module(load_as)
+        else:
             start_count = builder.message_count
-            with self.swallow_output():
+            with swallow_output():
                 try:
                     if not is_module:
                         self.run_python_file(driver[0])
@@ -1002,6 +1043,7 @@ class CodeTracer(object):
                                          " Try a different driver.".format(driver_name,
                                                                            load_as))
                 self.report_driver_result(builder, [message])
+        self.environment = module_finder.environment
 
 
 class FileSwallower(object):

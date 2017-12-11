@@ -3,7 +3,7 @@ from sys import version_info
 from tempfile import TemporaryFile
 from unittest import TestCase, skipIf
 
-from mock import patch, Mock
+from mock import patch
 
 from code_tracer import CodeTracer, FileSwallower
 from mock_turtle import MockTurtle
@@ -1732,6 +1732,18 @@ j = 76
 
 i = 50
 j = 98
+"""
+
+        report = CodeTracer().trace_code(code)
+
+        self.assertReportEqual(expected_report, report)
+
+    def test_builtins(self):
+        code = """\
+x = __builtins__.sum([1, 2])
+"""
+        expected_report = """\
+x = 3
 """
 
         report = CodeTracer().trace_code(code)

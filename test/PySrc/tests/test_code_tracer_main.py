@@ -12,6 +12,8 @@ EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_driver.py')
 EXAMPLE_SOURCE_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_source.py')
+EXAMPLE_PATCHING_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
+                                            'example_patching_driver.py')
 patch.multiple = patch.multiple  # Avoids PyCharm warnings.
 
 
@@ -220,21 +222,21 @@ return 42
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '-',
-        'foo',
+        'example_source',
         EXAMPLE_DRIVER_PATH,
         'fail',
         'badly'])
     def test_driver_fails(self, stdin, stdout):
         source = """\
-s = 'Hello, World!'
+foo = 'Hello, World!'
 """
         expected_report = """\
-s = 'Hello, World!' | ---------------------------------------------------- |
-                    | Traceback (most recent call last):                   |
-                    |   File "path/example_driver.py", line 6, in <module> |
-                    |     assert 'fail' not in sys.argv, sys.argv[1:]      |
-                    | AssertionError: ['fail', 'badly']                    |
-                    | ---------------------------------------------------- |
+foo = 'Hello, World!' | ---------------------------------------------------- |
+                      | Traceback (most recent call last):                   |
+                      |   File "path/example_driver.py", line 6, in <module> |
+                      |     assert 'fail' not in sys.argv, sys.argv[1:]      |
+                      | AssertionError: ['fail', 'badly']                    |
+                      | ---------------------------------------------------- |
 """
 
         stdin.read.return_value = source
@@ -257,9 +259,8 @@ s = 'Hello, World!' | ---------------------------------------------------- |
 s = 'Yo!'
 """
         expected_report = """\
-s = 'Yo!' | --------------------------------------------------------------- |
-          | IOError: [Errno 2] No such file or directory: 'bogus_driver.py' |
-          | --------------------------------------------------------------- |
+
+FileNotFoundError: [Errno 2] No such file or directory: 'bogus_driver.py' |
 """
 
         stdin.read.return_value = source
@@ -275,9 +276,8 @@ s = 'Yo!' | --------------------------------------------------------------- |
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '-',
-        'example_source',
-        EXAMPLE_DRIVER_PATH,
-        'skip'])
+        'different_source',
+        EXAMPLE_DRIVER_PATH])
     def test_bad_driver(self, stdin, stdout):
         source = """\
 def foo(x):
@@ -287,11 +287,10 @@ def foo(x):
 BAR = 'baz'
 """
         expected_report = """\
---------------------------------------------------------------------------------- |
-example_driver.py doesn't call the example_source module. Try a different driver. |
---------------------------------------------------------------------------------- |
+----------------------------------------------------------------------------------- |
+example_driver.py doesn't call the different_source module. Try a different driver. |
+----------------------------------------------------------------------------------- |
 
-BAR = 'baz'
 """
         stdin.read.return_value = source
 
@@ -302,11 +301,44 @@ BAR = 'baz'
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '--bad_driver', "Run config 'example' is bad, try something else.",
         '-',
         'example_source',
-        EXAMPLE_DRIVER_PATH,
-        'skip'])
+        EXAMPLE_PATCHING_DRIVER_PATH])
+    def test_driver_imports_first(self, stdin, stdout):
+        source = """\
+# This will raise a TypeError, unless we patch the sum() function before
+# importing this module. example_patching_driver.py does the patch, so
+# it has to be imported before this module.
+start = sum([1, 2, "3"])
+
+def foo(x):
+    return x + start
+"""
+        expected_report = """\
+
+
+
+start = 99
+
+x = 10
+return 109
+"""
+        stdin.read.return_value = source
+
+        try:
+            main()
+        except SystemExit:
+            pass
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--bad_driver', "Run config 'example' is bad, try something else.",
+        '-',
+        'different_source',
+        EXAMPLE_DRIVER_PATH])
     def test_bad_driver_message(self, stdin, stdout):
         source = """\
 def foo(x):
@@ -320,7 +352,6 @@ BAR = 'baz'
 Run config 'example' is bad, try something else. |
 ------------------------------------------------ |
 
-BAR = 'baz'
 """
         stdin.read.return_value = source
 

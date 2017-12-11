@@ -5,8 +5,7 @@ from example_source import foo
 
 assert 'fail' not in sys.argv, sys.argv[1:]
 
-if 'skip' not in sys.argv:
-    foo(42)
-    add_message('from driver')
+foo(42)
+add_message('from driver')
 
 sys.exit(0)  # Some drivers exit successfully like this.

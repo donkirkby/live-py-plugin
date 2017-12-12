@@ -366,7 +366,16 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     @NotNull
     @Override
     public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-        return new MyFileEditorState(mySplitEditorLayout.name(), myMainEditor.getState(level), mySecondEditor.getState(level));
+        // We always want the editor to open without live display, so only save
+        // splitter layout during navigation.
+        String splitLayout =
+                level == FileEditorStateLevel.NAVIGATION
+                        ? mySplitEditorLayout.name()
+                        : null;
+        return new MyFileEditorState(
+                splitLayout,
+                myMainEditor.getState(level),
+                mySecondEditor.getState(level));
     }
 
     @Override
@@ -380,9 +389,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 mySecondEditor.setState(compositeState.getSecondState());
             }
             if (compositeState.getSplitLayout() != null) {
-                // We always want the editor to open without live display.
-                // mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
-                mySplitEditorLayout = SplitEditorLayout.SINGLE;
+                mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
                 invalidateLayout();
             }
         }

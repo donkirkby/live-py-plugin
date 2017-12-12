@@ -150,14 +150,28 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 if (!mainRegion.isExpanded()) {
                     int startOffset = mainRegion.getStartOffset();
                     int endOffset = mainRegion.getEndOffset();
-                    int startLine = StringUtil.offsetToLineNumber(mainText, startOffset);
-                    int endLine = StringUtil.offsetToLineNumber(mainText, endOffset);
-                    FoldRegion displayRegion = displayModel.addFoldRegion(
-                            StringUtil.lineColToOffset(displayText, startLine, 0),
-                            StringUtil.lineColToOffset(displayText, endLine, 0),
-                            "...");
-                    if (displayRegion != null) {
-                        displayRegion.setExpanded(false);
+                    int startLine = StringUtil.offsetToLineNumber(
+                            mainText,
+                            startOffset);
+                    int endLine = StringUtil.offsetToLineNumber(
+                            mainText,
+                            endOffset);
+                    int startFold = StringUtil.lineColToOffset(
+                            displayText,
+                            startLine,
+                            0);
+                    int endFold = StringUtil.lineColToOffset(
+                            displayText,
+                            endLine,
+                            0);
+                    if (startFold < endFold) {
+                        FoldRegion displayRegion = displayModel.addFoldRegion(
+                                startFold,
+                                endFold,
+                                "...");
+                        if (displayRegion != null) {
+                            displayRegion.setExpanded(false);
+                        }
                     }
                 }
             }

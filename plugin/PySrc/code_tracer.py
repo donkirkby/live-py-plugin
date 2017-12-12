@@ -1016,8 +1016,6 @@ class CodeTracer(object):
         sys.meta_path.insert(0, module_finder)
         if is_own_driver:
             import_module(SCOPE_NAME)
-        elif not driver:
-            import_module(load_as)
         else:
             start_count = builder.message_count
             with swallow_output():

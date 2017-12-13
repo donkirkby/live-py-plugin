@@ -901,7 +901,7 @@ class CodeTracer(object):
         self.return_code = 0
 
         try:
-            tree = parse(source)
+            tree = parse(source, PSEUDO_FILENAME)
 
             new_tree = Tracer().visit(tree)
             fix_missing_locations(new_tree)
@@ -942,7 +942,15 @@ class CodeTracer(object):
             self.return_code = 1
             ex = sys.exc_info()[1]
             messages = traceback.format_exception_only(type(ex), ex)
-            builder.add_message(messages[-1].strip() + ' ', ex.lineno)
+            message = messages[-1].strip()
+            if ex.filename == PSEUDO_FILENAME:
+                line_number = ex.lineno
+            else:
+                line_number = 1
+                message = '{} line {}: {}'.format(ex.filename,
+                                                  ex.lineno,
+                                                  message)
+            builder.add_message(message, line_number)
         except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()

@@ -14,6 +14,8 @@ EXAMPLE_SOURCE_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_source.py')
 EXAMPLE_PATCHING_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                             'example_patching_driver.py')
+EXAMPLE_DRIVER_SYNTAX_ERROR_PATH = os.path.join(os.path.dirname(__file__),
+                                                'example_driver_syntax_error.py')
 patch.multiple = patch.multiple  # Avoids PyCharm warnings.
 
 
@@ -619,6 +621,26 @@ def missing_body():
         expected_report = """\
 SyntaxError: unexpected EOF while parsing
 """
+        stdin.read.return_value = source
+
+        with self.assertRaises(SystemExit):
+            main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        EXAMPLE_DRIVER_SYNTAX_ERROR_PATH])
+    def test_driver_syntax_error(self, stdin, stdout):
+        source = """\
+x = 'Hello, World!'
+"""
+        expected_report = """\
+{} line 4: SyntaxError: unexpected EOF while parsing
+""".format(EXAMPLE_DRIVER_SYNTAX_ERROR_PATH)
         stdin.read.return_value = source
 
         with self.assertRaises(SystemExit):

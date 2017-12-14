@@ -195,26 +195,23 @@ public class LiveCodingAnalyst implements DocumentListener {
         progressIndicator.start();
         try {
             String sourceCode = document.getText();
-            final String finalDisplay = ApplicationManager.getApplication().runReadAction(
-                    (Computable<String>) () -> {
-                String display = null;
-                try {
-                    CapturingProcessHandler processHandler = startProcess(sourceCode);
-                    ProcessOutput processOutput =
-                            processHandler.runProcessWithProgressIndicator(progressIndicator);
-                    display = processOutput.getStdout();
-                    String stderr = processOutput.getStderr();
-                    if (stderr.length() > 0) {
-                        log.error(stderr);
-                    }
-                } catch (Exception ex) {
-                    log.error("Report failed.", ex);
+            String display = null;
+            try {
+                CapturingProcessHandler processHandler = startProcess(sourceCode);
+                ProcessOutput processOutput =
+                        processHandler.runProcessWithProgressIndicator(progressIndicator);
+                display = processOutput.getStdout();
+                String stderr = processOutput.getStderr();
+                if (stderr.length() > 0) {
+                    log.error(stderr);
                 }
-                return display;
-            });
-            if (finalDisplay == null || progressIndicator.isCanceled()) {
+            } catch (ExecutionException | IOException ex) {
+                log.error("Report failed.", ex);
+            }
+            if (display == null || progressIndicator.isCanceled()) {
                 return;
             }
+            final String finalDisplay = display;
             ApplicationManager.getApplication().invokeLater(() -> displayResult(finalDisplay));
         } finally {
             progressIndicator.stop();
@@ -261,8 +258,11 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     private CapturingProcessHandler startProcess(String sourceCode) throws ExecutionException, IOException {
-        final GeneralCommandLine commandLine = commandLineState.generateCommandLine(
-                new CommandLinePatcher[]{commandLinePatcher});
+        final GeneralCommandLine commandLine =
+                ApplicationManager.getApplication().runReadAction(
+                        (Computable<GeneralCommandLine>) () ->
+                                commandLineState.generateCommandLine(
+                                        new CommandLinePatcher[]{commandLinePatcher}));
         final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
         try {
             byte[] stdin = sourceCode.getBytes();

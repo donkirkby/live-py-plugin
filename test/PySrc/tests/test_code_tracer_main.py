@@ -639,7 +639,7 @@ SyntaxError: unexpected EOF while parsing
 x = 'Hello, World!'
 """
         expected_report = """\
-{} line 4: SyntaxError: unexpected EOF while parsing
+{} line 4: SyntaxError: invalid syntax
 """.format(EXAMPLE_DRIVER_SYNTAX_ERROR_PATH)
         stdin.read.return_value = source
 

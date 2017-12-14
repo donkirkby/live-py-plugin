@@ -389,8 +389,12 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 mySecondEditor.setState(compositeState.getSecondState());
             }
             if (compositeState.getSplitLayout() != null) {
-                mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
-                invalidateLayout();
+                try {
+                    mySplitEditorLayout = SplitEditorLayout.valueOf(compositeState.getSplitLayout());
+                    invalidateLayout();
+                } catch (IllegalArgumentException e) {
+                    // Probably an old layout that is no longer supported.
+                }
             }
         }
     }

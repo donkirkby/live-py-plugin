@@ -255,17 +255,9 @@ class Tracer(NodeTransformer):
         for name, node in comparisons:
             args[0].elts.append(Str(s=name))  # name
             args[1].elts.append(  # repr() before
-                Call(func=Name(id='repr', ctx=Load()),
-                     args=[node],
-                     keywords=[],
-                     starargs=None,
-                     kwargs=None))
+                self._create_bare_context_call('get_repr', [node]))
             args[3].elts.append(  # repr() after
-                Call(func=Name(id='repr', ctx=Load()),
-                     args=[node],
-                     keywords=[],
-                     starargs=None,
-                     kwargs=None))
+                self._create_bare_context_call('get_repr', [node]))
         new_node = self._create_bare_context_call('record_call', args)
         return new_node
 
@@ -440,9 +432,6 @@ class Tracer(NodeTransformer):
         x = globals()['x'].start_frame()
         Kind of ugly, but I think it was worth it to handle recursive calls.
         """
-        if node.name == '__repr__':
-            return node
-
         new_node = self.generic_visit(node)
 
         line_numbers = set()

@@ -15,6 +15,7 @@ class ReportBuilder(object):
         self.line_widths = {}
         self.max_width = None
         self.frame_width = 0
+        self.is_muted = False
 
     def start_block(self, first_line, last_line):
         """ Cap all the lines from first_line to last_line inclusive with
@@ -74,6 +75,8 @@ class ReportBuilder(object):
         :param int last_line: the last line of the function that the frame is
         running.
         """
+        if self.is_muted:
+            return self
         new_frame = ReportBuilder(self.message_limit)
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths
@@ -90,9 +93,11 @@ class ReportBuilder(object):
 
     def add_message(self, message, line_number):
         """ Add a message to the report on line line_number (1-based). """
+        self._increment_message_count()
+        if self.is_muted:
+            return
         if '\n' in message:
             message = re.sub(r'\s+', ' ', message)
-        self._increment_message_count()
         self._check_line_count(line_number)
         new_width = len(self.messages[line_number - 1]) + len(message)
         self._update_frame_width(new_width, line_number)
@@ -105,6 +110,16 @@ class ReportBuilder(object):
         target = self.history[-1] if self.history else self
         target.max_width = self.max_width
         target.add_message(message, line_number)
+
+    def get_repr(self, value):
+        """ Get the representation of an object without reporting the call. """
+        if self.is_muted:
+            return ''
+        self.is_muted = True
+        try:
+            return repr(value)
+        finally:
+            self.is_muted = False
 
     def assign(self, name, value, line_number):
         """ Convenience method for simple assignments.
@@ -139,11 +154,15 @@ class ReportBuilder(object):
 
     def report_assignment(self, format_string, line_number):
         assignment = self.assignments[-1]
+        was_muted = self.is_muted
+        self.is_muted = True
+        # noinspection PyBroadException
         try:
             display = format_string.format(*(assignment.indexes +
                                              [assignment.value]))
         except Exception:
             display = None
+        self.is_muted = was_muted
         if display is not None and not display.endswith('>'):
             self.add_message(display + ' ', line_number)
 
@@ -167,9 +186,9 @@ class ReportBuilder(object):
         entries = traceback.extract_tb(tb)
         if entries:
             _, line_number, _, _ = entries[0]
+            old_limit, self.message_limit = self.message_limit, None
+            old_width, self.max_width = self.max_width, None
             try:
-                old_limit, self.message_limit = self.message_limit, None
-                old_width, self.max_width = self.max_width, None
                 self.add_message(message, line_number)
             finally:
                 self.message_limit = old_limit
@@ -240,18 +259,18 @@ class DeletionTarget(object):
         self.report_builder = report_builder
 
     def __delitem__(self, key):
-        before = repr(self.target)
+        before = self.report_builder.get_repr(self.target)
         del self.target[key]
-        after = repr(self.target)
+        after = self.report_builder.get_repr(self.target)
         if before != after:
             self.report_builder.assign(self.name,
                                        self.target,
                                        self.line_number)
 
     def __delattr__(self, key):
-        before = repr(self.target)
+        before = self.report_builder.get_repr(self.target)
         self.target.__delattr__(key)
-        after = repr(self.target)
+        after = self.report_builder.get_repr(self.target)
         if before != after:
             self.report_builder.assign(self.name,
                                        self.target,

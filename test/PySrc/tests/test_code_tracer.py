@@ -749,6 +749,34 @@ RuntimeError: live coding message limit exceeded """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_infinite_loop_in_repr(self):
+        # SETUP
+        # __repr__() doesn't display messages, so message counter doesn't change.
+        code = """\
+class Foo(object):
+    def __repr__(self):
+        while True:
+            x = 42
+
+s = Foo()
+"""
+        # The infinite loop fails silently inside __repr__().
+        expected_report = """\
+
+
+
+
+
+"""
+        tracer = CodeTracer()
+        tracer.message_limit = 3
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_set_attribute(self):
         # SETUP
         code = """\
@@ -868,6 +896,40 @@ self.name = 'Spot'
 
 dog = Dog('Spot')
 animal = Dog('Spot') """
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_repr_call(self):
+        # SETUP
+        code = """\
+class Dog(object):
+    def __init__(self, name):
+        self.name = name
+
+    def __repr__(self):
+        return 'Dog(%r)' % self.name
+
+dog1 = Dog('Spot')
+dog2 = Dog('Fido')
+s = repr(dog2)
+"""
+        expected_report = """\
+
+name = 'Spot'      | name = 'Fido'
+self.name = 'Spot' | self.name = 'Fido'
+
+
+return "Dog('Fido')"
+
+dog1 = Dog('Spot')
+dog2 = Dog('Fido')
+s = "Dog('Fido')"
+"""
         tracer = CodeTracer()
 
         # EXEC

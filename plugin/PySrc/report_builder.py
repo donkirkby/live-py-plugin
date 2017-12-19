@@ -12,7 +12,6 @@ class ReportBuilder(object):
         self.message_count = 0
         self.message_limit = message_limit
         self.stack_block = None  # (first_line, last_line) numbers, not indexes
-        self.stack = []  # current call stack
         self.history = []  # all stack frames that need to be combined
         self.line_widths = {}
         self.max_width = None
@@ -83,6 +82,9 @@ class ReportBuilder(object):
         """
         if self.is_muted:
             return self
+        for frame in self.history:
+            if frame.is_muted:
+                return frame
         new_frame = ReportBuilder(self.message_limit)
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths
@@ -146,11 +148,13 @@ class ReportBuilder(object):
         """ Get the representation of an object without reporting the call. """
         if self.is_muted:
             return ''
+        start_count = self.message_count
         self.is_muted = True
         try:
             return repr(value)
         finally:
             self.is_muted = False
+            self.message_count = start_count
 
     def assign(self, name, value, line_number):
         """ Convenience method for simple assignments.
@@ -187,6 +191,7 @@ class ReportBuilder(object):
         assignment = self.assignments[-1]
         was_muted = self.is_muted
         self.is_muted = True
+        start_count = self.message_count
         # noinspection PyBroadException
         try:
             display = format_string.format(*(assignment.indexes +
@@ -194,6 +199,7 @@ class ReportBuilder(object):
         except Exception:
             display = None
         self.is_muted = was_muted
+        self.message_count = start_count
         if display is not None and not display.endswith('>'):
             self.add_message(display + ' ', line_number)
 

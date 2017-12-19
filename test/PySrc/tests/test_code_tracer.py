@@ -1,7 +1,7 @@
 import sys
 from sys import version_info
 from tempfile import TemporaryFile
-from unittest import TestCase, skipIf
+from unittest import skipIf
 
 from mock import patch
 
@@ -761,6 +761,7 @@ class Foo(object):
             x = 42
 
 s = Foo()
+s2 = 'x'
 """
         # The infinite loop fails silently inside __repr__().
         expected_report = """\
@@ -769,9 +770,49 @@ s = Foo()
 
 
 
+
+s2 = 'x'
 """
         tracer = CodeTracer()
-        tracer.message_limit = 3
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_infinite_recursion_in_repr(self):
+        # SETUP
+        code = """\
+class Foo:
+    def get_bar(self):
+        self.do_foo()
+        return 'bar'
+
+    def __repr__(self):
+        return 'Foo' + self.get_bar()
+
+    def do_foo(self):
+        pass
+
+f = Foo()
+f.get_bar()
+"""
+        expected_report = """\
+
+
+
+return 'bar'
+
+
+
+
+
+
+
+f = Foobar
+"""
+        tracer = CodeTracer()
 
         # EXEC
         report = tracer.trace_code(code)

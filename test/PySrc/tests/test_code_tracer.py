@@ -6,7 +6,9 @@ from unittest import TestCase, skipIf
 from mock import patch
 
 from code_tracer import CodeTracer, FileSwallower
+import example_printing
 from mock_turtle import MockTurtle
+from report_builder import ReportBuilder
 from test_report_builder import ReportTestCase
 
 
@@ -1087,6 +1089,7 @@ sys.stdout.write(s)
         expected_report = """\
 
 s = 'x'
+sys.stdout.write('x')
 """
         tracer = CodeTracer()
 
@@ -1108,6 +1111,7 @@ sys.stderr.write(s)
         expected_report = """\
 
 s = 'x'
+sys.stderr.write('x')
 """
         tracer = CodeTracer()
 
@@ -1278,7 +1282,7 @@ print(b)
 """
         expected_report = """\
 (a, *b) = (1, 2, 3)
-print([2, 3]) """
+print('[2, 3]') """
         tracer = CodeTracer()
 
         # EXEC
@@ -1589,7 +1593,7 @@ print(p, n, sep=s)
 p = 'Bob'
 n = 23
 s = '--'
-print('Bob', 23, sep='--') """
+print('Bob--23') """
 
         report = CodeTracer().trace_code(code)
 
@@ -1606,7 +1610,7 @@ print(*args)
 
 
 args = ['Bob', 23]
-print(*['Bob', 23]) """
+print('Bob 23') """
 
         report = CodeTracer().trace_code(code)
 
@@ -1857,7 +1861,7 @@ s = '__live_coding__'
         self.assertReportEqual(expected_report, report)
 
 
-class FileSwallowerTest(TestCase):
+class FileSwallowerTest(ReportTestCase):
     def test_temp_file(self):
         expected_contents = 'before\nafter\n'
         expected_last_line = 'line 2'
@@ -1893,3 +1897,27 @@ class FileSwallowerTest(TestCase):
             real_contents = real_file.read()
 
         self.assertEqual(expected_contents, real_contents)
+
+    def test_report(self):
+        expected_report_python2 = """\
+
+print '42xyz'
+"""
+        expected_report_python3 = """\
+
+print('42xyz')
+"""
+        expected_report = (expected_report_python3
+                           if version_info.major >= 3
+                           else expected_report_python2)
+        report_builder = ReportBuilder()
+        example_source = example_printing.__file__
+        if example_source.endswith('.pyc'):
+            example_source = example_source[:-1]
+        swallower = FileSwallower(sys.stdout, example_source, report_builder)
+
+        with patch('sys.stdout', swallower):
+            example_printing.custom_print('42', 'xyz')
+        report = report_builder.report()
+
+        self.assertReportEqual(expected_report, report)

@@ -1,13 +1,16 @@
 import argparse
 from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
-                 Attribute, BinOp, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
+                 Attribute, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
                  Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
                  Tuple, Yield)
 from contextlib import contextmanager
 from copy import deepcopy
+import __future__
 import imp
+from inspect import currentframe
+
 import sys
 import traceback
 import types
@@ -63,6 +66,7 @@ OPERATOR_CHARS = {Add: '+',
                   BitOr: '|'}
 
 
+# noinspection PyPep8Naming
 class Tracer(NodeTransformer):
 
     def _set_statement_line_numbers(self,
@@ -92,31 +96,6 @@ class Tracer(NodeTransformer):
                 statements = []
             self._set_statement_line_numbers(statements, previous_line_number)
         return new_node
-
-    def _trace_print_function(self, existing_node):
-        starargs = getattr(existing_node, 'starargs', None)
-        values = []
-        formats = []
-        for a in existing_node.args:
-            if Starred is not None and isinstance(a, Starred):
-                # noinspection PyUnresolvedReferences
-                starargs = a.value
-            else:
-                values.append(a)
-                formats.append('%r')
-        if starargs is not None:
-            values.append(starargs)
-            formats.append('*%r')
-        for keyword in existing_node.keywords:
-            values.append(keyword.value)
-            formats.append('{}=%r'.format(keyword.arg))
-        message_format = 'print(' + ', '.join(formats) + ') '
-        return self._create_bare_context_call('add_message',
-                                              [BinOp(left=Str(message_format),
-                                                     op=Mod(),
-                                                     right=Tuple(elts=values,
-                                                                 ctx=Load())),
-                                               Num(existing_node.lineno)])
 
     @staticmethod
     def _get_attribute_names(attribute_node):
@@ -232,8 +211,6 @@ class Tracer(NodeTransformer):
 
         if self._is_untraceable_attribute(func_node):
             return existing_node
-        if isinstance(func_node, Name) and func_node.id == 'print':
-            return self._trace_print_function(existing_node)
 
         comparisons = []  # [(name, node)]
         names = self._get_attribute_names(func_node)
@@ -279,17 +256,6 @@ class Tracer(NodeTransformer):
                 target.value = self._create_bare_context_call('record_delete',
                                                               args)
         return existing_node
-
-    def visit_Print(self, node):
-        existing_node = self.generic_visit(node)
-        values = existing_node.values
-        message_format = 'print' + ','.join([' %r']*len(values)) + ' '
-        return self._create_context_call('add_message',
-                                         [BinOp(left=Str(message_format),
-                                                op=Mod(),
-                                                right=Tuple(elts=values,
-                                                            ctx=Load())),
-                                          Num(existing_node.lineno)])
 
     def _is_untraceable_attribute(self, node):
         if isinstance(node, Attribute):
@@ -597,7 +563,7 @@ class Tracer(NodeTransformer):
         try:
             todo = list(todo)
         except TypeError:
-            # todo wasn't iterable, treat it as a single item
+            # wasn't iterable, treat it as a single item
             trace = self._trace_assignment(targets)
             if trace:
                 new_nodes.append(trace)
@@ -742,18 +708,20 @@ class TracedModuleFinder(object):
         new_mod.__dict__.update(self.environment)
         self.environment = new_mod.__dict__
 
-        with swallow_output():
-            exec(self.traced_code, self.environment)
+        exec(self.traced_code, self.environment)
         return new_mod
 
 
 @contextmanager
-def swallow_output():
+def swallow_output(report_builder):
     old_stdout = sys.stdout
     old_stderr = sys.stderr
     try:
-        sys.stdout = FileSwallower(old_stdout)
-        sys.stderr = FileSwallower(old_stderr)
+        sys.stdout = FileSwallower(old_stdout, PSEUDO_FILENAME, report_builder)
+        sys.stderr = FileSwallower(old_stderr,
+                                   PSEUDO_FILENAME,
+                                   report_builder,
+                                   is_stderr=True)
         yield
     finally:
         sys.stdout = old_stdout
@@ -767,6 +735,7 @@ class CodeTracer(object):
         self.keepalive = False
         MockTurtle.monkey_patch(canvas)
         self.environment = {}
+        self.return_code = None
 
     def run_python_module(self, modulename):
         """Run a python module, as though with ``python -m name args...``.
@@ -944,7 +913,6 @@ class CodeTracer(object):
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()
             is_reported = False
-            messages = traceback.format_exception_only(etype, value)
             entries = traceback.extract_tb(tb)
             for filename, _, _, _ in entries:
                 if filename == PSEUDO_FILENAME:
@@ -1012,10 +980,11 @@ class CodeTracer(object):
                                            is_own_driver)
         sys.meta_path.insert(0, module_finder)
         if is_own_driver:
-            import_module(SCOPE_NAME)
+            with swallow_output(builder):
+                import_module(SCOPE_NAME)
         else:
             start_count = builder.message_count
-            with swallow_output():
+            with swallow_output(builder):
                 try:
                     if not is_module:
                         self.run_python_file(driver[0])
@@ -1042,16 +1011,37 @@ class CodeTracer(object):
 
 
 class FileSwallower(object):
-    def __init__(self, target, check_buffer=True):
+    def __init__(self,
+                 target,
+                 source_file=None,
+                 report_builder=None,
+                 check_buffer=True,
+                 is_stderr=False):
         self.target = target
         self.last_line = None
+        self.source_file = source_file
+        self.report_builder = report_builder
+        self.is_stderr = is_stderr
         if check_buffer:
             buffer = getattr(target, 'buffer', None)
             if buffer is not None:
                 self.buffer = FileSwallower(buffer, check_buffer=False)
 
-    def write(self, *args, **kwargs):
+    def write(self, *args, **_):
         text = args and str(args[0]) or ''
+        if self.report_builder is not None:
+            frame = currentframe()
+            while frame is not None:
+                if frame.f_code.co_filename == self.source_file:
+                    has_print_function = (
+                        sys.version_info >= (3, 0) or
+                        __future__.print_function in frame.f_globals.values())
+                    self.report_builder.add_output(text,
+                                                   frame.f_lineno,
+                                                   has_print_function,
+                                                   is_stderr=self.is_stderr)
+                    break
+                frame = frame.f_back
         lines = text.strip().splitlines()
         if lines:
             self.last_line = lines[-1]
@@ -1132,6 +1122,7 @@ def main():
     print(code_report)
     if tracer.return_code:
         exit(tracer.return_code)
+
 
 if __name__ == '__main__':
     main()

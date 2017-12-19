@@ -8,7 +8,8 @@ class ReportTestCase(unittest.TestCase):
         super(ReportTestCase, self).setUp()
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
-    def trimReport(self, report):
+    @staticmethod
+    def trimReport(report):
         lines = report.splitlines()
         trimmed_lines = [line.rstrip() for line in lines]
         return '\n'.join(trimmed_lines) + '\n'
@@ -150,13 +151,13 @@ x = 5
 
         # EXEC
         builder = ReportBuilder()
-        f = lambda x: builder.report_lambda(min_line, max_line, x, x+1)
-        y = f(23)
+        y = list(map(lambda x: builder.report_lambda(min_line, max_line, x, x+1),
+                     [23]))
         report = builder.report()
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
-        self.assertEqual(24, y)
+        self.assertEqual([24], y)
 
     def test_lambda_multiple_params(self):
         # SETUP
@@ -165,13 +166,14 @@ x = 5
 
         # EXEC
         builder = ReportBuilder()
-        f = lambda x, y: builder.report_lambda(min_line, max_line, x, y, x+y)
-        z = f('a', 'b')
+        z = list(map(lambda x, y: builder.report_lambda(min_line, max_line, x, y, x+y),
+                     ['a'],
+                     ['b']))
         report = builder.report()
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
-        self.assertEqual('ab', z)
+        self.assertEqual(['ab'], z)
 
     def test_lambda_multiple_calls(self):
         # SETUP
@@ -180,9 +182,9 @@ x = 5
 
         # EXEC
         builder = ReportBuilder()
-        f = lambda x, y: builder.report_lambda(min_line, max_line, x, y, x+y)
-        f('a', 'b')
-        f(1, 2)
+        list(map(lambda x, y: builder.report_lambda(min_line, max_line, x, y, x+y),
+                 ['a', 1],
+                 ['b', 2]))
         report = builder.report()
 
         # VERIFY
@@ -217,7 +219,7 @@ b = 20
 
         # EXEC
         builder = ReportBuilder(message_limit=2)
-        frame = builder.start_frame(1, 5)
+        builder.start_frame(1, 5)
         builder.start_block(1, 3)
         builder.start_block(1, 3)
         report = builder.report()
@@ -526,6 +528,76 @@ RuntimeError: a b
         # VERIFY
         self.assertEqual(0, builder.message_count)
         self.assertEqual(2, builder.count_all_messages())
+
+    def test_output(self):
+        # SETUP
+        expected_report = """\
+print('a')
+"""
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.add_output('a\n', 1)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, builder.report())
+
+    def test_multiple_outputs(self):
+        # SETUP
+        expected_report = """\
+print('a\\nb')
+"""
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.add_output('a\n', 1)
+        builder.add_output('b\n', 1)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, builder.report())
+
+    def test_multiple_outputs_different_lines(self):
+        # SETUP
+        expected_report = """\
+print('a')
+
+print('b')
+"""
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.add_output('a\n', 1)
+        builder.add_output('b\n', 3)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, builder.report())
+
+    def test_output_without_newline(self):
+        # SETUP
+        expected_report = """\
+sys.stdout.write('a')
+"""
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.add_output('a', 1)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, builder.report())
+
+    def test_output_stderr(self):
+        # SETUP
+        expected_report = """\
+sys.stderr.write('a\\n')
+"""
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.add_output('a\n', 1, is_stderr=True)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, builder.report())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,4 +1,6 @@
 import re
+
+import os
 import sys
 import traceback
 
@@ -16,6 +18,10 @@ class ReportBuilder(object):
         self.max_width = None
         self.frame_width = 0
         self.is_muted = False
+        self.current_output = ''
+        self.current_output_line = None
+        self.current_output_is_stderr = False
+        self.has_print_function = True
 
     def start_block(self, first_line, last_line):
         """ Cap all the lines from first_line to last_line inclusive with
@@ -98,10 +104,35 @@ class ReportBuilder(object):
             return
         if '\n' in message:
             message = re.sub(r'\s+', ' ', message)
+        self.check_output()
         self._check_line_count(line_number)
         new_width = len(self.messages[line_number - 1]) + len(message)
         self._update_frame_width(new_width, line_number)
         self.messages[line_number - 1] += message
+
+    def check_output(self):
+        if self.current_output:
+            if self.current_output_is_stderr:
+                template = 'sys.stderr.write({!r})'
+            elif self.current_output.endswith(os.linesep):
+                self.current_output = self.current_output[:-len(os.linesep)]
+                template = 'print({!r})' if self.has_print_function else 'print {!r}'
+            else:
+                template = 'sys.stdout.write({!r})'
+            print_message = template.format(self.current_output)
+            self.current_output = ''
+            print_line = self.current_output_line
+            self.current_output_line = None
+            self.add_message(print_message, print_line)
+
+    def add_output(self, text, line_number, has_print_function=True, is_stderr=False):
+        if (line_number != self.current_output_line or
+                is_stderr != self.current_output_is_stderr):
+            self.check_output()
+        self.current_output += text
+        self.current_output_line = line_number
+        self.current_output_is_stderr = is_stderr
+        self.has_print_function = has_print_function
 
     def add_extra_message(self, message, line_number):
         """ Add an extra message to the last frame after the code has finished
@@ -228,6 +259,7 @@ class ReportBuilder(object):
         return DeletionTarget(name, target, line_number, self)
 
     def report(self, total_lines=0):
+        self.check_output()
         self.max_width = None
         self.message_limit = None
         for frame in self.history:

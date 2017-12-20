@@ -1119,6 +1119,31 @@ print('x')
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_print_in_function(self):
+        # SETUP
+        code = """\
+from __future__ import print_function
+def main():
+    s = 'Hello, World!'
+    print(s)
+
+main()
+"""
+        expected_report = """\
+
+
+s = 'Hello, World!'
+print('Hello, World!')
+
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     @patch('sys.stdout')
     def test_stdout(self, mock_stdout):
         # SETUP
@@ -1905,7 +1930,6 @@ s = '__live_coding__'
 class FileSwallowerTest(ReportTestCase):
     def test_temp_file(self):
         expected_contents = 'before\nafter\n'
-        expected_last_line = 'line 2'
 
         with TemporaryFile('w+') as real_file:
             real_file.write('before\n')
@@ -1917,10 +1941,8 @@ class FileSwallowerTest(ReportTestCase):
             real_file.write('after\n')
             real_file.seek(0)
             real_contents = real_file.read()
-        last_line = swallower.last_line
 
         self.assertEqual(expected_contents, real_contents)
-        self.assertEqual(expected_last_line, last_line)
 
     def test_buffer(self):
         expected_contents = 'before\nafter\n'
@@ -1940,11 +1962,18 @@ class FileSwallowerTest(ReportTestCase):
         self.assertEqual(expected_contents, real_contents)
 
     def test_report(self):
+        source = """\
+import example_printing
+__live_coding_context__ = globals()['report_builder']  # variable name is important!
+example_printing.custom_print('42', 'xyz')
+"""
         expected_report_python2 = """\
+
 
 print '42xyz'
 """
         expected_report_python3 = """\
+
 
 print('42xyz')
 """
@@ -1952,13 +1981,11 @@ print('42xyz')
                            if version_info.major >= 3
                            else expected_report_python2)
         report_builder = ReportBuilder()
-        example_source = example_printing.__file__
-        if example_source.endswith('.pyc'):
-            example_source = example_source[:-1]
-        swallower = FileSwallower(sys.stdout, example_source, report_builder)
+        environment = dict(report_builder=report_builder)
+        swallower = FileSwallower(sys.stdout)
 
         with patch('sys.stdout', swallower):
-            example_printing.custom_print('42', 'xyz')
+            exec(source, environment, environment)
         report = report_builder.report()
 
         self.assertReportEqual(expected_report, report)

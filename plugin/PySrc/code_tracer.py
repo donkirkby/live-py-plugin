@@ -713,15 +713,12 @@ class TracedModuleFinder(object):
 
 
 @contextmanager
-def swallow_output(report_builder):
+def swallow_output():
     old_stdout = sys.stdout
     old_stderr = sys.stderr
     try:
-        sys.stdout = FileSwallower(old_stdout, PSEUDO_FILENAME, report_builder)
-        sys.stderr = FileSwallower(old_stderr,
-                                   PSEUDO_FILENAME,
-                                   report_builder,
-                                   is_stderr=True)
+        sys.stdout = FileSwallower(old_stdout)
+        sys.stderr = FileSwallower(old_stderr, is_stderr=True)
         yield
     finally:
         sys.stdout = old_stdout
@@ -980,11 +977,11 @@ class CodeTracer(object):
                                            is_own_driver)
         sys.meta_path.insert(0, module_finder)
         if is_own_driver:
-            with swallow_output(builder):
+            with swallow_output():
                 import_module(SCOPE_NAME)
         else:
             start_count = builder.message_count
-            with swallow_output(builder):
+            with swallow_output():
                 try:
                     if not is_module:
                         self.run_python_file(driver[0])
@@ -1013,14 +1010,9 @@ class CodeTracer(object):
 class FileSwallower(object):
     def __init__(self,
                  target,
-                 source_file=None,
-                 report_builder=None,
                  check_buffer=True,
                  is_stderr=False):
         self.target = target
-        self.last_line = None
-        self.source_file = source_file
-        self.report_builder = report_builder
         self.is_stderr = is_stderr
         if check_buffer:
             buffer = getattr(target, 'buffer', None)
@@ -1029,22 +1021,19 @@ class FileSwallower(object):
 
     def write(self, *args, **_):
         text = args and str(args[0]) or ''
-        if self.report_builder is not None:
-            frame = currentframe()
-            while frame is not None:
-                if frame.f_code.co_filename == self.source_file:
-                    has_print_function = (
-                        sys.version_info >= (3, 0) or
-                        __future__.print_function in frame.f_globals.values())
-                    self.report_builder.add_output(text,
-                                                   frame.f_lineno,
-                                                   has_print_function,
-                                                   is_stderr=self.is_stderr)
-                    break
-                frame = frame.f_back
-        lines = text.strip().splitlines()
-        if lines:
-            self.last_line = lines[-1]
+        frame = currentframe()
+        while frame is not None:
+            report_builder = frame.f_locals.get(CONTEXT_NAME)
+            if report_builder is not None:
+                has_print_function = (
+                    sys.version_info >= (3, 0) or
+                    __future__.print_function in frame.f_globals.values())
+                report_builder.add_output(text,
+                                          frame.f_lineno,
+                                          has_print_function,
+                                          is_stderr=self.is_stderr)
+                break
+            frame = frame.f_back
 
     def __getattr__(self, name):
         return getattr(self.target, name)

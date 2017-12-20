@@ -269,6 +269,7 @@ class ReportBuilder(object):
         self.max_width = None
         self.message_limit = None
         for frame in self.history:
+            frame.check_output()
             first_line, last_line = frame.stack_block
             self.start_block(first_line, last_line)
             for i in range(len(frame.messages)):

@@ -328,6 +328,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         }
     }
 
+    boolean isAnalysisPassing() {
+        return myAnalyst.isPassing();
+    }
+
     void startTurtle(@Nullable Project project, @NotNull DataContext dataContext) {
         if (myAnalyst.start(project, dataContext)){
             triggerLayoutChange(SplitEditorLayout.TURTLE);
@@ -376,6 +380,11 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 splitLayout,
                 myMainEditor.getState(level),
                 mySecondEditor.getState(level));
+    }
+
+    @NotNull
+    SplitEditorLayout getLayout() {
+        return mySplitEditorLayout;
     }
 
     @Override

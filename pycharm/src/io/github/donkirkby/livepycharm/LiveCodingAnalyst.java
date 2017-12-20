@@ -58,6 +58,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private Alarm alarm = new Alarm();
     private ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
     private CanvasPainter canvasPainter;
+    private boolean isPassing;
 
     LiveCodingAnalyst(VirtualFile mainFile,
                       Document displayDocument,
@@ -75,6 +76,10 @@ public class LiveCodingAnalyst implements DocumentListener {
 
     Document getDisplayDocument() {
         return displayDocument;
+    }
+
+    boolean isPassing() {
+        return isPassing;
     }
 
     /**
@@ -202,6 +207,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                         processHandler.runProcessWithProgressIndicator(progressIndicator);
                 display = processOutput.getStdout();
                 String stderr = processOutput.getStderr();
+                isPassing = processOutput.getExitCode() == 0;
                 if (stderr.length() > 0) {
                     log.error(stderr);
                 }

@@ -1,18 +1,38 @@
 package io.github.donkirkby.livepycharm;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
+import icons.LivePythonIcons;
 
-public class StartAction extends AnAction {
+import javax.swing.*;
+
+public class StartAction extends LayoutAction {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-        Editor editor = e.getData(LangDataKeys.EDITOR);
-
-        SplitFileEditor splitFileEditor = SplitFileEditor.getSplitFileEditor(editor);
+        SplitFileEditor splitFileEditor = getEditor(e);
         if (splitFileEditor == null) {
             return;
         }
         splitFileEditor.startAnalysis(e.getProject(), e.getDataContext());
+    }
+
+    @Override
+    SplitFileEditor.SplitEditorLayout getActiveLayout() {
+        return SplitFileEditor.SplitEditorLayout.DISPLAY;
+    }
+
+    @Override
+    Icon getDefaultIcon() {
+        return LivePythonIcons.MEDIA_PLAY;
+    }
+
+    @Override
+    Icon getPassingIcon() {
+        return LivePythonIcons.MEDIA_PLAY_GREEN;
+    }
+
+    @Override
+    Icon getFailingIcon() {
+        return LivePythonIcons.MEDIA_PLAY_RED;
     }
 }

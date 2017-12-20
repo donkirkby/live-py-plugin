@@ -1,20 +1,38 @@
 package io.github.donkirkby.livepycharm;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.editor.Editor;
+import icons.LivePythonIcons;
 
-public class TurtleAction extends AnAction {
+import javax.swing.*;
+
+public class TurtleAction extends LayoutAction {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-        Editor editor = e.getData(LangDataKeys.EDITOR);
-
-        SplitFileEditor splitFileEditor = SplitFileEditor.getSplitFileEditor(editor);
+        SplitFileEditor splitFileEditor = getEditor(e);
         if (splitFileEditor == null) {
             return;
         }
         splitFileEditor.startTurtle(e.getProject(), e.getDataContext());
+    }
+
+    @Override
+    SplitFileEditor.SplitEditorLayout getActiveLayout() {
+        return SplitFileEditor.SplitEditorLayout.TURTLE;
+    }
+
+    @Override
+    Icon getDefaultIcon() {
+        return LivePythonIcons.TURTLE;
+    }
+
+    @Override
+    Icon getPassingIcon() {
+        return LivePythonIcons.TURTLE_GREEN;
+    }
+
+    @Override
+    Icon getFailingIcon() {
+        return LivePythonIcons.TURTLE_RED;
     }
 }

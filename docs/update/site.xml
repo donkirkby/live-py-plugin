@@ -30,5 +30,8 @@
    <feature url="features/live_py_feature_2.19.0.201711091952.jar" id="live_py_feature" version="2.19.0.201711091952">
       <category name="devtools"/>
    </feature>
+   <feature url="features/live_py_feature_2.20.0.201712202254.jar" id="live_py_feature" version="2.20.0.201712202254">
+      <category name="devtools"/>
+   </feature>
    <category-def name="devtools" label="Developer Tools"/>
 </site>

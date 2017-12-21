@@ -6,8 +6,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 
 public class CanvasReader {
-	@SuppressWarnings("FieldCanBeLocal")
-	private boolean DEBUG = false;
+	private static final boolean DEBUG = false;
 	private BufferedReader inputReader;
 	private String nextLine;
 

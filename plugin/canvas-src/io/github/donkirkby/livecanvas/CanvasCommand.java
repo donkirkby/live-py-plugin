@@ -58,7 +58,7 @@ public class CanvasCommand {
 	public int getCoordinate(int index) {
 		return coordinates.get(index);
 	}
-	int[] getAllCoordinates() {
+	public int[] getAllCoordinates() {
 		int[] copy = new int[coordinates.size()];
 		Iterator<Integer> itr = coordinates.iterator();
 		for (int i = 0; i < copy.length; i++) {

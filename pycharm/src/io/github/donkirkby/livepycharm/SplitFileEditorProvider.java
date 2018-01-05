@@ -111,16 +111,6 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                                         mainScroll.getVerticalScrollOffset());
                                 updateDisplayFolding(mainEditor, displayEditor);
                             });
-                    displayEditor.getScrollingModel().addVisibleAreaListener(
-                            e -> {
-                                ScrollingModel displayScroll =
-                                        displayEditor.getScrollingModel();
-                                ScrollingModel mainScroll =
-                                        mainEditor.getScrollingModel();
-                                mainScroll.scrollVertically(
-                                        displayScroll.getVerticalScrollOffset());
-                            }
-                    );
 
                     if (displayDocument != null) {
                         displayDocument.addDocumentListener(new DocumentListener() {

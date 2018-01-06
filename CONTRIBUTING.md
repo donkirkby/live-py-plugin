@@ -80,7 +80,7 @@ IntelliJ [IDEA], and follow the [plugin development guidelines][idea-dev].
 
 ### Creating an Install Package for the PyCharm plugin ###
 1. Check that all of the Python unit tests pass, by running tox.
-2. Update the version number in `pycharm/resources/META-INF/plugin.xml`
+2. Update the version number and change notes in `pycharm/resources/META-INF/plugin.xml`
 3. Right-click the plugin module in the Project view and select Prepare Plugin
     Module 'livepy' For Deployment in the context menu.
 4. Install the new plugin jar into your IntelliJ or PyCharm. Sometimes it

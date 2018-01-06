@@ -5,8 +5,8 @@
     <vendor url="http://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
-      Lets you run your Python code as you type it.
-      Still in pre-release, thanks for testing.
+      Lets you run your Python code as you type it. Displays variable values
+      or turtle graphics.
     ]]></description>
 
     <change-notes><![CDATA[

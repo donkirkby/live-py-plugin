@@ -15,6 +15,6 @@ PyCharm will notice the link to the goal file and display both versions of the
 plot. When the user makes the starting version match the goal version, they
 will merge into one.
 
-If you have an idea for a lesson, you can describe it in an issue, or you can
-create a pull request with the two files. You can copy `example_lesson.py` and
-`example_goal.py` as a starting point.
+If you have an idea for a lesson, you can describe it in a comment on issue
+#177, or you can create a pull request adding two lesson files to this directory.
+You can copy `example_lesson.py` and `example_goal.py` as a starting point.

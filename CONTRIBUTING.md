@@ -116,6 +116,35 @@ buffer.
 Run the commands listed in `.travis.yml` in the section "script:" manually
 to check for compiler warnings and test regressions.
 
+## Adding Support For a New Editor ##
+
+If you want to use live coding with a new editor, you can add basic support
+with two features:
+
+First, launch a process like this:
+
+    python plugin/PySrc/code_tracer.py
+
+Then pass the source code from the editor as the standard input for that
+process, and capture the standard output.
+
+Second, display that standard output beside the source code, and keep the two
+windows synchronized as they scroll up and down.
+
+If you use your editor's plug-in system to package that up with the four files
+in the `PySrc` folder, then you're ready to publish your first release.
+
+To add more features, look at the options by running:
+
+    python plugin/PySrc/code_tracer.py -h
+
+The canvas commands are for turtle graphics: `bgcolor`, `create_line`,
+`create_polygon`, and `create_text`. Look at `SplitFileEditor.TurtleCanvas`
+in the `pycharm` project for an example.
+
+The driver command and arguments let you use another script or unit tests to
+call the live coding file.
+
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [g+]: http://google.com/+donkirkby
 [pde]: https://eclipse.org/pde/

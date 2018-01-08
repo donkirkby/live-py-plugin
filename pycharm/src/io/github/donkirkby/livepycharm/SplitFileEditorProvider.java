@@ -74,6 +74,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
         return new Builder() {
             private Editor mainEditor;
             private Editor displayEditor;
+            private boolean isSynchronizingPositions;
 
             @Override
             public FileEditor build() {
@@ -103,14 +104,44 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 if (mainEditor != null && displayEditor != null) {
                     mainEditor.getScrollingModel().addVisibleAreaListener(
                             e -> {
-                                ScrollingModel mainScroll =
-                                        mainEditor.getScrollingModel();
-                                ScrollingModel displayScroll =
-                                        displayEditor.getScrollingModel();
-                                displayScroll.scrollVertically(
-                                        mainScroll.getVerticalScrollOffset());
-                                updateDisplayFolding(mainEditor, displayEditor);
+                                if (isSynchronizingPositions) {
+                                    return;
+                                }
+                                isSynchronizingPositions = true;
+                                try {
+                                    ScrollingModel mainScroll =
+                                            mainEditor.getScrollingModel();
+                                    ScrollingModel displayScroll =
+                                            displayEditor.getScrollingModel();
+                                    int scrollOffset = mainScroll.getVerticalScrollOffset();
+                                    displayScroll.scrollVertically(
+                                            scrollOffset);
+                                    updateDisplayFolding(mainEditor, displayEditor);
+                                }
+                                finally {
+                                    isSynchronizingPositions = false;
+                                }
                             });
+                    displayEditor.getScrollingModel().addVisibleAreaListener(
+                            e -> {
+                                if (isSynchronizingPositions) {
+                                    return;
+                                }
+                                isSynchronizingPositions = true;
+                                try {
+                                    ScrollingModel displayScroll =
+                                            displayEditor.getScrollingModel();
+                                    ScrollingModel mainScroll =
+                                            mainEditor.getScrollingModel();
+                                    int scrollOffset = displayScroll.getVerticalScrollOffset();
+                                    mainScroll.scrollVertically(
+                                            scrollOffset);
+                                }
+                                finally {
+                                    isSynchronizingPositions = false;
+                                }
+                            }
+                    );
 
                     if (displayDocument != null) {
                         displayDocument.addDocumentListener(new DocumentListener() {

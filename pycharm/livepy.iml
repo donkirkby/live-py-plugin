@@ -17,6 +17,7 @@
       <sourceFolder url="file://$MODULE_DIR$/../plugin/canvas-src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../test/canvas-src" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/../.tox" />
+      <excludeFolder url="file://$MODULE_DIR$/../docs" />
       <excludeFolder url="file://$MODULE_DIR$/../feature" />
     </content>
     <orderEntry type="inheritedJdk" />

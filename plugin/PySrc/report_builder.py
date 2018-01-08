@@ -31,6 +31,7 @@ class ReportBuilder(object):
         """
 
         self._check_line_count(last_line)
+        self.check_output()
         line_indexes = range(first_line-1, last_line)
         max_width = 0
         all_end_in_pipes = True
@@ -115,12 +116,12 @@ class ReportBuilder(object):
     def check_output(self):
         if self.current_output:
             if self.current_output_is_stderr:
-                template = 'sys.stderr.write({!r})'
+                template = 'sys.stderr.write({!r}) '
             elif self.current_output.endswith(os.linesep):
                 self.current_output = self.current_output[:-len(os.linesep)]
-                template = 'print({!r})' if self.has_print_function else 'print {!r}'
+                template = 'print({!r}) ' if self.has_print_function else 'print {!r} '
             else:
-                template = 'sys.stdout.write({!r})'
+                template = 'sys.stdout.write({!r}) '
             print_message = template.format(self.current_output)
             self.current_output = ''
             print_line = self.current_output_line

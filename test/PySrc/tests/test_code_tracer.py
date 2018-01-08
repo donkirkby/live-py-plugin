@@ -6,7 +6,6 @@ from unittest import skipIf
 from mock import patch
 
 from code_tracer import CodeTracer, FileSwallower
-import example_printing
 from mock_turtle import MockTurtle
 from report_builder import ReportBuilder
 from test_report_builder import ReportTestCase
@@ -1135,6 +1134,26 @@ main()
 s = 'Hello, World!'
 print('Hello, World!')
 
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_print_in_loop(self):
+        # SETUP
+        code = """\
+from __future__ import print_function
+for i in range(3): 
+    print(i)      
+"""
+        expected_report = """\
+
+i = 0      | i = 1      | i = 2
+print('0') | print('1') | print('2')
 """
         tracer = CodeTracer()
 

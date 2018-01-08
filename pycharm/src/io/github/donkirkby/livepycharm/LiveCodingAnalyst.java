@@ -127,11 +127,17 @@ public class LiveCodingAnalyst implements DocumentListener {
             if (paramsGroup == null) {
                 return;
             }
-            String workingDir = commandLine.getWorkDirectory().getAbsolutePath();
             String driverPath = paramsGroup.getParametersList().get(0);
-            environment1.put(
-                    "PYTHONPATH",
-                    pythonPath.getAbsolutePath() + ":" + new File(driverPath).getParent());
+            String oldPythonPath = environment1.get("PYTHONPATH");
+            String newPythonPath;
+            if (oldPythonPath == null || oldPythonPath.length() == 0) {
+                newPythonPath = pythonPath.getAbsolutePath();
+            }
+            else {
+                newPythonPath = pythonPath.getAbsolutePath() +
+                        File.pathSeparator + oldPythonPath;
+            }
+            environment1.put("PYTHONPATH", newPythonPath);
             String modulePath = mainFile.getCanonicalPath();
             if (modulePath == null) {
                 modulePath = mainFile.getPath();
@@ -142,7 +148,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             paramsGroup.addParameterAt(i++, "-m");
             paramsGroup.addParameterAt(i++, "code_tracer");
             String moduleName = hasDriver
-                    ? getModuleName(new File(mainFile.getPath()), workingDir)
+                    ? getModuleName(new File(mainFile.getPath()), oldPythonPath)
                     : "__live_coding__";
             paramsGroup.addParameterAt(i++, "--filename");
             paramsGroup.addParameterAt(i++, modulePath);
@@ -286,11 +292,17 @@ public class LiveCodingAnalyst implements DocumentListener {
     private String getModuleName(
             File file,
             String pythonPath) {
-        Path pythonPath2 = Paths.get(pythonPath);
-        Path filePath2 = file.toPath();
-        Path filePath = pythonPath2.relativize(filePath2);
+        String[] paths = pythonPath.split(File.pathSeparator);
+        Path absolutePath = file.toPath();
+        Path shortestPath = absolutePath;
+        for (String path : paths) {
+            Path filePath = Paths.get(path).relativize(absolutePath);
+            if (filePath.getNameCount() < shortestPath.getNameCount()) {
+                shortestPath = filePath;
+            }
+        }
         StringBuilder moduleName = new StringBuilder();
-        for (java.nio.file.Path component : filePath) {
+        for (java.nio.file.Path component : shortestPath) {
             if (moduleName.length() > 0) {
                 moduleName.append(".");
             }

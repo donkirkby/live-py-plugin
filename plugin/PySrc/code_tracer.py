@@ -390,6 +390,7 @@ class Tracer(NodeTransformer):
                              self._create_context_call('start_block', args))
         return new_node
 
+    # noinspection PyTypeChecker
     def visit_FunctionDef(self, node):
         """ Instrument a function definition by creating a new report builder
         for this stack frame and putting it in a local variable. The local
@@ -443,18 +444,20 @@ class Tracer(NodeTransformer):
             new_node.body.append(
                 self._trace_assignment(new_node.args.kwarg, node.lineno))
 
-        handler_body = [self._create_context_call('exception'),
-                        Raise()]
-        new_node.body.append(
-            TryExcept(body=try_body,
-                      handlers=[ExceptHandler(body=handler_body)],
-                      orelse=[],
-                      finalbody=[]))
-        self._set_statement_line_numbers(try_body, first_line_number)
-        self._set_statement_line_numbers(handler_body, last_line_number)
+        if try_body:
+            handler_body = [self._create_context_call('exception'),
+                            Raise()]
+            new_node.body.append(
+                TryExcept(body=try_body,
+                          handlers=[ExceptHandler(body=handler_body)],
+                          orelse=[],
+                          finalbody=[]))
+            self._set_statement_line_numbers(try_body, first_line_number)
+            self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
 
-    def _is_module_header(self, statement):
+    @staticmethod
+    def _is_module_header(statement):
         if isinstance(statement, ImportFrom):
             return statement.module == '__future__'
         if isinstance(statement, Expr):

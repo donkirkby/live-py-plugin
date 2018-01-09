@@ -389,6 +389,27 @@ n = None """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_empty_function(self):
+        # SETUP
+        code = '''\
+def foo(x):
+    """ No function body, just a docstring. """
+
+n = foo(10)
+'''
+        expected_report = """\
+x = 10
+
+
+n = None """
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_return_subscript(self):
         # SETUP
         code = """\

@@ -123,7 +123,11 @@ public class LiveCodingAnalyst implements DocumentListener {
         commandLinePatcher = commandLine -> {
             Map<String, String> environment1 = commandLine.getEnvironment();
             ParamsGroup paramsGroup = commandLine.getParametersList().getParamsGroup(
-                    PythonCommandLineState.GROUP_SCRIPT);
+                    PythonCommandLineState.GROUP_MODULE);
+            if (paramsGroup == null || paramsGroup.getParameters().isEmpty()) {
+                paramsGroup = commandLine.getParametersList().getParamsGroup(
+                        PythonCommandLineState.GROUP_SCRIPT);
+            }
             if (paramsGroup == null) {
                 return;
             }

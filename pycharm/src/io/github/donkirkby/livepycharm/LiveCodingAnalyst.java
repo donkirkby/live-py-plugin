@@ -135,6 +135,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             String oldPythonPath = environment1.get("PYTHONPATH");
             String newPythonPath;
             if (oldPythonPath == null || oldPythonPath.length() == 0) {
+                oldPythonPath = "";
                 newPythonPath = pythonPath.getAbsolutePath();
             }
             else {

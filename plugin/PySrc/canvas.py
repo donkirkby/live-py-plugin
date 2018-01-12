@@ -12,7 +12,8 @@ class Canvas(object):
         method_names = ('create_line',
                         'create_rectangle',
                         'create_polygon',
-                        'create_text')
+                        'create_text',
+                        'create_image')
         for method_name in method_names:
             self.__dict__[method_name] = make_call(method_name)
 

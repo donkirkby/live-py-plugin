@@ -22,11 +22,15 @@ import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.*;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,6 +137,20 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 maxWidth = Math.max(maxWidth, width);
             }
             return new Dimension(maxWidth, height);
+        }
+
+        private void drawImage(Graphics graphics, CanvasCommand command) {
+            byte[] decoded =
+                    Base64.getDecoder().decode(command.getOption("image"));
+            BufferedImage image;
+            try {
+                try (ByteArrayInputStream inputStream = new ByteArrayInputStream(decoded)) {
+                    image = ImageIO.read(inputStream);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            graphics.drawImage(image, 140, 120, null);
         }
 
         private void drawText(Graphics graphics, CanvasCommand command) {
@@ -247,6 +265,9 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                         break;
                     case "create_text":
                         drawText(gc, command);
+                        break;
+                    case "create_image":
+                        drawImage(gc, command);
                         break;
                 }
                 graphics.setColor(oldColor);

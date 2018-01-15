@@ -3,20 +3,20 @@ import unittest
 from report_builder import ReportBuilder
 
 
+def trim_report(report):
+    lines = report.splitlines()
+    trimmed_lines = [line.rstrip() for line in lines]
+    return '\n'.join(trimmed_lines) + '\n'
+
+
 class ReportTestCase(unittest.TestCase):
     def setUp(self):
         super(ReportTestCase, self).setUp()
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
-    @staticmethod
-    def trimReport(report):
-        lines = report.splitlines()
-        trimmed_lines = [line.rstrip() for line in lines]
-        return '\n'.join(trimmed_lines) + '\n'
-
     def assertReportEqual(self, expected_report, report):
-        self.assertEqual(self.trimReport(expected_report),
-                         self.trimReport(report))
+        self.assertEqual(trim_report(expected_report),
+                         trim_report(report))
 
 
 class ReportBuilderTest(ReportTestCase):

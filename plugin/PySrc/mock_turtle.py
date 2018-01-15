@@ -1,16 +1,17 @@
 from collections import namedtuple
+# noinspection PyDeprecation
 import imp
+import importlib
 import sys
 
 from canvas import Canvas
 
+if sys.version_info.major >= 3:
+    tkinter_name = 'tkinter'
+else:
+    tkinter_name = 'Tkinter'
 try:
-    if sys.version_info.major >= 3:
-        tkinter_name = 'tkinter'
-        import tkinter as tk
-    else:
-        tkinter_name = 'Tkinter'
-        import Tkinter as tk
+    tk = importlib.import_module(tkinter_name)
 except ImportError:
     tk = sys.modules[tkinter_name] = imp.new_module(tkinter_name)
     tk.Frame = tk.Canvas = tk.Tk = object
@@ -71,6 +72,10 @@ class MockTurtle(TNavigator, TPen):
     @classmethod
     def get_all_reports(cls):
         return MockTurtle._pen.report
+
+    @classmethod
+    def display_image(cls, x, y, image):
+        MockTurtle._screen.cv.create_image(x, y, image=image)
 
     def __init__(self, x=0, y=0, heading=0, canvas=None):
         self._path = None
@@ -235,7 +240,7 @@ class MockTurtle(TNavigator, TPen):
             return color_map.get(color.lower(), color)
         try:
             r, g, b = color
-        except:
+        except ValueError:
             return '#000000'
         r, g, b = [round(255.0*x) for x in (r, g, b)]
         if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
@@ -254,6 +259,7 @@ class MockTurtle(TNavigator, TPen):
             if code == colorstr:
                 return name
         return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
+
 
 # Normally, Tkinter will look up these colour names for you, but we don't
 # actually launch Tkinter when we're analysing code.

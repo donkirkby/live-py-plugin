@@ -5,17 +5,24 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
                  Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
                  Tuple, Yield)
+from base64 import standard_b64encode
 from contextlib import contextmanager
 from copy import deepcopy
 import __future__
-import imp
 from inspect import currentframe
+# noinspection PyUnresolvedReferences
+from io import BytesIO
 
 import sys
 import traceback
 import types
 import os
 from importlib import import_module
+
+# Switch to importlib.util.module_from_spec() once support for 2.7 and 3.4 are
+# removed.
+# noinspection PyDeprecation
+import imp
 try:
     builtins = import_module('__builtin__')
 except ImportError:
@@ -668,7 +675,9 @@ class LineNumberCleaner(NodeTransformer):
         return self.generic_visit(node)
 
 
-class TracedModuleFinder(object):
+class TracedModuleImporter(object):
+    is_desperate = False
+
     def __init__(self,
                  module_name,
                  traced_code,
@@ -695,12 +704,27 @@ class TracedModuleFinder(object):
         if (fullname == self.module_name or
                 (fullname == SCOPE_NAME and self.is_own_driver)):
             return self
+        if fullname not in ('matplotlib', 'matplotlib.pyplot'):
+            return None
+        is_after = False
+        for finder in sys.meta_path:
+            if not is_after:
+                is_after = finder is self
+                continue
+            loader = finder.find_module(fullname, path)
+            if loader is not None:
+                return PatchedMatplotlibLoader(fullname, loader)
+        if sys.version_info < (3, 0) and not TracedModuleImporter.is_desperate:
+            # Didn't find anyone to load the module, get desperate.
+            TracedModuleImporter.is_desperate = True
+            return PatchedMatplotlibLoader(fullname, None)
 
     def load_module(self, fullname):
         if '.' in self.module_name:
             package_name, child_name = self.module_name.rsplit('.', 1)
         else:
             package_name = None
+        # noinspection PyDeprecation
         new_mod = imp.new_module(fullname)
         sys.modules[fullname] = new_mod
         new_mod.__builtins__ = builtins
@@ -713,6 +737,36 @@ class TracedModuleFinder(object):
 
         exec(self.traced_code, self.environment)
         return new_mod
+
+
+class PatchedMatplotlibLoader(object):
+    def __init__(self, fullname, main_loader):
+        self.fullname = fullname
+        self.main_loader = main_loader
+        self.plt = None
+
+    def load_module(self, fullname):
+        if self.main_loader is not None:
+            module = self.main_loader.load_module(fullname)
+        else:
+            module = import_module(fullname)
+            TracedModuleImporter.is_desperate = False
+        if fullname == 'matplotlib':
+            module.use('Agg')
+        elif fullname == 'matplotlib.pyplot':
+            self.plt = module
+            module.show = self.mock_show
+        return module
+
+    def mock_show(self, *args, **kwargs):
+        data = BytesIO()
+        self.plt.savefig(data, format='PNG')
+
+        image = data.getvalue()
+        encoded = standard_b64encode(image)
+        image_text = encoded.decode('UTF-8')
+        MockTurtle.display_image(0, 0, image=image_text)
+
 
 
 @contextmanager
@@ -757,6 +811,7 @@ class CodeTracer(object):
             else:
                 packagename, name = None, modulename
                 searchpath = None  # "top-level search" in imp.find_module()
+            # noinspection PyDeprecation
             openfile, pathname, _ = imp.find_module(name, searchpath)
 
             # If `modulename` is actually a package, not a mere module,
@@ -767,6 +822,7 @@ class CodeTracer(object):
                 name = '__main__'
                 package = __import__(packagename, glo, loc, ['__path__'])
                 searchpath = package.__path__
+                # noinspection PyDeprecation
                 openfile, pathname, _ = imp.find_module(name, searchpath)
         finally:
             if openfile:
@@ -783,6 +839,7 @@ class CodeTracer(object):
         """
         # Create a module to serve as __main__
         old_main_mod = sys.modules['__main__']
+        # noinspection PyDeprecation
         main_mod = imp.new_module('__main__')
         sys.modules['__main__'] = main_mod
         main_mod.__file__ = filename
@@ -799,7 +856,8 @@ class CodeTracer(object):
             # Restore the old __main__
             sys.modules['__main__'] = old_main_mod
 
-    def make_code_from_py(self, filename):
+    @staticmethod
+    def make_code_from_py(filename):
         """Get source from `filename` and make a code object of it."""
         with open(filename, 'rU') as f:
             source = f.read()
@@ -808,16 +866,16 @@ class CodeTracer(object):
 
         return code
 
-    def split_lines(self, messages):
+    @staticmethod
+    def split_lines(messages):
         for message in messages:
             for line in message.splitlines():
                 yield line
 
     def trace_turtle(self, source):
-        exec(source, self.environment, self.environment)
+        self.trace_code(source)
 
         return '\n'.join(MockTurtle.get_all_reports())
-
 
     def report_driver_result(self, builder, messages):
         messages = list(self.split_lines(messages))
@@ -890,7 +948,7 @@ class CodeTracer(object):
                     if target in sys.modules:
                         del sys.modules[target]
                 for i in reversed(range(len(sys.meta_path))):
-                    if isinstance(sys.meta_path[i], TracedModuleFinder):
+                    if isinstance(sys.meta_path[i], TracedModuleImporter):
                         sys.meta_path.pop(i)
 
             for value in self.environment.values():
@@ -973,12 +1031,12 @@ class CodeTracer(object):
         is_own_driver = ((is_module and driver and driver[0] == load_as) or
                          load_as == SCOPE_NAME)
         seed(0)
-        module_finder = TracedModuleFinder(load_as,
-                                           code,
-                                           self.environment,
-                                           filename,
-                                           is_own_driver)
-        sys.meta_path.insert(0, module_finder)
+        module_importer = TracedModuleImporter(load_as,
+                                               code,
+                                               self.environment,
+                                               filename,
+                                               is_own_driver)
+        sys.meta_path.insert(0, module_importer)
         if is_own_driver:
             with swallow_output():
                 import_module(SCOPE_NAME)
@@ -1007,7 +1065,7 @@ class CodeTracer(object):
                                          " Try a different driver.".format(driver_name,
                                                                            load_as))
                 self.report_driver_result(builder, [message])
-        self.environment = module_finder.environment
+        self.environment = module_importer.environment
 
 
 class FileSwallower(object):

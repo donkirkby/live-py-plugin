@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -150,7 +152,11 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            graphics.drawImage(image, 140, 120, null);
+            graphics.drawImage(
+                    image,
+                    command.getCoordinate(0),
+                    command.getCoordinate(1),
+                    null);
         }
 
         private void drawText(Graphics graphics, CanvasCommand command) {
@@ -204,10 +210,17 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 command.setOption("font", "('Arial', 12, 'normal')");
                 command.setOption(
                         "text",
-                        "No turtle commands found.\n" +
-                        "For example:\n" +
+                        "No turtle or matplotlib commands found.\n" +
+                        "A turtle example:\n" +
+                        "\n" +
                         "from turtle import *\n" +
-                        "forward(100)");
+                        "forward(100)\n" +
+                        "\n" +
+                        "A matplotlib example:\n" +
+                        "\n" +
+                        "import matplotlib.pyplot as plt\n" +
+                        "plt.plot([3, 1, 4])\n" +
+                        "plt.show()");
                 drawText(graphics, command);
                 return;
             }
@@ -326,6 +339,14 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         displayCards.add(mySecondEditor.getComponent(), SplitEditorLayout.DISPLAY.toString());
         displayCards.add(turtleCanvas, SplitEditorLayout.TURTLE.toString());
         splitter.setSecondComponent(displayCards);
+
+        turtleCanvas.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent componentEvent) {
+                super.componentResized(componentEvent);
+                myAnalyst.schedule();
+            }
+        });
 
         final JPanel result = new JPanel(new BorderLayout());
         result.add(splitter, BorderLayout.CENTER);

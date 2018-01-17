@@ -758,15 +758,29 @@ class PatchedMatplotlibLoader(object):
             module.show = self.mock_show
         return module
 
-    def mock_show(self, *args, **kwargs):
+    def mock_show(self, *_args, **_kwargs):
+        figure = self.plt.gcf()
+        # noinspection PyProtectedMember
+        turtle_screen = MockTurtle._screen
+        screen_width = turtle_screen.cv.cget('width')
+        screen_height = turtle_screen.cv.cget('height')
+        figure_width = figure.get_figwidth()*figure.dpi
+        figure_height = figure.get_figheight()*figure.dpi
+        if figure_width < screen_width:
+            x = (screen_width - figure_width) // 2
+        else:
+            x = 0
+        if figure_height < screen_height:
+            y = (screen_height - figure_height) // 2
+        else:
+            y = 0
         data = BytesIO()
         self.plt.savefig(data, format='PNG')
 
         image = data.getvalue()
         encoded = standard_b64encode(image)
         image_text = encoded.decode('UTF-8')
-        MockTurtle.display_image(0, 0, image=image_text)
-
+        MockTurtle.display_image(x, y, image=image_text)
 
 
 @contextmanager

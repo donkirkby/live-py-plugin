@@ -169,12 +169,19 @@ public class LiveCodingAnalyst implements DocumentListener {
             paramsGroup.addParameterAt(i, moduleName);
         };
         isRunning = true;
+        schedule();
+        return true;
+    }
+
+    public void schedule() {
+        if ( ! isRunning) {
+            return;
+        }
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
         Document document = documentManager.getDocument(mainFile);
         if (document != null) {
             schedule(document);
         }
-        return true;
     }
 
     private String buildBadDriverMessage(

@@ -1001,6 +1001,144 @@ s = "Dog('Fido')"
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_repr_return(self):
+        # SETUP
+        code = """\
+class Foo:
+    def __init__(self, x):
+        self.x = x
+
+    def __repr__(self):
+        return 'Foo({!r})'.format(self.x)
+
+def bar(x):
+    return Foo(x)
+
+y = bar(23)
+"""
+        expected_report = """\
+
+x = 23
+self.x = 23
+
+
+
+
+x = 23
+return Foo(23)
+
+y = Foo(23)
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_repr_yield(self):
+        # SETUP
+        code = """\
+class Foo:
+    def __init__(self, x):
+        self.x = x
+
+    def __repr__(self):
+        return 'Foo({!r})'.format(self.x)
+
+def bar(x):
+    yield Foo(x)
+
+y = list(bar(23))
+"""
+        expected_report = """\
+
+x = 23
+self.x = 23
+
+
+
+
+x = 23
+yield Foo(23)
+
+y = [Foo(23)]
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_repr_yield_tuple(self):
+        # SETUP
+        code = """\
+class Foo:
+    def __init__(self, x):
+        self.x = x
+
+    def __repr__(self):
+        return 'Foo({!r})'.format(self.x)
+
+def bar(x):
+    yield x, Foo(x)
+
+y = list(bar(23))
+"""
+        expected_report = """\
+
+x = 23
+self.x = 23
+
+
+
+
+x = 23
+yield 23, Foo(23)
+
+y = [(23, Foo(23))]
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_repr_lambda(self):
+        # SETUP
+        code = """\
+class Foo:
+    def __init__(self, x):
+        self.x = x
+
+    def __repr__(self):
+        return 'Foo({!r})'.format(self.x)
+
+y = list(map(lambda n: Foo(n), range(2)))
+"""
+        expected_report = """\
+
+x = 0      | x = 1
+self.x = 0 | self.x = 1
+
+
+
+
+(0 => Foo(0)) | (1 => Foo(1)) y = [Foo(0), Foo(1)] 
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_module_name(self):
         # SETUP
         code = """\

@@ -418,7 +418,7 @@ def get_foo(x):
 class FooTest(TestCase):
     def test_get_foo(self):
         y = get_foo(10)
-        self.assertEqual(15, y)
+        self.fail(y)
 """
         expected_report = """\
 ---------------- |
@@ -429,7 +429,7 @@ SystemExit: True |
 
 
 y = 510
-AssertionError: 15 != 510
+AssertionError: 510
 """
         if sys.version_info < (3, 0):
             expected_report = expected_report.replace('(failures=1)',

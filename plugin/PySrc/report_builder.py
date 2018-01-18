@@ -211,10 +211,10 @@ class ReportBuilder(object):
         :param last_line: range for the block markers
         :param args: parameter values, followed by the result.
         """
-        params = ', '.join(repr(arg) for arg in args[:-1])
+        params = ', '.join(self.get_repr(arg) for arg in args[:-1])
         result = args[-1]
         self.start_block(first_line, last_line)
-        self.add_message('({} => {!r}) '.format(params, result), first_line)
+        self.add_message('({} => {}) '.format(params, self.get_repr(result)), first_line)
         return result
 
     def exception(self):
@@ -233,14 +233,14 @@ class ReportBuilder(object):
                 self.max_width = old_width
 
     def return_value(self, value, line_number):
-        self.add_message('return %s ' % repr(value), line_number)
+        self.add_message('return %s ' % self.get_repr(value), line_number)
         return value
 
     def yield_value(self, value, line_number):
         if isinstance(value, tuple):
-            display = ', '.join([repr(item) for item in value])
+            display = ', '.join([self.get_repr(item) for item in value])
         else:
-            display = repr(value)
+            display = self.get_repr(value)
         self.add_message('yield %s ' % display, line_number)
         return value
 

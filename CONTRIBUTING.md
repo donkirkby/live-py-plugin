@@ -138,9 +138,9 @@ To add more features, look at the options by running:
 
     python plugin/PySrc/code_tracer.py -h
 
-The canvas commands are for turtle graphics: `bgcolor`, `create_line`,
-`create_polygon`, and `create_text`. Look at `SplitFileEditor.TurtleCanvas`
-in the `pycharm` project for an example.
+The canvas commands are for turtle graphics and matplotlib: `bgcolor`,
+`create_line`, `create_polygon`, `create_text`, and `create_image`. Look at
+`SplitFileEditor.TurtleCanvas` in the `pycharm` project for an example.
 
 The driver command and arguments let you use another script or unit tests to
 call the live coding file.

@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LiveCodingAnalyst implements DocumentListener {
     public interface CanvasPainter {
@@ -49,6 +51,9 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
+    private static final Pattern GOAL_PATTERN =
+            Pattern.compile(":lesson goal file:\\s*(\\S*)");
+    private static final String CANVAS_START = String.format("start_canvas%n");
     private final VirtualFile mainFile;
     private final Document displayDocument;
     private boolean isRunning;
@@ -58,6 +63,8 @@ public class LiveCodingAnalyst implements DocumentListener {
     private Alarm alarm = new Alarm();
     private ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
     private CanvasPainter canvasPainter;
+    private String goalFile;
+    private CanvasCommand goalImageCommand;
     private boolean isPassing;
 
     LiveCodingAnalyst(VirtualFile mainFile,
@@ -150,6 +157,8 @@ public class LiveCodingAnalyst implements DocumentListener {
             boolean hasDriver = ! driverPath.equals(modulePath);
             int i = 0;
             Rectangle bounds = canvasPainter.getBounds();
+            boolean hasGoal = goalFile != null;
+            int canvasHeight = hasGoal ? bounds.height / 2 : bounds.height;
             paramsGroup.addParameterAt(i++, "-m");
             paramsGroup.addParameterAt(i++, "code_tracer");
             String moduleName = hasDriver
@@ -164,7 +173,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             paramsGroup.addParameterAt(i++, "--width");
             paramsGroup.addParameterAt(i++, Integer.toString(bounds.width));
             paramsGroup.addParameterAt(i++, "--height");
-            paramsGroup.addParameterAt(i++, Integer.toString(bounds.height));
+            paramsGroup.addParameterAt(i++, Integer.toString(canvasHeight));
             paramsGroup.addParameterAt(i++, "-"); // source code from stdin
             paramsGroup.addParameterAt(i, moduleName);
         };
@@ -218,21 +227,9 @@ public class LiveCodingAnalyst implements DocumentListener {
         progressIndicator.start();
         try {
             String sourceCode = document.getText();
-            String display = null;
-            try {
-                CapturingProcessHandler processHandler = startProcess(sourceCode);
-                ProcessOutput processOutput =
-                        processHandler.runProcessWithProgressIndicator(progressIndicator);
-                display = processOutput.getStdout();
-                String stderr = processOutput.getStderr();
-                isPassing = processOutput.getExitCode() == 0;
-                if (stderr.length() > 0) {
-                    log.error(stderr);
-                }
-            } catch (ExecutionException | IOException ex) {
-                log.error("Report failed.", ex);
-            }
-            if (display == null || progressIndicator.isCanceled()) {
+            checkGoalFile(sourceCode);
+            String display = getDisplay(sourceCode);
+            if (progressIndicator.isCanceled()) {
                 return;
             }
             final String finalDisplay = display;
@@ -240,6 +237,82 @@ public class LiveCodingAnalyst implements DocumentListener {
         } finally {
             progressIndicator.stop();
         }
+    }
+
+    private void checkGoalFile(String sourceCode) {
+        Matcher matcher = GOAL_PATTERN.matcher(sourceCode);
+        String newGoalFile = matcher.find()
+                ? matcher.group(1)
+                : null;
+        if (Objects.equals(newGoalFile, goalFile)) {
+            return;
+        }
+        if (newGoalFile == null) {
+            goalImageCommand = null;
+            goalFile = null;
+            return;
+        }
+        VirtualFile goalPath = mainFile.getParent().findFileByRelativePath(newGoalFile);
+        if (goalPath == null) {
+            log.error("Unable to load goal file " + newGoalFile);
+            goalImageCommand = null;
+            goalFile = newGoalFile;
+            return;
+        }
+        StringWriter goalSource = new StringWriter();
+        PrintWriter goalSourcePrinter = new PrintWriter(goalSource);
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    goalPath.getInputStream()));
+            String line;
+            while (null != (line = reader.readLine())) {
+                goalSourcePrinter.println(line);
+            }
+        } catch (IOException e) {
+            log.error(e);
+            return;
+        }
+        String goalDisplay = getDisplay(goalSource.toString());
+        if (goalDisplay.startsWith(CANVAS_START)) {
+            BufferedReader reader =
+                    new BufferedReader(new StringReader(goalDisplay));
+            try {
+                reader.readLine();  // Skip first line.
+                CanvasReader canvasReader = new CanvasReader(reader);
+                ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
+                for (CanvasCommand command : canvasCommands) {
+                    if (command.getName().equals("create_image")) {
+                        goalImageCommand = command;
+                        goalFile = newGoalFile;
+                        return;
+                    }
+                }
+            } catch (IOException e) {
+                log.error(e);
+                return;
+            }
+        }
+        goalImageCommand = null;
+        goalFile = newGoalFile;
+    }
+
+    @NotNull
+    private String getDisplay(String sourceCode) {
+        String display = "";
+        try {
+            CapturingProcessHandler processHandler = startProcess(sourceCode);
+            ProcessOutput processOutput =
+                    processHandler.runProcessWithProgressIndicator(progressIndicator);
+            display = processOutput.getStdout();
+            String stderr = processOutput.getStderr();
+            isPassing = processOutput.getExitCode() == 0;
+            if (stderr.length() > 0) {
+                log.error(stderr);
+            }
+        } catch (ExecutionException | IOException ex) {
+            log.error("Report failed.", ex);
+        }
+        return display;
     }
 
     private void schedule(Document document) {
@@ -251,8 +324,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     private void displayResult(String display) {
-        String canvasStart = String.format("start_canvas%n");
-        if ( ! display.startsWith(canvasStart)) {
+        if ( ! display.startsWith(CANVAS_START)) {
             canvasPainter.setCommands(null);
         }
         else {
@@ -260,7 +332,32 @@ public class LiveCodingAnalyst implements DocumentListener {
             try {
                 reader.readLine();  // Skip first line.
                 CanvasReader canvasReader = new CanvasReader(reader);
-                canvasPainter.setCommands(canvasReader.readCommands());
+                ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
+                if (goalImageCommand != null) {
+                    boolean isSolved = false;
+                    for (CanvasCommand command : canvasCommands) {
+                        if (command.getName().equals("create_image") &&
+                                command.getOption("image").equals(
+                                        goalImageCommand.getOption("image"))) {
+                            isSolved = true;
+                            break;
+                        }
+                    }
+                    Rectangle canvasBounds = canvasPainter.getBounds();
+                    if (isSolved) {
+                        CanvasCommand message = new CanvasCommand();
+                        message.setName("create_text");
+                        message.setOption("text", "Solved!");
+                        message.setOption("font", "('Arial', 16, 'normal')");
+                        message.addCoordinate(canvasBounds.width/2);
+                        message.addCoordinate(canvasBounds.height*3/4);
+                        canvasCommands.add(message);
+                    } else {
+                        goalImageCommand.setCoordinate(1, canvasBounds.height/2);
+                        canvasCommands.add(goalImageCommand);
+                    }
+                }
+                canvasPainter.setCommands(canvasCommands);
 
                 StringWriter writer = new StringWriter();
                 PrintWriter printer = new PrintWriter(writer);

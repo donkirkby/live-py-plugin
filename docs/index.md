@@ -1,6 +1,6 @@
 ---
 title: Live Coding in Python
-subtitle: An Eclipse Plug In and an Emacs Mode
+subtitle: Plug ins for PyCharm, Emacs, and Eclipse
 ---
 To see how to use it, watch the [demo video][video] or read the 
 [getting started page][starting]. You might also find some useful examples in

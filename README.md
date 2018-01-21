@@ -4,7 +4,7 @@ live-py-plugin
 [![Build Status]][travis]
 [![Code Coverage]][codecov]
 
-Live coding in Python implemented as an Eclipse plugin or an Emacs minor mode.
+Live coding in Python with PyCharm, Emacs, or Eclipse.
 
 [Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
 [travis]: https://travis-ci.org/live-py-plugin

@@ -1,6 +1,6 @@
 ---
-title: Live Coding in Python
-subtitle: An Eclipse Plug In and an Emacs Mode
+title: Getting Started with Live Coding
+subtitle: Plug ins for PyCharm, Emacs, and Eclipse
 ---
 I've built a tool that lets you run your Python code as you type it. For
 example, this code draws a 50x50 pixel square.

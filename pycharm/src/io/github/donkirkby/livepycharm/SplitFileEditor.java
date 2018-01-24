@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.util.ui.UIUtil;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -49,7 +52,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     @NotNull
     private final JComponent myComponent;
     @NotNull
-    private final JPanel turtleCanvas;
+    private final TurtleCanvas turtleCanvas;
     @NotNull
     private SplitEditorLayout mySplitEditorLayout = SplitEditorLayout.SINGLE;
     private LiveCodingAnalyst myAnalyst;
@@ -69,7 +72,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 file,
                 displayDocument,
                 this,
-                (LiveCodingAnalyst.CanvasPainter) turtleCanvas);
+                turtleCanvas);
 
         myComponent = createComponent();
 
@@ -85,6 +88,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             extends JPanel
             implements LiveCodingAnalyst.CanvasPainter {
         private List<CanvasCommand> canvasCommands;
+        private boolean isComparing;
 
         @Override
         public void setCommands(List<CanvasCommand> commands) {
@@ -142,6 +146,15 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         }
 
         private void drawImage(Graphics graphics, CanvasCommand command) {
+            BufferedImage image = readImage(command);
+            graphics.drawImage(
+                    image,
+                    command.getCoordinate(0),
+                    command.getCoordinate(1),
+                    null);
+        }
+
+        private BufferedImage readImage(CanvasCommand command) {
             byte[] decoded =
                     Base64.getDecoder().decode(command.getOption("image"));
             BufferedImage image;
@@ -152,11 +165,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            graphics.drawImage(
-                    image,
-                    command.getCoordinate(0),
-                    command.getCoordinate(1),
-                    null);
+            return image;
         }
 
         private void drawText(Graphics graphics, CanvasCommand command) {
@@ -224,6 +233,9 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 drawText(graphics, command);
                 return;
             }
+            if (isComparing() && paintComparison(graphics)) {
+                return;
+            }
             for (CanvasCommand command : canvasCommands) {
                 String method = command.getName();
                 String fill = command.getOption("fill");
@@ -249,7 +261,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     gc.setStroke(newStroke);
                 }
                 switch (method) {
-                    case "bgcolor":
+                    case CanvasCommand.BACKGROUND_COLOR:
                         graphics.setColor(newBackground);
                         graphics.fillRect(
                                 bounds.x,
@@ -257,14 +269,14 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                                 bounds.width,
                                 bounds.height);
                         break;
-                    case "create_line":
+                    case CanvasCommand.CREATE_LINE:
                         graphics.drawLine(
                                 command.getCoordinate(0),
                                 command.getCoordinate(1),
                                 command.getCoordinate(2),
                                 command.getCoordinate(3));
                         break;
-                    case "create_polygon":
+                    case CanvasCommand.CREATE_POLYGON:
                         int[] xCoordinates = command.getXCoordinates();
                         int[] yCoordinates = command.getYCoordinates();
 
@@ -276,16 +288,72 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                                     xCoordinates.length);
                         }
                         break;
-                    case "create_text":
+                    case CanvasCommand.CREATE_TEXT:
                         drawText(gc, command);
                         break;
-                    case "create_image":
+                    case CanvasCommand.CREATE_IMAGE:
                         drawImage(gc, command);
                         break;
                 }
                 graphics.setColor(oldColor);
                 gc.setStroke(oldStroke);
             }
+        }
+
+        private boolean paintComparison(Graphics graphics) {
+            BufferedImage currentImage = null;
+            BufferedImage targetImage = null;
+            int currentX = 0;
+            int currentY = 0;
+            int targetY = 0;
+            for (CanvasCommand command : canvasCommands) {
+                if (CanvasCommand.CREATE_IMAGE.equals(command.getName())) {
+                    if (currentImage == null) {
+                        currentImage = readImage(command);
+                        currentX = command.getCoordinate(0);
+                        currentY = command.getCoordinate(1);
+                    } else {
+                        targetImage = readImage(command);
+                        targetY = command.getCoordinate(1);
+                    }
+                }
+            }
+            if (targetImage == null) {
+                return false;
+            }
+            int width = currentImage.getWidth() > targetImage.getWidth()
+                    ? currentImage.getWidth()
+                    : targetImage.getWidth();
+            int height = currentImage.getHeight() > targetImage.getHeight()
+                    ? currentImage.getHeight()
+                    : targetImage.getHeight();
+            BufferedImage diffImage = UIUtil.createImage(
+                    width,
+                    height,
+                    BufferedImage.TYPE_INT_RGB);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    int currentRGB =
+                        (x < currentImage.getWidth() && y < currentImage.getHeight())
+                        ? currentImage.getRGB(x, y)
+                        : 0;
+                    int targetRGB =
+                        (x < targetImage.getWidth() && y < targetImage.getHeight())
+                        ? targetImage.getRGB(x, y)
+                        : 0;
+                    int diffRGB = currentRGB < targetRGB
+                        ? targetRGB - currentRGB
+                        : currentRGB - targetRGB;
+                    diffImage.setRGB(x, y, diffRGB);
+                }
+            }
+
+            graphics.drawImage(
+                    diffImage,
+                    currentX,
+                    (currentY + targetY) / 2,
+                    null);
+            return true;
         }
 
         private Font getFontOption(CanvasCommand command) {
@@ -302,6 +370,14 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             }
             return new Font(fontOptions.getName(), style, fontOptions.getSize()*4/3 - 1);
 
+        }
+
+        boolean isComparing() {
+            return isComparing;
+        }
+
+        public void setComparing(boolean comparing) {
+            isComparing = comparing;
         }
     }
 
@@ -345,6 +421,21 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             public void componentResized(ComponentEvent componentEvent) {
                 super.componentResized(componentEvent);
                 myAnalyst.schedule();
+            }
+        });
+        turtleCanvas.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent mouseEvent) {
+                super.mouseEntered(mouseEvent);
+                turtleCanvas.setComparing(true);
+                turtleCanvas.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent mouseEvent) {
+                super.mouseExited(mouseEvent);
+                turtleCanvas.setComparing(false);
+                turtleCanvas.repaint();
             }
         });
 

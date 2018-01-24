@@ -7,23 +7,29 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CanvasCommand {
+	public static final String BACKGROUND_COLOR = "bgcolor";
+	public static final String CREATE_LINE = "create_line";
+	public static final String CREATE_POLYGON = "create_polygon";
+	public static final String CREATE_TEXT = "create_text";
+	public static final String CREATE_IMAGE = "create_image";
+
 	private String name;
 	private ArrayList<Integer> coordinates =
 			new ArrayList<>();
 	private	Hashtable<String, String> options =
 			new Hashtable<>();
-	
+
 	public static class FontOptions {
 		private String name;
 		private int size;
 		private String[] styleNames;
-		
+
 		FontOptions(String name, int size, String[] styleNames) {
 			this.name = name;
 			this.size = size;
 			this.styleNames = styleNames;
 		}
-		
+
 		public String getName() {
 			return name;
 		}
@@ -41,11 +47,11 @@ public class CanvasCommand {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public String getOption(String name) {
 		return options.get(name);
 	}
-	
+
 	public void setOption(String name, String value) {
 		options.put(name, value);
 	}

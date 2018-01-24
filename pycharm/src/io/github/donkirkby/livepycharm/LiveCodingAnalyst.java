@@ -281,7 +281,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                 CanvasReader canvasReader = new CanvasReader(reader);
                 ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
                 for (CanvasCommand command : canvasCommands) {
-                    if (command.getName().equals("create_image")) {
+                    if (command.getName().equals(CanvasCommand.CREATE_IMAGE)) {
                         goalImageCommand = command;
                         goalFile = newGoalFile;
                         return;
@@ -336,7 +336,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                 if (goalImageCommand != null) {
                     boolean isSolved = false;
                     for (CanvasCommand command : canvasCommands) {
-                        if (command.getName().equals("create_image") &&
+                        if (command.getName().equals(CanvasCommand.CREATE_IMAGE) &&
                                 command.getOption("image").equals(
                                         goalImageCommand.getOption("image"))) {
                             isSolved = true;
@@ -346,7 +346,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                     Rectangle canvasBounds = canvasPainter.getBounds();
                     if (isSolved) {
                         CanvasCommand message = new CanvasCommand();
-                        message.setName("create_text");
+                        message.setName(CanvasCommand.CREATE_TEXT);
                         message.setOption("text", "Solved!");
                         message.setOption("font", "('Arial', 16, 'normal')");
                         message.addCoordinate(canvasBounds.width/2);

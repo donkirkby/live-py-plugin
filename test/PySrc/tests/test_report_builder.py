@@ -198,7 +198,7 @@ b = 20
 """
 
         # EXEC
-        builder = ReportBuilder(message_limit=2)
+        builder = ReportBuilder(message_limit=4)
         builder.assign('a', 10, 1)
         builder.assign('b', 20, 2)
         with self.assertRaisesRegex(RuntimeError, r'message limit exceeded'):

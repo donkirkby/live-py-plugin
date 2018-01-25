@@ -898,11 +898,11 @@ class CodeTracer(object):
         message_width = 1
         for lineno, message in enumerate(messages, 2):
             message_width = max(len(message), message_width)
-            builder.add_message(message, lineno)
-        
+            builder.add_message(message, lineno, None)
+
         header = '-' * message_width + ' '
-        builder.add_message(header, 1)
-        builder.add_message(header, block_size)
+        builder.add_message(header, 1, None)
+        builder.add_message(header, block_size, None)
         builder.start_block(1, block_size)
 
     def trace_code(self,
@@ -914,7 +914,7 @@ class CodeTracer(object):
                    filename=None,
                    bad_driver=None):
         """ Trace a module of source code, possibly by running a driver script.
-        
+
         :param str source: the source code to trace
         :param str load_as: the module name to load the source code as
         :param bool is_module: True if the driver is a module name instead of a
@@ -980,7 +980,7 @@ class CodeTracer(object):
                 message = '{} line {}: {}'.format(ex.filename,
                                                   ex.lineno,
                                                   message)
-            builder.add_message(message, line_number)
+            builder.add_message(message, line_number, None)
         except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()

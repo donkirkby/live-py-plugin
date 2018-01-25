@@ -100,13 +100,18 @@ class ReportBuilder(object):
             raise RuntimeError('live coding message limit exceeded')
         self.message_count += 1
 
-    def add_message(self, message, line_number):
+    def add_message(self, message, line_number, max_width=80):
         """ Add a message to the report on line line_number (1-based). """
         self._increment_message_count()
         if self.is_muted:
             return
         if '\n' in message:
             message = re.sub(r'\s+', ' ', message)
+        if max_width is not None and len(message) > max_width:
+            half_width = max_width//2
+            full_width = half_width*2
+            message = "{}[{} chars]{}".format(message[:half_width], len(message)-full_width, message[-half_width:]);
+
         self.check_output()
         self._check_line_count(line_number)
         new_width = len(self.messages[line_number - 1]) + len(message)

@@ -117,8 +117,8 @@ class ReportBuilder(object):
         if self.current_output:
             if self.current_output_is_stderr:
                 template = 'sys.stderr.write({!r}) '
-            elif self.current_output.endswith(os.linesep):
-                self.current_output = self.current_output[:-len(os.linesep)]
+            elif self.current_output.endswith('\n'):
+                self.current_output = self.current_output[:-1]
                 template = 'print({!r}) ' if self.has_print_function else 'print {!r} '
             else:
                 template = 'sys.stdout.write({!r}) '

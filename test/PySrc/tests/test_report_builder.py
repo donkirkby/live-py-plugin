@@ -198,7 +198,7 @@ b = 20
 """
 
         # EXEC
-        builder = ReportBuilder(message_limit=2)
+        builder = ReportBuilder(message_limit=4)
         builder.assign('a', 10, 1)
         builder.assign('b', 20, 2)
         with self.assertRaisesRegex(RuntimeError, r'message limit exceeded'):
@@ -358,7 +358,7 @@ b = 'xyz' """
     def test_multiple_messages(self):
         # SETUP
         expected_report = """\
-x = 1 y = 2 """
+x = 1 | y = 2 """
 
         # EXEC
         builder = ReportBuilder()
@@ -594,6 +594,18 @@ sys.stderr.write('a\\n')
         # EXEC
         builder = ReportBuilder()
         builder.add_output('a\n', 1, is_stderr=True)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, builder.report())
+
+    def test_format_stderr(self):
+        # SETUP
+        expected_report = "sys.stderr.write('abc') | x = None"
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.add_output('abc', 1, is_stderr=True)
+        builder.assign(name='x', value=None, line_number=1)
 
         # VERIFY
         self.assertReportEqual(expected_report, builder.report())

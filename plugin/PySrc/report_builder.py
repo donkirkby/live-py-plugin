@@ -206,6 +206,7 @@ class ReportBuilder(object):
             display = None
         self.is_muted = was_muted
         self.message_count = start_count
+        self.start_block(line_number, line_number)
         if display is not None and not display.endswith('>'):
             self.add_message(display + ' ', line_number)
 

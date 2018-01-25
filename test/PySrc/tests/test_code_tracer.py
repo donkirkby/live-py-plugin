@@ -79,7 +79,7 @@ for a,b in [(1,2)]:
     c = a + b
 """
         expected_report = """\
-a = 1 b = 2
+a = 1 | b = 2
 c = 3
 """
         tracer = CodeTracer()
@@ -679,7 +679,7 @@ n = 0
       |       |
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
         tracer = CodeTracer()
-        tracer.message_limit = 4
+        tracer.message_limit = 8
 
         # EXEC
         report = tracer.trace_code(code)
@@ -1129,7 +1129,7 @@ self.x = 0 | self.x = 1
 
 
 
-(0 => Foo(0)) | (1 => Foo(1)) y = [Foo(0), Foo(1)]
+(0 => Foo(0)) | (1 => Foo(1)) | y = [Foo(0), Foo(1)] 
 """
         tracer = CodeTracer()
 

@@ -45,6 +45,12 @@ class MockTurtle(TNavigator, TPen):
                 return bgcolor
             self._config['bgcolor'] = color
 
+        def tracer(self, a=None, b=None):
+            pass
+
+        def update(self):
+            pass
+
     _Stamp = namedtuple('Stamp', 'pos heading color')
     _screen = _pen = OriginalTurtle = original_mainloop = None
     instances = []

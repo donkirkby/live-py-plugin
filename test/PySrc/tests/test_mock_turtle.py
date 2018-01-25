@@ -740,3 +740,13 @@ create_line
 
         # VERIFY
         self.assertFalse(hasattr(t, 'bogus'))
+
+    def test_screen_methods_exist(self):
+        # SETUP
+        screen_methods = ['tracer', 'update']
+        t = MockTurtle()
+
+        # EXEC
+
+        # VERIFY
+        self.assertTrue(all([hasattr(t.screen, attribute) for attribute in screen_methods]))

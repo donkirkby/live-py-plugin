@@ -333,17 +333,20 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     BufferedImage.TYPE_INT_RGB);
             for (int x = 0; x < width; x++) {
                 for (int y = 0; y < height; y++) {
-                    int currentRGB =
-                        (x < currentImage.getWidth() && y < currentImage.getHeight())
-                        ? currentImage.getRGB(x, y)
-                        : 0;
-                    int targetRGB =
-                        (x < targetImage.getWidth() && y < targetImage.getHeight())
-                        ? targetImage.getRGB(x, y)
-                        : 0;
-                    int diffRGB = currentRGB < targetRGB
-                        ? targetRGB - currentRGB
-                        : currentRGB - targetRGB;
+                    int currentRGB = getRGB(currentImage, x, y);
+                    int targetRGB = getRGB(targetImage, x, y);
+                    int diff = 0;
+                    for (int byteNum = 0; byteNum < 3; byteNum++) {
+                        int currentByte = currentRGB % 256;
+                        int targetByte = targetRGB % 256;
+                        diff += currentByte < targetByte
+                                ? targetByte - currentByte
+                                : currentByte - targetByte;
+                        currentRGB >>= 8;
+                        targetRGB >>= 8;
+                    }
+                    diff /= 3;  // Average diff of the three channels.
+                    int diffRGB = (((diff << 8) + diff) << 8) + diff;
                     diffImage.setRGB(x, y, diffRGB);
                 }
             }
@@ -354,6 +357,15 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     (currentY + targetY) / 2,
                     null);
             return true;
+        }
+
+        private int getRGB(BufferedImage currentImage, int x, int y) {
+            if (x >= currentImage.getWidth() || y >= currentImage.getHeight()) {
+                return 0;
+            }
+            int rgb = currentImage.getRGB(x, y);
+            rgb &= (1 << 24) - 1;
+            return rgb;
         }
 
         private Font getFontOption(CanvasCommand command) {

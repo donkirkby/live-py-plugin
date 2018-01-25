@@ -1129,7 +1129,7 @@ self.x = 0 | self.x = 1
 
 
 
-(0 => Foo(0)) | (1 => Foo(1)) y = [Foo(0), Foo(1)] 
+(0 => Foo(0)) | (1 => Foo(1)) y = [Foo(0), Foo(1)]
 """
         tracer = CodeTracer()
 
@@ -1306,8 +1306,8 @@ print('Hello, World!')
         # SETUP
         code = """\
 from __future__ import print_function
-for i in range(3): 
-    print(i)      
+for i in range(3):
+    print(i)
 """
         expected_report = """\
 
@@ -1452,7 +1452,7 @@ e = list(c)
 """
         expected_report = """\
 
-d = (0, 3) 
+d = (0, 3)
 e = []
 """
         tracer = CodeTracer()
@@ -2166,4 +2166,14 @@ print('42xyz')
             exec(source, environment, environment)
         report = report_builder.report()
 
+        self.assertReportEqual(expected_report, report)
+
+    def test_long_values(self):
+        code="""\
+y = [x for x in range(1,100)]
+"""
+        expected_report = """\
+y = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, [312 chars]90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
+"""
+        report = CodeTracer().trace_code(code)
         self.assertReportEqual(expected_report, report)

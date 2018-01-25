@@ -96,8 +96,8 @@ START, STOP and LEN are required by `after-change-functions' but unused."
          (command-line-start (concat
 			      (shell-quote-argument live-py-version)
 			      " "
-                  live-py-args
-                  " "
+                              live-py-args
+                              " "
 			      (shell-quote-argument tracer-path)
 			      " -f "
 			      (shell-quote-argument buffer-file-name)))
@@ -108,7 +108,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 			    live-py-module
 			    " "
 			    live-py-driver)
-               command-line-start))
+                         command-line-start))
          (pythonpath (concat "PYTHONPATH=" (shell-quote-argument
 					    (or live-py-path live-py-dir))))
          (process-environment (cons pythonpath process-environment))
@@ -117,7 +117,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
     ;; only with `live-py-create-output-window' to do it as required.
     (unless (get-buffer-window live-py-trace-name)
       (live-py-create-output-window))
-
+    
     (let ((output-window (get-buffer-window live-py-trace-name)))
       (setq-local live-py-display-col-nr
                   (if output-window
@@ -293,50 +293,6 @@ One possible value is '-Q new'."
   "Wrapper function to turn the mode off."
   (interactive) ; Allow binding to a key
   (live-py-mode 0))
-
-
-;; (defun live-py-convert-line (text)
-;;   "Convert line text into a line in SVG"
-;;   (let ((
-;;   (format "<line stroke=\"%s\" x0=\"%d\" y0=\"%d\" x1=\"%d\" y1=\"%d\" />"
-;;           fill
-;;           x0 y0 x1 y1))
-
-; x0 y0 x1 y1 fill
-(defun parse-create-line ()
-  (let ((rval '()))
-    (dotimes (i 5)
-      (forward-line)
-      (setq rval (append rval (list (string-trim (thing-at-point 'line t))))))
-    rval))
-
-
-(defun parse-for-turtle ()
-  (interactive)
-  (let ((output-window (get-buffer-window live-py-trace-name)))
-    (with-selected-window output-window
-      (save-excursion
-        (beginning-of-buffer)
-        (search-forward "start_canvas")
-        (point)
-        (forward-line)
-        (let ((current-line (thing-at-point 'word t)))
-          (while (and (not (eobp)) (not (string-prefix-p current-line "end_canvas")))
-            (message "AT POINT: %s" current-line)
-            (if (string-prefix-p current-line "create_line")
-                (message "CREATE LINE %s" (parse-create-line)))
-            (forward-line)
-            (setq current-line (thing-at-point 'word t)))
-          (message "done loop"))))))
-
-
-(defun live-py-turtle-mode ()
-  "Turn on turtle mode"
-  (interactive)
-  (let ((output-window (get-buffer-window live-py-trace-name)))
-    (with-selected-window output-window
-      (insert-image (create-image "<?xml version=\"1.0\" encoding=\"utf-8\" ?><svg baseProfile=\"full\" height=\"500px\" version=\"1.1\" width=\"500px\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:ev=\"http://www.w3.org/2001/xml-events\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><defs /><rect fill=\"white\" height=\"100%\" width=\"100%\" x=\"0\" y=\"0\" /><line stroke=\"#000000\" stroke-linecap=\"round\" stroke-width=\"0\" x1=\"250.0\" x2=\"300.0\" y1=\"250.0\" y2=\"250.0\" /><line stroke=\"#000d00\" stroke-linecap=\"round\" stroke-width=\"1\" x1=\"300.0\" x2=\"258.33562479\" y1=\"250.0\" y2=\"280.270940493\" /><line stroke=\"#001a00\" stroke-linecap=\"round\" stroke-width=\"2\" x1=\"258.33562479\" x2=\"275.640576475\" y1=\"280.270940493\" y2=\"227.011775581\" /><line stroke=\"#002600\" stroke-linecap=\"round\" stroke-width=\"3\" x1=\"275.640576475\" x2=\"295.263155617\" y1=\"227.011775581\" y2=\"287.403864365\" /><line stroke=\"#003300\" stroke-linecap=\"round\" stroke-width=\"4\" x1=\"295.263155617\" x2=\"235.395898034\" y1=\"287.403864365\" y2=\"243.907755696\" /><line stroke=\"#004000\" stroke-linecap=\"round\" stroke-width=\"5\" x1=\"235.395898034\" x2=\"322.895898034\" y1=\"243.907755696\" y2=\"243.907755696\" /><line stroke=\"#004d00\" stroke-linecap=\"round\" stroke-width=\"6\" x1=\"322.895898034\" x2=\"238.758130619\" y1=\"243.907755696\" y2=\"305.037421934\" /><line stroke=\"#005900\" stroke-linecap=\"round\" stroke-width=\"7\" x1=\"238.758130619\" x2=\"276.921729424\" y1=\"305.037421934\" y2=\"187.581942172\" /><line stroke=\"#006600\" stroke-linecap=\"round\" stroke-width=\"8\" x1=\"276.921729424\" x2=\"322.038210603\" y1=\"187.581942172\" y2=\"326.436193551\" /><line stroke=\"#007300\" stroke-linecap=\"round\" stroke-width=\"9\" x1=\"322.038210603\" x2=\"183.291796068\" y1=\"326.436193551\" y2=\"225.631022783\" /><line stroke=\"#008000\" stroke-linecap=\"round\" stroke-width=\"10\" x1=\"183.291796068\" x2=\"383.291796068\" y1=\"225.631022783\" y2=\"225.631022783\" /><line stroke=\"#008c00\" stroke-linecap=\"round\" stroke-width=\"11\" x1=\"383.291796068\" x2=\"196.00436187\" y1=\"225.631022783\" y2=\"361.703308688\" /><line stroke=\"#009900\" stroke-linecap=\"round\" stroke-width=\"12\" x1=\"196.00436187\" x2=\"278.202882373\" y1=\"361.703308688\" y2=\"108.722275354\" /><line stroke=\"#00a600\" stroke-linecap=\"round\" stroke-width=\"13\" x1=\"278.202882373\" x2=\"371.989540166\" y1=\"108.722275354\" y2=\"397.367928049\" /><line stroke=\"#00b300\" stroke-linecap=\"round\" stroke-width=\"14\" x1=\"371.989540166\" x2=\"93.6876941013\" y1=\"397.367928049\" y2=\"195.169801261\" /><line stroke=\"#00bf00\" stroke-linecap=\"round\" stroke-width=\"15\" x1=\"93.6876941013\" x2=\"481.187694101\" y1=\"195.169801261\" y2=\"195.169801261\" /><line stroke=\"#00cc00\" stroke-linecap=\"round\" stroke-width=\"16\" x1=\"481.187694101\" x2=\"130.074318543\" y1=\"195.169801261\" y2=\"450.268600756\" /><line stroke=\"#00d900\" stroke-linecap=\"round\" stroke-width=\"17\" x1=\"130.074318543\" x2=\"279.484035323\" y1=\"450.268600756\" y2=\"-9.56722487308\" /><line stroke=\"#00e600\" stroke-linecap=\"round\" stroke-width=\"18\" x1=\"279.484035323\" x2=\"445.117144308\" y1=\"-9.56722487308\" y2=\"500.199067861\" /><line stroke=\"#00f200\" stroke-linecap=\"round\" stroke-width=\"19\" x1=\"445.117144308\" x2=\"-33.416407865\" y1=\"500.199067861\" y2=\"152.52409113\" /><polygon fill=\"#0000ff\" fill-rule=\"evenodd\" points=\"250.0,250.0 300.0,250.0 258.33562479,280.270940493 275.640576475,227.011775581 295.263155617,287.403864365 235.395898034,243.907755696 322.895898034,243.907755696 238.758130619,305.037421934 276.921729424,187.581942172 322.038210603,326.436193551 183.291796068,225.631022783 383.291796068,225.631022783 196.00436187,361.703308688 278.202882373,108.722275354 371.989540166,397.367928049 93.6876941013,195.169801261 481.187694101,195.169801261 130.074318543,450.268600756 279.484035323,-9.56722487308 445.117144308,500.199067861 -33.416407865,152.52409113\" /><line stroke=\"#000000\" stroke-linecap=\"round\" stroke-width=\"0\" x1=\"250.0\" x2=\"300.0\" y1=\"250.0\" y2=\"250.0\" /><line stroke=\"#000d00\" stroke-linecap=\"round\" stroke-width=\"1\" x1=\"300.0\" x2=\"258.33562479\" y1=\"250.0\" y2=\"280.270940493\" /><line stroke=\"#001a00\" stroke-linecap=\"round\" stroke-width=\"2\" x1=\"258.33562479\" x2=\"275.640576475\" y1=\"280.270940493\" y2=\"227.011775581\" /><line stroke=\"#002600\" stroke-linecap=\"round\" stroke-width=\"3\" x1=\"275.640576475\" x2=\"295.263155617\" y1=\"227.011775581\" y2=\"287.403864365\" /><line stroke=\"#003300\" stroke-linecap=\"round\" stroke-width=\"4\" x1=\"295.263155617\" x2=\"235.395898034\" y1=\"287.403864365\" y2=\"243.907755696\" /><line stroke=\"#004000\" stroke-linecap=\"round\" stroke-width=\"5\" x1=\"235.395898034\" x2=\"322.895898034\" y1=\"243.907755696\" y2=\"243.907755696\" /><line stroke=\"#004d00\" stroke-linecap=\"round\" stroke-width=\"6\" x1=\"322.895898034\" x2=\"238.758130619\" y1=\"243.907755696\" y2=\"305.037421934\" /><line stroke=\"#005900\" stroke-linecap=\"round\" stroke-width=\"7\" x1=\"238.758130619\" x2=\"276.921729424\" y1=\"305.037421934\" y2=\"187.581942172\" /><line stroke=\"#006600\" stroke-linecap=\"round\" stroke-width=\"8\" x1=\"276.921729424\" x2=\"322.038210603\" y1=\"187.581942172\" y2=\"326.436193551\" /><line stroke=\"#007300\" stroke-linecap=\"round\" stroke-width=\"9\" x1=\"322.038210603\" x2=\"183.291796068\" y1=\"326.436193551\" y2=\"225.631022783\" /><line stroke=\"#008000\" stroke-linecap=\"round\" stroke-width=\"10\" x1=\"183.291796068\" x2=\"383.291796068\" y1=\"225.631022783\" y2=\"225.631022783\" /><line stroke=\"#008c00\" stroke-linecap=\"round\" stroke-width=\"11\" x1=\"383.291796068\" x2=\"196.00436187\" y1=\"225.631022783\" y2=\"361.703308688\" /><line stroke=\"#009900\" stroke-linecap=\"round\" stroke-width=\"12\" x1=\"196.00436187\" x2=\"278.202882373\" y1=\"361.703308688\" y2=\"108.722275354\" /><line stroke=\"#00a600\" stroke-linecap=\"round\" stroke-width=\"13\" x1=\"278.202882373\" x2=\"371.989540166\" y1=\"108.722275354\" y2=\"397.367928049\" /><line stroke=\"#00b300\" stroke-linecap=\"round\" stroke-width=\"14\" x1=\"371.989540166\" x2=\"93.6876941013\" y1=\"397.367928049\" y2=\"195.169801261\" /><line stroke=\"#00bf00\" stroke-linecap=\"round\" stroke-width=\"15\" x1=\"93.6876941013\" x2=\"481.187694101\" y1=\"195.169801261\" y2=\"195.169801261\" /><line stroke=\"#00cc00\" stroke-linecap=\"round\" stroke-width=\"16\" x1=\"481.187694101\" x2=\"130.074318543\" y1=\"195.169801261\" y2=\"450.268600756\" /><line stroke=\"#00d900\" stroke-linecap=\"round\" stroke-width=\"17\" x1=\"130.074318543\" x2=\"279.484035323\" y1=\"450.268600756\" y2=\"-9.56722487308\" /><line stroke=\"#00e600\" stroke-linecap=\"round\" stroke-width=\"18\" x1=\"279.484035323\" x2=\"445.117144308\" y1=\"-9.56722487308\" y2=\"500.199067861\" /><line stroke=\"#00f200\" stroke-linecap=\"round\" stroke-width=\"19\" x1=\"445.117144308\" x2=\"-33.416407865\" y1=\"500.199067861\" y2=\"152.52409113\" /></svg>" 'svg 't)))))
-
 
 ;;;###autoload
 (define-minor-mode live-py-mode

@@ -740,3 +740,13 @@ create_line
 
         # VERIFY
         self.assertFalse(hasattr(t, 'bogus'))
+
+    def test_screen_methods_exist(self):
+        # SETUP
+        t = MockTurtle()
+
+        # EXEC
+
+        # VERIFY
+        t.screen.tracer()
+        t.screen.update()

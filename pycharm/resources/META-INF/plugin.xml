@@ -1,17 +1,16 @@
 <idea-plugin>
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>2.20.1</version>
+    <version>2.21.0</version>
     <vendor url="http://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
-      Lets you run your Python code as you type it. Displays variable values
-      or turtle graphics.
+      Lets you run your Python code as you type it. Displays variable values,
+      matplotlib, or turtle graphics.
     ]]></description>
 
     <change-notes><![CDATA[
-      Supports driving live code from unit tests or other script.
-      Fixes incompatibility with latest PyCharm release.
+      Adds support for matplotlib, and fixes Python path problems.
     ]]>
     </change-notes>
 

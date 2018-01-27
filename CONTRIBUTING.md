@@ -1,7 +1,8 @@
 # Contributing to the Live Coding in Python Project #
 If you like this project and want to make it better, help out. It could be as
-simple as sending Don a nice note on [Google+][g+], you could report a bug,
-or pitch in with some development work.
+simple as sending [@donkirkby] a nice note on Twitter, you could report a bug,
+or pitch in with some development work. There are usually some issues labeled as
+[good first issues] or [help wanted].
 
 ## Bug Reports and Enhancement Requests ##
 Please create issue descriptions [on GitHub][issues]. Be as specific as possible.
@@ -10,10 +11,12 @@ you planning to submit your own fix in a pull request? Please include a small
 code sample and what you would like the live code display to show for that code.
 
 ## Eclipse Development ##
-Live Coding in Python is an Eclipse Plug-in, so you need the [Plug-in Development Environment (PDE)][pde]. You might
-find the [PDE tutorial][tutorial] helpful.
+Live Coding in Python is an Eclipse Plug-in, so you need the
+[Plug-in Development Environment (PDE)][pde]. You might find the
+[PDE tutorial][tutorial] helpful.
 
-If you want to see what's currently being worked on, check out the [waffle board][waffle].
+If you want to see what's currently being worked on, check out the latest
+[milestone].
 
 ### Running from source code ###
 1. You need to install the PDE. You can either install the standard edition of
@@ -146,7 +149,7 @@ The driver command and arguments let you use another script or unit tests to
 call the live coding file.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
-[g+]: http://google.com/+donkirkby
+[@donkirkby]: https://twitter.com/donkirkby
 [pde]: https://eclipse.org/pde/
 [tutorial]: http://www.vogella.com/tutorials/EclipsePlugIn/article.html
 [waffle]: https://waffle.io/donkirkby/live-py-plugin
@@ -154,3 +157,6 @@ call the live coding file.
 [pyrel]: https://www.python.org/downloads/
 [mkt]: https://marketplace.eclipse.org/content/live-coding-python/edit
 [melpa.org]: https://melpa.org
+[good first issues]: https://github.com/donkirkby/live-py-plugin/labels/good%20first%20issue
+[help wanted]: https://github.com/donkirkby/live-py-plugin/labels/help%20wanted
+[milestone]: https://github.com/donkirkby/live-py-plugin/milestones

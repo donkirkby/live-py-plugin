@@ -103,7 +103,7 @@ x = 5
         builder.add_assignment_index(0)
         builder.add_assignment_index(23)
         builder.add_assignment_index('x')
-        builder.report_assignment('a[{!r}][{!r}] = b[{!r}] = {!r}',
+        builder.report_assignment('a[{!r}][{!r}] = b[{!r}] = {}',
                                   line_number=1)
         builder.end_assignment()
         report = builder.report()
@@ -121,7 +121,7 @@ x = 5
         builder.add_assignment_index(0)
         builder.add_assignment_index(23)
         builder.set_assignment_value(99)
-        builder.report_assignment('a[{!r}][{!r}] = {!r}',
+        builder.report_assignment('a[{!r}][{!r}] = {}',
                                   line_number=1)
         builder.end_assignment()
         report = builder.report()

@@ -329,7 +329,7 @@ class Tracer(NodeTransformer):
                     'set_assignment_value',
                     [existing_node.value])
                 operator_char = OPERATOR_CHARS.get(type(existing_node.op), '?')
-                format_string += ' {}= {{!r}} '.format(operator_char)
+                format_string += ' {}= {{}} '.format(operator_char)
             else:
                 self._wrap_assignment_target(read_target, index_to_get=-1)
                 read_target.ctx = Load()
@@ -337,7 +337,7 @@ class Tracer(NodeTransformer):
                     'set_assignment_value',
                     [read_target])
                 try_body.append(set_assignment_value)
-                format_string += ' = {!r}'
+                format_string += ' = {}'
             try_body.append(self._create_context_call(
                 'report_assignment',
                 [Str(s=format_string), Num(n=existing_node.lineno)]))
@@ -626,8 +626,8 @@ class Tracer(NodeTransformer):
     def _wrap_assignment_targets(self, targets):
         """ Build string describing assignment targets and wrap indexes.
 
-        For example, "x = {!r}" for a single target, "x = y = {!r}" for
-        multiple targets, or "x[{!r}] = {!r} for an indexed target.
+        For example, "x = {}" for a single target, "x = y = {}" for
+        multiple targets, or "x[{!r}] = {} for an indexed target.
         @return: string, or None if no assignment can be reported.
         """
         strings = []
@@ -637,7 +637,7 @@ class Tracer(NodeTransformer):
                 strings.append(format_text)
         if not strings:
             return None
-        strings.append('{!r}')  # for assignment value
+        strings.append('{}')  # for assignment value
         return ' = '.join(strings)
 
     def _create_context_call(self, function_name, args=None):
@@ -898,11 +898,11 @@ class CodeTracer(object):
         message_width = 1
         for lineno, message in enumerate(messages, 2):
             message_width = max(len(message), message_width)
-            builder.add_message(message, lineno, None)
+            builder.add_message(message, lineno)
 
         header = '-' * message_width + ' '
-        builder.add_message(header, 1, None)
-        builder.add_message(header, block_size, None)
+        builder.add_message(header, 1)
+        builder.add_message(header, block_size)
         builder.start_block(1, block_size)
 
     def trace_code(self,
@@ -980,7 +980,7 @@ class CodeTracer(object):
                 message = '{} line {}: {}'.format(ex.filename,
                                                   ex.lineno,
                                                   message)
-            builder.add_message(message, line_number, None)
+            builder.add_message(message, line_number)
         except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()

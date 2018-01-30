@@ -100,17 +100,13 @@ class ReportBuilder(object):
             raise RuntimeError('live coding message limit exceeded')
         self.message_count += 1
 
-    def add_message(self, message, line_number, max_width=80):
+    def add_message(self, message, line_number):
         """ Add a message to the report on line line_number (1-based). """
         self._increment_message_count()
         if self.is_muted:
             return
         if '\n' in message:
             message = re.sub(r'\s+', ' ', message)
-        if max_width is not None and len(message) > max_width:
-            half_width = max_width//2
-            full_width = half_width*2
-            message = "{}[{} chars]{}".format(message[:half_width], len(message)-full_width, message[-half_width:]);
 
         self.check_output()
         self._check_line_count(line_number)
@@ -121,13 +117,13 @@ class ReportBuilder(object):
     def check_output(self):
         if self.current_output:
             if self.current_output_is_stderr:
-                template = 'sys.stderr.write({!r}) '
+                template = 'sys.stderr.write({}) '
             elif self.current_output.endswith('\n'):
                 self.current_output = self.current_output[:-1]
-                template = 'print({!r}) ' if self.has_print_function else 'print {!r} '
+                template = 'print({}) ' if self.has_print_function else 'print {} '
             else:
-                template = 'sys.stdout.write({!r}) '
-            print_message = template.format(self.current_output)
+                template = 'sys.stdout.write({}) '
+            print_message = template.format(self.get_repr(self.current_output))
             self.current_output = ''
             print_line = self.current_output_line
             self.current_output_line = None
@@ -157,10 +153,18 @@ class ReportBuilder(object):
         start_count = self.message_count
         self.is_muted = True
         try:
-            return repr(value)
+            repr_text = repr(value)
         finally:
             self.is_muted = False
             self.message_count = start_count
+        max_width = 80
+        if len(repr_text) > max_width:
+            half_width = max_width//2 - 5
+            full_width = half_width * 2
+            repr_text = "{}[{} chars]{}".format(repr_text[:half_width],
+                                                len(repr_text) - full_width,
+                                                repr_text[-half_width:])
+        return repr_text
 
     def assign(self, name, value, line_number):
         """ Convenience method for simple assignments.
@@ -170,7 +174,7 @@ class ReportBuilder(object):
         self.start_assignment()
         try:
             self.set_assignment_value(value)
-            self.report_assignment('{} = {{!r}}'.format(name),
+            self.report_assignment('{} = {{}}'.format(name),
                                    line_number=line_number)
         finally:
             self.end_assignment()
@@ -195,17 +199,12 @@ class ReportBuilder(object):
 
     def report_assignment(self, format_string, line_number):
         assignment = self.assignments[-1]
-        was_muted = self.is_muted
-        self.is_muted = True
-        start_count = self.message_count
         # noinspection PyBroadException
         try:
             display = format_string.format(*(assignment.indexes +
-                                             [assignment.value]))
+                                             [self.get_repr(assignment.value)]))
         except Exception:
             display = None
-        self.is_muted = was_muted
-        self.message_count = start_count
         self.start_block(line_number, line_number)
         if display is not None and not display.endswith('>'):
             self.add_message(display + ' ', line_number)

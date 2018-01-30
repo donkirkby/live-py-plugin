@@ -2169,11 +2169,32 @@ print('42xyz')
         self.assertReportEqual(expected_report, report)
 
     def test_long_values(self):
-        code="""\
-y = [x for x in range(1,100)]
+        code = """\
+y = [x for x in range(100)]
 """
         expected_report = """\
-y = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, [312 chars]90, 91, 92, 93, 94, 95, 96, 97, 98, 99]
+y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, [320 chars]91, 92, 93, 94, 95, 96, 97, 98, 99]
+"""
+        report = CodeTracer().trace_code(code)
+        self.assertReportEqual(expected_report, report)
+
+    def test_long_values_in_function(self):
+        self.maxDiff = None
+        code = """\
+def main(): 
+    for i in range(2): 
+        x = 100 * (i+1) 
+        y = ['x'] * x 
+ 
+main() 
+"""
+        expected_report = """\
+
+i = 0                                                                                 | i = 1 
+x = 100                                                                               | x = 200 
+y = ['x', 'x', 'x', 'x', 'x', 'x', 'x',[430 chars] 'x', 'x', 'x', 'x', 'x', 'x', 'x'] | y = ['x', 'x', 'x', \
+'x', 'x', 'x', 'x',[930 chars] 'x', 'x', 'x', 'x', 'x', 'x', 'x']
+
 """
         report = CodeTracer().trace_code(code)
         self.assertReportEqual(expected_report, report)

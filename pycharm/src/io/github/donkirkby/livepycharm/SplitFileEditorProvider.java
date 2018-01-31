@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Alarm;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,11 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
     private static final String SECOND_EDITOR = "second_editor";
     private static final String SPLIT_LAYOUT = "split_layout";
 
+    private enum ScrollingMaster {
+        Source,
+        Display
+    }
+
     @NotNull
     private final com.intellij.openapi.fileEditor.FileEditorProvider myFirstProvider;
     @NotNull
@@ -27,6 +33,9 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
 
     @NotNull
     private final String myEditorTypeId;
+
+    private ScrollingMaster scrollingMaster = null;
+    private Alarm alarm = new Alarm();
 
     public SplitFileEditorProvider() {
         myFirstProvider = new PsiAwareTextEditorProvider();
@@ -70,11 +79,18 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 getBuilderFromEditorProvider(myFirstProvider, project, file);
         final Builder secondBuilder =
                 getBuilderFromEditorProvider(mySecondProvider, project, displayFile);
+        if (mainDocument != null) {
+            mainDocument.addDocumentListener(new DocumentListener() {
+                @Override
+                public void documentChanged(DocumentEvent event) {
+                    setScrollingMaster(ScrollingMaster.Source);
+                }
+            });
+        }
 
         return new Builder() {
             private Editor mainEditor;
             private Editor displayEditor;
-            private boolean isSynchronizingPositions;
 
             @Override
             public FileEditor build() {
@@ -103,45 +119,9 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 Editor displayEditor = this.displayEditor;
                 if (mainEditor != null && displayEditor != null) {
                     mainEditor.getScrollingModel().addVisibleAreaListener(
-                            e -> {
-                                if (isSynchronizingPositions) {
-                                    return;
-                                }
-                                isSynchronizingPositions = true;
-                                try {
-                                    ScrollingModel mainScroll =
-                                            mainEditor.getScrollingModel();
-                                    ScrollingModel displayScroll =
-                                            displayEditor.getScrollingModel();
-                                    int scrollOffset = mainScroll.getVerticalScrollOffset();
-                                    displayScroll.scrollVertically(
-                                            scrollOffset);
-                                    updateDisplayFolding(mainEditor, displayEditor);
-                                }
-                                finally {
-                                    isSynchronizingPositions = false;
-                                }
-                            });
+                            e -> updateScrolling(mainEditor));
                     displayEditor.getScrollingModel().addVisibleAreaListener(
-                            e -> {
-                                if (isSynchronizingPositions) {
-                                    return;
-                                }
-                                isSynchronizingPositions = true;
-                                try {
-                                    ScrollingModel displayScroll =
-                                            displayEditor.getScrollingModel();
-                                    ScrollingModel mainScroll =
-                                            mainEditor.getScrollingModel();
-                                    int scrollOffset = displayScroll.getVerticalScrollOffset();
-                                    mainScroll.scrollVertically(
-                                            scrollOffset);
-                                }
-                                finally {
-                                    isSynchronizingPositions = false;
-                                }
-                            }
-                    );
+                            e -> updateScrolling(displayEditor));
 
                     if (displayDocument != null) {
                         displayDocument.addDocumentListener(new DocumentListener() {
@@ -154,7 +134,38 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 }
                 return editor;
             }
+
+            private void updateScrolling(Editor activeEditor) {
+                Editor masterEditor;
+                Editor slaveEditor;
+                if (scrollingMaster == ScrollingMaster.Source) {
+                    masterEditor = mainEditor;
+                    slaveEditor = displayEditor;
+                } else if (scrollingMaster == ScrollingMaster.Display) {
+                    masterEditor = displayEditor;
+                    slaveEditor = mainEditor;
+                } else if (activeEditor == mainEditor) {
+                    masterEditor = mainEditor;
+                    slaveEditor = displayEditor;
+                    setScrollingMaster(ScrollingMaster.Source);
+                } else {
+                    masterEditor = displayEditor;
+                    slaveEditor = mainEditor;
+                    setScrollingMaster(ScrollingMaster.Display);
+                }
+
+                ScrollingModel masterScroll = masterEditor.getScrollingModel();
+                ScrollingModel slaveScroll = slaveEditor.getScrollingModel();
+                int scrollOffset = masterScroll.getVerticalScrollOffset();
+                slaveScroll.scrollVertically(scrollOffset);
+            }
         };
+    }
+
+    private void setScrollingMaster(ScrollingMaster scrollingMaster) {
+        alarm.cancelAllRequests();
+        this.scrollingMaster = scrollingMaster;
+        alarm.addRequest(() -> this.scrollingMaster = null, 500);
     }
 
     private void updateDisplayFolding(Editor mainEditor, Editor displayEditor) {

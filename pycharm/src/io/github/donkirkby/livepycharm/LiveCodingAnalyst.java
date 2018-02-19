@@ -53,7 +53,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
     private static final Pattern GOAL_PATTERN =
             Pattern.compile(":lesson goal file:\\s*(\\S*)");
-    private static final String CANVAS_START = String.format("start_canvas%n");
+    private static final String CANVAS_START = "start_canvas";
     private final VirtualFile mainFile;
     private final Document displayDocument;
     private boolean isRunning;
@@ -324,13 +324,16 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     private void displayResult(String display) {
-        if ( ! display.startsWith(CANVAS_START)) {
-            canvasPainter.setCommands(null);
-        }
-        else {
-            BufferedReader reader = new BufferedReader(new StringReader(display));
-            try {
-                reader.readLine();  // Skip first line.
+        StringWriter writer = new StringWriter();
+        BufferedReader reader = new BufferedReader(new StringReader(display));
+        try {
+            String line = reader.readLine();  // Skip first line.
+            if ( ! CANVAS_START.equals(line)) {
+                canvasPainter.setCommands(null);
+                writer.write(line);
+                writer.write('\n');
+            }
+            else {
                 CanvasReader canvasReader = new CanvasReader(reader);
                 ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
                 if (goalImageCommand != null) {
@@ -358,20 +361,18 @@ public class LiveCodingAnalyst implements DocumentListener {
                     }
                 }
                 canvasPainter.setCommands(canvasCommands);
-
-                StringWriter writer = new StringWriter();
-                PrintWriter printer = new PrintWriter(writer);
-                while (true) {
-                    String line = reader.readLine();
-                    if (line == null) {
-                        break;
-                    }
-                    printer.println(line);
-                }
-                display = writer.toString();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
+            while (true) {
+                line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                writer.write(line);
+                writer.write('\n');
+            }
+            display = writer.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         final String finalDisplay = display;
         ApplicationManager.getApplication().runWriteAction(

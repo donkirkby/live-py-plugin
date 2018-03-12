@@ -163,14 +163,14 @@ aligned but will not hide the part after the narrowing."
          (display-hscroll live-py-display-hscroll))
     (unless output-window
       (live-py-create-output-window))
-    (set-window-buffer output-window live-py-trace-name)
     (with-selected-window output-window
       (goto-char (point-min))
       (forward-line window-start-line-nr)
       (set-window-start output-window (point))
       (forward-line (- point-line-nr window-start-line-nr))
       (move-to-column display-col-nr t)
-      (set-window-hscroll output-window display-hscroll))))
+      (set-window-hscroll output-window display-hscroll))
+    (set-window-buffer output-window live-py-trace-name)))
 
 (defun live-py-post-command-function ()
   "Update window start and point of trace buffer if necessary."

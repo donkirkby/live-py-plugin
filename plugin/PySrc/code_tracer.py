@@ -683,7 +683,8 @@ class TracedModuleImporter(object):
                  traced_code,
                  environment,
                  filename,
-                 is_own_driver):
+                 is_own_driver,
+                 is_zoomed):
         """ Import the code that has been instrumented for live coding.
 
         :param module_name: name of the module to load in sys.modules, or None
@@ -693,12 +694,14 @@ class TracedModuleImporter(object):
         :param filename: the name of the file this code came from
         :param is_own_driver: True if this module should be loaded as the main
             module, but in a package.
+        :param is_zoomed: True if matplotlib should be zoomed
         """
         self.module_name = module_name
         self.traced_code = traced_code
         self.environment = environment
         self.filename = filename
         self.is_own_driver = is_own_driver
+        self.is_zoomed = is_zoomed
 
     def find_module(self, fullname, path=None):
         if (fullname == self.module_name or
@@ -713,11 +716,11 @@ class TracedModuleImporter(object):
                 continue
             loader = finder.find_module(fullname, path)
             if loader is not None:
-                return PatchedMatplotlibLoader(fullname, loader)
+                return PatchedMatplotlibLoader(fullname, loader, self.is_zoomed)
         if sys.version_info < (3, 0) and not TracedModuleImporter.is_desperate:
             # Didn't find anyone to load the module, get desperate.
             TracedModuleImporter.is_desperate = True
-            return PatchedMatplotlibLoader(fullname, None)
+            return PatchedMatplotlibLoader(fullname, None, self.is_zoomed)
 
     def load_module(self, fullname):
         if '.' in self.module_name:
@@ -740,9 +743,10 @@ class TracedModuleImporter(object):
 
 
 class PatchedMatplotlibLoader(object):
-    def __init__(self, fullname, main_loader):
+    def __init__(self, fullname, main_loader, is_zoomed):
         self.fullname = fullname
         self.main_loader = main_loader
+        self.is_zoomed = is_zoomed
         self.plt = None
 
     def load_module(self, fullname):
@@ -755,7 +759,14 @@ class PatchedMatplotlibLoader(object):
             module.use('Agg')
         elif fullname == 'matplotlib.pyplot':
             self.plt = module
+            turtle_screen = MockTurtle._screen
+            screen_width = turtle_screen.cv.cget('width')
+            screen_height = turtle_screen.cv.cget('height')
             module.show = self.mock_show
+            module.live_coding_size = (screen_width, screen_height)
+            module.live_coding_zoom = self.live_coding_zoom
+            if self.is_zoomed:
+                self.live_coding_zoom()
         return module
 
     def mock_show(self, *_args, **_kwargs):
@@ -781,6 +792,14 @@ class PatchedMatplotlibLoader(object):
         encoded = standard_b64encode(image)
         image_text = encoded.decode('UTF-8')
         MockTurtle.display_image(x, y, image=image_text)
+
+    def live_coding_zoom(self):
+        screen_width, screen_height = self.plt.live_coding_size
+        fig = self.plt.gcf()
+        fig_width, fig_height = fig.get_figwidth(), fig.get_figheight()
+        x_dpi = screen_width/fig_width
+        y_dpi = screen_height/fig_height
+        fig.dpi = min(x_dpi, y_dpi)
 
 
 @contextmanager
@@ -912,7 +931,8 @@ class CodeTracer(object):
                    dump=False,
                    driver=None,
                    filename=None,
-                   bad_driver=None):
+                   bad_driver=None,
+                   is_zoomed=False):
         """ Trace a module of source code, possibly by running a driver script.
 
         :param str source: the source code to trace
@@ -925,6 +945,7 @@ class CodeTracer(object):
         :param str filename: the file name of the source code
         :param str bad_driver: a message to display if the driver doesn't call
         the module
+        :param bool is_zoomed: True if matplotlib is zoomed
         """
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
@@ -951,7 +972,8 @@ class CodeTracer(object):
                               is_module,
                               driver,
                               filename,
-                              bad_driver)
+                              bad_driver,
+                              is_zoomed)
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
@@ -1028,7 +1050,8 @@ class CodeTracer(object):
                  is_module,
                  driver,
                  filename,
-                 bad_driver):
+                 bad_driver,
+                 is_zoomed):
         """ Run the traced module, plus its driver.
 
         :param code: the compiled code for the traced module
@@ -1040,6 +1063,7 @@ class CodeTracer(object):
         :param str filename: the file name of the source code
         :param str bad_driver: a message to display if the driver doesn't call
         the module
+        :param bool is_zoomed: True if matplotlib is zoomed
         """
         self.environment[CONTEXT_NAME] = builder
         is_own_driver = ((is_module and driver and driver[0] == load_as) or
@@ -1049,7 +1073,8 @@ class CodeTracer(object):
                                                code,
                                                self.environment,
                                                filename,
-                                               is_own_driver)
+                                               is_own_driver,
+                                               is_zoomed)
         sys.meta_path.insert(0, module_importer)
         if is_own_driver:
             with swallow_output():
@@ -1132,6 +1157,10 @@ def main():
                         type=int,
                         default=600,
                         help='height of the canvas in pixels')
+    parser.add_argument('-z',
+                        '--zoomed',
+                        action='store_true',
+                        help='matplotlib is zoomed to fit the canvas size')
     parser.add_argument('-d',
                         '--dump',
                         action='store_true',
@@ -1176,7 +1205,8 @@ def main():
                                     is_module=args.module,
                                     driver=args.driver,
                                     filename=args.filename,
-                                    bad_driver=args.bad_driver)
+                                    bad_driver=args.bad_driver,
+                                    is_zoomed=args.zoomed)
     turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:
         print('start_canvas')

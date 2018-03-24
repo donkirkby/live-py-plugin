@@ -64,6 +64,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
     private CanvasPainter canvasPainter;
     private String goalFile;
+    private Rectangle goalBounds;
     private CanvasCommand goalImageCommand;
     private boolean isPassing;
 
@@ -174,6 +175,9 @@ public class LiveCodingAnalyst implements DocumentListener {
             paramsGroup.addParameterAt(i++, Integer.toString(bounds.width));
             paramsGroup.addParameterAt(i++, "--height");
             paramsGroup.addParameterAt(i++, Integer.toString(canvasHeight));
+            if (hasGoal) {
+                paramsGroup.addParameterAt(i++, "--zoom");
+            }
             paramsGroup.addParameterAt(i++, "-"); // source code from stdin
             paramsGroup.addParameterAt(i, moduleName);
         };
@@ -244,19 +248,20 @@ public class LiveCodingAnalyst implements DocumentListener {
         String newGoalFile = matcher.find()
                 ? matcher.group(1)
                 : null;
-        if (Objects.equals(newGoalFile, goalFile)) {
+        Rectangle newBounds = canvasPainter.getBounds();
+        if (Objects.equals(newGoalFile, goalFile) && newBounds.equals(goalBounds)) {
             return;
         }
+        goalBounds = newBounds;
+        goalFile = newGoalFile;
         if (newGoalFile == null) {
             goalImageCommand = null;
-            goalFile = null;
             return;
         }
         VirtualFile goalPath = mainFile.getParent().findFileByRelativePath(newGoalFile);
         if (goalPath == null) {
             log.error("Unable to load goal file " + newGoalFile);
             goalImageCommand = null;
-            goalFile = newGoalFile;
             return;
         }
         StringWriter goalSource = new StringWriter();
@@ -283,7 +288,6 @@ public class LiveCodingAnalyst implements DocumentListener {
                 for (CanvasCommand command : canvasCommands) {
                     if (command.getName().equals(CanvasCommand.CREATE_IMAGE)) {
                         goalImageCommand = command;
-                        goalFile = newGoalFile;
                         return;
                     }
                 }
@@ -293,7 +297,6 @@ public class LiveCodingAnalyst implements DocumentListener {
             }
         }
         goalImageCommand = null;
-        goalFile = newGoalFile;
     }
 
     @NotNull

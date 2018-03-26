@@ -1,4 +1,5 @@
 import argparse
+import re
 from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  Attribute, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
@@ -1090,6 +1091,9 @@ class CodeTracer(object):
                         module_name = driver[0]
                         self.run_python_module(module_name)
                         end_count = builder.count_all_messages()
+                    if sys.stdout.saw_failures:
+                        self.report_driver_result(builder, ['Pytest reported failures.'])
+                        self.return_code = 1
                 except SystemExit as ex:
                     end_count = builder.count_all_messages()
                     if ex.code:
@@ -1114,6 +1118,7 @@ class FileSwallower(object):
                  is_stderr=False):
         self.target = target
         self.is_stderr = is_stderr
+        self.saw_failures = False
         if check_buffer:
             buffer = getattr(target, 'buffer', None)
             if buffer is not None:
@@ -1123,6 +1128,8 @@ class FileSwallower(object):
         text = args and str(args[0]) or ''
         frame = currentframe()
         while frame is not None:
+            if re.search(r'^=+\s*FAILURES\s*=+$', text):
+                self.saw_failures = True
             report_builder = frame.f_locals.get(CONTEXT_NAME)
             if report_builder is not None:
                 has_print_function = (

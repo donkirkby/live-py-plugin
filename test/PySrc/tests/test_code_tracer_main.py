@@ -16,6 +16,8 @@ EXAMPLE_PATCHING_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                             'example_patching_driver.py')
 EXAMPLE_DRIVER_SYNTAX_ERROR_PATH = os.path.join(os.path.dirname(__file__),
                                                 'example_driver_syntax_error.py')
+EXAMPLE_PYCHARM_FAILURES_PATH = os.path.join(os.path.dirname(__file__),
+                                             'example_pycharm_failures.py')
 patch.multiple = patch.multiple  # Avoids PyCharm warnings.
 
 
@@ -239,6 +241,35 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
                       |     assert 'fail' not in sys.argv, sys.argv[1:]      |
                       | AssertionError: ['fail', 'badly']                    |
                       | ---------------------------------------------------- |
+"""
+
+        stdin.read.return_value = source
+
+        with self.assertRaises(SystemExit):
+            main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        report = self.trim_exception(report)
+        expected_report = self.trim_exception(expected_report)
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        EXAMPLE_PYCHARM_FAILURES_PATH])
+    def test_driver_pycharm_failures(self, stdin, stdout):
+        """ PyCharm's Pytest wrapper reports failures, but doesn't set exit code.
+
+        Look for === FAILURES === report.
+        """
+        source = """\
+foo = 'Hello, World!'
+"""
+        expected_report = """\
+foo = 'Hello, World!' | ------------------------- |
+                      | Pytest reported failures. |
+                      | ------------------------- |
 """
 
         stdin.read.return_value = source

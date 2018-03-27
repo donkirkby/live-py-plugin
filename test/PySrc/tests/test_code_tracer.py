@@ -111,6 +111,48 @@ n = 0 | n = 1 | n = 3 | n = 4 | n = 5 | n = 7 """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    def test_for_else(self):
+        # SETUP
+        code = """\
+i = 1
+for j in range(3):
+    i += j
+else:
+    i *= 10
+"""
+        expected_report = """\
+i = 1
+j = 0 | j = 1 | j = 2
+i = 1 | i = 2 | i = 4
+
+i = 40 """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_while_else(self):
+        # SETUP
+        code = """\
+i = 0
+while i < 2:
+    i += 1
+else:
+    i *= 10
+"""
+        expected_report = """\
+i = 0
+      |
+i = 1 | i = 2
+
+i = 20 """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_mutable(self):
         # SETUP
         code = """\

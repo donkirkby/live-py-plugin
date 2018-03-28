@@ -1139,7 +1139,7 @@ self.x = 23
 
 
 x = 23
-yield 23, Foo(23)
+yield (23, Foo(23))
 
 y = [(23, Foo(23))]
 """
@@ -1720,27 +1720,6 @@ x = ''
 
 y = 2
 RuntimeError: Bad stuff happened. """
-        # EXEC
-        report = CodeTracer().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_multivalue_yield(self):
-        # SETUP
-        code = """\
-def foo():
-    yield 1, 2
-
-for x in foo():
-    pass
-"""
-        expected_report = """\
-
-yield 1, 2
-
-x = (1, 2) """
-
         # EXEC
         report = CodeTracer().trace_code(code)
 

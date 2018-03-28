@@ -1,6 +1,5 @@
 import re
 
-import os
 import sys
 import traceback
 
@@ -242,10 +241,7 @@ class ReportBuilder(object):
         return value
 
     def yield_value(self, value, line_number):
-        if isinstance(value, tuple):
-            display = ', '.join([self.get_repr(item) for item in value])
-        else:
-            display = self.get_repr(value)
+        display = self.get_repr(value)
         self.add_message('yield %s ' % display, line_number)
         return value
 

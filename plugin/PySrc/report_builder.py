@@ -18,7 +18,7 @@ class ReportBuilder(object):
         self.is_muted = False
         self.current_output = ''
         self.current_output_line = None
-        self.current_output_is_stderr = False
+        self.current_output_target_name = None
         self.has_print_function = True
 
     def start_block(self, first_line, last_line):
@@ -115,26 +115,26 @@ class ReportBuilder(object):
 
     def check_output(self):
         if self.current_output:
-            if self.current_output_is_stderr:
-                template = 'sys.stderr.write({}) '
-            elif self.current_output.endswith('\n'):
+            if (self.current_output_target_name is None and
+                    self.current_output.endswith('\n')):
                 self.current_output = self.current_output[:-1]
                 template = 'print({}) ' if self.has_print_function else 'print {} '
             else:
-                template = 'sys.stdout.write({}) '
+                target_name = self.current_output_target_name or 'sys.stdout'
+                template = target_name + '.write({}) '
             print_message = template.format(self.get_repr(self.current_output))
             self.current_output = ''
             print_line = self.current_output_line
             self.current_output_line = None
             self.add_message(print_message, print_line)
 
-    def add_output(self, text, line_number, has_print_function=True, is_stderr=False):
+    def add_output(self, text, line_number, has_print_function=True, target_name=None):
         if (line_number != self.current_output_line or
-                is_stderr != self.current_output_is_stderr):
+                target_name != self.current_output_target_name):
             self.check_output()
         self.current_output += text
         self.current_output_line = line_number
-        self.current_output_is_stderr = is_stderr
+        self.current_output_target_name = target_name
         self.has_print_function = has_print_function
 
     def add_extra_message(self, message, line_number):

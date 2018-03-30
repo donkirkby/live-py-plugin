@@ -593,7 +593,7 @@ sys.stderr.write('a\\n')
 
         # EXEC
         builder = ReportBuilder()
-        builder.add_output('a\n', 1, is_stderr=True)
+        builder.add_output('a\n', 1, target_name='sys.stderr')
 
         # VERIFY
         self.assertReportEqual(expected_report, builder.report())
@@ -604,7 +604,7 @@ sys.stderr.write('a\\n')
 
         # EXEC
         builder = ReportBuilder()
-        builder.add_output('abc', 1, is_stderr=True)
+        builder.add_output('abc', 1, target_name='sys.stderr')
         builder.assign(name='x', value=None, line_number=1)
 
         # VERIFY

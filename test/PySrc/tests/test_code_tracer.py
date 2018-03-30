@@ -1408,6 +1408,40 @@ sys.stderr.write('x')
         self.assertReportEqual(expected_report, report)
         mock_stderr.write.assert_not_called()
 
+    def test_string_io(self):
+        # SETUP
+        code = """\
+from __future__ import unicode_literals
+from io import StringIO
+
+f = StringIO()
+f.write('x')
+"""
+        expected_report_python2 = """\
+
+
+
+
+f.write(u'x')
+"""
+        expected_report_python3 = """\
+
+
+
+
+f.write('x')
+"""
+        expected_report = (expected_report_python3
+                           if version_info.major >= 3
+                           else expected_report_python2)
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_assign_tuple(self):
         # SETUP
         code = """\

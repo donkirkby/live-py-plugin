@@ -11,8 +11,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 import __future__
 from inspect import currentframe
-# noinspection PyUnresolvedReferences
-from io import BytesIO
+import io
 
 import sys
 import traceback
@@ -795,7 +794,8 @@ class PatchedMatplotlibLoader(object):
             y = (screen_height - figure_height) // 2
         else:
             y = 0
-        data = BytesIO()
+        # noinspection PyUnresolvedReferences
+        data = io.BytesIO()
         self.plt.savefig(data, format='PNG')
 
         image = data.getvalue()
@@ -816,13 +816,17 @@ class PatchedMatplotlibLoader(object):
 def swallow_output():
     old_stdout = sys.stdout
     old_stderr = sys.stderr
+    # noinspection PyUnresolvedReferences
+    old_string_io = io.StringIO
     try:
         sys.stdout = FileSwallower(old_stdout)
-        sys.stderr = FileSwallower(old_stderr, is_stderr=True)
+        sys.stderr = FileSwallower(old_stderr, target_name='sys.stderr')
+        io.StringIO = TracedStringIO
         yield
     finally:
         sys.stdout = old_stdout
         sys.stderr = old_stderr
+        io.StringIO = old_string_io
 
 
 class CodeTracer(object):
@@ -1124,9 +1128,9 @@ class FileSwallower(object):
     def __init__(self,
                  target,
                  check_buffer=True,
-                 is_stderr=False):
+                 target_name=None):
         self.target = target
-        self.is_stderr = is_stderr
+        self.target_name = target_name
         self.saw_failures = False
         if check_buffer:
             buffer = getattr(target, 'buffer', None)
@@ -1135,10 +1139,10 @@ class FileSwallower(object):
 
     def write(self, *args, **_):
         text = args and str(args[0]) or ''
+        if re.search(r'^=+\s*FAILURES\s*=+$', text):
+            self.saw_failures = True
         frame = currentframe()
         while frame is not None:
-            if re.search(r'^=+\s*FAILURES\s*=+$', text):
-                self.saw_failures = True
             report_builder = frame.f_locals.get(CONTEXT_NAME)
             if report_builder is not None:
                 has_print_function = (
@@ -1147,12 +1151,29 @@ class FileSwallower(object):
                 report_builder.add_output(text,
                                           frame.f_lineno,
                                           has_print_function,
-                                          is_stderr=self.is_stderr)
+                                          target_name=self.target_name)
                 break
             frame = frame.f_back
 
     def __getattr__(self, name):
         return getattr(self.target, name)
+
+
+# noinspection PyUnresolvedReferences
+class TracedStringIO(io.StringIO):
+    def write(self, text):
+        super(TracedStringIO, self).write(text)
+        frame = currentframe()
+        while frame is not None:
+            report_builder = frame.f_locals.get(CONTEXT_NAME)
+            if report_builder is not None:
+                for name, value in frame.f_locals.items():
+                    if value is self:
+                        report_builder.add_output(text,
+                                                  frame.f_lineno,
+                                                  target_name=name)
+                        return
+            frame = frame.f_back
 
 
 def main():

@@ -1181,6 +1181,96 @@ self.x = 0 | self.x = 1
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    @skipIf(sys.version_info < (3, 3),
+            'unittest.mock not available before Python 3.3')
+    def test_repr_mock(self):
+        # SETUP
+        code = """\
+from unittest.mock import Mock
+
+m = Mock(name='foo')
+"""
+        expected_report = """\
+
+
+m = Mock(name='foo')
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    @skipIf(sys.version_info < (3, 3),
+            'unittest.mock not available before Python 3.3')
+    def test_repr_magic_mock(self):
+        # SETUP
+        code = """\
+from unittest.mock import MagicMock
+
+m = MagicMock(name='foo')
+"""
+        expected_report = """\
+
+
+m = MagicMock(name='foo')
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    @skipIf(sys.version_info < (3, 3),
+            'unittest.mock not available before Python 3.3')
+    def test_repr_unnamed_mock(self):
+        # SETUP
+        code = """\
+from unittest.mock import Mock
+
+m = Mock()
+"""
+        expected_report = """\
+
+
+m = Mock()
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    @skipIf(sys.version_info < (3, 4),
+            'enum not available before Python 3.4')
+    def test_repr_enum(self):
+        # SETUP
+        code = """\
+from enum import Enum
+
+Animal = Enum('Animal', 'ANT BEE CAT DOG')
+eric = Animal.BEE
+"""
+        expected_report = """\
+
+
+
+eric = <Animal.BEE: 2>
+"""
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_module_name(self):
         # SETUP
         code = """\

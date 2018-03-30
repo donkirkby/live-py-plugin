@@ -2,6 +2,14 @@ import re
 
 import sys
 import traceback
+try:
+    from unittest.mock import Mock
+except ImportError:
+    Mock = None
+try:
+    from enum import Enum
+except ImportError:
+    Enum = None
 
 
 class ReportBuilder(object):
@@ -200,12 +208,27 @@ class ReportBuilder(object):
         assignment = self.assignments[-1]
         # noinspection PyBroadException
         try:
+            if Mock is not None and isinstance(assignment.value, Mock):
+                # noinspection PyProtectedMember
+                mock_name = assignment.value._mock_name
+                args = '' if mock_name is None else 'name={!r}'.format(mock_name)
+                value_repr = '{}({})'.format(
+                    assignment.value.__class__.__name__,
+                    args)
+            else:
+                value_repr = self.get_repr(assignment.value)
+
             display = format_string.format(*(assignment.indexes +
-                                             [self.get_repr(assignment.value)]))
+                                             [value_repr]))
+            if Enum is not None and isinstance(assignment.value, Enum):
+                # Leave the representation of enums alone.
+                pass
+            elif display.endswith('>'):
+                display = None
         except Exception:
             display = None
-        self.start_block(line_number, line_number)
-        if display is not None and not display.endswith('>'):
+        if display is not None:
+            self.start_block(line_number, line_number)
             self.add_message(display + ' ', line_number)
 
     def report_lambda(self, first_line, last_line, *args):

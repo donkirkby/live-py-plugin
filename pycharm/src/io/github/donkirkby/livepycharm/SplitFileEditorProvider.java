@@ -34,7 +34,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
     @NotNull
     private final String myEditorTypeId;
 
-    private ScrollingMaster scrollingMaster = null;
+    private ScrollingMaster scrollingMaster = ScrollingMaster.Source;
     private Alarm alarm = new Alarm();
 
     public SplitFileEditorProvider() {
@@ -163,9 +163,10 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
     }
 
     private void setScrollingMaster(ScrollingMaster scrollingMaster) {
-        alarm.cancelAllRequests();
-        this.scrollingMaster = scrollingMaster;
-        alarm.addRequest(() -> this.scrollingMaster = null, 500);
+        // This doesn't work, so I'm leaving the source as the scrolling master.
+        //alarm.cancelAllRequests();
+        //this.scrollingMaster = scrollingMaster;
+        //alarm.addRequest(() -> this.scrollingMaster = null, 500);
     }
 
     private void updateDisplayFolding(Editor mainEditor, Editor displayEditor) {

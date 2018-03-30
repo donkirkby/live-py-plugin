@@ -546,6 +546,7 @@ class Tracer(NodeTransformer):
                     [Str(s=handler_name),
                      Name(id=handler_name, ctx=Load()),
                      Num(n=handler.lineno)]))
+            handler.body.insert(0, self._create_context_call('exception'))
         return existing_node
 
     def visit_Try(self, node):

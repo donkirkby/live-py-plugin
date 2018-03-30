@@ -611,7 +611,7 @@ except Exception as e:
 """
         expected_report = """\
 
-
+RuntimeError: Bad stuff happened.
 e = RuntimeError('Bad stuff happened.',)
 f = RuntimeError('Bad stuff happened.',) """
 
@@ -633,7 +633,7 @@ except:
 """
         expected_report = """\
 
-
+RuntimeError: Bad stuff happened.
 
 f = 'Worse stuff' """
 

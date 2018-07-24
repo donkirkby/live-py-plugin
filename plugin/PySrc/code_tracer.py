@@ -801,7 +801,7 @@ class PatchedMatplotlibLoader(object):
 
         image = data.getvalue()
         encoded = standard_b64encode(image)
-        image_text = encoded.decode('UTF-8')
+        image_text = str(encoded.decode('UTF-8'))
         MockTurtle.display_image(x, y, image=image_text)
 
     def live_coding_zoom(self):

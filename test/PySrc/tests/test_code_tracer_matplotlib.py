@@ -22,7 +22,7 @@ def clear_matplotlib():
 
 def replace_image(report):
     report = trim_report(report)
-    report = re.sub(r"image=u?'[a-zA-Z0-9+/=]*'", "image='...'", report)
+    report = re.sub(r"image='[a-zA-Z0-9+/=]*'", "image='...'", report)
     return report
 
 

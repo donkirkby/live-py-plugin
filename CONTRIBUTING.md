@@ -52,6 +52,10 @@ Be sure that you test everything with the latest versions of [PyDev][pdrel] and
 There is also a PyCharm version of the plugin. You can work on it with
 IntelliJ [IDEA], and follow the [plugin development guidelines][idea-dev].
 
+If you're trying to find the code for some feature of PyCharm, put a breakpoint
+in `ActionUtil.performActionDumbAware()`, then use the feature and step
+through the code after the breakpoint.
+
 ### Running from Source Code ###
 1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm` project.
 2. Install the [Python plugin][idea-py]. It will probably prompt you when you open the project.

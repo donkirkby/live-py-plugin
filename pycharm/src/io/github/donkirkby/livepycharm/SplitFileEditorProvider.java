@@ -21,11 +21,6 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
     private static final String SECOND_EDITOR = "second_editor";
     private static final String SPLIT_LAYOUT = "split_layout";
 
-    private enum ScrollingMaster {
-        Source,
-        Display
-    }
-
     @NotNull
     private final com.intellij.openapi.fileEditor.FileEditorProvider myFirstProvider;
     @NotNull
@@ -33,9 +28,6 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
 
     @NotNull
     private final String myEditorTypeId;
-
-    private ScrollingMaster scrollingMaster = ScrollingMaster.Source;
-    private Alarm alarm = new Alarm();
 
     public SplitFileEditorProvider() {
         myFirstProvider = new PsiAwareTextEditorProvider();
@@ -79,14 +71,6 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 getBuilderFromEditorProvider(myFirstProvider, project, file);
         final Builder secondBuilder =
                 getBuilderFromEditorProvider(mySecondProvider, project, displayFile);
-        if (mainDocument != null) {
-            mainDocument.addDocumentListener(new DocumentListener() {
-                @Override
-                public void documentChanged(DocumentEvent event) {
-                    setScrollingMaster(ScrollingMaster.Source);
-                }
-            });
-        }
 
         return new Builder() {
             private Editor mainEditor;
@@ -101,9 +85,11 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                             public void editorCreated(@NotNull EditorFactoryEvent event) {
                                 Editor editor = event.getEditor();
                                 Document document = editor.getDocument();
-                                if (document == mainDocument) {
+                                if (mainEditor == null &&
+                                        document == mainDocument) {
                                     mainEditor = editor;
-                                } else if (document == displayDocument) {
+                                } else if (displayEditor == null &&
+                                        document == displayDocument) {
                                     displayEditor = editor;
                                 }
                             }
@@ -136,37 +122,21 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
             }
 
             private void updateScrolling(Editor activeEditor) {
-                Editor masterEditor;
                 Editor slaveEditor;
-                if (scrollingMaster == ScrollingMaster.Source) {
-                    masterEditor = mainEditor;
+                if (activeEditor == mainEditor) {
                     slaveEditor = displayEditor;
-                } else if (scrollingMaster == ScrollingMaster.Display) {
-                    masterEditor = displayEditor;
-                    slaveEditor = mainEditor;
-                } else if (activeEditor == mainEditor) {
-                    masterEditor = mainEditor;
-                    slaveEditor = displayEditor;
-                    setScrollingMaster(ScrollingMaster.Source);
                 } else {
-                    masterEditor = displayEditor;
                     slaveEditor = mainEditor;
-                    setScrollingMaster(ScrollingMaster.Display);
                 }
 
-                ScrollingModel masterScroll = masterEditor.getScrollingModel();
+                ScrollingModel masterScroll = activeEditor.getScrollingModel();
                 ScrollingModel slaveScroll = slaveEditor.getScrollingModel();
-                int scrollOffset = masterScroll.getVerticalScrollOffset();
+                int scrollOffset = masterScroll.getVisibleArea().y;
+                slaveScroll.disableAnimation();
                 slaveScroll.scrollVertically(scrollOffset);
+                slaveScroll.enableAnimation();
             }
         };
-    }
-
-    private void setScrollingMaster(ScrollingMaster scrollingMaster) {
-        // This doesn't work, so I'm leaving the source as the scrolling master.
-        //alarm.cancelAllRequests();
-        //this.scrollingMaster = scrollingMaster;
-        //alarm.addRequest(() -> this.scrollingMaster = null, 500);
     }
 
     private void updateDisplayFolding(Editor mainEditor, Editor displayEditor) {

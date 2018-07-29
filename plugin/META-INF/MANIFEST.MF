@@ -16,7 +16,8 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.core.expressions;bundle-version="3.4.600",
  org.eclipse.debug.ui;bundle-version="3.10.2",
  org.eclipse.core.variables;bundle-version="3.2.800",
- org.python.pydev.debug;bundle-version="5.8.0"
+ org.python.pydev.debug;bundle-version="5.8.0",
+ org.python.pydev.ast;bundle-version="5.8.0"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: org.eclipse.compare,

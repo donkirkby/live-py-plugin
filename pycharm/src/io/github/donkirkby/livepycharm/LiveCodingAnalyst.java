@@ -310,7 +310,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             String stderr = processOutput.getStderr();
             isPassing = processOutput.getExitCode() == 0;
             if (stderr.length() > 0) {
-                log.error(stderr);
+                log.warn(stderr);
             }
         } catch (ExecutionException | IOException ex) {
             log.error("Report failed.", ex);

@@ -67,6 +67,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private Rectangle goalBounds;
     private CanvasCommand goalImageCommand;
     private boolean isPassing;
+    private boolean isDisplayUpdating;
 
     LiveCodingAnalyst(VirtualFile mainFile,
                       Document displayDocument,
@@ -88,6 +89,10 @@ public class LiveCodingAnalyst implements DocumentListener {
 
     boolean isPassing() {
         return isPassing;
+    }
+
+    boolean isDisplayUpdating() {
+        return isDisplayUpdating;
     }
 
     /**
@@ -186,7 +191,7 @@ public class LiveCodingAnalyst implements DocumentListener {
         return true;
     }
 
-    public void schedule() {
+    void schedule() {
         if ( ! isRunning) {
             return;
         }
@@ -378,8 +383,10 @@ public class LiveCodingAnalyst implements DocumentListener {
             throw new RuntimeException(e);
         }
         final String finalDisplay = display;
+        isDisplayUpdating = true;
         ApplicationManager.getApplication().runWriteAction(
                 () -> displayDocument.setText(finalDisplay));
+        alarm.addRequest(() -> isDisplayUpdating = false, 300);
     }
 
     private CapturingProcessHandler startProcess(String sourceCode) throws ExecutionException, IOException {

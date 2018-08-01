@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.Alarm;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +74,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
         return new Builder() {
             private Editor mainEditor;
             private Editor displayEditor;
+            private int displayX;
 
             @Override
             public FileEditor build() {
@@ -122,6 +122,23 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
             }
 
             private void updateScrolling(Editor activeEditor) {
+                // Horizontal scroll remembers manually scrolled position.
+                SplitFileEditor splitFileEditor =
+                        SplitFileEditor.getSplitFileEditor(mainEditor);
+                ScrollingModel displayScroll =
+                        displayEditor.getScrollingModel();
+
+                boolean isUpdating = splitFileEditor != null &&
+                        splitFileEditor.isDisplayUpdating();
+                if (isUpdating) {
+                    displayScroll.disableAnimation();
+                    displayScroll.scrollHorizontally(displayX);
+                    displayScroll.enableAnimation();
+                } else {
+                    displayX = displayScroll.getVisibleArea().x;
+                }
+
+                // Vertical scroll synchronized between two sides.
                 Editor slaveEditor;
                 if (activeEditor == mainEditor) {
                     slaveEditor = displayEditor;

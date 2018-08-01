@@ -388,7 +388,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             return isComparing;
         }
 
-        public void setComparing(boolean comparing) {
+        void setComparing(boolean comparing) {
             isComparing = comparing;
         }
     }
@@ -416,6 +416,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     @Override
     public String getName() {
         return "Live coding in Python split editor";
+    }
+
+    boolean isDisplayUpdating() {
+        return myAnalyst.isDisplayUpdating();
     }
 
     @NotNull

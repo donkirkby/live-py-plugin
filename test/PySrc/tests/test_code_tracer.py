@@ -614,6 +614,8 @@ except Exception as e:
 RuntimeError: Bad stuff happened.
 e = RuntimeError('Bad stuff happened.',)
 f = RuntimeError('Bad stuff happened.',) """
+        if sys.version_info >= (3, 7, 0):
+            expected_report = expected_report.replace(',)', ')')
 
         tracer = CodeTracer()
 

@@ -18,6 +18,8 @@ EXAMPLE_DRIVER_SYNTAX_ERROR_PATH = os.path.join(os.path.dirname(__file__),
                                                 'example_driver_syntax_error.py')
 EXAMPLE_PYCHARM_FAILURES_PATH = os.path.join(os.path.dirname(__file__),
                                              'example_pycharm_failures.py')
+EXAMPLE_SILENT_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
+                                          'example_silent_driver.py')
 patch.multiple = patch.multiple  # Avoids PyCharm warnings.
 
 
@@ -72,6 +74,11 @@ i = 1 + 1
         expected_report = """\
     def foo(x):                       | x = 3
         return x + 1                  | return 4
+                                      |
+                                      |
+    def bar(bucket):                  |
+        bucket.add('bar')             |
+                                      |
                                       |
     if __name__ == '__live_coding__': |
         y = foo(3)                    | y = 4
@@ -472,6 +479,32 @@ AssertionError: 510
             main()
 
         self.assertEqual(1, ctx.exception.code)
+        report = stdout.write.call_args_list[0][0][0]
+        report = self.trim_exception(report)
+        expected_report = self.trim_exception(expected_report)
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '-',
+        'example_source',
+        '-m',
+        'unittest',
+        'example_silent_driver'])
+    def test_silent_driver(self, stdin, stdout):
+        """ Driver calls code, but doesn't generate messages. """
+        source = """\
+def bar(bucket):
+    bucket.add('bar')
+"""
+        expected_report = """\
+
+"""
+
+        stdin.read.return_value = source
+
+        main()
+
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
         expected_report = self.trim_exception(expected_report)

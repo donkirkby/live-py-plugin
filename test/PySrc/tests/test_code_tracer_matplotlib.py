@@ -47,4 +47,3 @@ create_image
     report = tracer.trace_turtle(code)
 
     assert expected_report == replace_image(report)
-

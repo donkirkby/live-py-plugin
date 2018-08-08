@@ -7,7 +7,7 @@
 .cache
 /.coverage
 /coverage.xml
-/.pytest_cache
+.pytest_cache
 /.idea/shelf
 /pycharm/out
 /.idea/workspace.xml

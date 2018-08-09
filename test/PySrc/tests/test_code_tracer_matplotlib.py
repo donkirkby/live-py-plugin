@@ -20,6 +20,18 @@ def clear_matplotlib():
             yield True
 
 
+@pytest.fixture(name='is_numpy_cleared')
+def clear_numpy():
+    for should_yield in (True, False):
+        to_delete = [module_name
+                     for module_name in sys.modules
+                     if module_name.startswith('numpy')]
+        for module_name in to_delete:
+            del sys.modules[module_name]
+        if should_yield:
+            yield True
+
+
 def replace_image(report):
     report = trim_report(report)
     report = re.sub(r"image='[a-zA-Z0-9+/=]*'", "image='...'", report)
@@ -47,3 +59,22 @@ create_image
     report = tracer.trace_turtle(code)
 
     assert expected_report == replace_image(report)
+
+
+def test_numpy_random(is_numpy_cleared):
+    assert is_numpy_cleared
+    code = """\
+import numpy as np 
+
+x = np.random.normal(size=3)
+"""
+    expected_report = """\
+
+
+x = array([1.76405235, 0.40015721, 0.97873798])
+"""
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)

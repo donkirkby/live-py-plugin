@@ -733,7 +733,7 @@ class TracedModuleImporter(object):
         if (fullname == self.module_name or
                 (fullname == SCOPE_NAME and self.is_own_driver)):
             return self
-        if fullname not in ('matplotlib', 'matplotlib.pyplot'):
+        if fullname not in ('matplotlib', 'matplotlib.pyplot', 'numpy.random'):
             return None
         is_after = False
         for finder in sys.meta_path:
@@ -742,11 +742,11 @@ class TracedModuleImporter(object):
                 continue
             loader = finder.find_module(fullname, path)
             if loader is not None:
-                return PatchedMatplotlibLoader(fullname, loader, self.is_zoomed)
+                return PatchedModuleLoader(fullname, loader, self.is_zoomed)
         if sys.version_info < (3, 0) and not TracedModuleImporter.is_desperate:
             # Didn't find anyone to load the module, get desperate.
             TracedModuleImporter.is_desperate = True
-            return PatchedMatplotlibLoader(fullname, None, self.is_zoomed)
+            return PatchedModuleLoader(fullname, None, self.is_zoomed)
 
     def load_module(self, fullname):
         if '.' in self.module_name:
@@ -768,7 +768,7 @@ class TracedModuleImporter(object):
         return new_mod
 
 
-class PatchedMatplotlibLoader(object):
+class PatchedModuleLoader(object):
     def __init__(self, fullname, main_loader, is_zoomed):
         self.fullname = fullname
         self.main_loader = main_loader
@@ -781,7 +781,9 @@ class PatchedMatplotlibLoader(object):
         else:
             module = import_module(fullname)
             TracedModuleImporter.is_desperate = False
-        if fullname == 'matplotlib':
+        if fullname == 'numpy.random':
+            module.seed(0)
+        elif fullname == 'matplotlib':
             module.use('Agg')
         elif fullname == 'matplotlib.pyplot':
             self.plt = module

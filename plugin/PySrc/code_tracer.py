@@ -556,7 +556,9 @@ class Tracer(NodeTransformer):
     def visit_Raise(self, node):
         existing_node = self.generic_visit(node)
         new_nodes = [existing_node]
-        if node.exc is None:
+        node_exc = getattr(node, 'type', None)
+        node_exc = getattr(node, 'exc', node_exc)
+        if node_exc is None:
             # Reraising the current exception, so we have to report this line.
 
             new_nodes.insert(0, self._create_context_call(

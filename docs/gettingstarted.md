@@ -5,7 +5,7 @@ subtitle: Plug ins for PyCharm, Emacs, and Eclipse
 I've built a tool that lets you run your Python code as you type it. For
 example, this code draws a 50x50 pixel square.
 
-![code that draws a 50x50 square][square50]
+![some code that draws a 50x50 square][square50]
 
 When I change the forward distance to 75, the square immediately changes. I
 don't even have to save the file.

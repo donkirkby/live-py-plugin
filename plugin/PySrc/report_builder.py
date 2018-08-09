@@ -28,6 +28,7 @@ class ReportBuilder(object):
         self.current_output_line = None
         self.current_output_target_name = None
         self.has_print_function = True
+        self.current_exception = None
 
     def start_block(self, first_line, last_line):
         """ Cap all the lines from first_line to last_line inclusive with
@@ -244,13 +245,18 @@ class ReportBuilder(object):
         self.add_message('({} => {}) '.format(params, self.get_repr(result)), first_line)
         return result
 
-    def exception(self):
+    def exception(self, line_number=None):
         etype, value, tb = sys.exc_info()
         messages = traceback.format_exception_only(etype, value)
         message = messages[-1].strip() + ' '
-        entries = traceback.extract_tb(tb)
-        if entries:
-            _, line_number, _, _ = entries[0]
+        if line_number is None:
+            if value is self.current_exception:
+                return
+            self.current_exception = value
+            entries = traceback.extract_tb(tb)
+            if entries:
+                _, line_number, _, _ = entries[0]
+        if line_number is not None:
             old_limit, self.message_limit = self.message_limit, None
             old_width, self.max_width = self.max_width, None
             try:

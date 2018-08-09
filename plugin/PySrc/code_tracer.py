@@ -553,6 +553,17 @@ class Tracer(NodeTransformer):
         # Python 3.3 renamed TryExcept and TryFinally to Try
         return self.visit_TryExcept(node)
 
+    def visit_Raise(self, node):
+        existing_node = self.generic_visit(node)
+        new_nodes = [existing_node]
+        if node.exc is None:
+            # Reraising the current exception, so we have to report this line.
+
+            new_nodes.insert(0, self._create_context_call(
+                'exception',
+                [Num(n=existing_node.lineno)]))
+        return new_nodes
+
     def visit_Yield(self, node):
         existing_node = self.generic_visit(node)
         value = existing_node.value

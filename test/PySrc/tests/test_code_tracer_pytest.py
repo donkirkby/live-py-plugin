@@ -56,7 +56,7 @@ a, (b, c) = (1, (2, 3))
 
     report = tracer.trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 def test_assign_tuple_list():
@@ -64,12 +64,13 @@ def test_assign_tuple_list():
 a, [b, c] = (1, (2, 3))
 """
     expected_report = """\
-(a, (b, c)) = (1, (2, 3)) """
+(a, (b, c)) = (1, (2, 3))
+"""
     tracer = CodeTracer()
 
     report = tracer.trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 def test_assign_generator_unpacked():
@@ -77,12 +78,13 @@ def test_assign_generator_unpacked():
 a, b = (3*i for i in range(2))
 """
     expected_report = """\
-(a, b) = (0, 3) """
+(a, b) = (0, 3)
+"""
     tracer = CodeTracer()
 
     report = tracer.trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 def test_assign_assignment():
@@ -90,12 +92,13 @@ def test_assign_assignment():
 a = b = 2
 """
     expected_report = """\
-a = b = 2 """
+a = b = 2
+"""
     tracer = CodeTracer()
 
     report = tracer.trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 def test_assign_generator_assignment():
@@ -114,13 +117,13 @@ e = []
 
     report = tracer.trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 def test_assign_to_anonymous_attribute():
     code = """\
 class Foo(object):
-pass
+    pass
 
 Foo().x = 2
 """
@@ -131,7 +134,7 @@ Foo().x = 2
 """
     report = CodeTracer().trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 def test_assign_to_expression():
@@ -146,7 +149,7 @@ a = [1, 2, 3]
 """
     report = CodeTracer().trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 def test_augmented_assign_to_expression():
@@ -161,7 +164,7 @@ a = [1, 2, 3]
 """
     report = CodeTracer().trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
 
 
 @pytest.mark.skipif(
@@ -174,9 +177,183 @@ print(b)
 """
     expected_report = """\
 (a, *b) = (1, 2, 3)
-print('[2, 3]') """
+print('[2, 3]')
+"""
     tracer = CodeTracer()
 
     report = tracer.trace_code(code)
 
-    assert expected_report, trim_report(report)
+    assert expected_report == trim_report(report)
+
+
+def test_runtime_error():
+    code = """\
+x = 2
+raise RuntimeError('Bad stuff happened.')
+"""
+    expected_report = """\
+x = 2
+RuntimeError: Bad stuff happened.
+"""
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_runtime_error_after_conditional():
+    code = """\
+if False:
+    x = 2
+else:
+    x = 3
+raise RuntimeError('Bad stuff happened.')
+"""
+    expected_report = """\
+
+
+
+x = 3
+RuntimeError: Bad stuff happened.
+"""
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_runtime_error_caught():
+    code = """\
+try:
+    raise RuntimeError('Bad stuff happened.')
+except Exception as e:
+    f = e
+"""
+    expected_report = """\
+
+RuntimeError: Bad stuff happened.
+e = RuntimeError('Bad stuff happened.',)
+f = RuntimeError('Bad stuff happened.',)
+"""
+    if sys.version_info >= (3, 7, 0):
+        expected_report = expected_report.replace(',)', ')')
+
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_runtime_error_caught_unnamed():
+    code = """\
+try:
+    raise RuntimeError('Bad stuff happened.')
+except:
+    f = 'Worse stuff'
+"""
+    expected_report = """\
+
+RuntimeError: Bad stuff happened.
+
+f = 'Worse stuff'
+"""
+
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_multiline_error():
+    code = """\
+quality = 0
+for c in ['1',
+          'x']:
+    quality += int(c)
+"""
+    expected_report = """\
+quality = 0
+c = '1'     | c = 'x'
+            |
+quality = 1 | ValueError: invalid literal for int() with base 10: 'x'
+"""
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_unwinding_exceptions():
+    code = """\
+def foo(n):
+    raise RuntimeError('Bad stuff happened.')
+
+x = foo(5)
+"""
+    expected_report = """\
+n = 5
+RuntimeError: Bad stuff happened.
+
+RuntimeError: Bad stuff happened.
+"""
+
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_reraise():
+    code = """\
+x = 2
+try:
+    raise RuntimeError('Bad stuff happened.')
+except:
+    raise
+"""
+    expected_report = """\
+x = 2
+
+RuntimeError: Bad stuff happened.
+
+RuntimeError: Bad stuff happened.
+"""
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_nested_reraise():
+    code = """\
+x = 2
+try:
+    try:
+        raise RuntimeError('Bad stuff happened.')
+    except:
+        raise
+except:
+    raise
+"""
+    expected_report = """\
+x = 2
+
+
+RuntimeError: Bad stuff happened.
+
+RuntimeError: Bad stuff happened.
+
+RuntimeError: Bad stuff happened.
+"""
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)

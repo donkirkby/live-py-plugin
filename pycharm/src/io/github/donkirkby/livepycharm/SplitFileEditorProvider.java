@@ -130,6 +130,9 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
 
                 boolean isUpdating = splitFileEditor != null &&
                         splitFileEditor.isDisplayUpdating();
+                boolean isDisplayHidden = splitFileEditor != null &&
+                        splitFileEditor.getLayout() !=
+                                SplitFileEditor.SplitEditorLayout.DISPLAY;
                 if (isUpdating) {
                     displayScroll.disableAnimation();
                     displayScroll.scrollHorizontally(displayX);
@@ -140,7 +143,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
 
                 // Vertical scroll synchronized between two sides.
                 Editor slaveEditor;
-                if (activeEditor == mainEditor || isUpdating) {
+                if (activeEditor == mainEditor || isUpdating || isDisplayHidden) {
                     activeEditor = mainEditor;
                     slaveEditor = displayEditor;
                 } else {

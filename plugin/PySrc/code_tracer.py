@@ -482,13 +482,14 @@ class Tracer(NodeTransformer):
 
     def visit_Module(self, node):
         new_node = self.generic_visit(node)
+        line_numbers = set()
+        new_body = []
         try_body = new_node.body
         if try_body:
-            new_body = []
             while try_body and self._is_module_header(try_body[0]):
                 new_body.append(try_body.pop(0))
-            line_numbers = set()
             self._find_line_numbers(new_node, line_numbers)
+        if line_numbers:
             first_line_number = min(line_numbers)
             last_line_number = max(line_numbers)
             handler_body = [self._create_context_call('exception'),

@@ -186,6 +186,20 @@ print('[2, 3]')
     assert expected_report == trim_report(report)
 
 
+def test_docstring():
+    code = """\
+''
+"""
+    expected_report = """\
+
+"""
+    tracer = CodeTracer()
+
+    report = tracer.trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
 def test_runtime_error():
     code = """\
 x = 2

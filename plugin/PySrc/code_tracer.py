@@ -6,7 +6,6 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
                  Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
                  Tuple, Yield)
-from base64 import standard_b64encode
 from contextlib import contextmanager
 from copy import deepcopy
 import __future__
@@ -28,10 +27,20 @@ try:
 except ImportError:
     import builtins
 
-from canvas import Canvas
-from mock_turtle import MockTurtle
-from report_builder import ReportBuilder
-from random import seed
+
+IS_PYODIDE = __name__ == 'builtins'
+if IS_PYODIDE:
+    # noinspection PyUnresolvedReferences
+    from js import document
+    standard_b64encode = Canvas = MockTurtle = None
+else:
+    from base64 import standard_b64encode
+    from canvas import Canvas
+    from mock_turtle import MockTurtle
+    from report_builder import ReportBuilder
+    document = None
+
+from random import seed  # noqa
 
 # Import some classes that are only available in Python 3.
 try:
@@ -854,7 +863,8 @@ class CodeTracer(object):
         self.message_limit = 10000
         self.max_width = None
         self.keepalive = False
-        MockTurtle.monkey_patch(canvas)
+        if MockTurtle is not None:
+            MockTurtle.monkey_patch(canvas)
         self.environment = {}
         self.return_code = None
 
@@ -1192,6 +1202,19 @@ class TracedStringIO(io.StringIO):
             frame = frame.f_back
 
 
+def display(_event=None):
+    code = document.getElementById('source').value
+    tracer = CodeTracer()
+    tracer.max_width = 200000
+    code_report = tracer.trace_code(code)
+    document.getElementById('display').value = code_report
+
+
+def web_main():
+    display()
+    document.getElementById('source').addEventListener('input', display)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='Trace Python code.',
@@ -1273,3 +1296,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+elif IS_PYODIDE:
+    web_main()

@@ -69,9 +69,9 @@ class ReportBuilder(object):
                 first_line, last_line = self.stack_block
                 for line_index in range(first_line - 1, last_line):
                     line_width = (
-                            self.line_widths.get(line_index, 0) +
-                            new_width -
-                            self.frame_width)
+                        self.line_widths.get(line_index, 0) +
+                        new_width -
+                        self.frame_width)
                     if line_width > self.max_width:
                         should_throw = True
                     self.line_widths[line_index] = line_width
@@ -352,6 +352,7 @@ class AssignmentReport(object):
         self.value = None
         self.indexes = []
 
+
 import argparse
 import re
 from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
@@ -381,7 +382,20 @@ try:
 except ImportError:
     import builtins
 
-from random import seed
+
+IS_PYODIDE = __name__ == 'builtins'
+if IS_PYODIDE:
+    # noinspection PyUnresolvedReferences
+    from js import document
+    standard_b64encode = Canvas = MockTurtle = None
+else:
+    from base64 import standard_b64encode
+    from canvas import Canvas
+    from mock_turtle import MockTurtle
+    from report_builder import ReportBuilder
+    document = None
+
+from random import seed  # noqa
 
 # Import some classes that are only available in Python 3.
 try:
@@ -924,8 +938,8 @@ class Tracer(NodeTransformer):
             value = Name(id='None', ctx=Load())
 
         return Yield(value=self._create_bare_context_call(
-            'yield_value',
-            [value, Num(n=existing_node.lineno)]))
+                    'yield_value',
+                    [value, Num(n=existing_node.lineno)]))
 
     def visit_YieldFrom(self, node):
         existing_node = self.generic_visit(node)
@@ -1132,7 +1146,54 @@ class PatchedModuleLoader(object):
         else:
             module = import_module(fullname)
             TracedModuleImporter.is_desperate = False
+        if fullname == 'numpy.random':
+            module.seed(0)
+        elif fullname == 'matplotlib':
+            module.use('Agg')
+        elif fullname == 'matplotlib.pyplot':
+            self.plt = module
+            turtle_screen = MockTurtle._screen
+            screen_width = turtle_screen.cv.cget('width')
+            screen_height = turtle_screen.cv.cget('height')
+            module.show = self.mock_show
+            module.live_coding_size = (screen_width, screen_height)
+            module.live_coding_zoom = self.live_coding_zoom
+            if self.is_zoomed:
+                self.live_coding_zoom()
         return module
+
+    def mock_show(self, *_args, **_kwargs):
+        figure = self.plt.gcf()
+        # noinspection PyProtectedMember
+        turtle_screen = MockTurtle._screen
+        screen_width = turtle_screen.cv.cget('width')
+        screen_height = turtle_screen.cv.cget('height')
+        figure_width = figure.get_figwidth()*figure.dpi
+        figure_height = figure.get_figheight()*figure.dpi
+        if figure_width < screen_width:
+            x = (screen_width - figure_width) // 2
+        else:
+            x = 0
+        if figure_height < screen_height:
+            y = (screen_height - figure_height) // 2
+        else:
+            y = 0
+        # noinspection PyUnresolvedReferences
+        data = io.BytesIO()
+        self.plt.savefig(data, format='PNG')
+
+        image = data.getvalue()
+        encoded = standard_b64encode(image)
+        image_text = str(encoded.decode('UTF-8'))
+        MockTurtle.display_image(x, y, image=image_text)
+
+    def live_coding_zoom(self):
+        screen_width, screen_height = self.plt.live_coding_size
+        fig = self.plt.gcf()
+        fig_width, fig_height = fig.get_figwidth(), fig.get_figheight()
+        x_dpi = screen_width/fig_width
+        y_dpi = screen_height/fig_height
+        fig.dpi = min(x_dpi, y_dpi)
 
 
 @contextmanager
@@ -1157,6 +1218,8 @@ class CodeTracer(object):
         self.message_limit = 10000
         self.max_width = None
         self.keepalive = False
+        if MockTurtle is not None:
+            MockTurtle.monkey_patch(canvas)
         self.environment = {}
         self.return_code = None
 
@@ -1240,6 +1303,11 @@ class CodeTracer(object):
         for message in messages:
             for line in message.splitlines():
                 yield line
+
+    def trace_turtle(self, source):
+        self.trace_code(source)
+
+        return '\n'.join(MockTurtle.get_all_reports())
 
     def report_driver_result(self, builder, messages):
         messages = list(self.split_lines(messages))
@@ -1459,8 +1527,8 @@ class FileSwallower(object):
             report_builder = frame.f_locals.get(CONTEXT_NAME)
             if report_builder is not None:
                 has_print_function = (
-                        sys.version_info >= (3, 0) or
-                        __future__.print_function in frame.f_globals.values())
+                    sys.version_info >= (3, 0) or
+                    __future__.print_function in frame.f_globals.values())
                 report_builder.add_output(text,
                                           frame.f_lineno,
                                           has_print_function,
@@ -1489,15 +1557,99 @@ class TracedStringIO(io.StringIO):
             frame = frame.f_back
 
 
-from js import document
-
-
-def display(event=None):
+def display(_event=None):
     code = document.getElementById('source').value
     tracer = CodeTracer()
     tracer.max_width = 200000
     code_report = tracer.trace_code(code)
     document.getElementById('display').value = code_report
 
-display()
-document.getElementById('source').addEventListener('input', display)
+
+def web_main():
+    display()
+    document.getElementById('source').addEventListener('input', display)
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Trace Python code.',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-c',
+                        '--canvas',
+                        action='store_true',
+                        help='Should canvas commands be printed?')
+    parser.add_argument('-x',
+                        '--width',
+                        type=int,
+                        default=800,
+                        help='width of the canvas in pixels')
+    parser.add_argument('-y',
+                        '--height',
+                        type=int,
+                        default=600,
+                        help='height of the canvas in pixels')
+    parser.add_argument('-z',
+                        '--zoomed',
+                        action='store_true',
+                        help='matplotlib is zoomed to fit the canvas size')
+    parser.add_argument('-d',
+                        '--dump',
+                        action='store_true',
+                        help='dump source code with report')
+    parser.add_argument('-f',
+                        '--filename',
+                        help='file name to save in __file__')
+    parser.add_argument('-b',
+                        '--bad_driver',
+                        help="message to display if driver doesn't call module")
+    parser.add_argument('-m',
+                        '--module',
+                        action='store_true',
+                        help='driver is an importable module, not a script')
+    parser.add_argument('source',
+                        nargs=argparse.OPTIONAL,
+                        default='-',
+                        help='source file to trace, or - for stdin')
+    parser.add_argument('load_as',
+                        nargs=argparse.OPTIONAL,
+                        default=SCOPE_NAME,
+                        help='load traced code as a module with this name')
+    parser.add_argument('driver',
+                        nargs=argparse.REMAINDER,
+                        help='script to call traced code, plus any arguments')
+
+    args = parser.parse_args()
+    if args.driver and args.driver[0] in ('-m', '--module'):
+        args.module = True
+        args.driver = args.driver[1:]
+    if args.source == '-':
+        code = sys.stdin.read()
+    else:
+        with open(args.source, 'r') as source:
+            code = source.read()
+    canvas = Canvas(args.width, args.height)
+    tracer = CodeTracer(canvas)
+    tracer.max_width = 200000
+    code_report = tracer.trace_code(code,
+                                    dump=args.dump,
+                                    load_as=args.load_as,
+                                    is_module=args.module,
+                                    driver=args.driver,
+                                    filename=args.filename,
+                                    bad_driver=args.bad_driver,
+                                    is_zoomed=args.zoomed)
+    turtle_report = MockTurtle.get_all_reports()
+    if turtle_report and args.canvas:
+        print('start_canvas')
+        print('\n'.join(turtle_report))
+        print('end_canvas')
+        print('.')
+    print(code_report)
+    if tracer.return_code:
+        exit(tracer.return_code)
+
+
+if __name__ == '__main__':
+    main()
+elif IS_PYODIDE:
+    web_main()

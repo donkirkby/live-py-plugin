@@ -18,10 +18,19 @@ import types
 import os
 from importlib import import_module
 
-# Switch to importlib.util.module_from_spec() once support for 2.7 and 3.4 are
-# removed.
-# noinspection PyDeprecation
-import imp
+try:
+    from importlib.abc import MetaPathFinder, Loader
+    from importlib.machinery import ModuleSpec
+    from importlib.util import find_spec
+    imp = None
+except ImportError:
+    # Stub out the classes for older versions of Python.
+    class MetaPathFinder(object):
+        pass
+
+    Loader = ModuleSpec = object
+    find_spec = None
+    import imp
 try:
     builtins = import_module('__builtin__')
 except ImportError:
@@ -453,6 +462,7 @@ class Tracer(NodeTransformer):
         new_node.body = [context_assign]
         if isinstance(try_body[0], Expr) and isinstance(try_body[0].value, Str):
             # Move docstring back to top of function.
+            # noinspection PyUnresolvedReferences
             new_node.body.insert(0, try_body.pop(0))
 
         # trace function parameter values
@@ -496,6 +506,7 @@ class Tracer(NodeTransformer):
         try_body = new_node.body
         if try_body:
             while try_body and self._is_module_header(try_body[0]):
+                # noinspection PyUnresolvedReferences
                 new_body.append(try_body.pop(0))
             self._find_line_numbers(new_node, line_numbers)
         if line_numbers:
@@ -677,20 +688,21 @@ class Tracer(NodeTransformer):
         return ' = '.join(strings)
 
     def _create_context_call(self, function_name, args=None):
-        " Create a method call expression on the live coding context object. "
+        """ Create a method call expression on the live coding context object. """
         return Expr(value=self._create_bare_context_call(function_name, args))
 
-    def _create_bare_context_call(self, function_name, args=None):
+    @staticmethod
+    def _create_bare_context_call(function_name, args=None):
         """ Create a method call on the live coding context object.
 
         Bare means that it is not wrapped in an expression. """
         if args is None:
             args = []
         context_name = Name(id=CONTEXT_NAME, ctx=Load())
-        function = Attribute(value=context_name,
-                             attr=function_name,
-                             ctx=Load())
-        return Call(func=function,
+        func = Attribute(value=context_name,
+                         attr=function_name,
+                         ctx=Load())
+        return Call(func=func,
                     args=args,
                     keywords=[],
                     starargs=None,
@@ -711,7 +723,8 @@ class LineNumberCleaner(NodeTransformer):
         return self.generic_visit(node)
 
 
-class TracedModuleImporter(object):
+# noinspection PyAbstractClass
+class TracedModuleImporter(MetaPathFinder, Loader):
     is_desperate = False
 
     def __init__(self,
@@ -739,6 +752,42 @@ class TracedModuleImporter(object):
         self.is_own_driver = is_own_driver
         self.is_zoomed = is_zoomed
 
+    def find_spec(self, fullname, path, target=None):
+        if (fullname == self.module_name or
+                (fullname == SCOPE_NAME and self.is_own_driver)):
+            return ModuleSpec(fullname, self)
+        if fullname not in ('matplotlib', 'matplotlib.pyplot', 'numpy.random'):
+            return None
+        is_after = False
+        for finder in sys.meta_path:
+            if not is_after:
+                is_after = finder is self
+                continue
+            finder_find_spec = getattr(finder, 'find_spec', None)
+            if finder_find_spec:
+                spec = finder_find_spec(fullname, path, target)
+                if spec is not None:
+                    spec.loader = PatchedModuleLoader(fullname,
+                                                      spec.loader,
+                                                      self.is_zoomed)
+                    return spec
+        return None
+
+    def exec_module(self, module):
+        if '.' in self.module_name:
+            package_name, child_name = self.module_name.rsplit('.', 1)
+        else:
+            package_name = None
+        module.__package__ = package_name
+        if self.filename is not None:
+            module.__file__ = self.filename
+        module.__builtins__ = builtins
+        module.__dict__.update(self.environment)
+        self.environment = module.__dict__
+
+        exec(self.traced_code, self.environment)
+
+    # find_module() and load_module() are used in Python 2.
     def find_module(self, fullname, path=None):
         if (fullname == self.module_name or
                 (fullname == SCOPE_NAME and self.is_own_driver)):
@@ -759,44 +808,32 @@ class TracedModuleImporter(object):
             return PatchedModuleLoader(fullname, None, self.is_zoomed)
 
     def load_module(self, fullname):
-        if '.' in self.module_name:
-            package_name, child_name = self.module_name.rsplit('.', 1)
-        else:
-            package_name = None
         # noinspection PyDeprecation
         new_mod = imp.new_module(fullname)
         sys.modules[fullname] = new_mod
-        new_mod.__builtins__ = builtins
-        if self.filename is not None:
-            new_mod.__file__ = self.filename
-        new_mod.__package__ = package_name
 
-        new_mod.__dict__.update(self.environment)
-        self.environment = new_mod.__dict__
-
-        exec(self.traced_code, self.environment)
+        self.exec_module(new_mod)
         return new_mod
 
 
-class PatchedModuleLoader(object):
+# noinspection PyAbstractClass
+class PatchedModuleLoader(Loader):
     def __init__(self, fullname, main_loader, is_zoomed):
         self.fullname = fullname
         self.main_loader = main_loader
         self.is_zoomed = is_zoomed
         self.plt = None
 
-    def load_module(self, fullname):
+    def exec_module(self, module):
         if self.main_loader is not None:
-            module = self.main_loader.load_module(fullname)
-        else:
-            module = import_module(fullname)
-            TracedModuleImporter.is_desperate = False
-        if fullname == 'numpy.random':
+            self.main_loader.exec_module(module)
+        if self.fullname == 'numpy.random':
             module.seed(0)
-        elif fullname == 'matplotlib':
+        elif self.fullname == 'matplotlib':
             module.use('Agg')
-        elif fullname == 'matplotlib.pyplot':
+        elif self.fullname == 'matplotlib.pyplot':
             self.plt = module
+            # noinspection PyProtectedMember
             turtle_screen = MockTurtle._screen
             screen_width = turtle_screen.cv.cget('width')
             screen_height = turtle_screen.cv.cget('height')
@@ -805,6 +842,14 @@ class PatchedModuleLoader(object):
             module.live_coding_zoom = self.live_coding_zoom
             if self.is_zoomed:
                 self.live_coding_zoom()
+
+    def load_module(self, fullname):
+        if self.main_loader is not None:
+            module = self.main_loader.load_module(fullname)
+        else:
+            module = import_module(fullname)
+            TracedModuleImporter.is_desperate = False
+        self.exec_module(module)
         return module
 
     def mock_show(self, *_args, **_kwargs):
@@ -876,34 +921,50 @@ class CodeTracer(object):
         This is based on code from coverage.py, by Ned Batchelder.
         https://bitbucket.org/ned/coveragepy
         """
-        openfile = None
-        glo, loc = globals(), locals()
-        try:
-            # Search for the module - inside its parent package, if any -
-            # using standard import mechanics.
-            if '.' in modulename:
-                packagename, name = modulename.rsplit('.', 1)
-                package = __import__(packagename, glo, loc, ['__path__'])
-                searchpath = package.__path__
-            else:
-                packagename, name = None, modulename
-                searchpath = None  # "top-level search" in imp.find_module()
-            # noinspection PyDeprecation
-            openfile, pathname, _ = imp.find_module(name, searchpath)
-
-            # If `modulename` is actually a package, not a mere module,
-            # then we pretend to be Python 2.7 and try running its
-            # __main__.py script.
-            if openfile is None:
-                packagename = modulename
-                name = '__main__'
-                package = __import__(packagename, glo, loc, ['__path__'])
-                searchpath = package.__path__
+        if find_spec:
+            spec = find_spec(modulename)
+            pathname = spec.origin
+            packagename = spec.name
+            if pathname.endswith("__init__.py") and not modulename.endswith("__init__"):
+                mod_main = modulename + ".__main__"
+                spec = find_spec(mod_main)
+                if not spec:
+                    raise ImportError(
+                        "No module named %s; "
+                        "%r is a package and cannot be directly executed"
+                        % (mod_main, modulename))
+                pathname = spec.origin
+                packagename = spec.name
+            packagename = packagename.rpartition(".")[0]
+        else:
+            openfile = None
+            glo, loc = globals(), locals()
+            try:
+                # Search for the module - inside its parent package, if any -
+                # using standard import mechanics.
+                if '.' in modulename:
+                    packagename, name = modulename.rsplit('.', 1)
+                    package = __import__(packagename, glo, loc, ['__path__'])
+                    searchpath = package.__path__
+                else:
+                    packagename, name = None, modulename
+                    searchpath = None  # "top-level search" in imp.find_module()
                 # noinspection PyDeprecation
                 openfile, pathname, _ = imp.find_module(name, searchpath)
-        finally:
-            if openfile:
-                openfile.close()
+
+                # If `modulename` is actually a package, not a mere module,
+                # then we pretend to be Python 2.7 and try running its
+                # __main__.py script.
+                if openfile is None:
+                    packagename = modulename
+                    name = '__main__'
+                    package = __import__(packagename, glo, loc, ['__path__'])
+                    searchpath = package.__path__
+                    # noinspection PyDeprecation
+                    openfile, pathname, _ = imp.find_module(name, searchpath)
+            finally:
+                if openfile:
+                    openfile.close()
 
         # Finally, hand the file off to run_python_file for execution.
         pathname = os.path.abspath(pathname)
@@ -916,8 +977,8 @@ class CodeTracer(object):
         """
         # Create a module to serve as __main__
         old_main_mod = sys.modules['__main__']
-        # noinspection PyDeprecation
-        main_mod = imp.new_module('__main__')
+        # noinspection PyUnresolvedReferences
+        main_mod = types.ModuleType('__main__')
         sys.modules['__main__'] = main_mod
         main_mod.__file__ = filename
         main_mod.__builtins__ = builtins

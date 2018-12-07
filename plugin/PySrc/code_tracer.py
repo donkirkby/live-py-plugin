@@ -1246,6 +1246,14 @@ class FileSwallower(object):
         return getattr(self.target, name)
 
 
+def find_string_io_targets(frame):
+    for name, value in frame.f_locals.items():
+        yield name, value
+        if name == 'self':
+            for attr_name, attr_value in value.__dict__.items():
+                yield 'self.' + attr_name, attr_value
+
+
 # noinspection PyUnresolvedReferences
 class TracedStringIO(io.StringIO):
     def write(self, text):
@@ -1254,7 +1262,7 @@ class TracedStringIO(io.StringIO):
         while frame is not None:
             report_builder = frame.f_locals.get(CONTEXT_NAME)
             if report_builder is not None:
-                for name, value in frame.f_locals.items():
+                for name, value in find_string_io_targets(frame):
                     if value is self:
                         report_builder.add_output(text,
                                                   frame.f_lineno,

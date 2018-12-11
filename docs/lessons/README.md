@@ -15,6 +15,12 @@ PyCharm will notice the link to the goal file and display both versions of the
 plot. When the user makes the starting version match the goal version, they
 will merge into one.
 
-If you have an idea for a lesson, you can describe it in a comment on issue
-#177, or you can create a pull request adding two lesson files to this directory.
+If you have an idea for a lesson, you can describe it in a comment on issue #177,
+or you can create a pull request adding two lesson files to this directory.
 You can copy `example_lesson.py` and `example_goal.py` as a starting point.
+
+Some of the example lessons are based on [Nicolas P. Rougier's] tutorial and
+are licensed under a [Creative Commons Attribution-ShareAlike 4.0] license.
+
+[Nicolas P. Rougier's]: https://github.com/rougier/matplotlib-tutorial
+[Creative Commons Attribution-ShareAlike 4.0]: http://creativecommons.org/licenses/by-sa/4.0

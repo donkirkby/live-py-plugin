@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.Alarm;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +75,9 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
         return new Builder() {
             private Editor mainEditor;
             private Editor displayEditor;
+            private Editor scrollingEditor;
             private int displayX;
+            private Alarm alarm = new Alarm();
 
             @Override
             public FileEditor build() {
@@ -143,12 +146,18 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
 
                 // Vertical scroll synchronized between two sides.
                 Editor slaveEditor;
-                if (activeEditor == mainEditor || isUpdating || isDisplayHidden) {
+                if (scrollingEditor != null) {
+                    activeEditor = scrollingEditor;
+                    slaveEditor = activeEditor == mainEditor
+                            ? displayEditor
+                            : mainEditor;
+                } else if (activeEditor == mainEditor || isUpdating || isDisplayHidden) {
                     activeEditor = mainEditor;
                     slaveEditor = displayEditor;
                 } else {
                     slaveEditor = mainEditor;
                 }
+                recordScrollingEditor(activeEditor);
 
                 ScrollingModel masterScroll = activeEditor.getScrollingModel();
                 ScrollingModel slaveScroll = slaveEditor.getScrollingModel();
@@ -156,6 +165,12 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 slaveScroll.disableAnimation();
                 slaveScroll.scrollVertically(scrollOffset);
                 slaveScroll.enableAnimation();
+            }
+
+            private void recordScrollingEditor(Editor activeEditor) {
+                scrollingEditor = activeEditor;
+                alarm.cancelAllRequests();
+                alarm.addRequest(() -> scrollingEditor = null, 300);
             }
         };
     }

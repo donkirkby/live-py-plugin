@@ -19,7 +19,8 @@ the [tools folder][tools]. To learn more, read about [how it works][how].
 
 Special thanks to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for
 contributing the Emacs support. Thanks to [all the contributors][hatrack] for
-helping in all kinds of ways.
+helping in all kinds of ways, and thanks to [JetBrains] for the free PyCharm and
+IDEA licenses.
 
 If you like this project, check out some of my [other projects][projects].
 
@@ -27,6 +28,7 @@ If you like this project, check out some of my [other projects][projects].
 [screenshot]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik
+[JetBrains]: https://www.jetbrains.com/?from=live-py-plugin
 
 Installing the Eclipse plugin
 -----------------------------

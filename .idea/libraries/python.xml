@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="python">
+    <CLASSES>
+      <root url="jar://$APPLICATION_PLUGINS_DIR$/python/lib/python.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

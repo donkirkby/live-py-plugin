@@ -67,7 +67,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private Rectangle goalBounds;
     private CanvasCommand goalImageCommand;
     private boolean isPassing;
-    private boolean isDisplayUpdating;
+    private boolean isDisplayUpdating = true;
 
     LiveCodingAnalyst(VirtualFile mainFile,
                       Document displayDocument,

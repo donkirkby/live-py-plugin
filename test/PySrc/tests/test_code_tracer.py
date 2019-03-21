@@ -40,6 +40,21 @@ i = 1 """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
+    @skipIf(sys.version_info < (3, 6),
+            'type hints not available before Python 3.6')
+    def test_annotated_assignment(self):
+        # SETUP
+        code = """\
+i: int = 1
+"""
+        expected_report = """\
+i = 1 """
+        # EXEC
+        report = CodeTracer().trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
     def test_increment(self):
         # SETUP
         code = """\

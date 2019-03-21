@@ -293,7 +293,11 @@ class Tracer(NodeTransformer):
 
     def visit_Assign(self, node):
         existing_node = self.generic_visit(node)
-        if any(map(self._is_untraceable_attribute, existing_node.targets)):
+        try:
+            targets = existing_node.targets
+        except AttributeError:
+            targets = [existing_node.target]
+        if any(map(self._is_untraceable_attribute, targets)):
             return existing_node
         line_numbers = set()
         self._find_line_numbers(existing_node, line_numbers)
@@ -301,9 +305,9 @@ class Tracer(NodeTransformer):
         last_line_number = max(line_numbers)
         new_nodes = []
         format_string = self._wrap_assignment_targets(
-            existing_node.targets)
-        if (len(existing_node.targets) == 1 and
-                isinstance(existing_node.targets[0], Tuple)):
+            targets)
+        if (len(targets) == 1 and
+                isinstance(targets[0], Tuple)):
             existing_node.value = Call(func=Name(id='tuple', ctx=Load()),
                                        args=[existing_node.value],
                                        keywords=[],
@@ -329,6 +333,9 @@ class Tracer(NodeTransformer):
         self._set_statement_line_numbers(finally_body, last_line_number)
 
         return new_nodes
+
+    def visit_AnnAssign(self, node):
+        return self.visit_Assign(node)
 
     def visit_AugAssign(self, node):
         read_target = deepcopy(node.target)

@@ -6,7 +6,7 @@ var languagePluginLoader = new Promise((resolve, reject) => {
   // This is filled in by the Makefile to be either a local file or the
   // deployed location. TODO: This should be done in a less hacky
   // way.
-  var baseURL = window.languagePluginUrl || 'https://iodide.io/pyodide-demo/';
+  var baseURL = window.languagePluginUrl || 'http://donkirkby.github.io/live-py-plugin/demo/';
   baseURL = baseURL.substr(0, baseURL.lastIndexOf('/')) + '/';
 
   ////////////////////////////////////////////////////////////

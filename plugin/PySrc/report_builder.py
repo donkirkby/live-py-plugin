@@ -160,11 +160,13 @@ class ReportBuilder(object):
             return ''
         start_count = self.message_count
         self.is_muted = True
+        # noinspection PyBroadException
         try:
             repr_text = repr(value)
-        finally:
-            self.is_muted = False
-            self.message_count = start_count
+        except Exception:
+            repr_text = '<{} object>'.format(value.__class__.__name__)
+        self.is_muted = False
+        self.message_count = start_count
         max_width = 80
         if len(repr_text) > max_width:
             half_width = max_width//2 - 5

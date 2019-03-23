@@ -353,8 +353,6 @@ class AssignmentReport(object):
     def __init__(self):
         self.value = None
         self.indexes = []
-
-
 import argparse
 import re
 from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,

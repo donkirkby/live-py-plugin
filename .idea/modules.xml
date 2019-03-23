@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/pycharm/livepy.iml" filepath="$PROJECT_DIR$/pycharm/livepy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/test/PySrc/pytest.iml" filepath="$PROJECT_DIR$/test/PySrc/pytest.iml" />
     </modules>
   </component>
 </project>

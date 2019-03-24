@@ -123,6 +123,29 @@ buffer.
 Run the commands listed in `.travis.yml` in the section "script:" manually
 to check for compiler warnings and test regressions.
 
+
+## Browser Development
+The browser version uses the [Pyodide] project to run Python code in the browser.
+
+### Updating and Testing
+To deploy the latest version of `code_tracer.py` and `report_builder.py` to the
+web site, run `test/PySrc/tools/serve_demo.py`.
+
+To update the Pyodide files, clone it from GitHub, install Docker, then run
+Pyodide's `run_docker` script. See the Pyodide project for full instructions.
+After the lengthy build process, run the `serve_demo.py` script again. It will
+copy all of the Pyodide files into the demo directory.
+
+To update the ReactJS files, change to the `html` folder, and run
+`npm run build`. You can also use `npm start` to test the ReactJS files without
+Pyodide. After building the ReactJS files, use `serve_demo.py` to copy them
+into the web site.
+
+After updating the files, test them out on `http://localhost:8000/`. 
+
+[Pyodide]: https://github.com/iodide-project/pyodide
+
+
 ## Adding Support For a New Editor ##
 
 If you want to use live coding with a new editor, you can add basic support

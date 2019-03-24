@@ -17,6 +17,10 @@ def parse_args():
     parser.add_argument('--port',
                         type=int,
                         default=8000)
+    parser.add_argument('--no_update',
+                        '-n',
+                        action='store_true',
+                        help='Serve files without updating them.')
     parser.add_argument('--demo_dir',
                         help='directory to serve from',
                         default=os.path.abspath(
@@ -47,6 +51,16 @@ def parse_args():
                                          '..',
                                          'plugin',
                                          'PySrc')))
+    parser.add_argument('--react_dir',
+                        help='directory to copy React app from',
+                        default=os.path.abspath(
+                            os.path.join(__file__,
+                                         '..',
+                                         '..',
+                                         '..',
+                                         '..',
+                                         'html',
+                                         'build')))
     return parser.parse_args()
 
 
@@ -62,17 +76,23 @@ def copy_pyodide(pyodide_dir, demo_dir):
                       'pyodide.asm.data',
                       'packages.json'):
         source_path = os.path.join(pyodide_dir, 'build', file_name)
-        target_path = os.path.join(demo_dir, file_name)
-        source_time = os.stat(source_path).st_mtime
-        try:
-            target_time = os.stat(target_path).st_mtime
-        except FileNotFoundError:
-            target_time = 0
-        if source_time <= target_time:
-            print(file_name, 'is up to date.')
-        else:
-            shutil.copy(source_path, target_path)
-            print(file_name, 'copied.')
+        target_path = os.path.join(demo_dir, 'pyodide', file_name)
+        copy_if_needed(source_path, target_path)
+
+
+def copy_if_needed(source_path, target_path, file_name=None):
+    if file_name is None:
+        file_name = os.path.basename(target_path)
+    source_time = os.stat(source_path).st_mtime
+    try:
+        target_time = os.stat(target_path).st_mtime
+    except FileNotFoundError:
+        target_time = 0
+    if source_time <= target_time:
+        print(file_name, 'is up to date.')
+    else:
+        shutil.copy(source_path, target_path)
+        print(file_name, 'copied.')
 
 
 def copy_tracer(tracer_dir, demo_dir):
@@ -101,6 +121,40 @@ def copy_tracer(tracer_dir, demo_dir):
         print('Code tracer copied.')
 
 
+def copy_react(react_dir, demo_dir):
+    if not os.path.isdir(react_dir):
+        print(f'React directory {react_dir!r} not found.')
+        return
+
+    copied_files = set()
+    for source_dir, child_names, file_names in os.walk(react_dir):
+        for child_name in child_names:
+            source_path = os.path.join(source_dir, child_name)
+            rel_path = os.path.relpath(source_path, react_dir)
+            target_path = os.path.join(demo_dir, rel_path)
+            os.makedirs(target_path, exist_ok=True)
+        for file_name in file_names:
+            if file_name == 'favicon.ico':
+                continue
+            source_path = os.path.join(source_dir, file_name)
+            rel_path = os.path.relpath(source_path, react_dir)
+            target_path = os.path.join(demo_dir, rel_path)
+            copy_if_needed(source_path, target_path, rel_path)
+            copied_files.add(target_path)
+
+    for target_dir, child_names, file_names in os.walk(demo_dir):
+        if os.path.basename(target_dir) == 'pyodide':
+            continue
+        for file_name in file_names:
+            if file_name == 'code_tracer.py':
+                continue
+            file_path = os.path.join(target_dir, file_name)
+            if file_path not in copied_files:
+                os.remove(file_path)
+                rel_path = os.path.relpath(file_path, demo_dir)
+                print(f'Deleted {rel_path!r}.')
+
+
 def launch(port, retries=20):
     try:
         httpd = socketserver.TCPServer(("", port), SimpleHTTPRequestHandler)
@@ -115,8 +169,11 @@ def launch(port, retries=20):
 
 def main():
     args = parse_args()
-    copy_pyodide(args.pyodide_dir, args.demo_dir)
-    copy_tracer(args.tracer_dir, args.demo_dir)
+    if not args.no_update:
+        copy_pyodide(args.pyodide_dir, args.demo_dir)
+        copy_tracer(args.tracer_dir, args.demo_dir)
+        copy_react(args.react_dir, args.demo_dir)
+
     SimpleHTTPRequestHandler.extensions_map.update({
         '.wasm': 'application/wasm',
     })

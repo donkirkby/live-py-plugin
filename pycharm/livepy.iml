@@ -3,7 +3,7 @@
   <component name="DevKit.ModuleBuildProperties" url="file://$MODULE_DIR$/resources/META-INF/plugin.xml" />
   <component name="FacetManager">
     <facet type="Python" name="Python">
-      <configuration sdkName="Python 2.7 (live-py-plugin)" />
+      <configuration sdkName="Python 3.7 (live-py-plugin)" />
     </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -12,8 +12,6 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../plugin/PySrc" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../test/PySrc/tests" type="java-test-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../test/PySrc/tools" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../plugin/canvas-src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../test/canvas-src" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/../.tox" />
@@ -31,6 +29,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="PROVIDED" name="Python 2.7 (live-py-plugin) interpreter library" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="Python 3.7 (live-py-plugin) interpreter library" level="application" />
   </component>
 </module>

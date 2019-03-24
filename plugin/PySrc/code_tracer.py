@@ -40,7 +40,7 @@ except ImportError:
 IS_PYODIDE = __name__ == 'builtins'
 if IS_PYODIDE:
     # noinspection PyUnresolvedReferences
-    from js import document
+    from js import document, window
     standard_b64encode = Canvas = MockTurtle = None
 else:
     from base64 import standard_b64encode
@@ -1283,7 +1283,7 @@ def display(_event=None):
     tracer = CodeTracer()
     tracer.max_width = 200000
     code_report = tracer.trace_code(code)
-    document.getElementById('display').value = code_report
+    window.updateDisplay(code, code_report)
 
 
 def web_main():

@@ -10,24 +10,26 @@ class App extends Component {
 def search(n, a):
     low = 0
     high = len(a) - 1
-    while True:
+    while low <= high:
         mid = low + high // 2
         v = a[mid]
         if n == v:
             return mid
         if n < v:
-            high=mid - 10
-            else:
-                low=mid + 1
-            return -1
+            high=mid - 1
+        else:
+            low=mid + 1
+    return -1
 
 i = search(1, [1, 2, 4])
 `};
 
         this.handleChange = this.handleChange.bind(this);
+        this.updateDisplay = this.updateDisplay.bind(this);
+        window.updateDisplay = this.updateDisplay;
 
         if (window.languagePluginLoader === undefined) {
-            this.state.display = this.state.source;
+            this.state.display = 'Pyodide is not loaded.';
         } else {
             window.languagePluginLoader.then(function() {
                 fetch('code_tracer.py').then(function (response) {
@@ -41,10 +43,10 @@ i = search(1, [1, 2, 4])
 
     handleChange(event) {
         this.setState({source: event.target.value});
-        if (window.languagePluginLoader === undefined) {
-            /* Dummy analysis to use when Pyodide isn't loaded. */
-            this.setState({display: event.target.value});
-        }
+    }
+
+    updateDisplay(source, display) {
+        this.setState({source: source, display: display});
     }
 
     render() {

@@ -1,13 +1,13 @@
 {
-  "main.css": "/live-py-plugin/demo/static/css/main.8018ee5d.chunk.css",
-  "main.js": "/live-py-plugin/demo/static/js/main.e495d89e.chunk.js",
-  "main.js.map": "/live-py-plugin/demo/static/js/main.e495d89e.chunk.js.map",
-  "runtime~main.js": "/live-py-plugin/demo/static/js/runtime~main.cf8ffd75.js",
-  "runtime~main.js.map": "/live-py-plugin/demo/static/js/runtime~main.cf8ffd75.js.map",
-  "static/js/2.58b3c62a.chunk.js": "/live-py-plugin/demo/static/js/2.58b3c62a.chunk.js",
-  "static/js/2.58b3c62a.chunk.js.map": "/live-py-plugin/demo/static/js/2.58b3c62a.chunk.js.map",
-  "index.html": "/live-py-plugin/demo/index.html",
-  "precache-manifest.1ced334dd736cd5ac0ef15fe859b74ab.js": "/live-py-plugin/demo/precache-manifest.1ced334dd736cd5ac0ef15fe859b74ab.js",
-  "service-worker.js": "/live-py-plugin/demo/service-worker.js",
-  "static/css/main.8018ee5d.chunk.css.map": "/live-py-plugin/demo/static/css/main.8018ee5d.chunk.css.map"
+  "main.css": "./static/css/main.8018ee5d.chunk.css",
+  "main.js": "./static/js/main.9598f5eb.chunk.js",
+  "main.js.map": "./static/js/main.9598f5eb.chunk.js.map",
+  "runtime~main.js": "./static/js/runtime~main.d653cc00.js",
+  "runtime~main.js.map": "./static/js/runtime~main.d653cc00.js.map",
+  "static/js/2.58b3c62a.chunk.js": "./static/js/2.58b3c62a.chunk.js",
+  "static/js/2.58b3c62a.chunk.js.map": "./static/js/2.58b3c62a.chunk.js.map",
+  "index.html": "./index.html",
+  "precache-manifest.2a29de9cb70353648466efffd079c9b1.js": "./precache-manifest.2a29de9cb70353648466efffd079c9b1.js",
+  "service-worker.js": "./service-worker.js",
+  "static/css/main.8018ee5d.chunk.css.map": "./static/css/main.8018ee5d.chunk.css.map"
 }

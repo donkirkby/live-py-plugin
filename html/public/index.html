@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
@@ -39,6 +38,9 @@
     -->
     <script type="application/javascript">
         self.languagePluginUrl = self.location.href + "pyodide/";
+        self.updateDisplay = function(source, display) {
+            // This gets replaced with a ReactJS method from the App class.
+        }
     </script>
     <script type="application/javascript" src="pyodide/pyodide.js"></script>
   </body>

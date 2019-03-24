@@ -2,6 +2,7 @@
   "name": "live-py",
   "version": "0.1.0",
   "private": true,
+  "homepage": "http://donkirkby.github.io/live-py-plugin/demo",
   "dependencies": {
     "react": "^16.8.5",
     "react-dom": "^16.8.5",

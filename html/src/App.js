@@ -1,5 +1,10 @@
 import React, { Component } from 'react';
+import AceEditor from 'react-ace';
 import './App.css';
+
+import 'brace/mode/python';
+import 'brace/mode/markdown';
+import 'brace/theme/github';
 
 class App extends Component {
     constructor(props) {
@@ -25,8 +30,7 @@ i = search(1, [1, 2, 4])
 `};
 
         this.handleChange = this.handleChange.bind(this);
-        this.updateDisplay = this.updateDisplay.bind(this);
-        window.updateDisplay = this.updateDisplay;
+        let app = this;
 
         if (window.languagePluginLoader === undefined) {
             this.state.display = 'Pyodide is not loaded.';
@@ -36,17 +40,18 @@ i = search(1, [1, 2, 4])
                     return response.text();
                 }).then(function (code_tracer_source) {
                     window.pyodide.runPython(code_tracer_source);
+                    app.handleChange();
                 });
             });
         }
     }
 
-    handleChange(event) {
-        this.setState({source: event.target.value});
-    }
-
-    updateDisplay(source, display) {
-        this.setState({source: source, display: display});
+    handleChange(newSource) {
+        if (newSource === undefined) {
+            newSource = this.state.source;
+        }
+        let display = window.analyze(newSource);
+        this.setState({source: newSource, display: display});
     }
 
     render() {
@@ -60,16 +65,43 @@ i = search(1, [1, 2, 4])
                       <th><label htmlFor="display">See Inside</label></th>
                   </tr>
                   <tr>
-                      <td><textarea value={this.state.source}
-                                    onChange={this.handleChange}
-                                    rows="25"
-                                    cols="65"
-                                    id="source"/></td>
-                      <td><textarea value={this.state.display}
-                                    readOnly={true}
-                                    rows="25"
-                                    cols="65"
-                                    id="display"/></td>
+                      <td><AceEditor
+                          value={this.state.source}
+                          onChange={this.handleChange}
+                          placeholder="# Python Code"
+                          mode="python"
+                          theme="github"
+                          name="source"
+                          id="source"
+                          fontSize={18}
+                          showPrintMargin={true}
+                          showGutter={true}
+                          highlightActiveLine={true}
+                          editorProps={{
+                              $blockScrolling: Infinity
+                          }}
+                          setOptions={{
+                              showLineNumbers: true,
+                              tabSize: 4,
+                          }}/></td>
+                      <td><AceEditor
+                          value={this.state.display}
+                          readOnly={true}
+                          mode="markdown"
+                          theme="github"
+                          name="display"
+                          id="display"
+                          fontSize={18}
+                          showPrintMargin={true}
+                          showGutter={true}
+                          highlightActiveLine={true}
+                          editorProps={{
+                              $blockScrolling: Infinity
+                          }}
+                          setOptions={{
+                              showLineNumbers: true,
+                              tabSize: 4,
+                          }}/></td>
                   </tr>
                   </tbody>
               </table>

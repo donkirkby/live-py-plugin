@@ -5,6 +5,7 @@
   "homepage": ".",
   "dependencies": {
     "react": "^16.8.5",
+    "react-ace": "^6.4.0",
     "react-dom": "^16.8.5",
     "react-scripts": "2.1.8"
   },

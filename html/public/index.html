@@ -38,8 +38,9 @@
     -->
     <script type="application/javascript">
         self.languagePluginUrl = self.location.href + "pyodide/";
-        self.updateDisplay = function(source, display) {
+        self.analyze = function(source) {
             // This gets replaced with a ReactJS method from the App class.
+            return source;
         }
     </script>
     <script type="application/javascript" src="pyodide/pyodide.js"></script>

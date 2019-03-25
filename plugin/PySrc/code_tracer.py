@@ -1278,17 +1278,15 @@ class TracedStringIO(io.StringIO):
             frame = frame.f_back
 
 
-def display(_event=None):
-    code = document.getElementById('source').value
+def analyze(source_code):
     tracer = CodeTracer()
     tracer.max_width = 200000
-    code_report = tracer.trace_code(code)
-    window.updateDisplay(code, code_report)
+    code_report = tracer.trace_code(source_code)
+    return code_report
 
 
 def web_main():
-    display()
-    document.getElementById('source').addEventListener('input', display)
+    window.analyze = analyze
 
 
 def main():

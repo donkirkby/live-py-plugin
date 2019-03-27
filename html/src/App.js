@@ -6,10 +6,51 @@ import 'brace/mode/python';
 import 'brace/mode/markdown';
 import 'brace/theme/github';
 
+class Editor extends Component {
+    constructor(props) {
+        super(props);
+        this.content = React.createRef();
+        this.handleScroll = this.handleScroll.bind(this);
+    }
+
+    handleScroll() {
+        // debugger;
+        this.props.onScroll(this.content.current.editor.session.getScrollTop());
+    }
+
+    componentDidUpdate() {
+        // debugger;
+        this.content.current.editor.session.setScrollTop(this.props.scrollTop);
+    }
+
+    render() {
+        return <AceEditor
+            ref={this.content}
+            value={this.props.value}
+            onChange={this.props.onChange}
+            readOnly={this.props.readOnly}
+            onScroll={this.handleScroll}
+            mode={this.props.mode}
+            theme="github"
+            fontSize={18}
+            showPrintMargin={true}
+            showGutter={true}
+            highlightActiveLine={true}
+            editorProps={{
+                $blockScrolling: Infinity
+            }}
+            setOptions={{
+                showLineNumbers: true,
+                tabSize: 4,
+            }}/>;
+    }
+}
+
 class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            scrollTop: 0,
             display: 'Loading...',
             source: `\
 def search(n, a):
@@ -30,6 +71,7 @@ i = search(1, [1, 2, 4])
 `};
 
         this.handleChange = this.handleChange.bind(this);
+        this.handleScroll = this.handleScroll.bind(this);
         let app = this;
 
         if (window.languagePluginLoader === undefined) {
@@ -54,6 +96,11 @@ i = search(1, [1, 2, 4])
         this.setState({source: newSource, display: display});
     }
 
+    handleScroll(scrollTop) {
+        console.log(scrollTop);
+        this.setState({scrollTop: scrollTop});
+    }
+
     render() {
         return (
             <div className="App">
@@ -65,43 +112,19 @@ i = search(1, [1, 2, 4])
                       <th><label htmlFor="display">See Inside</label></th>
                   </tr>
                   <tr>
-                      <td><AceEditor
+                      <td><Editor
                           value={this.state.source}
+                          scrollTop={this.state.scrollTop}
                           onChange={this.handleChange}
-                          placeholder="# Python Code"
-                          mode="python"
-                          theme="github"
-                          name="source"
-                          id="source"
-                          fontSize={18}
-                          showPrintMargin={true}
-                          showGutter={true}
-                          highlightActiveLine={true}
-                          editorProps={{
-                              $blockScrolling: Infinity
-                          }}
-                          setOptions={{
-                              showLineNumbers: true,
-                              tabSize: 4,
-                          }}/></td>
-                      <td><AceEditor
+                          onScroll={this.handleScroll}
+                          mode="python"/></td>
+                      <td><Editor
                           value={this.state.display}
+                          scrollTop={this.state.scrollTop}
                           readOnly={true}
-                          mode="markdown"
-                          theme="github"
-                          name="display"
-                          id="display"
-                          fontSize={18}
-                          showPrintMargin={true}
-                          showGutter={true}
-                          highlightActiveLine={true}
-                          editorProps={{
-                              $blockScrolling: Infinity
-                          }}
-                          setOptions={{
-                              showLineNumbers: true,
-                              tabSize: 4,
-                          }}/></td>
+                          onChange={this.handleChange}
+                          onScroll={this.handleScroll}
+                          mode="markdown"/></td>
                   </tr>
                   </tbody>
               </table>

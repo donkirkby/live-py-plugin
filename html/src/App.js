@@ -9,18 +9,21 @@ import 'brace/theme/github';
 class Editor extends Component {
     constructor(props) {
         super(props);
+        this.state = {selectedLine: undefined};
         this.content = React.createRef();
         this.handleScroll = this.handleScroll.bind(this);
     }
 
     handleScroll() {
-        // debugger;
         this.props.onScroll(this.content.current.editor.session.getScrollTop());
     }
 
     componentDidUpdate() {
-        // debugger;
         this.content.current.editor.session.setScrollTop(this.props.scrollTop);
+        if (this.props.selectedLine !== this.state.selectedLine) {
+            this.setState({selectedLine: this.props.selectedLine});
+            this.content.current.editor.gotoLine(this.props.selectedLine+1);
+        }
     }
 
     render() {
@@ -30,6 +33,8 @@ class Editor extends Component {
             onChange={this.props.onChange}
             readOnly={this.props.readOnly}
             onScroll={this.handleScroll}
+            onSelectionChange={this.props.onSelectionChange}
+            onCursorChange={this.props.onCursorChange}
             mode={this.props.mode}
             theme="github"
             fontSize={18}
@@ -51,6 +56,7 @@ class App extends Component {
         super(props);
         this.state = {
             scrollTop: 0,
+            selectedLine: undefined,
             display: 'Loading...',
             source: `\
 def search(n, a):
@@ -72,6 +78,7 @@ i = search(1, [1, 2, 4])
 
         this.handleChange = this.handleChange.bind(this);
         this.handleScroll = this.handleScroll.bind(this);
+        this.handleCursorChange = this.handleCursorChange.bind(this);
         let app = this;
 
         if (window.languagePluginLoader === undefined) {
@@ -97,8 +104,11 @@ i = search(1, [1, 2, 4])
     }
 
     handleScroll(scrollTop) {
-        console.log(scrollTop);
         this.setState({scrollTop: scrollTop});
+    }
+
+    handleCursorChange(selection) {
+        this.setState({selectedLine: selection.selectionLead.row});
     }
 
     render() {
@@ -117,11 +127,13 @@ i = search(1, [1, 2, 4])
                           scrollTop={this.state.scrollTop}
                           onChange={this.handleChange}
                           onScroll={this.handleScroll}
+                          onCursorChange={this.handleCursorChange}
                           mode="python"/></td>
                       <td><Editor
                           value={this.state.display}
                           scrollTop={this.state.scrollTop}
                           readOnly={true}
+                          selectedLine={this.state.selectedLine}
                           onChange={this.handleChange}
                           onScroll={this.handleScroll}
                           mode="markdown"/></td>

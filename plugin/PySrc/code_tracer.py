@@ -1181,6 +1181,10 @@ class CodeTracer(object):
         is_own_driver = ((is_module and driver and driver[0] == load_as) or
                          load_as == SCOPE_NAME)
         seed(0)
+        numpy_random = sys.modules.get('numpy.random')
+        if numpy_random is not None:
+            numpy_random.seed(0)
+
         module_importer = TracedModuleImporter(load_as,
                                                code,
                                                self.environment,

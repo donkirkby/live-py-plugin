@@ -1,6 +1,6 @@
 ---
 title: Getting Started with Live Coding
-subtitle: Plug ins for PyCharm, Emacs, and Eclipse
+subtitle: Plug ins for PyCharm, Emacs, Eclipse, or even a browser
 ---
 I've built a tool that lets you run your Python code as you type it. For
 example, this code draws a 50x50 pixel square.
@@ -242,6 +242,9 @@ I have also started working on a PyCharm plugin. Contributions are
 welcome if you want to help out.
 
 ![PyCharm screen shot][pycharm]
+
+Don't feel like installing anything before you can try it out? Try the
+[browser version].
 
 
 ## Live Unit Tests ##
@@ -493,14 +496,15 @@ Remember, you can try this tool yourself by visiting
 [donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
 love to hear about any other projects working on the same kind of tools.
 
-[square50]: http://donkirkby.github.com/live-py-plugin/images/demo_square50.png
-[square75]: http://donkirkby.github.com/live-py-plugin/images/demo_square75.png
-[livepy]: http://donkirkby.github.com/live-py-plugin/
+[square50]: https://donkirkby.github.io/live-py-plugin/images/demo_square50.png
+[square75]: https://donkirkby.github.io/live-py-plugin/images/demo_square75.png
+[livepy]: https://donkirkby.github.io/live-py-plugin/
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
-[turtle_window]: http://donkirkby.github.com/live-py-plugin/images/demo_turtle_window.png
-[star]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
-[pinwheel]: http://donkirkby.github.com/live-py-plugin/images/demo_pinwheel.png
+[turtle_window]: https://donkirkby.github.io/live-py-plugin/images/demo_turtle_window.png
+[star]: https://donkirkby.github.io/live-py-plugin/images/demo_star.png
+[pinwheel]: https://donkirkby.github.io/live-py-plugin/images/demo_pinwheel.png
 [tdd]: https://donkirkby.github.io/testing/
-[emacs]: http://donkirkby.github.com/live-py-plugin/images/emacs.png
-[pycharm]: http://donkirkby.github.com/live-py-plugin/images/pycharm.png
-[emacs-test]: http://donkirkby.github.com/live-py-plugin/images/emacs-test.png
+[emacs]: https://donkirkby.github.io/live-py-plugin/images/emacs.png
+[pycharm]: https://donkirkby.github.io/live-py-plugin/images/pycharm.png
+[emacs-test]: https://donkirkby.github.io/live-py-plugin/images/emacs-test.png
+[browser version]: https://donkirkby.github.io/live-py-plugin/demo/

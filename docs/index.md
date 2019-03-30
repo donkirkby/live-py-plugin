@@ -1,16 +1,18 @@
 ---
 title: Live Coding in Python
-subtitle: Plug ins for PyCharm, Emacs, and Eclipse
+subtitle: Plug ins for PyCharm, Emacs, Eclipse, or even a browser
 ---
 To see how to use it, watch the [demo video][video] or read the 
-[getting started page][starting]. You might also find some useful examples in
+[getting started page][starting]. Want to try it without installing anything?
+Try the [browser version]. You might also find some useful examples in
 the [tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
 
 Special thanks to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for
 contributing the Emacs support. Thanks to [all the contributors][hatrack] for
-helping in all kinds of ways.
+helping in all kinds of ways, and thanks to [JetBrains] for the free PyCharm and
+IDEA licenses.
 
 If you like this project, check out some of my [other projects][projects].
 
@@ -18,6 +20,8 @@ If you like this project, check out some of my [other projects][projects].
 [screenshot]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik
+[JetBrains]: https://www.jetbrains.com/?from=live-py-plugin
+[browser version]: https://donkirkby.github.io/live-py-plugin/demo/
 
 Installing the Eclipse plugin
 -----------------------------

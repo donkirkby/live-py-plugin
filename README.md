@@ -4,7 +4,7 @@ live-py-plugin
 [![Build Status]][travis]
 [![Code Coverage]][codecov]
 
-Live coding in Python with PyCharm, Emacs, or Eclipse.
+Live coding in Python with PyCharm, Emacs, Eclipse, or even a browser.
 
 [Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
 [travis]: https://travis-ci.org/live-py-plugin
@@ -12,7 +12,8 @@ Live coding in Python with PyCharm, Emacs, or Eclipse.
 [codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
 
 To see how to use it, watch the [demo video][video] or read the 
-[getting started page][starting]. You might also find some useful examples in
+[getting started page][starting]. Want to try it without installing anything?
+Try the [browser version]. You might also find some useful examples in
 the [tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
@@ -29,6 +30,7 @@ If you like this project, check out some of my [other projects][projects].
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik
 [JetBrains]: https://www.jetbrains.com/?from=live-py-plugin
+[browser version]: https://donkirkby.github.io/live-py-plugin/demo/
 
 Installing the Eclipse plugin
 -----------------------------

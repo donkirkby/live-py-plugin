@@ -49,8 +49,6 @@ else:
     from report_builder import ReportBuilder
     document = None
 
-from random import seed  # noqa
-
 # Import some classes that are only available in Python 3.
 try:
     from ast import arg, Starred
@@ -763,7 +761,10 @@ class TracedModuleImporter(MetaPathFinder, Loader):
         if (fullname == self.module_name or
                 (fullname == SCOPE_NAME and self.is_own_driver)):
             return ModuleSpec(fullname, self)
-        if fullname not in ('matplotlib', 'matplotlib.pyplot', 'numpy.random'):
+        if fullname not in ('matplotlib',
+                            'matplotlib.pyplot',
+                            'numpy.random',
+                            'random'):
             return None
         is_after = False
         for finder in sys.meta_path:
@@ -799,7 +800,10 @@ class TracedModuleImporter(MetaPathFinder, Loader):
         if (fullname == self.module_name or
                 (fullname == SCOPE_NAME and self.is_own_driver)):
             return self
-        if fullname not in ('matplotlib', 'matplotlib.pyplot', 'numpy.random'):
+        if fullname not in ('matplotlib',
+                            'matplotlib.pyplot',
+                            'numpy.random',
+                            'random'):
             return None
         is_after = False
         for finder in sys.meta_path:
@@ -834,7 +838,7 @@ class PatchedModuleLoader(Loader):
     def exec_module(self, module):
         if self.main_loader is not None:
             self.main_loader.exec_module(module)
-        if self.fullname == 'numpy.random':
+        if self.fullname in ('numpy.random', 'random'):
             module.seed(0)
         elif self.fullname == 'matplotlib':
             module.use('Agg')
@@ -1180,10 +1184,10 @@ class CodeTracer(object):
         self.environment[CONTEXT_NAME] = builder
         is_own_driver = ((is_module and driver and driver[0] == load_as) or
                          load_as == SCOPE_NAME)
-        seed(0)
-        numpy_random = sys.modules.get('numpy.random')
-        if numpy_random is not None:
-            numpy_random.seed(0)
+        for module_name in ('random', 'numpy.random'):
+            random_module = sys.modules.get(module_name)
+            if random_module is not None:
+                random_module.seed(0)
 
         module_importer = TracedModuleImporter(load_as,
                                                code,

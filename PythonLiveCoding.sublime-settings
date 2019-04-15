@@ -1,0 +1,7 @@
+{
+    // Location of python interpreter to run the code tracer.
+    "python_executable": "C:/Python27/python.exe",
+
+    // Location of code_tracer.py. 
+    "code_tracer": "code_tracer.py",
+}

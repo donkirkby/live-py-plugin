@@ -49,6 +49,11 @@ else:
     from report_builder import ReportBuilder
     document = None
 
+try:
+    from mock_pyglet import MockPyglet
+except ImportError:
+    MockPyglet = None
+
 # Import some classes that are only available in Python 3.
 try:
     from ast import arg, Starred
@@ -921,6 +926,8 @@ class CodeTracer(object):
         self.keepalive = False
         if MockTurtle is not None:
             MockTurtle.monkey_patch(canvas)
+        if MockPyglet is not None:
+            MockPyglet.monkey_patch(canvas)
         self.environment = {}
         self.return_code = None
 

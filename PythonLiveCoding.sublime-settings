@@ -4,4 +4,8 @@
 
     // Location of code_tracer.py. 
     "code_tracer": "code_tracer.py",
+
+    // Length or duration between when the user finishes typing and when live
+    // coding will update in ms. 
+    "timout_duration": 300,
 }

@@ -1,4 +1,6 @@
 import sys
+import logging
+import functools
 import subprocess
 
 import sublime, sublime_plugin
@@ -6,6 +8,9 @@ import sublime, sublime_plugin
 
 XMIN, YMIN, XMAX, YMAX = list(range(4))
 LC_TARGET_VIEW_ID = 'lc_tgt_view_id'
+
+
+logging.basicConfig(level=logging.INFO)
 
 
 def find_view(view_id):
@@ -144,10 +149,36 @@ class TargetViewReplaceCommand(sublime_plugin.TextCommand):
  
 class SourceViewEventListener(sublime_plugin.ViewEventListener):
 
+    """
+    Will execute live coding update once the timeout expires. Based on the 
+    IdleWatcher example here: http://www.sublimetext.com/docs/plugin-examples
+    """
+
+    pending = 0
+
     @classmethod
     def is_applicable(cls, settings):
         return settings.has(LC_TARGET_VIEW_ID)
 
-    def on_modified_async(self):
+    def handleTimeout(self):
+        self.pending = self.pending - 1
+        if self.pending == 0:
+
+            # There are no more queued up calls to handleTimeout, so it must 
+            # have been 1000ms since the last modification.
+            self.onIdle()
+
+    def onIdle(self):
+        settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
+        timeout = settings.get('timout_duration', 300)
+        logging.getLogger().info('Window idle for: {}ms - updating live coding output'.format(timeout))
         tgt_view = find_view(self.view.settings().get(LC_TARGET_VIEW_ID))
         tgt_view.run_command('target_view_replace', {'src_view_id': self.view.id()})
+
+    def on_modified_async(self):
+        self.pending = self.pending + 1
+
+        # Ask for handleTimeout to be called when timeout has expired.
+        settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
+        timeout = settings.get('timout_duration', 300)
+        sublime.set_timeout(functools.partial(self.handleTimeout), timeout)

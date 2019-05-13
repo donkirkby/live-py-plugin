@@ -1,5 +1,8 @@
+import os
+import io
 import sys
 import logging
+import tempfile
 import functools
 import subprocess
 
@@ -7,7 +10,13 @@ import sublime, sublime_plugin
 
 
 XMIN, YMIN, XMAX, YMAX = list(range(4))
-LC_TARGET_VIEW_ID = 'lc_tgt_view_id'
+OUTPUT_TEXT = 'output_text'
+OUTPUT_IMAGE = 'output_image'
+OUTPUT_TYPE = 'output_type'
+OUTPUT_VIEW_ID = 'output_view_id'
+
+CANVAS_START = 'start_canvas'
+CANVAS_END = 'end_canvas'
 
 
 logging.basicConfig(level=logging.INFO)
@@ -21,11 +30,36 @@ def find_view(view_id):
     return None
 
 
+class CanvasCommand(object):
+    pass
+    
+
+class CanvasReader(object):
+
+    def __init__(self, inputReader):
+        self.inputReader = inputReader
+
+    def read(self):
+        return self.inputReader.readline()
+
+    def readCommands(self):
+        newCommands = []
+        done = False
+        while not done:
+            command = self.read()
+            print('command:', command)
+            done = command == None or command.strip() == CANVAS_END
+            if not done:
+               newCommands.append(command)
+        return newCommands
+
+
 class BaseWindowCommand(sublime_plugin.WindowCommand):
 
-    def fixedSetLayout(self, window, layout):
-        #A bug was introduced in Sublime Text 3, sometime before 3053, in that it
-        #changes the active group to 0 when the layout is changed. Annoying.
+    def fixed_set_layout(self, window, layout):
+
+        # A bug was introduced in Sublime Text 3, sometime before 3053, in that 
+        # it changes the active group to 0 when the layout is changed. Annoying.
         active_group = window.active_group()
         window.run_command('set_layout', layout)
         num_groups = len(layout['cells'])
@@ -38,33 +72,6 @@ class BaseWindowCommand(sublime_plugin.WindowCommand):
         cols = layout['cols']
         return rows, cols, cells
 
-
-class ResetCommand(BaseWindowCommand):
-
-    def run(self):
-        
-        # Close any target views and remove their tag.
-        for view in self.window.views():
-            if not view.settings().has(LC_TARGET_VIEW_ID):
-                continue
-            tgt_view_id = view.settings().get(LC_TARGET_VIEW_ID)
-            tgt_view = find_view(tgt_view_id)
-            if tgt_view is not None:
-               print('closing:', tgt_view.name())
-               tgt_view.close()
-            view.settings().erase(LC_TARGET_VIEW_ID)
-
-        # Set the layout back to a single group.
-        rows, cols, cells = self.get_layout()
-        self.fixedSetLayout(self.window, {
-            'cols': [0, 1], 
-            'rows': [0, 1], 
-            'cells': [[0, 0, 1, 1]]
-        })
-
-
-class StartCommand(BaseWindowCommand):
-
     def create_pane(self):
         
         rows, cols, cells = self.get_layout()
@@ -76,7 +83,7 @@ class StartCommand(BaseWindowCommand):
         new_cell = [old_cell[XMAX], old_cell[YMIN], old_cell[XMAX] + 1, old_cell[YMAX]]
         cells.append(new_cell)
 
-        self.fixedSetLayout(self.window, {
+        self.fixed_set_layout(self.window, {
             'cols': cols, 
             'rows': rows, 
             'cells': cells
@@ -84,32 +91,73 @@ class StartCommand(BaseWindowCommand):
 
         # Create a new file in the new group, then switch active group back.
         self.window.focus_group(len(cells) - 1)
-        tgt_view = self.window.new_file()
+        output_view = self.window.new_file()
         self.window.focus_group(active_group)
-        
-        return tgt_view
+        logging.getLogger().info('Created output view id: {}'.format(output_view.id()))
+
+        return output_view
+
+
+class ResetCommand(BaseWindowCommand):
 
     def run(self):
+        
+        # Close any output views and remove their tag.
+        for view in self.window.views():
+            if not view.settings().has(OUTPUT_VIEW_ID):
+                continue
+            output_view_id = view.settings().get(OUTPUT_VIEW_ID)
+            output_view = find_view(output_view_id)
+            if output_view is not None:
+               logging.getLogger().info('Closing view: {}'.format(output_view.name()))
+               output_view.close()
+            view.settings().erase(OUTPUT_VIEW_ID)
 
+        # Set the layout back to a single group.
+        rows, cols, cells = self.get_layout()
+        self.fixed_set_layout(self.window, {
+            'cols': [0, 1], 
+            'rows': [0, 1], 
+            'cells': [[0, 0, 1, 1]]
+        })
+
+
+class BaseStartCommand(BaseWindowCommand):
+
+    OUTPUT_TYPE = None
+
+    def run(self):
         active_group = self.window.active_group()
-        src_view = self.window.active_view_in_group(active_group)
-        if src_view.settings().has(LC_TARGET_VIEW_ID):
+        input_view = self.window.active_view_in_group(active_group)
+        if input_view.settings().has(OUTPUT_VIEW_ID):
             msg = 'Already a live coding session for the current view.'
             sublime.message_dialog(msg)
             return
 
-        tgt_view = self.create_pane()
+        output_view = self.create_pane()
 
-        src_view.settings().set('word_wrap', False)
-        src_view.settings().set(LC_TARGET_VIEW_ID, tgt_view.id())
+        input_view.settings().set('word_wrap', False)
+        input_view.settings().set(OUTPUT_VIEW_ID, output_view.id())
         
-        tgt_view.set_scratch(True)
-        tgt_view.settings().set('word_wrap', False)
-        tgt_view.set_name('live coding output')
-        tgt_view.run_command('target_view_replace', {'src_view_id': src_view.id()})
- 
+        output_view.set_scratch(True)
+        output_view.settings().set('word_wrap', False)
+        output_view.settings().set(OUTPUT_TYPE, self.OUTPUT_TYPE)
+        output_view.set_name('live coding output')
+        
+        output_view.run_command('output_view_update', {'input_view_id': input_view.id()})
 
-class TargetViewReplaceCommand(sublime_plugin.TextCommand):
+
+class StartCommand(BaseStartCommand):
+
+    OUTPUT_TYPE = OUTPUT_TEXT
+
+
+class PygletCommand( BaseStartCommand ):
+
+    OUTPUT_TYPE = OUTPUT_IMAGE
+
+
+class OutputViewUpdateCommand(sublime_plugin.TextCommand):
 
     def trace_code(self, contents):
 
@@ -121,6 +169,7 @@ class TargetViewReplaceCommand(sublime_plugin.TextCommand):
         args = [
             py_path, 
             tracer_path,
+            '--canvas',
             '-'
         ]
 
@@ -136,18 +185,43 @@ class TargetViewReplaceCommand(sublime_plugin.TextCommand):
             stderr=subprocess.PIPE, 
             startupinfo=startupinfo,
             universal_newlines=True
-		)
+        )
         out, err = proc.communicate(input=contents)
-        return out
 
-    def run(self, edit, src_view_id=None):
-        src_view = find_view(src_view_id)
-        contents = src_view.substr(sublime.Region(0, src_view.size()))
+        reader = io.StringIO(out)
+        stdout = ''
+        done = False
+        while not done:
+            line = reader.readline()
+            if line.strip() == CANVAS_START:
+                cmds = CanvasReader(reader).readCommands()
+                line = reader.readline() # Skip a line.
+            elif line:
+                stdout += line
+            else:
+                done = True
+        return stdout
+
+    def run(self, edit, input_view_id=None):
+        input_view = find_view(input_view_id)
+        logging.getLogger().info('Update running for input view id: {}'.format(self.view.id()))
+        contents = input_view.substr(sublime.Region(0, input_view.size()))
         code_report = self.trace_code(contents)
-        self.view.replace(edit, sublime.Region(0, self.view.size()), code_report)
+        output_type = self.view.settings().get(OUTPUT_TYPE, OUTPUT_TEXT)
+        if output_type == OUTPUT_TEXT:
+            logging.getLogger().info('Updating text in view id: {}'.format(self.view.id()))
+            self.view.replace(edit, sublime.Region(0, self.view.size()), code_report)
+        else:
+            logging.getLogger().info('Updating image in view id: {}'.format(self.view.id()))
 
- 
-class SourceViewEventListener(sublime_plugin.ViewEventListener):
+            self.view.erase(edit, sublime.Region(0, self.view.size()))
+            img_path = 'file://{}'.format(os.path.join(tempfile.gettempdir(), 'screenshot.png'))
+            html = '<img src="' + img_path + '" width="800" height="600">'
+            self.view.erase_phantoms('test')
+            self.view.add_phantom('test', self.view.sel()[0], html, sublime.LAYOUT_BLOCK)
+
+
+class InputViewEventListener(sublime_plugin.ViewEventListener):
 
     """
     Will execute live coding update once the timeout expires. Based on the 
@@ -158,27 +232,29 @@ class SourceViewEventListener(sublime_plugin.ViewEventListener):
 
     @classmethod
     def is_applicable(cls, settings):
-        return settings.has(LC_TARGET_VIEW_ID)
+        return settings.has(OUTPUT_VIEW_ID)
 
-    def handleTimeout(self):
+    def on_timeout(self):
         self.pending = self.pending - 1
         if self.pending == 0:
 
-            # There are no more queued up calls to handleTimeout, so it must 
+            # There are no more queued up calls to on_timeout, so it must 
             # have been 1000ms since the last modification.
-            self.onIdle()
+            settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
+            timeout = settings.get('timout_duration', 300)
+            logging.getLogger().info('Window idle for: {}ms - updating live coding output'.format(timeout))
+            self.on_idle()
 
-    def onIdle(self):
-        settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
-        timeout = settings.get('timout_duration', 300)
-        logging.getLogger().info('Window idle for: {}ms - updating live coding output'.format(timeout))
-        tgt_view = find_view(self.view.settings().get(LC_TARGET_VIEW_ID))
-        tgt_view.run_command('target_view_replace', {'src_view_id': self.view.id()})
+    def on_idle(self):
+        """Update the output view."""
+        settings = self.view.settings()
+        output_view = find_view(settings.get(OUTPUT_VIEW_ID))
+        output_view.run_command('output_view_update', {'input_view_id': self.view.id()})
 
     def on_modified_async(self):
         self.pending = self.pending + 1
 
-        # Ask for handleTimeout to be called when timeout has expired.
+        # Ask for on_timeout to be called when timeout has expired.
         settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
         timeout = settings.get('timout_duration', 300)
-        sublime.set_timeout(functools.partial(self.handleTimeout), timeout)
+        sublime.set_timeout(functools.partial(self.on_timeout), timeout)

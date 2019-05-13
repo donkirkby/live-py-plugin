@@ -43,6 +43,10 @@
                 "command": "start", 
                 "caption": "Start"
             },
+            {
+                "command": "pyglet", 
+                "caption": "Start Pyglet"
+            },
             {   
                 "command": "reset", 
                 "caption": "Reset"

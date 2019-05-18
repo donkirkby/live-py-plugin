@@ -41,18 +41,13 @@ IS_PYODIDE = __name__ == 'builtins'
 if IS_PYODIDE:
     # noinspection PyUnresolvedReferences
     from js import document, window
-    standard_b64encode = Canvas = MockTurtle = None
+    standard_b64encode = Canvas = MockTurtle = MockPyglet = None
 else:
     from base64 import standard_b64encode
     from canvas import Canvas
-    from mock_turtle import MockTurtle
+    from mock_turtle import MockTurtle, MockPyglet
     from report_builder import ReportBuilder
     document = None
-
-try:
-    from mock_pyglet import MockPyglet
-except ImportError:
-    MockPyglet = None
 
 # Import some classes that are only available in Python 3.
 try:

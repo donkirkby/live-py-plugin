@@ -1,35 +1,44 @@
+import io
 import sys
-from functools import partial
+import base64
 
 import pyglet
-import pyglet.gl as gl
+
+from mock_turtle import MockTurtle
 
 
 class MockPyglet(object):
 
     class Window(pyglet.window.Window):
 
-        def __init__(self, width, height):
-            conf = gl.Config(double_buffer=True)
+        def __init__(self, **kwargs):
+            conf = pyglet.gl.Config(double_buffer=True)
             super(MockPyglet.Window, self).__init__(
                 config=conf,
                 resizable=True,
                 visible=False,
-                width=width,
-                height=height
+                width=self.width,
+                height=self.height
             )
-            self.on_resize( width, height )
+            self.on_resize(self.width, self.height)
 
         def on_draw(self):
-            colorbuffer = pyglet.image.get_buffer_manager().get_color_buffer()
-            colorbuffer.save('screenshot.png')
+
+            # Get the colour buffer, write it to a bytearray in png format.
+            buf = pyglet.image.get_buffer_manager().get_color_buffer()
+            b = io.BytesIO()
+            buf.save('buffer.png', b)
+            img_str = base64.b64encode(b.getvalue()) 
+            MockTurtle.display_image(0, 0, image=img_str)
 
 
     @classmethod
     def monkey_patch(cls, canvas):
         pyglet_module = sys.modules['pyglet']
-        w = canvas.cget('width')
-        h = canvas.cget('height')
+
+        # Let the canvas size dictate the program's window size.
+        cls.width = canvas.cget('width')
+        cls.height = canvas.cget('height')
 
         def run():
             for window in pyglet_module.app.windows:
@@ -42,4 +51,4 @@ class MockPyglet(object):
                 window.close()
 
         pyglet_module.app.run = run
-        pyglet_module.window.Window = partial(MockPyglet.Window, width=w, height=h)
+        pyglet_module.window.Window = MockPyglet.Window

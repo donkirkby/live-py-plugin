@@ -44,8 +44,8 @@
                 "caption": "Start"
             },
             {
-                "command": "pyglet", 
-                "caption": "Start Pyglet"
+                "command": "start_canvas", 
+                "caption": "Start Canvas"
             },
             {   
                 "command": "reset", 

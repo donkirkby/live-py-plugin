@@ -27,7 +27,7 @@ install:
   - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw | sed 's/24\.3/24\.4/g' > x.sh && source ./x.sh
 script:
   - pip install --upgrade virtualenv==16.6.0
-  - pip list
+  - pip list --format=columns
   - travis_wait tox -e $TOX_ENV
   - emacs --version
   - emacs -Q --batch -L emacs-live-py-mode --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile emacs-live-py-mode/*.el

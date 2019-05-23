@@ -397,7 +397,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                                         new CommandLinePatcher[]{commandLinePatcher}));
         final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
         try {
-            byte[] stdin = sourceCode.getBytes();
+            byte[] stdin = sourceCode.getBytes("UTF8");
             final OutputStream processInput = processHandler.getProcessInput();
             assert processInput != null;
             processInput.write(stdin);

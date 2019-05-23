@@ -92,8 +92,8 @@ through the code after the breakpoint.
     Module 'livepy' For Deployment in the context menu.
 4. Install the new plugin jar into your IntelliJ or PyCharm. Sometimes it
     behaves differently as a jar. From the File menu, choose Settings....
-5. Navigate down to the plugins section, and click the Install plugin from
-    disk... button.
+5. Navigate down to the plugins section, click on the gear icon at the top,
+    and choose Install plugin from disk... from the menu.
 6. Select the jar file you just created, and click the Restart button.
 7. Once it restarts, open a Python file, and check that live coding works.
 8. Commit the version number changes, push, and create a release on GitHub. (Finish

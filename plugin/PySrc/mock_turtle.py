@@ -2,7 +2,7 @@ from collections import namedtuple
 # noinspection PyDeprecation
 import io
 import imp
-import base64
+from base64 import standard_b64encode
 import importlib
 import sys
 
@@ -1049,7 +1049,9 @@ class MockPyglet(object):
             buf = pyglet.image.get_buffer_manager().get_color_buffer()
             b = io.BytesIO()
             buf.save('buffer.png', b)
-            img_str = base64.b64encode(b.getvalue()) 
+            image = b.getvalue()
+            encoded = standard_b64encode(image)
+            img_str = str(encoded.decode('UTF-8'))
             MockTurtle.display_image(0, 0, image=img_str)
 
 
@@ -1062,7 +1064,7 @@ class MockPyglet(object):
         cls.height = canvas.cget('height')
 
         def run():
-            for window in pyglet_module.app.windows:
+            for window in list(pyglet_module.app.windows):
                 for i in range(2):
                     pyglet.clock.tick()
                     window.switch_to()

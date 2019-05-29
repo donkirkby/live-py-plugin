@@ -35,9 +35,11 @@ def trace_code(input, pargs=None):
         args.extend(pargs)
     args.append('-')
 
-    # Startup info so we don't open a new command prompt.
-    startupinfo = subprocess.STARTUPINFO()
-    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    # Startup info so we don't open a new command prompt in windows.
+    startupinfo = None
+    if os.name == 'nt':
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
     # Launch, pipe in code and return.
     proc = subprocess.Popen(

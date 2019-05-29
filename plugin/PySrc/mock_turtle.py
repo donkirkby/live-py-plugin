@@ -21,7 +21,6 @@ except ImportError:
     tk.simpledialog = imp.new_module(tkinter_name)
     sys.modules[tkinter_name + '.simpledialog'] = tk.simpledialog
 
-import pyglet
 from turtle import TNavigator, TPen
 
 
@@ -1028,18 +1027,22 @@ color_map = {
 }
 
 
-class MockPyglet(object):
+def monkey_patch_pyglet(canvas):
 
-    class Window(pyglet.window.Window):
+    pyglet = sys.modules['pyglet']
+
+    class MockPygletWindow(pyglet.window.Window):
 
         def __init__(self, **kwargs):
             conf = pyglet.gl.Config(double_buffer=True)
-            super(MockPyglet.Window, self).__init__(
+            super(MockPygletWindow, self).__init__(
                 config=conf,
                 resizable=True,
                 visible=False,
-                width=self.width,
-                height=self.height
+
+                # Let the canvas size dictate the program's window size.
+                width=canvas.cget('width'),
+                height=canvas.cget('height')
             )
             self.on_resize(self.width, self.height)
 
@@ -1054,24 +1057,16 @@ class MockPyglet(object):
             img_str = str(encoded.decode('UTF-8'))
             MockTurtle.display_image(0, 0, image=img_str)
 
+    def run():
+        for window in list(pyglet.app.windows):
+            for i in range(2):
+                pyglet.clock.tick()
+                window.switch_to()
+                window.dispatch_events()
+                window.dispatch_event('on_draw')
+                window.flip()
+            window.close()
 
-    @classmethod
-    def monkey_patch(cls, canvas):
-        pyglet_module = sys.modules['pyglet']
-
-        # Let the canvas size dictate the program's window size.
-        cls.width = canvas.cget('width')
-        cls.height = canvas.cget('height')
-
-        def run():
-            for window in list(pyglet_module.app.windows):
-                for i in range(2):
-                    pyglet.clock.tick()
-                    window.switch_to()
-                    window.dispatch_events()
-                    window.dispatch_event('on_draw')
-                    window.flip()
-                window.close()
-
-        pyglet_module.app.run = run
-        pyglet_module.window.Window = MockPyglet.Window
+    original_pyglet = sys.modules['pyglet']
+    original_pyglet.app.run = run
+    original_pyglet.window.Window = MockPygletWindow

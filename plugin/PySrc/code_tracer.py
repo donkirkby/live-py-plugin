@@ -45,7 +45,7 @@ if IS_PYODIDE:
 else:
     from base64 import standard_b64encode
     from canvas import Canvas
-    from mock_turtle import MockTurtle, MockPyglet
+    from mock_turtle import MockTurtle, monkey_patch_pyglet
     from report_builder import ReportBuilder
     document = None
 
@@ -764,7 +764,8 @@ class TracedModuleImporter(MetaPathFinder, Loader):
         if fullname not in ('matplotlib',
                             'matplotlib.pyplot',
                             'numpy.random',
-                            'random'):
+                            'random',
+                            'pyglet'):
             return None
         is_after = False
         for finder in sys.meta_path:
@@ -803,7 +804,8 @@ class TracedModuleImporter(MetaPathFinder, Loader):
         if fullname not in ('matplotlib',
                             'matplotlib.pyplot',
                             'numpy.random',
-                            'random'):
+                            'random',
+                            'pyglet'):
             return None
         is_after = False
         for finder in sys.meta_path:
@@ -853,6 +855,8 @@ class PatchedModuleLoader(Loader):
             module.live_coding_zoom = self.live_coding_zoom
             if self.is_zoomed:
                 self.live_coding_zoom()
+        elif self.fullname == 'pyglet':
+           monkey_patch_pyglet(MockTurtle._screen.cv)
 
     def load_module(self, fullname):
         if self.main_loader is not None:
@@ -921,8 +925,6 @@ class CodeTracer(object):
         self.keepalive = False
         if MockTurtle is not None:
             MockTurtle.monkey_patch(canvas)
-        if MockPyglet is not None:
-            MockPyglet.monkey_patch(canvas)
         self.environment = {}
         self.return_code = None
 
@@ -974,7 +976,7 @@ class CodeTracer(object):
                     package = __import__(packagename, glo, loc, ['__path__'])
                     searchpath = package.__path__
                     # noinspection PyDeprecation
-                    openfile, pathname, _ = imp.find_module(name, searchpath)
+                    openfile, pathname, _ = imp.find_module(name, searchpath) 
             finally:
                 if openfile:
                     openfile.close()

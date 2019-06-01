@@ -1067,6 +1067,5 @@ def monkey_patch_pyglet(canvas):
                 window.flip()
             window.close()
 
-    original_pyglet = sys.modules['pyglet']
-    original_pyglet.app.run = run
-    original_pyglet.window.Window = MockPygletWindow
+    pyglet.app.run = run
+    pyglet.window.Window = MockPygletWindow

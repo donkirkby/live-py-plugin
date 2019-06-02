@@ -1,7 +1,6 @@
 import os
 import io
 import logging
-import functools
 import subprocess
 
 import sublime, sublime_plugin
@@ -12,6 +11,8 @@ OUTPUT_VIEW_ID = 'output_view_id'
 INPUT_VIEW_TRACER_ARGS = 'input_view_tracer_args'
 CANVAS_START = 'start_canvas'
 CANVAS_END = 'end_canvas'
+HAS_IDLE_TIMER = 'has_idle_timer'
+SCROLL_TIMER = 50
 
 
 logging.basicConfig(level=logging.INFO)
@@ -54,12 +55,19 @@ def trace_code(input, pargs=None):
     return proc.communicate(input=input)
 
 
-def update_view(output_view, out, err):
+def update_output_for_view(input_view):
+
+    # Trace the code in input view's buffer.
+    view_settings = input_view.settings()
+    contents = input_view.substr(sublime.Region(0, input_view.size()))
+    tracer_args = view_settings.get(INPUT_VIEW_TRACER_ARGS)
+    out, err = trace_code(contents, tracer_args)
+    if err:
+        logging.getLogger().error(err)
 
     img = None
     reader = io.StringIO(out)
     stdout = ''
-
     done = False
     while not done:
         line = reader.readline()
@@ -76,6 +84,9 @@ def update_view(output_view, out, err):
         else:
             done = True
 
+    # Remove all phantoms from the output view then update with stdout / goal
+    # image.
+    output_view = find_view(view_settings.get(OUTPUT_VIEW_ID))
     output_view.erase_phantoms('goal_image')
     if img is not None:
         output_view.run_command('output_view_replace', {'text': ''})
@@ -218,9 +229,10 @@ class ResetCommand(BaseWindowCommand):
             output_view_id = view.settings().get(OUTPUT_VIEW_ID)
             output_view = find_view(output_view_id)
             if output_view is not None:
-               logging.getLogger().info('Closing view: {}'.format(output_view.name()))
+               logging.getLogger().info('Closing view: "{}"'.format(output_view.name()))
                output_view.close()
             view.settings().erase(OUTPUT_VIEW_ID)
+            view.settings().erase(HAS_IDLE_TIMER)
 
         # Set the layout back to a single group.
         rows, cols, cells = self.get_layout()
@@ -231,7 +243,7 @@ class ResetCommand(BaseWindowCommand):
         })
 
 
-class BaseStartCommand(BaseWindowCommand):
+class StartCommand(BaseWindowCommand):
 
     TRACER_ARGS = []
 
@@ -252,16 +264,10 @@ class BaseStartCommand(BaseWindowCommand):
         input_view.settings().set(OUTPUT_VIEW_ID, output_view.id())
         input_view.settings().set(INPUT_VIEW_TRACER_ARGS, self.TRACER_ARGS)
 
-        contents = input_view.substr(sublime.Region(0, input_view.size()))
-        update_view(output_view, *trace_code(contents, self.TRACER_ARGS))
+        update_output_for_view(input_view)
 
 
-class StartCommand(BaseStartCommand):
-
-    pass
-
-
-class StartCanvasCommand( BaseStartCommand ):
+class StartCanvasCommand(StartCommand):
 
     TRACER_ARGS = ['--canvas']
 
@@ -285,17 +291,13 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
     def is_applicable(cls, settings):
         return settings.has(OUTPUT_VIEW_ID)
 
-    def on_timeout_async(self):
+    def on_modified_timeout_async(self):
         self.pending = self.pending - 1
         if self.pending == 0:
 
             # There are no more queued up calls to on_timeout, so it must have
             # been 1000ms since the last modification.
-            view_settings = self.view.settings()
-            output_view = find_view(view_settings.get(OUTPUT_VIEW_ID))
-            contents = self.view.substr(sublime.Region(0, self.view.size()))
-            tracer_args = view_settings.get(INPUT_VIEW_TRACER_ARGS)
-            update_view(output_view, *trace_code(contents, tracer_args))
+            update_output_for_view(self.view)
 
     def on_modified_async(self):
         self.pending = self.pending + 1
@@ -303,4 +305,27 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
         # Ask for on_timeout to be called when timeout has expired.
         settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
         timeout = settings.get('timout_duration', 300)
-        sublime.set_timeout_async(functools.partial(self.on_timeout_async), timeout)
+        sublime.set_timeout_async(self.on_modified_timeout_async, timeout)
+
+    def on_activated_timeout_async(self): 
+
+        # Get the output view. Note that it may be None in the event that this
+        # callback fires after the user closes the view.
+        output_view = find_view(self.view.settings().get(OUTPUT_VIEW_ID))
+        if output_view is None:
+            logging.getLogger().warning('Attempted to scroll non-existent view')
+            return
+
+        output_view.set_viewport_position(self.view.viewport_position())
+
+        # Queue the callback to fire again in order to create an on_idle event.
+        if self.is_applicable(self.view.settings()):
+            sublime.set_timeout_async(self.on_activated_timeout_async, SCROLL_TIMER)
+
+    def on_activated_async(self):
+        settings = self.view.settings()
+        if settings.has(HAS_IDLE_TIMER):
+            logging.getLogger().info('Already a scroll timer on the current view')
+            return
+        settings.set(HAS_IDLE_TIMER, True)
+        sublime.set_timeout_async(self.on_activated_timeout_async, SCROLL_TIMER)

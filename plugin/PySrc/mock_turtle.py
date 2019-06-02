@@ -1,6 +1,8 @@
 from collections import namedtuple
 # noinspection PyDeprecation
+import io
 import imp
+from base64 import standard_b64encode
 import importlib
 import sys
 
@@ -1023,3 +1025,47 @@ color_map = {
     'yellow4': '#8b8b00',
     'yellowgreen': '#9acd32',
 }
+
+
+def monkey_patch_pyglet(canvas):
+
+    pyglet = sys.modules['pyglet']
+
+    class MockPygletWindow(pyglet.window.Window):
+
+        def __init__(self, **kwargs):
+            conf = pyglet.gl.Config(double_buffer=True)
+            super(MockPygletWindow, self).__init__(
+                config=conf,
+                resizable=True,
+                visible=False,
+
+                # Let the canvas size dictate the program's window size.
+                width=canvas.cget('width'),
+                height=canvas.cget('height')
+            )
+            self.on_resize(self.width, self.height)
+
+        def on_draw(self):
+
+            # Get the colour buffer, write it to a bytearray in png format.
+            buf = pyglet.image.get_buffer_manager().get_color_buffer()
+            b = io.BytesIO()
+            buf.save('buffer.png', b)
+            image = b.getvalue()
+            encoded = standard_b64encode(image)
+            img_str = str(encoded.decode('UTF-8'))
+            MockTurtle.display_image(0, 0, image=img_str)
+
+    def run():
+        for window in list(pyglet.app.windows):
+            for i in range(2):
+                pyglet.clock.tick()
+                window.switch_to()
+                window.dispatch_events()
+                window.dispatch_event('on_draw')
+                window.flip()
+            window.close()
+
+    pyglet.app.run = run
+    pyglet.window.Window = MockPygletWindow

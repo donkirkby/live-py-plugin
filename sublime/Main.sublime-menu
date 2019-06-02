@@ -1,0 +1,56 @@
+[
+    {
+        "id": "preferences",
+        "caption": "Preferences",
+        "mnemonic": "n",
+        "children": [
+            {   
+                "command": "reset", 
+                "caption": "Reset"
+            },
+            {
+                "caption": "Package Settings",
+                "id": "package-settings",
+                "children": [
+                    {
+                        "caption": "Python Live Coding",
+                        "children": [
+                            {
+                                "caption": "Settings – Default",
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/python_live_coding/python_live_coding.sublime-settings"
+                                }
+                            },
+                            {
+                                "caption": "Settings – User",
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/User/python_live_coding.sublime-settings"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "live_coding",
+        "caption": "Live Coding",
+        "children": [
+            {
+                "command": "start", 
+                "caption": "Start"
+            },
+            {
+                "command": "start_canvas", 
+                "caption": "Start Canvas"
+            },
+            {   
+                "command": "reset", 
+                "caption": "Reset"
+            }
+        ]
+    }
+]

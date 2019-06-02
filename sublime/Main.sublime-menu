@@ -19,14 +19,14 @@
                                 "caption": "Settings – Default",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/PythonLiveCoding/PythonLiveCoding.sublime-settings"
+                                    "file": "${packages}/python_live_coding/python_live_coding.sublime-settings"
                                 }
                             },
                             {
                                 "caption": "Settings – User",
                                 "command": "open_file",
                                 "args": {
-                                    "file": "${packages}/User/PythonLiveCoding.sublime-settings"
+                                    "file": "${packages}/User/python_live_coding.sublime-settings"
                                 }
                             }
                         ]

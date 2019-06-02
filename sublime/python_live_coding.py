@@ -29,7 +29,7 @@ def find_view(view_id):
 def trace_code(input, pargs=None):
 
     # Pull location of python exe and code_tracer.py script from user settings.
-    settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
+    settings = sublime.load_settings('python_live_coding.sublime-settings')
     py_path = settings.get('python_executable')
     tracer_path = settings.get('code_tracer')
     args = [py_path, tracer_path]
@@ -303,7 +303,7 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
         self.pending = self.pending + 1
 
         # Ask for on_timeout to be called when timeout has expired.
-        settings = sublime.load_settings('PythonLiveCoding.sublime-settings')
+        settings = sublime.load_settings('python_live_coding.sublime-settings')
         timeout = settings.get('timout_duration', 300)
         sublime.set_timeout_async(self.on_modified_timeout_async, timeout)
 

@@ -1,11 +1,11 @@
-# PythonLiveCoding
+# python_live_coding
 Sublime Text 3 plugin for the python live coding package. (https://github.com/donkirkby/live-py-plugin)
 
 # Quick Start
 
 * Open Sublime Text 3
 * Navigate to Preferences -> Browse packages...
-* Clone repo into this location, ie C:\Users\<username>\AppData\Roaming\Sublime Text 3\Packages\PythonLiveCoding for windows.
+* Clone repo into this location, ie C:\Users\<username>\AppData\Roaming\Sublime Text 3\Packages\python_live_coding for windows.
 * New menus should now be available.
 
 * Navigate to Preferences -> Package settings -> Python Live Coding -> Settings - Default

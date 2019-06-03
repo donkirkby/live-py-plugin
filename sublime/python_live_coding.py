@@ -1,7 +1,8 @@
-import os
 import io
 import logging
+import os
 import subprocess
+import sys
 
 import sublime, sublime_plugin
 
@@ -16,6 +17,7 @@ SCROLL_TIMER = 50
 
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def find_view(view_id):
@@ -30,8 +32,10 @@ def trace_code(input, pargs=None):
 
     # Pull location of python exe and code_tracer.py script from user settings.
     settings = sublime.load_settings('python_live_coding.sublime-settings')
-    py_path = settings.get('python_executable')
-    tracer_path = settings.get('code_tracer')
+    py_path = settings.get('python_executable', sys.executable)
+    default_code_tracer = os.path.abspath(os.path.join(__file__,
+                                                       '../code_tracer.py'))
+    tracer_path = settings.get('code_tracer', default_code_tracer)
     args = [py_path, tracer_path]
     if pargs is not None:
         args.extend(pargs)
@@ -63,7 +67,7 @@ def update_output_for_view(input_view):
     tracer_args = view_settings.get(INPUT_VIEW_TRACER_ARGS)
     out, err = trace_code(contents, tracer_args)
     if err:
-        logging.getLogger().error(err)
+        logger.error(err)
 
     img = None
     reader = io.StringIO(out)
@@ -213,7 +217,7 @@ class BaseWindowCommand(sublime_plugin.WindowCommand):
         self.window.focus_group(len(cells) - 1)
         output_view = self.window.new_file()
         self.window.focus_group(active_group)
-        logging.getLogger().info('Created output view id: {}'.format(output_view.id()))
+        logger.info('Created output view id: {}'.format(output_view.id()))
 
         return output_view
 
@@ -229,7 +233,7 @@ class ResetCommand(BaseWindowCommand):
             output_view_id = view.settings().get(OUTPUT_VIEW_ID)
             output_view = find_view(output_view_id)
             if output_view is not None:
-               logging.getLogger().info('Closing view: "{}"'.format(output_view.name()))
+               logger.info('Closing view: "{}"'.format(output_view.name()))
                output_view.close()
             view.settings().erase(OUTPUT_VIEW_ID)
             view.settings().erase(HAS_IDLE_TIMER)
@@ -313,7 +317,7 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
         # callback fires after the user closes the view.
         output_view = find_view(self.view.settings().get(OUTPUT_VIEW_ID))
         if output_view is None:
-            logging.getLogger().warning('Attempted to scroll non-existent view')
+            logger.warning('Attempted to scroll non-existent view')
             return
 
         output_view.set_viewport_position(self.view.viewport_position())
@@ -325,7 +329,7 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
     def on_activated_async(self):
         settings = self.view.settings()
         if settings.has(HAS_IDLE_TIMER):
-            logging.getLogger().info('Already a scroll timer on the current view')
+            logger.info('Already a scroll timer on the current view')
             return
         settings.set(HAS_IDLE_TIMER, True)
         sublime.set_timeout_async(self.on_activated_timeout_async, SCROLL_TIMER)

@@ -21,7 +21,7 @@ matrix:
       - TOX_ENV=py37
 
 install:
-  - sudo apt-get install freeglut-devel
+  - sudo apt-get install freeglut3-dev
   - travis_retry pip install "virtualenv<14.0.0" "tox>=1.9" "coverage<4"
 
   # Emacs Version Manager

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """ Run the demo using the simple HTTP server.
 
 Only useful for testing, but it sets the MIME types correctly.
@@ -177,6 +179,7 @@ def main():
     SimpleHTTPRequestHandler.extensions_map.update({
         '.wasm': 'application/wasm',
     })
+    os.chdir(args.demo_dir)
     SimpleHTTPRequestHandler.directory = args.demo_dir
 
     print("Serving at port", args.port, 'from', SimpleHTTPRequestHandler.directory)

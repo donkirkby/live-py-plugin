@@ -136,7 +136,7 @@ i = search(1, [1, 2, 4])
                           selectedLine={this.state.selectedLine}
                           onChange={this.handleChange}
                           onScroll={this.handleScroll}
-                          mode="markdown"/></td>
+                          mode="text"/></td>
                   </tr>
                   </tbody>
               </table>

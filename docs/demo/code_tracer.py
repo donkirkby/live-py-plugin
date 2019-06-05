@@ -396,15 +396,13 @@ IS_PYODIDE = __name__ == 'builtins'
 if IS_PYODIDE:
     # noinspection PyUnresolvedReferences
     from js import document, window
-    standard_b64encode = Canvas = MockTurtle = None
+    standard_b64encode = Canvas = MockTurtle = MockPyglet = None
 else:
     from base64 import standard_b64encode
     from canvas import Canvas
-    from mock_turtle import MockTurtle
+    from mock_turtle import MockTurtle, monkey_patch_pyglet
     from report_builder import ReportBuilder
     document = None
-
-from random import seed  # noqa
 
 # Import some classes that are only available in Python 3.
 try:
@@ -1118,7 +1116,11 @@ class TracedModuleImporter(MetaPathFinder, Loader):
         if (fullname == self.module_name or
                 (fullname == SCOPE_NAME and self.is_own_driver)):
             return ModuleSpec(fullname, self)
-        if fullname not in ('matplotlib', 'matplotlib.pyplot', 'numpy.random'):
+        if fullname not in ('matplotlib',
+                            'matplotlib.pyplot',
+                            'numpy.random',
+                            'random',
+                            'pyglet'):
             return None
         is_after = False
         for finder in sys.meta_path:
@@ -1154,7 +1156,11 @@ class TracedModuleImporter(MetaPathFinder, Loader):
         if (fullname == self.module_name or
                 (fullname == SCOPE_NAME and self.is_own_driver)):
             return self
-        if fullname not in ('matplotlib', 'matplotlib.pyplot', 'numpy.random'):
+        if fullname not in ('matplotlib',
+                            'matplotlib.pyplot',
+                            'numpy.random',
+                            'random',
+                            'pyglet'):
             return None
         is_after = False
         for finder in sys.meta_path:
@@ -1189,7 +1195,7 @@ class PatchedModuleLoader(Loader):
     def exec_module(self, module):
         if self.main_loader is not None:
             self.main_loader.exec_module(module)
-        if self.fullname == 'numpy.random':
+        if self.fullname in ('numpy.random', 'random'):
             module.seed(0)
         elif self.fullname == 'matplotlib':
             module.use('Agg')
@@ -1204,6 +1210,8 @@ class PatchedModuleLoader(Loader):
             module.live_coding_zoom = self.live_coding_zoom
             if self.is_zoomed:
                 self.live_coding_zoom()
+        elif self.fullname == 'pyglet':
+           monkey_patch_pyglet(MockTurtle._screen.cv)
 
     def load_module(self, fullname):
         if self.main_loader is not None:
@@ -1323,7 +1331,7 @@ class CodeTracer(object):
                     package = __import__(packagename, glo, loc, ['__path__'])
                     searchpath = package.__path__
                     # noinspection PyDeprecation
-                    openfile, pathname, _ = imp.find_module(name, searchpath)
+                    openfile, pathname, _ = imp.find_module(name, searchpath) 
             finally:
                 if openfile:
                     openfile.close()
@@ -1535,7 +1543,11 @@ class CodeTracer(object):
         self.environment[CONTEXT_NAME] = builder
         is_own_driver = ((is_module and driver and driver[0] == load_as) or
                          load_as == SCOPE_NAME)
-        seed(0)
+        for module_name in ('random', 'numpy.random'):
+            random_module = sys.modules.get(module_name)
+            if random_module is not None:
+                random_module.seed(0)
+
         module_importer = TracedModuleImporter(load_as,
                                                code,
                                                self.environment,

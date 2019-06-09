@@ -92,14 +92,17 @@ START, STOP and LEN are required by `after-change-functions' but unused."
     (setq-local live-py-lighter live-py-lighter-tracing)
     (force-mode-line-update)
     (redisplay))
-  (let* ((tracer-path (locate-file "code_tracer.py" load-path))
+  (let* ((tracer-path (file-name-directory
+                       (directory-file-name
+                        (file-name-directory
+                         (locate-file (concat (file-name-as-directory "space_tracer")
+                                              "code_tracer.py")
+                                      load-path)))))
          (command-line-start (concat
 			      (shell-quote-argument live-py-version)
 			      " "
                               live-py-args
-                              " "
-			      (shell-quote-argument tracer-path)
-			      " -f "
+                              " -m space_tracer -f "
 			      (shell-quote-argument buffer-file-name)))
 	 (command-line (if live-py-driver
 			   (concat
@@ -109,8 +112,10 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 			    " "
 			    live-py-driver)
                          command-line-start))
-         (pythonpath (concat "PYTHONPATH=" (shell-quote-argument
-					    (or live-py-path live-py-dir))))
+         (pythonpath (concat "PYTHONPATH=" (concat (shell-quote-argument tracer-path)
+                                                   path-separator
+                                                   (shell-quote-argument
+                                                    (or live-py-path live-py-dir)))))
          (process-environment (cons pythonpath process-environment))
          (default-directory live-py-dir))
     ;; Don't let `shell-command-on-region' handle the window split, care

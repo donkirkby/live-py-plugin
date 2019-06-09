@@ -5,7 +5,7 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
                  Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
-                 Tuple, Yield, keyword, NameConstant)
+                 Tuple, Yield, keyword)
 from contextlib import contextmanager
 from copy import deepcopy
 import __future__
@@ -450,7 +450,8 @@ class Tracer(NodeTransformer):
         for decorator in new_node.decorator_list:
             if decorator.id == 'traced':
                 start_frame_keywords.append(
-                    keyword(arg='is_decorated', value=NameConstant(value=True)))
+                    keyword(arg='is_decorated', value=Name(id='True',
+                                                           ctx=Load())))
         try_body = new_node.body
         globals_call = Call(func=Name(id='globals', ctx=Load()),
                             args=[],

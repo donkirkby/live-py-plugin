@@ -27,7 +27,7 @@
 ;; In the ERT buffer type R to rerun all these tests, r to rerun one test.
 ;; When a test fails move there and type l to get a list of all `should',
 ;; including those hidden in `live-py-test-with-temp-text-in-file' and
-;; function calls, to count to the failed one. If you use an Emacs package
+;; function calls, to count to the failed one.  If you use an Emacs package
 ;; for Python development like for example elpy remember to disable it
 ;; before running ERT.
 ;;
@@ -46,16 +46,16 @@
 ;;            (message "INF: No action defined after `eval-defun'")))))
 ;; (define-key emacs-lisp-mode-map (kbd "C-c C-c") #'f-eval-defun-and-ert)
 ;;
-;; The ordering of the arguments in `equal' etc. follows "Unit testing: why
+;; The ordering of the arguments in `equal' etc.  follows "Unit testing: why
 ;; is the expected argument always first in equality tests?":
 ;; http://stackoverflow.com/questions/9331259
 ;;
 ;; The `ert-deftest' are grouped hierarchically by path-like names and
 ;; prefix-numbered from top to bottom to keep the same order in the test
 ;; list just for convenience, execution order does not have a dependency
-;; among the tests. The convenience is when more than one test fails: It
+;; among the tests.  The convenience is when more than one test fails: It
 ;; makes sense to work first on that one that is the culprit, not the
-;; depending symptoms. The prefix numbers try to reflect this where more
+;; depending symptoms.  The prefix numbers try to reflect this where more
 ;; obvious.
 ;;
 ;; Functions are used instead of key sequences for user interaction in the
@@ -102,8 +102,8 @@ Within BODY the variable value FILE can be passed to
 
 (defun live-py-test-buf (file)
   "Return a list with some buffer properties for all windows.
-FILE is the source buffer name. The buffer propierties are a tag
-and the line numbers of window start and point. The tag is :s for
+FILE is the source buffer name.  The buffer propierties are a tag
+and the line numbers of window start and point.  The tag is :s for
 the source buffer, :t for the trace buffer and :- for unknown."
   (cl-mapcan
    (lambda (window)
@@ -215,8 +215,8 @@ x = 50
     (with-selected-window (get-buffer-window live-py-trace-name)
       (should (string= live-py-test-trace (buffer-string))))))
 
-;; Recreate the killed trace buffer.
 (defun live-py-test/2-recreate/1-buffer (file)
+  "Recreate the killed trace buffer for FILE."
   (kill-buffer live-py-trace-name)
   (should (equal '(:s 2 3 :s 1 1) (live-py-test-buf file))))
 (ert-deftest live-py-test/2-recreate/1-buffer/edit ()
@@ -232,8 +232,8 @@ x = 50
     (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
-;; Recreate the deleted output window.
 (defun live-py-test/2-recreate/2-window (file)
+  "Recreate the deleted output window for FILE."
   (delete-other-windows)
   (should (equal '(:s 2 3) (live-py-test-buf file))))
 (ert-deftest live-py-test/2-recreate/2-window/edit ()
@@ -249,8 +249,8 @@ x = 50
     (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
-;; Recreate the killed trace buffer and the deleted output window.
 (defun live-py-test/2-recreate/3-buffer-and-window (file)
+  "Recreate the killed trace buffer and the deleted output window for FILE."
   (kill-buffer live-py-trace-name)
   (delete-other-windows)
   (should (equal '(:s 2 3) (live-py-test-buf file))))
@@ -267,9 +267,10 @@ x = 50
     (live-py-test-forward-line)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
-;; Keep source in first window, browse something else in the other window
-;; and come back. http://github.com/donkirkby/live-py-plugin/issues/100
 (defun live-py-test/3-other-window/1-browse-else (file)
+  "Browse multiple windows.
+Keep source for FILE in first window, browse something else in the other window
+and come back.  http://github.com/donkirkby/live-py-plugin/issues/100"
   (let ((temp-buffer (generate-new-buffer "*temp*")))
     (other-window 1)
     (switch-to-buffer temp-buffer)
@@ -293,10 +294,11 @@ x = 50
       (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))
       (kill-buffer temp-buffer))))
 
-;; Keep source in first window, browse it in the other window and come back.
-;; The other window must not trigger any update as long as the first window
-;; still shows the source buffer.
 (defun live-py-test/3-other-window/2-browse-source (file)
+  "Browse multiple windows without triggering an update.
+Keep source for FILE in first window, browse it in the other window and come
+back.  The other window must not trigger any update as long as the first window
+still shows the source buffer."
   (other-window 1)
   (switch-to-buffer file)
   (live-py-test-scroll-line 2)
@@ -329,11 +331,11 @@ outdated in a later scroll sync."
     (live-py-test-edit)
     (should (equal '(:s 2 4 :t 2 4) (live-py-test-buf file)))))
 
-;; Abandon source in first window and swap it to the other window. When the
-;; first window does not show the source buffer any more the other window
-;; can take it over. Furthermore, respect a user's change of truncate-lines
-;; in both buffers.
 (defun live-py-test/3-other-window/4-abandon-source-and-swap (file)
+  "Abandon source in FILE window and swap it to the other window.
+When the first window does not show the source buffer any more the other window
+can take it over.  Furthermore, respect a user's change of `truncate-lines'
+in both buffers."
   (switch-to-buffer live-py-trace-name)
   (scroll-up 1)
   (other-window 1)

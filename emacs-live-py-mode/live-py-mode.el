@@ -32,8 +32,8 @@
 Floating point number with seconds.
 
 Every change in the source buffer starts or restarts the timer
-with this delay. As soon as it fires the trace buffer will be
-updated. Set it to nil during automatic tests.")
+with this delay.  As soon as it fires the trace buffer will be
+updated.  Set it to nil during automatic tests.")
 (defvar live-py-lighter-delaying nil
   "Lighter during the plugin state \"delaying\".
 For understanding purposes this can be set to for example \" Live-D\"
@@ -155,7 +155,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 
 Pass the possibly reused (line-number-at-pos (window-start)) to
 WINDOW-START-LINE-NR and (line-number-at-pos) to POINT-LINE-NR,
-both are relative to (point-min). Numbering starts at 1 for all
+both are relative to (point-min).  Numbering starts at 1 for all
 *-LINE-NR in this function signature and body.
 
 When the source buffer is narrowed the trace buffer remains

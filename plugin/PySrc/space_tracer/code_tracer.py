@@ -5,7 +5,7 @@ from ast import (fix_missing_locations, iter_fields, parse, Add, Assign, AST,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
                  Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
-                 Tuple, Yield)
+                 Tuple, Yield, keyword, NameConstant)
 from contextlib import contextmanager
 from copy import deepcopy
 import __future__
@@ -446,6 +446,11 @@ class Tracer(NodeTransformer):
         last_line_number = max(line_numbers)
         args = [Num(n=first_line_number),
                 Num(n=last_line_number)]
+        start_frame_keywords = []
+        for decorator in new_node.decorator_list:
+            if decorator.id == 'traced':
+                start_frame_keywords.append(
+                    keyword(arg='is_decorated', value=NameConstant(value=True)))
         try_body = new_node.body
         globals_call = Call(func=Name(id='globals', ctx=Load()),
                             args=[],
@@ -459,7 +464,7 @@ class Tracer(NodeTransformer):
                                                attr='start_frame',
                                                ctx=Load()),
                                 args=args,
-                                keywords=[],
+                                keywords=start_frame_keywords,
                                 starargs=None,
                                 kwargs=None)
         context_assign = Assign(targets=[Name(id=CONTEXT_NAME, ctx=Store())],
@@ -1149,11 +1154,15 @@ class CodeTracer(object):
         report = builder.report(source.count('\n'))
         if dump:
             source_lines = source.splitlines()
+            reported_source_lines = []
+            for first_line, last_line in builder.reported_blocks:
+                for line_number in range(first_line, last_line+1):
+                    reported_source_lines.append(source_lines[line_number-1])
             report_lines = report.splitlines()
             dump_lines = []
-            source_width = max(map(len, source_lines))
+            source_width = max(map(len, reported_source_lines))
             indent = 4
-            for source_line, report_line in izip_longest(source_lines,
+            for source_line, report_line in izip_longest(reported_source_lines,
                                                          report_lines,
                                                          fillvalue=''):
                 line = (indent * ' ' + source_line +

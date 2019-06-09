@@ -29,6 +29,10 @@ class ReportBuilder(object):
         self.current_output_target_name = None
         self.has_print_function = True
         self.current_exception = None
+        self.is_decorated = False
+
+        # Filled after calling report().
+        self.reported_blocks = set()  # {(first_line, last_line)}
 
     def start_block(self, first_line, last_line):
         """ Cap all the lines from first_line to last_line inclusive with
@@ -79,7 +83,7 @@ class ReportBuilder(object):
             if should_throw:
                 raise RuntimeError('live coding message limit exceeded')
 
-    def start_frame(self, first_line, last_line):
+    def start_frame(self, first_line, last_line, is_decorated=False):
         """ Start a new stack frame to support recursive calls.
 
         This allows extra messages to be added to a stack frame after a
@@ -88,6 +92,8 @@ class ReportBuilder(object):
         running.
         :param int last_line: the last line of the function that the frame is
         running.
+        :param bool is_decorated: True if the function is marked by the @traced
+        decorator, and other parts should not be traced.
         """
         if self.is_muted:
             return self
@@ -98,6 +104,7 @@ class ReportBuilder(object):
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths
         new_frame.max_width = self.max_width
+        new_frame.is_decorated = is_decorated
         self.history.append(new_frame)
         return new_frame
 
@@ -301,9 +308,12 @@ class ReportBuilder(object):
         self.check_output()
         self.max_width = None
         self.message_limit = None
+        traced_blocks = set()
         for frame in self.history:
             frame.check_output()
             first_line, last_line = frame.stack_block
+            if frame.is_decorated:
+                traced_blocks.add(frame.stack_block)
             self.start_block(first_line, last_line)
             for i in range(len(frame.messages)):
                 message = frame.messages[i]
@@ -312,7 +322,16 @@ class ReportBuilder(object):
                     self.add_message(message, line_number)
         self.history = []
         self._check_line_count(total_lines)
-        return '\n'.join(self.messages)
+        if not traced_blocks:
+            reported_messages = self.messages
+            self.reported_blocks = [(1, len(self.messages))]
+        else:
+            reported_messages = []
+            self.reported_blocks = sorted(traced_blocks)
+            for first_line, last_line in self.reported_blocks:
+                for line_number in range(first_line, last_line+1):
+                    reported_messages.append(self.messages[line_number-1])
+        return '\n'.join(reported_messages)
 
     def _check_line_count(self, line_count):
         while len(self.messages) < line_count:

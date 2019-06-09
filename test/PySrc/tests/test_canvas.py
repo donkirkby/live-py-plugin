@@ -1,5 +1,5 @@
 import unittest
-from canvas import Canvas
+from space_tracer.canvas import Canvas
 
 
 class CanvasTest(unittest.TestCase):

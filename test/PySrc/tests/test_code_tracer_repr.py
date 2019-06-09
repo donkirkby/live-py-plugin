@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from code_tracer import CodeTracer
+from space_tracer.code_tracer import CodeTracer
 from test_report_builder import trim_report
 
 

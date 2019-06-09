@@ -6,7 +6,7 @@ from base64 import standard_b64encode
 import importlib
 import sys
 
-from canvas import Canvas
+from .canvas import Canvas
 
 if sys.version_info.major >= 3:
     tkinter_name = 'tkinter'
@@ -21,7 +21,7 @@ except ImportError:
     tk.simpledialog = imp.new_module(tkinter_name)
     sys.modules[tkinter_name + '.simpledialog'] = tk.simpledialog
 
-from turtle import TNavigator, TPen
+from turtle import TNavigator, TPen  # noqa
 
 
 class MockTurtle(TNavigator, TPen):
@@ -64,6 +64,7 @@ class MockTurtle(TNavigator, TPen):
         turtle_module.Turtle = MockTurtle
         cls.original_mainloop = turtle_module.mainloop
         turtle_module.mainloop = turtle_module.done = lambda: None
+        # noinspection PyProtectedMember
         MockTurtle._screen = MockTurtle._Screen(canvas)
         MockTurtle._pen = MockTurtle()
 
@@ -93,6 +94,7 @@ class MockTurtle(TNavigator, TPen):
         if MockTurtle._screen is not None:
             self.screen = MockTurtle._screen
         else:
+            # noinspection PyProtectedMember
             self.screen = MockTurtle._Screen(canvas)
         self.stamps = []
         self.__xoff = self.screen.cv.cget('width')/2
@@ -132,6 +134,7 @@ class MockTurtle(TNavigator, TPen):
             self._path.append(-yend + self.__yoff)
         self._position = end
 
+    # noinspection PyProtectedMember
     def __getattr__(self, name):
         if name == 'report':
             for instance in MockTurtle.instances:
@@ -142,6 +145,7 @@ class MockTurtle(TNavigator, TPen):
             report = self.screen.cv.report[:]
             bgcolor = self.screen._config['bgcolor']
             if bgcolor is not None:
+                # noinspection PyTypeChecker
                 bgcolorstr = self._colorstr(bgcolor)
                 report[:0] = ["bgcolor",
                               "    fill={!r}".format(bgcolorstr),
@@ -214,7 +218,8 @@ class MockTurtle(TNavigator, TPen):
             anchor = 'sw'
         elif align == 'center':
             anchor = 's'
-        elif align == 'right':
+        else:
+            assert align == 'right'
             anchor = 'se'
         kwargs = dict(text=str(arg),
                       anchor=anchor,
@@ -255,7 +260,8 @@ class MockTurtle(TNavigator, TPen):
             return '#000000'
         return "#%02x%02x%02x" % (r, g, b)
 
-    def _rgb_value(self, rgbstr):
+    @staticmethod
+    def _rgb_value(rgbstr):
         return round(int(rgbstr, 16)/2.55)/100.0
 
     def _color(self, colorstr):
@@ -1033,6 +1039,7 @@ def monkey_patch_pyglet(canvas):
 
     class MockPygletWindow(pyglet.window.Window):
 
+        # noinspection PyUnusedLocal
         def __init__(self, **kwargs):
             conf = pyglet.gl.Config(double_buffer=True)
             super(MockPygletWindow, self).__init__(
@@ -1046,8 +1053,8 @@ def monkey_patch_pyglet(canvas):
             )
             self.on_resize(self.width, self.height)
 
-        def on_draw(self):
-
+        @staticmethod
+        def on_draw():
             # Get the colour buffer, write it to a bytearray in png format.
             buf = pyglet.image.get_buffer_manager().get_color_buffer()
             b = io.BytesIO()

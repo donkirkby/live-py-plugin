@@ -32,11 +32,13 @@ def trace_code(input, pargs=None):
 
     # Pull location of python exe and code_tracer.py script from user settings.
     settings = sublime.load_settings('python_live_coding.sublime-settings')
-    py_path = settings.get('python_executable', sys.executable)
-    default_code_tracer = os.path.abspath(os.path.join(__file__,
-                                                       '../code_tracer.py'))
-    tracer_path = settings.get('code_tracer', default_code_tracer)
-    args = [py_path, tracer_path]
+    executable = settings.get('python_executable', sys.executable)
+    default_space_tracer = os.path.join(__file__, '../space_tracer')
+    tracer_path = settings.get('space_tracer', default_space_tracer)
+    tracer_path = os.path.abspath(os.path.dirname(tracer_path))
+    python_path = os.pathsep.join([tracer_path] + sys.path)
+    new_env = dict(os.environ, PYTHONPATH=python_path)
+    args = [executable, '-m', 'space_tracer']
     if pargs is not None:
         args.extend(pargs)
     args.append('-')
@@ -54,8 +56,8 @@ def trace_code(input, pargs=None):
         stdout=subprocess.PIPE, 
         stderr=subprocess.PIPE, 
         startupinfo=startupinfo,
-        universal_newlines=True
-    )
+        universal_newlines=True,
+        env=new_env)
     return proc.communicate(input=input)
 
 

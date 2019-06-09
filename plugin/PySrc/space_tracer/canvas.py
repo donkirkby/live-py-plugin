@@ -14,8 +14,8 @@ class Canvas(object):
                         'create_polygon',
                         'create_text',
                         'create_image')
-        for method_name in method_names:
-            self.__dict__[method_name] = make_call(method_name)
+        for name in method_names:
+            self.__dict__[name] = make_call(name)
 
     def call(self, method_name, *args, **kwargs):
         self.report.append(method_name)

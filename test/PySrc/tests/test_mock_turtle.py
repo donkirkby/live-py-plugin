@@ -1,7 +1,7 @@
 import unittest
 
-from canvas import Canvas
-from mock_turtle import MockTurtle
+from space_tracer.canvas import Canvas
+from space_tracer.mock_turtle import MockTurtle
 import turtle
 
 

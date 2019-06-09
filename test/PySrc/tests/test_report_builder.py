@@ -1,6 +1,6 @@
 import unittest
 
-from report_builder import ReportBuilder
+from space_tracer.report_builder import ReportBuilder
 
 
 def trim_report(report):

@@ -124,6 +124,34 @@ Run the commands listed in `.travis.yml` in the section "script:" manually
 to check for compiler warnings and test regressions.
 
 
+## Sublime Text Development
+Follow the regular installation instructions, but create symbolic links to
+the files and `space_tracer` folder, instead of copying them.
+
+1. Open Sublime Text 3.
+2. Navigate to Preferences -> Browse packages...
+3. Create a `python_live_coding` folder under the `Packages` folder.
+4. Download the source code for this project, and link most of the files from
+    the `sublime` folder into the `python_live_coding` package folder you just
+    created. By using symbolic links, your Sublime package files will stay the
+    same as the ones in this project. Copy the
+    `python_live_coding.sublime-settings` file, because your settings might be
+    different from the defaults.
+5. Also link the `plugin/PySrc/space_tracer` folder into the same
+    `python_live_coding` package folder.
+6. New menus should now be available, and the live coding should work for
+    simple scripts.
+7. Navigate to Preferences -> Package settings -> Python Live Coding
+    -> Settings - Default
+8. Set path to preferred Python executable, particularly if you want to use a
+    virtual environment.
+9. Save and close this pane.
+10. Open a new window.
+11. Navigate to Live Coding -> Start
+12. This should bring up a new pane on the right with the live coding display.
+13. Begin typing in the left pane and see the code trace results on the right.
+
+
 ## Browser Development
 The browser version uses the [Pyodide] project to run Python code in the browser.
 

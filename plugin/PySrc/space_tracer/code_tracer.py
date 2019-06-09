@@ -44,9 +44,9 @@ if IS_PYODIDE:
     standard_b64encode = Canvas = MockTurtle = MockPyglet = None
 else:
     from base64 import standard_b64encode
-    from canvas import Canvas
-    from mock_turtle import MockTurtle, monkey_patch_pyglet
-    from report_builder import ReportBuilder
+    from .canvas import Canvas
+    from .mock_turtle import MockTurtle, monkey_patch_pyglet
+    from .report_builder import ReportBuilder
     document = None
 
 # Import some classes that are only available in Python 3.
@@ -856,7 +856,8 @@ class PatchedModuleLoader(Loader):
             if self.is_zoomed:
                 self.live_coding_zoom()
         elif self.fullname == 'pyglet':
-           monkey_patch_pyglet(MockTurtle._screen.cv)
+            # noinspection PyProtectedMember
+            monkey_patch_pyglet(MockTurtle._screen.cv)
 
     def load_module(self, fullname):
         if self.main_loader is not None:

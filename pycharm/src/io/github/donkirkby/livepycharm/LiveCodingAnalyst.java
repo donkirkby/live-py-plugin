@@ -166,7 +166,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             boolean hasGoal = goalFile != null;
             int canvasHeight = hasGoal ? bounds.height / 2 : bounds.height;
             paramsGroup.addParameterAt(i++, "-m");
-            paramsGroup.addParameterAt(i++, "code_tracer");
+            paramsGroup.addParameterAt(i++, "space_tracer");
             String moduleName = hasDriver
                     ? getModuleName(new File(mainFile.getPath()), oldPythonPath)
                     : "__live_coding__";

@@ -3,8 +3,8 @@ import re
 import pytest
 import sys
 
-from canvas import Canvas
-from code_tracer import CodeTracer
+from space_tracer.canvas import Canvas
+from space_tracer.code_tracer import CodeTracer
 from test_report_builder import trim_report
 
 

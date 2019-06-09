@@ -4,8 +4,10 @@ subtitle: Plug ins for PyCharm, Emacs, Sublime Text, Eclipse, or even a browser
 ---
 To see how to use it, watch the [demo video][video] or read the 
 [getting started page][starting]. Want to try it without installing anything?
-Try the [browser version]. You might also find some useful examples in
-the [tools folder][tools]. To learn more, read about [how it works][how].
+Try the [browser version]. This project includes the [Space Tracer] that trades
+time for space when you debug, and the Space Tracer can also be installed as a
+command-line tool. You might also find some useful examples in the
+[tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
 
@@ -23,6 +25,7 @@ If you like this project, check out some of my [other projects][projects].
 [cpaulik]: https://github.com/cpaulik
 [JetBrains]: https://www.jetbrains.com/?from=live-py-plugin
 [browser version]: https://donkirkby.github.io/live-py-plugin/demo/
+[Space Tracer]: http://donkirkby.github.io/live-py-plugin/space_tracer
 [James Davies]: https://github.com/Derfies
 
 Feature Comparison
@@ -139,7 +142,7 @@ We'll be adding it to package control soon, but here's the manual method:
 4. Download the source code for this project, and copy all the files from the
     `sublime` folder into the `python_live_coding` package folder you just
     created.
-5. Also copy all the files from the `plugin/PySrc` folder into the same
+5. Also copy the `plugin/PySrc/space_tracer` folder into the same
     `python_live_coding` package folder.
 6. New menus should now be available, and the live coding should work for
     simple scripts.

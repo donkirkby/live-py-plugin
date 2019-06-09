@@ -3,8 +3,8 @@
     // Location of python interpreter to run the code tracer.
     // "python_executable": "/path/to/python",
 
-    // Location of code_tracer.py. 
-    // "code_tracer": "/path/to/code_tracer.py",
+    // Location of space_tracer package folder.
+    // "space_tracer": "/path/to/space_tracer",
 
     // Length or duration between when the user finishes typing and when live
     // coding will update in ms. 

@@ -666,12 +666,12 @@ public class LiveCodingAnalyst {
         Bundle bundle = Activator.getDefault().getBundle();
         Path sourceFolder = new Path("PySrc");
         scriptPath = BundleUtils.getRelative(
-                sourceFolder.append("code_tracer.py"),
+                sourceFolder.append("space_tracer/code_tracer.py"),
                 bundle);
         String[] otherScripts = new String[] {
-                "report_builder.py",
-                "canvas.py",
-                "mock_turtle.py"
+                "space_tracer/report_builder.py",
+                "space_tracer/canvas.py",
+                "space_tracer/mock_turtle.py"
         };
         for (String script : otherScripts) {
             BundleUtils.getRelative(

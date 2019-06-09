@@ -5,9 +5,9 @@ from unittest import skipIf
 
 from mock import patch
 
-from code_tracer import CodeTracer, FileSwallower
-from mock_turtle import MockTurtle
-from report_builder import ReportBuilder
+from space_tracer.code_tracer import CodeTracer, FileSwallower
+from space_tracer.mock_turtle import MockTurtle
+from space_tracer.report_builder import ReportBuilder
 from test_report_builder import ReportTestCase
 
 

@@ -70,7 +70,9 @@ Python interpreter, and you can run a Python script normally.
 7. Close all the dialog boxes by clicking OK, then let PyCharm restart when it
     asks.
 8. Open a Python file.
-9. From the Run menu, choose Start Live Coding.
+9. Run the Python file normally, as a script or a unit test.
+10. With the same run configuration selected in the drop down, choose Start
+    Live Coding from the Run menu.
 
 Uninstalling the PyCharm plugin
 -------------------------------

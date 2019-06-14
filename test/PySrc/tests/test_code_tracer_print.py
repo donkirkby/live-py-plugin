@@ -1,3 +1,4 @@
+import sys
 from sys import version_info
 
 from code_tracer import CodeTracer
@@ -238,7 +239,7 @@ self.f.write('Hello, Alice.')
     assert expected_report == trim_report(report)
 
 
-def test_no_input(tmpdir):
+def test_no_input():
     code = """\
 s = input()
 """
@@ -256,13 +257,14 @@ def test_input(tmpdir):
 first line
 second line
 """
-    code = """\
-s = input()
-"""
+    if sys.version_info < (3, 0):
+        code = "s = raw_input()"
+    else:
+        code = "s = input()"
     expected_report = """\
 s = 'first line'
 """
-    stdin_path = tmpdir.join('stdin.txt')
+    stdin_path = str(tmpdir.join('stdin.txt'))
     with open(stdin_path, 'w') as f:
         f.write(input_text)
 
@@ -276,11 +278,14 @@ def test_prompt(tmpdir):
 first line
 second line
 """
-    code = r"s = input('What comes first?\n')"
+    if sys.version_info < (3, 0):
+        code = "s = raw_input('What comes first?')"
+    else:
+        code = "s = input('What comes first?')"
     expected_report = """\
-print('What comes first?') | s = 'first line'
+sys.stdout.write('What comes first?') | s = 'first line'
 """
-    stdin_path = tmpdir.join('stdin.txt')
+    stdin_path = str(tmpdir.join('stdin.txt'))
     with open(stdin_path, 'w') as f:
         f.write(input_text)
 

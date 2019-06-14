@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
+import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -135,6 +137,18 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         commandLinePatcher = commandLine -> {
             Map<String, String> environment1 = commandLine.getEnvironment();
+            // Hack: use reflection to get redirected input file.
+            String inputFilePath;
+            try {
+                Field f = commandLine.getClass().getDeclaredField("myInputFile");
+                f.setAccessible(true);
+                File inputFile = (File) f.get(commandLine);
+                inputFilePath = inputFile == null ? null : inputFile.getAbsolutePath();
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                inputFilePath = null;
+            }
+            commandLine.withInput(null);  // We send source code over stdin.
+            
             ParamsGroup paramsGroup = commandLine.getParametersList().getParamsGroup(
                     PythonCommandLineState.GROUP_MODULE);
             if (paramsGroup == null || paramsGroup.getParameters().isEmpty()) {
@@ -172,6 +186,10 @@ public class LiveCodingAnalyst implements DocumentListener {
                     : "__live_coding__";
             paramsGroup.addParameterAt(i++, "--filename");
             paramsGroup.addParameterAt(i++, modulePath);
+            if (inputFilePath != null) {
+                paramsGroup.addParameterAt(i++, "--input");
+                paramsGroup.addParameterAt(i++, inputFilePath);
+            }
             String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
             paramsGroup.addParameterAt(i++, "--bad_driver");
             paramsGroup.addParameterAt(i++, badDriverMessage);
@@ -217,7 +235,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
         if (isRunning) {
             FileDocumentManager documentManager =
                     FileDocumentManager.getInstance();
@@ -397,7 +415,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                                         new CommandLinePatcher[]{commandLinePatcher}));
         final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
         try {
-            byte[] stdin = sourceCode.getBytes("UTF8");
+            byte[] stdin = sourceCode.getBytes(StandardCharsets.UTF_8);
             final OutputStream processInput = processHandler.getProcessInput();
             assert processInput != null;
             processInput.write(stdin);

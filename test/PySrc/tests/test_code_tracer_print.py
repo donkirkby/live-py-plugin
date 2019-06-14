@@ -236,3 +236,54 @@ self.f.write('Hello, Alice.')
     report = CodeTracer().trace_code(code)
 
     assert expected_report == trim_report(report)
+
+
+def test_no_input(tmpdir):
+    code = """\
+s = input()
+"""
+    expected_report = """\
+EOFError: EOF when reading a line
+"""
+
+    report = CodeTracer().trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_input(tmpdir):
+    input_text = """\
+first line
+second line
+"""
+    code = """\
+s = input()
+"""
+    expected_report = """\
+s = 'first line'
+"""
+    stdin_path = tmpdir.join('stdin.txt')
+    with open(stdin_path, 'w') as f:
+        f.write(input_text)
+
+    report = CodeTracer().trace_code(code, stdin=stdin_path)
+
+    assert expected_report == trim_report(report)
+
+
+def test_prompt(tmpdir):
+    input_text = """\
+first line
+second line
+"""
+    code = r"s = input('What comes first?\n')"
+    expected_report = """\
+print('What comes first?') | s = 'first line'
+"""
+    stdin_path = tmpdir.join('stdin.txt')
+    with open(stdin_path, 'w') as f:
+        f.write(input_text)
+
+    report = CodeTracer().trace_code(code, stdin=stdin_path)
+
+    assert expected_report == trim_report(report)

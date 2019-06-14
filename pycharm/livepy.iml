@@ -18,7 +18,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../docs" />
       <excludeFolder url="file://$MODULE_DIR$/../feature" />
     </content>
-    <orderEntry type="jdk" jdkName="IntelliJ IDEA IU-181.5540.7" jdkType="IDEA JDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library>

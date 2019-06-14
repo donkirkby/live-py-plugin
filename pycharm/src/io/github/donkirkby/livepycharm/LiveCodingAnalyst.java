@@ -5,6 +5,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import io.github.donkirkby.livecanvas.CanvasReader;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -112,6 +113,17 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (configuration == null) {
             return false;
         }
+        RunConfiguration runConfiguration = configuration.getConfiguration();
+        PythonRunConfiguration pythonRunConfiguration;
+        if (runConfiguration instanceof  PythonRunConfiguration) {
+            pythonRunConfiguration = (PythonRunConfiguration) runConfiguration;
+        }
+        else {
+            pythonRunConfiguration = null;
+        }
+        String inputFilePath = pythonRunConfiguration == null
+                ? null
+                : pythonRunConfiguration.getInputFile();
         DefaultRunExecutor executor = new DefaultRunExecutor();
         ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, configuration);
         if (builder == null) {
@@ -137,16 +149,6 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         commandLinePatcher = commandLine -> {
             Map<String, String> environment1 = commandLine.getEnvironment();
-            // Hack: use reflection to get redirected input file.
-            String inputFilePath;
-            try {
-                Field f = commandLine.getClass().getDeclaredField("myInputFile");
-                f.setAccessible(true);
-                File inputFile = (File) f.get(commandLine);
-                inputFilePath = inputFile == null ? null : inputFile.getAbsolutePath();
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                inputFilePath = null;
-            }
             commandLine.withInput(null);  // We send source code over stdin.
             
             ParamsGroup paramsGroup = commandLine.getParametersList().getParamsGroup(

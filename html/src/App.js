@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import AceEditor from 'react-ace';
+import Splitter from 'm-react-splitters';
+import 'm-react-splitters/lib/splitters.css';
 import './App.css';
 
 import 'brace/mode/python';
@@ -37,6 +39,8 @@ class Editor extends Component {
             onCursorChange={this.props.onCursorChange}
             mode={this.props.mode}
             theme="github"
+            width="100%"
+            height="calc(100% - 2em)"
             fontSize={18}
             showPrintMargin={true}
             showGutter={true}
@@ -113,36 +117,37 @@ i = search(1, [1, 2, 4])
 
     render() {
         return (
-            <div className="App">
-              <p><a href="..">Home</a></p>
-              <table>
-                  <tbody>
-                  <tr>
-                      <th><label htmlFor="source">Type Some Python</label></th>
-                      <th><label htmlFor="display">See Inside</label></th>
-                  </tr>
-                  <tr>
-                      <td><Editor
-                          value={this.state.source}
-                          scrollTop={this.state.scrollTop}
-                          onChange={this.handleChange}
-                          onScroll={this.handleScroll}
-                          onCursorChange={this.handleCursorChange}
-                          mode="python"/></td>
-                      <td><Editor
-                          value={this.state.display}
-                          scrollTop={this.state.scrollTop}
-                          readOnly={true}
-                          selectedLine={this.state.selectedLine}
-                          onChange={this.handleChange}
-                          onScroll={this.handleScroll}
-                          mode="text"/></td>
-                  </tr>
-                  </tbody>
-              </table>
-              <p>Change the code, and see the changes inside. Try to find the bug in the
-                  example code. (Hint: try searching for different numbers.) Paste your
-                  own code to see how it works.</p>
+            <div className="app">
+                <p className="page-header"><a href="..">Home</a></p>
+                <div className="splitter-wrapper">
+                    <Splitter position="vertical">
+                        <div className="editor-pane">
+                            <p className="editor-header">Type Some Python</p>
+                            <Editor
+                                value={this.state.source}
+                                scrollTop={this.state.scrollTop}
+                                onChange={this.handleChange}
+                                onScroll={this.handleScroll}
+                                onCursorChange={this.handleCursorChange}
+                                mode="python"/>
+                        </div>
+                        <div className="editor-pane">
+                            <p className="editor-header">See Inside</p>
+                            <Editor
+                                value={this.state.display}
+                                scrollTop={this.state.scrollTop}
+                                readOnly={true}
+                                selectedLine={this.state.selectedLine}
+                                onChange={this.handleChange}
+                                onScroll={this.handleScroll}
+                                mode="text"/>
+                        </div>
+                    </Splitter>
+                </div>
+                <div className="page-footer">Change the code, and see the
+                    changes inside. Try to find the bug in the example code.
+                    (Hint: try searching for different numbers.) Paste your own
+                    code to see how it works.</div>
           </div>
     );
   }

@@ -5,6 +5,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
@@ -27,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunConfiguration;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import io.github.donkirkby.livecanvas.CanvasReader;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -110,6 +113,17 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (configuration == null) {
             return false;
         }
+        RunConfiguration runConfiguration = configuration.getConfiguration();
+        PythonRunConfiguration pythonRunConfiguration;
+        if (runConfiguration instanceof  PythonRunConfiguration) {
+            pythonRunConfiguration = (PythonRunConfiguration) runConfiguration;
+        }
+        else {
+            pythonRunConfiguration = null;
+        }
+        String inputFilePath = pythonRunConfiguration == null
+                ? null
+                : pythonRunConfiguration.getInputFile();
         DefaultRunExecutor executor = new DefaultRunExecutor();
         ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, configuration);
         if (builder == null) {
@@ -135,6 +149,8 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         commandLinePatcher = commandLine -> {
             Map<String, String> environment1 = commandLine.getEnvironment();
+            commandLine.withInput(null);  // We send source code over stdin.
+            
             ParamsGroup paramsGroup = commandLine.getParametersList().getParamsGroup(
                     PythonCommandLineState.GROUP_MODULE);
             if (paramsGroup == null || paramsGroup.getParameters().isEmpty()) {
@@ -172,6 +188,10 @@ public class LiveCodingAnalyst implements DocumentListener {
                     : "__live_coding__";
             paramsGroup.addParameterAt(i++, "--filename");
             paramsGroup.addParameterAt(i++, modulePath);
+            if (inputFilePath != null) {
+                paramsGroup.addParameterAt(i++, "--input");
+                paramsGroup.addParameterAt(i++, inputFilePath);
+            }
             String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
             paramsGroup.addParameterAt(i++, "--bad_driver");
             paramsGroup.addParameterAt(i++, badDriverMessage);
@@ -217,7 +237,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     @Override
-    public void documentChanged(DocumentEvent e) {
+    public void documentChanged(@NotNull DocumentEvent e) {
         if (isRunning) {
             FileDocumentManager documentManager =
                     FileDocumentManager.getInstance();
@@ -397,7 +417,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                                         new CommandLinePatcher[]{commandLinePatcher}));
         final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
         try {
-            byte[] stdin = sourceCode.getBytes("UTF8");
+            byte[] stdin = sourceCode.getBytes(StandardCharsets.UTF_8);
             final OutputStream processInput = processHandler.getProcessInput();
             assert processInput != null;
             processInput.write(stdin);

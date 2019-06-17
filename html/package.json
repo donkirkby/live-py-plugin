@@ -4,6 +4,7 @@
   "private": true,
   "homepage": ".",
   "dependencies": {
+    "m-react-splitters": "^1.2.0",
     "react": "^16.8.5",
     "react-ace": "^6.4.0",
     "react-dom": "^16.8.5",

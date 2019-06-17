@@ -4,7 +4,8 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/tests" />
     <content url="file://$MODULE_DIR$/tools" />
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 3.7 (live-py-plugin)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="livepy" />
   </component>
 </module>

@@ -1,3 +1,4 @@
+import sys
 from sys import version_info
 
 from space_tracer.code_tracer import CodeTracer
@@ -234,5 +235,60 @@ self.f.write('Hello, Alice.')
                        else expected_report_python2)
 
     report = CodeTracer().trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_no_input():
+    code = """\
+s = input()
+"""
+    expected_report = """\
+EOFError: EOF when reading a line
+"""
+
+    report = CodeTracer().trace_code(code)
+
+    assert expected_report == trim_report(report)
+
+
+def test_input(tmpdir):
+    input_text = """\
+first line
+second line
+"""
+    if sys.version_info < (3, 0):
+        code = "s = raw_input()"
+    else:
+        code = "s = input()"
+    expected_report = """\
+s = 'first line'
+"""
+    stdin_path = str(tmpdir.join('stdin.txt'))
+    with open(stdin_path, 'w') as f:
+        f.write(input_text)
+
+    report = CodeTracer().trace_code(code, stdin=stdin_path)
+
+    assert expected_report == trim_report(report)
+
+
+def test_prompt(tmpdir):
+    input_text = """\
+first line
+second line
+"""
+    if sys.version_info < (3, 0):
+        code = "s = raw_input('What comes first?')"
+    else:
+        code = "s = input('What comes first?')"
+    expected_report = """\
+sys.stdout.write('What comes first?') | s = 'first line'
+"""
+    stdin_path = str(tmpdir.join('stdin.txt'))
+    with open(stdin_path, 'w') as f:
+        f.write(input_text)
+
+    report = CodeTracer().trace_code(code, stdin=stdin_path)
 
     assert expected_report == trim_report(report)

@@ -1257,19 +1257,23 @@ class PatchedModuleLoader(Loader):
 
 
 @contextmanager
-def swallow_output():
+def swallow_output(stdin_path=None):
     old_stdout = sys.stdout
     old_stderr = sys.stderr
+    old_stdin = sys.stdin
     # noinspection PyUnresolvedReferences
     old_string_io = io.StringIO
     try:
         sys.stdout = FileSwallower(old_stdout)
         sys.stderr = FileSwallower(old_stderr, target_name='sys.stderr')
-        io.StringIO = TracedStringIO
-        yield
+        sys.stdin = stdin_path and open(stdin_path) or io.StringIO()
+        with sys.stdin:
+            io.StringIO = TracedStringIO
+            yield
     finally:
         sys.stdout = old_stdout
         sys.stderr = old_stderr
+        sys.stdin = old_stdin
         io.StringIO = old_string_io
 
 
@@ -1406,6 +1410,7 @@ class CodeTracer(object):
                    dump=False,
                    driver=None,
                    filename=None,
+                   stdin=None,
                    bad_driver=None,
                    is_zoomed=False):
         """ Trace a module of source code, possibly by running a driver script.
@@ -1418,6 +1423,7 @@ class CodeTracer(object):
         output
         :param list driver: the driver script's file name or module name and args
         :param str filename: the file name of the source code
+        :param str stdin: the file name to redirect stdin from
         :param str bad_driver: a message to display if the driver doesn't call
         the module
         :param bool is_zoomed: True if matplotlib is zoomed
@@ -1448,7 +1454,8 @@ class CodeTracer(object):
                               driver,
                               filename,
                               bad_driver,
-                              is_zoomed)
+                              is_zoomed,
+                              stdin)
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
@@ -1526,7 +1533,8 @@ class CodeTracer(object):
                  driver,
                  filename,
                  bad_driver,
-                 is_zoomed):
+                 is_zoomed,
+                 stdin_path=None):
         """ Run the traced module, plus its driver.
 
         :param code: the compiled code for the traced module
@@ -1539,6 +1547,7 @@ class CodeTracer(object):
         :param str bad_driver: a message to display if the driver doesn't call
         the module
         :param bool is_zoomed: True if matplotlib is zoomed
+        :param str stdin_path: Path to redirect stdin from
         """
         self.environment[CONTEXT_NAME] = builder
         is_own_driver = ((is_module and driver and driver[0] == load_as) or
@@ -1556,7 +1565,7 @@ class CodeTracer(object):
                                                is_zoomed)
         sys.meta_path.insert(0, module_importer)
         if is_own_driver:
-            with swallow_output():
+            with swallow_output(stdin_path):
                 import_module(SCOPE_NAME)
         else:
             with swallow_output():
@@ -1688,6 +1697,9 @@ def main():
     parser.add_argument('-b',
                         '--bad_driver',
                         help="message to display if driver doesn't call module")
+    parser.add_argument('-i',
+                        '--input',
+                        help="file to redirect stdin from")
     parser.add_argument('-m',
                         '--module',
                         action='store_true',
@@ -1722,6 +1734,7 @@ def main():
                                     is_module=args.module,
                                     driver=args.driver,
                                     filename=args.filename,
+                                    stdin=args.input,
                                     bad_driver=args.bad_driver,
                                     is_zoomed=args.zoomed)
     turtle_report = MockTurtle.get_all_reports()

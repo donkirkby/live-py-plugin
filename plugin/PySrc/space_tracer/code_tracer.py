@@ -73,7 +73,8 @@ except ImportError:
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
 PSEUDO_FILENAME = '<live coding source>'
-SCOPE_NAME = '__live_coding__'
+DEFAULT_MODULE_NAME = '__main__'
+LIVE_MODULE_NAME = '__live_coding__'
 
 OPERATOR_CHARS = {Add: '+',
                   Sub: '-',
@@ -764,8 +765,9 @@ class TracedModuleImporter(MetaPathFinder, Loader):
         self.is_zoomed = is_zoomed
 
     def find_spec(self, fullname, path, target=None):
-        if (fullname == self.module_name or
-                (fullname == SCOPE_NAME and self.is_own_driver)):
+        if fullname == self.module_name or (self.is_own_driver and
+                                            fullname in (DEFAULT_MODULE_NAME,
+                                                         LIVE_MODULE_NAME)):
             return ModuleSpec(fullname, self)
         if fullname not in ('matplotlib',
                             'matplotlib.pyplot',
@@ -804,8 +806,7 @@ class TracedModuleImporter(MetaPathFinder, Loader):
 
     # find_module() and load_module() are used in Python 2.
     def find_module(self, fullname, path=None):
-        if (fullname == self.module_name or
-                (fullname == SCOPE_NAME and self.is_own_driver)):
+        if fullname == self.module_name:
             return self
         if fullname not in ('matplotlib',
                             'matplotlib.pyplot',
@@ -910,6 +911,7 @@ class PatchedModuleLoader(Loader):
 
 @contextmanager
 def swallow_output(stdin_path=None):
+    old_main_mod = sys.modules.pop(DEFAULT_MODULE_NAME, None)
     old_stdout = sys.stdout
     old_stderr = sys.stderr
     old_stdin = sys.stdin
@@ -923,6 +925,10 @@ def swallow_output(stdin_path=None):
             io.StringIO = TracedStringIO
             yield
     finally:
+        if old_main_mod is not None:
+            sys.modules[DEFAULT_MODULE_NAME] = old_main_mod
+        else:
+            sys.modules.pop(DEFAULT_MODULE_NAME, None)
         sys.stdout = old_stdout
         sys.stderr = old_stderr
         sys.stdin = old_stdin
@@ -1002,7 +1008,6 @@ class CodeTracer(object):
         `filename` is the path to the file to execute.
         """
         # Create a module to serve as __main__
-        old_main_mod = sys.modules['__main__']
         # noinspection PyUnresolvedReferences
         main_mod = types.ModuleType('__main__')
         sys.modules['__main__'] = main_mod
@@ -1011,14 +1016,10 @@ class CodeTracer(object):
         if package:
             main_mod.__package__ = package
 
-        try:
-            code = self.make_code_from_py(filename)
+        code = self.make_code_from_py(filename)
 
-            # Execute the code object.
-            exec(code, main_mod.__dict__)
-        finally:
-            # Restore the old __main__
-            sys.modules['__main__'] = old_main_mod
+        # Execute the code object.
+        exec(code, main_mod.__dict__)
 
     @staticmethod
     def make_code_from_py(filename):
@@ -1057,18 +1058,19 @@ class CodeTracer(object):
 
     def trace_code(self,
                    source,
-                   load_as=SCOPE_NAME,
+                   trace_module=DEFAULT_MODULE_NAME,
                    is_module=False,
                    dump=False,
                    driver=None,
                    filename=None,
                    stdin=None,
                    bad_driver=None,
-                   is_zoomed=False):
+                   is_zoomed=False,
+                   is_live=False):
         """ Trace a module of source code, possibly by running a driver script.
 
         :param str source: the source code to trace
-        :param str load_as: the module name to load the source code as
+        :param str trace_module: the module name to load the source code as
         :param bool is_module: True if the driver is a module name instead of a
         file name
         :param bool dump: True if the source code should be included in the
@@ -1079,6 +1081,8 @@ class CodeTracer(object):
         :param str bad_driver: a message to display if the driver doesn't call
         the module
         :param bool is_zoomed: True if matplotlib is zoomed
+        :param bool is_live: Load main module as __live_coding__, instead of
+        __main__.
         """
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
@@ -1096,25 +1100,26 @@ class CodeTracer(object):
 
             # Set sys.argv properly.
             old_argv = sys.argv
-            sys.argv = driver or [filename or load_as]
+            sys.argv = driver or [filename or trace_module]
 
             try:
                 self.run_code(code,
                               builder,
-                              load_as,
+                              trace_module,
                               is_module,
                               driver,
                               filename,
                               bad_driver,
                               is_zoomed,
-                              stdin)
+                              stdin,
+                              is_live)
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
 
                 # During testing, we import these modules for every test case,
                 # so force a reload. This is only likely to happen during testing.
-                for target in (load_as, SCOPE_NAME):
+                for target in (trace_module, LIVE_MODULE_NAME):
                     if target in sys.modules:
                         del sys.modules[target]
                 for i in reversed(range(len(sys.meta_path))):
@@ -1190,7 +1195,8 @@ class CodeTracer(object):
                  filename,
                  bad_driver,
                  is_zoomed,
-                 stdin_path=None):
+                 stdin_path=None,
+                 is_live=False):
         """ Run the traced module, plus its driver.
 
         :param code: the compiled code for the traced module
@@ -1204,10 +1210,14 @@ class CodeTracer(object):
         the module
         :param bool is_zoomed: True if matplotlib is zoomed
         :param str stdin_path: Path to redirect stdin from
+        :param bool is_live: Load main module as __live_coding__, instead of
+        __main__.
         """
         self.environment[CONTEXT_NAME] = builder
-        is_own_driver = ((is_module and driver and driver[0] == load_as) or
-                         load_as == SCOPE_NAME)
+        if load_as in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
+            is_own_driver = True
+        else:
+            is_own_driver = is_module and driver and driver[0] == load_as
         for module_name in ('random', 'numpy.random'):
             random_module = sys.modules.get(module_name)
             if random_module is not None:
@@ -1220,11 +1230,13 @@ class CodeTracer(object):
                                                is_own_driver,
                                                is_zoomed)
         sys.meta_path.insert(0, module_importer)
+        main_module_name = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
+        output_context = swallow_output(stdin_path)
         if is_own_driver:
-            with swallow_output(stdin_path):
-                import_module(SCOPE_NAME)
+            with output_context:
+                import_module(main_module_name)
         else:
-            with swallow_output():
+            with output_context:
                 try:
                     if not is_module:
                         self.run_python_file(driver[0])
@@ -1347,27 +1359,27 @@ def main():
                         '--dump',
                         action='store_true',
                         help='dump source code with report')
-    parser.add_argument('-f',
-                        '--filename',
-                        help='file name to save in __file__')
     parser.add_argument('-b',
                         '--bad_driver',
                         help="message to display if driver doesn't call module")
     parser.add_argument('-i',
                         '--input',
                         help="file to redirect stdin from")
+    parser.add_argument('--source',
+                        help='file to read the traced module from, or - for '
+                             'stdin. (default: %(default)s for standard '
+                             'Python loading)')
+    parser.add_argument('--trace_module',
+                        default=DEFAULT_MODULE_NAME,
+                        help='module to display trace for.')
+    parser.add_argument('--live',
+                        action='store_true',
+                        help='load traced module as %s instead of %s.' %
+                             (LIVE_MODULE_NAME, DEFAULT_MODULE_NAME))
     parser.add_argument('-m',
-                        '--module',
+                        dest='module',
                         action='store_true',
                         help='driver is an importable module, not a script')
-    parser.add_argument('source',
-                        nargs=argparse.OPTIONAL,
-                        default='-',
-                        help='source file to trace, or - for stdin')
-    parser.add_argument('load_as',
-                        nargs=argparse.OPTIONAL,
-                        default=SCOPE_NAME,
-                        help='load traced code as a module with this name')
     parser.add_argument('driver',
                         nargs=argparse.REMAINDER,
                         help='script to call traced code, plus any arguments')
@@ -1376,23 +1388,36 @@ def main():
     if args.driver and args.driver[0] in ('-m', '--module'):
         args.module = True
         args.driver = args.driver[1:]
+    filename = None
+    if args.trace_module in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
+        if args.driver:
+            if args.module:
+                spec = find_spec(args.driver[0])
+                filename = spec.origin
+            else:
+                filename = args.driver[0]
+    else:
+        spec = find_spec(args.trace_module)
+        filename = spec and spec.origin
+
     if args.source == '-':
         code = sys.stdin.read()
     else:
-        with open(args.source, 'r') as source:
+        with open(args.source or filename, 'r') as source:
             code = source.read()
     canvas = Canvas(args.width, args.height)
     tracer = CodeTracer(canvas)
     tracer.max_width = 200000
     code_report = tracer.trace_code(code,
                                     dump=args.dump,
-                                    load_as=args.load_as,
+                                    trace_module=args.trace_module,
                                     is_module=args.module,
                                     driver=args.driver,
-                                    filename=args.filename,
+                                    filename=filename,
                                     stdin=args.input,
                                     bad_driver=args.bad_driver,
-                                    is_zoomed=args.zoomed)
+                                    is_zoomed=args.zoomed,
+                                    is_live=args.live)
     turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:
         print('start_canvas')

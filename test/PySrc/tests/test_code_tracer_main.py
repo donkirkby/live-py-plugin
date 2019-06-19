@@ -35,7 +35,9 @@ class CodeTracerMainTest(ReportTestCase):
             if module_name in sys.modules:
                 del sys.modules[module_name]
 
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py'])
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--source', '-'])
     def test_main(self, stdin, stdout):
         code = """\
 i = 1
@@ -43,7 +45,7 @@ name = __name__
 """
         expected_report = """\
 i = 1
-name = '__live_coding__' """
+name = '__main__' """
         stdin.read.return_value = code
 
         main()
@@ -51,8 +53,10 @@ name = '__live_coding__' """
         self.assertReportEqual(expected_report,
                                stdout.write.call_args_list[0][0][0])
 
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py',
-                                                                '--dump'])
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--source', '-',
+        '--dump'])
     def test_dump_arg(self, stdin, stdout):
         code = """\
 i = 1 + 1
@@ -69,6 +73,7 @@ i = 1 + 1
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '--dump',
+        '--live',
         EXAMPLE_SOURCE_PATH])
     def test_source_file_arg(self, stdin, stdout):
         expected_report = """\
@@ -92,8 +97,8 @@ i = 1 + 1
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH])
     def test_driver(self, stdin, stdout):
         source = """\
@@ -115,8 +120,8 @@ return 43
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH,
         '99'])
     def test_driver_args(self, stdin, stdout):
@@ -139,8 +144,9 @@ return ['99']
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        '__live_coding__',
+        '--source', '-',
+        '--trace_module', '__live_coding__',
+        '--live',
         EXAMPLE_SOURCE_PATH,
         '99'])
     def test_args_no_driver(self, stdin, stdout):
@@ -161,8 +167,8 @@ x = ['99']
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         '-m',
         'example_driver',
         '99'])
@@ -186,8 +192,8 @@ return ['99']
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_package.lib_in_package',
+        '--source', '-',
+        '--trace_module', 'example_package.lib_in_package',
         '-m',
         'example_driver'])
     def test_lib_in_package(self, stdin, stdout):
@@ -210,8 +216,8 @@ return 'from driver Received'
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         '-m',
         'example_package.driver_in_package'])
     def test_driver_in_package(self, stdin, stdout):
@@ -232,8 +238,8 @@ return 42
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH,
         'fail',
         'badly'])
@@ -262,8 +268,8 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         EXAMPLE_PYCHARM_FAILURES_PATH])
     def test_driver_pycharm_failures(self, stdin, stdout):
         """ PyCharm's Pytest wrapper reports failures, but doesn't set exit code.
@@ -291,8 +297,8 @@ foo = 'Hello, World!' | ------------------------- |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'foo',
+        '--source', '-',
+        '--trace_module', 'foo',
         'bogus_driver.py'])
     def test_unknown_driver(self, stdin, stdout):
         source = """\
@@ -315,8 +321,8 @@ FileNotFoundError: [Errno 2] No such file or directory: 'bogus_driver.py' |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'different_source',
+        '--source', '-',
+        '--trace_module', 'different_source',
         EXAMPLE_DRIVER_PATH])
     def test_bad_driver(self, stdin, stdout):
         source = """\
@@ -341,8 +347,8 @@ example_driver.py doesn't call the different_source module. Try a different driv
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         EXAMPLE_PATCHING_DRIVER_PATH])
     def test_driver_imports_first(self, stdin, stdout):
         source = """\
@@ -376,8 +382,8 @@ return 109
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '--bad_driver', "Run config 'example' is bad, try something else.",
-        '-',
-        'different_source',
+        '--source', '-',
+        '--trace_module', 'different_source',
         EXAMPLE_DRIVER_PATH])
     def test_bad_driver_message(self, stdin, stdout):
         source = """\
@@ -402,8 +408,8 @@ Run config 'example' is bad, try something else. |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'foo',
+        '--source', '-',
+        '--trace_module', 'foo',
         '-m',
         'unittest',
         'foo'])
@@ -441,8 +447,8 @@ y = 15
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'foo',
+        '--source', '-',
+        '--trace_module', 'foo',
         '-m',
         'unittest',
         'foo'])
@@ -478,6 +484,7 @@ AssertionError: 510
         with self.assertRaises(SystemExit) as ctx:
             main()
 
+        # noinspection PyUnresolvedReferences
         self.assertEqual(1, ctx.exception.code)
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
@@ -486,8 +493,8 @@ AssertionError: 510
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         '-m',
         'unittest',
         'example_silent_driver'])
@@ -512,8 +519,8 @@ def bar(bucket):
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'foo',
+        '--source', '-',
+        '--trace_module', 'foo',
         '-m',
         'doctest',
         'foo.py'])
@@ -568,8 +575,8 @@ return 542
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         '-m',
         'example_package'])
     def test_driver_package(self, stdin, stdout):
@@ -590,14 +597,18 @@ return 42
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-f',
-        '/path/to/foo.py'])
+        '--source', '-',
+        EXAMPLE_SOURCE_PATH])
     def test_dunder_file(self, stdin, stdout):
         source = """\
-filename = __file__
+import os
+
+filename = os.path.basename(__file__)
 """
         expected_report = """\
-filename = '/path/to/foo.py'
+
+
+filename = 'example_source.py'
 """
         stdin.read.return_value = source
 
@@ -607,24 +618,30 @@ filename = '/path/to/foo.py'
         self.assertReportEqual(expected_report, report)
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
-        'dummy.py'])
-    def test_dunder_file_not_set(self, stdin, stdout):
+        'dummy.py',
+        '--source', '-',
+        '-m', 'example_source'])
+    def test_dunder_file_for_module(self, stdin, stdout):
         source = """\
-filename = __file__
+import os
+
+filename = os.path.basename(__file__)
 """
         expected_report = """\
-NameError: name '__file__' is not defined
+
+
+filename = 'example_source.py'
 """
         stdin.read.return_value = source
 
-        with self.assertRaises(SystemExit):
-            main()
+        main()
 
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source', '-',
         '--canvas'])
     def test_canvas_main(self, stdin, stdout):
         source = """\
@@ -655,8 +672,8 @@ end_canvas
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH])
     def test_exception_with_driver(self, stdin, stdout):
         source = """\
@@ -677,7 +694,10 @@ SystemExit: Bad stuff. | x = 42
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
 
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=['dummy.py'])
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--source', '-',
+        EXAMPLE_SOURCE_PATH])
     def test_syntax_error(self, stdin, stdout):
         source = """\
 def missing_body():
@@ -695,8 +715,8 @@ SyntaxError: unexpected EOF while parsing
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '-',
-        'example_source',
+        '--source', '-',
+        '--trace_module', 'example_source',
         EXAMPLE_DRIVER_SYNTAX_ERROR_PATH])
     def test_driver_syntax_error(self, stdin, stdout):
         source = """\

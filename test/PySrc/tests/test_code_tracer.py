@@ -676,7 +676,7 @@ dog.name = 'Spot' """
 def foo(x):
     return x + 3
 
-if __name__ == '__live_coding__':
+if __name__ == '__main__':
     y = foo(10)
 """
         expected_report = """\
@@ -689,6 +689,31 @@ y = 13 """
 
         # EXEC
         report = tracer.trace_code(code)
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_module_name_live(self):
+        # SETUP
+        code = """\
+def foo(x):
+    return x + 3
+
+if __name__ == '__live_coding__':
+    y = foo(10)
+"""
+        expected_report = """\
+x = 10
+return 13
+
+
+y = 13 """
+        tracer = CodeTracer()
+
+        # EXEC
+        report = tracer.trace_code(code,
+                                   trace_module='__live_coding__',
+                                   is_live=True)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -1269,7 +1294,7 @@ s = 'example_package'
 """
 
         report = CodeTracer().trace_code(code,
-                                         load_as='example_package.foo',
+                                         trace_module='example_package.foo',
                                          is_module=True,
                                          driver=['unittest',
                                                  'example_package.foo'])
@@ -1287,9 +1312,10 @@ s = '__live_coding__'
 """
 
         report = CodeTracer().trace_code(code,
-                                         load_as='example_package.foo',
+                                         trace_module='example_package.foo',
                                          is_module=True,
-                                         driver=['example_package.foo'])
+                                         driver=['example_package.foo'],
+                                         is_live=True)
 
         self.assertReportEqual(expected_report, report)
 

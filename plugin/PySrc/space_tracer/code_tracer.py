@@ -806,7 +806,9 @@ class TracedModuleImporter(MetaPathFinder, Loader):
 
     # find_module() and load_module() are used in Python 2.
     def find_module(self, fullname, path=None):
-        if fullname == self.module_name:
+        if fullname == self.module_name or (self.is_own_driver and
+                                            fullname in (DEFAULT_MODULE_NAME,
+                                                         LIVE_MODULE_NAME)):
             return self
         if fullname not in ('matplotlib',
                             'matplotlib.pyplot',
@@ -1392,13 +1394,11 @@ def main():
     if args.trace_module in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
         if args.driver:
             if args.module:
-                spec = find_spec(args.driver[0])
-                filename = spec.origin
+                filename = find_module_path(args.driver[0])
             else:
                 filename = args.driver[0]
     else:
-        spec = find_spec(args.trace_module)
-        filename = spec and spec.origin
+        filename = find_module_path(args.trace_module)
 
     if args.source == '-':
         code = sys.stdin.read()
@@ -1427,6 +1427,19 @@ def main():
     print(code_report)
     if tracer.return_code:
         exit(tracer.return_code)
+
+
+def find_module_path(module_name):
+    if find_spec is not None:
+        # noinspection PyCallingNonCallable
+        spec = find_spec(module_name)
+        return spec and spec.origin
+    try:
+        source_file, pathname, description = imp.find_module(module_name)
+        source_file.close()
+        return pathname
+    except ImportError:
+        return None
 
 
 if __name__ == '__main__':

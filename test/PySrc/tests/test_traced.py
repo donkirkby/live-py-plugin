@@ -33,7 +33,7 @@ print(bar(3))
             s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'
         return s           | return 'xyyy' """
 
-    report = CodeTracer().trace_code(code, dump=True)
+    report = CodeTracer().trace_code(code, source_width=None, source_indent=4)
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -77,6 +77,6 @@ print(bar(3))
         return s             | return 'abbb'
 """
 
-    report = CodeTracer().trace_code(code, dump=True)
+    report = CodeTracer().trace_code(code, source_width=None, source_indent=4)
 
     assert trim_report(expected_report) == trim_report(report)

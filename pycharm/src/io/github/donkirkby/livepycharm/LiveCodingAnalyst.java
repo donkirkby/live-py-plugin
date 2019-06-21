@@ -186,8 +186,6 @@ public class LiveCodingAnalyst implements DocumentListener {
             String moduleName = hasDriver
                     ? getModuleName(new File(mainFile.getPath()), oldPythonPath)
                     : "__live_coding__";
-            paramsGroup.addParameterAt(i++, "--filename");
-            paramsGroup.addParameterAt(i++, modulePath);
             if (inputFilePath != null) {
                 paramsGroup.addParameterAt(i++, "--input");
                 paramsGroup.addParameterAt(i++, inputFilePath);
@@ -203,7 +201,11 @@ public class LiveCodingAnalyst implements DocumentListener {
             if (hasGoal) {
                 paramsGroup.addParameterAt(i++, "--zoom");
             }
+            paramsGroup.addParameterAt(i++, "--source");
             paramsGroup.addParameterAt(i++, "-"); // source code from stdin
+            paramsGroup.addParameterAt(i++, "--source_width");
+            paramsGroup.addParameterAt(i++, "0");
+            paramsGroup.addParameterAt(i++, "--trace_module");
             paramsGroup.addParameterAt(i, moduleName);
         };
         isRunning = true;

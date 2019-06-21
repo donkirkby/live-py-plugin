@@ -103,7 +103,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 			      (shell-quote-argument live-py-version)
 			      " "
                               live-py-args
-                              " -m space_tracer --source - --live --trace_module "
+                              " -m space_tracer --source - --live --source_width 0 --trace_module "
                               trace-module))
 	 (command-line (if live-py-driver
 			   (concat

@@ -1062,7 +1062,8 @@ class CodeTracer(object):
                    source,
                    trace_module=DEFAULT_MODULE_NAME,
                    is_module=False,
-                   dump=False,
+                   source_width=0,
+                   source_indent=0,
                    driver=None,
                    filename=None,
                    stdin=None,
@@ -1075,8 +1076,10 @@ class CodeTracer(object):
         :param str trace_module: the module name to load the source code as
         :param bool is_module: True if the driver is a module name instead of a
         file name
-        :param bool dump: True if the source code should be included in the
-        output
+        :param int? source_width: Width of source code - use 0 to hide or
+        negative numbers to trim columns from the end, None to fit source code.
+        :param int source_indent: Number of spaces to indent source code.
+        Negative to skip first columns of source code.
         :param list driver: the driver script's file name or module name and args
         :param str filename: the file name of the source code
         :param str stdin: the file name to redirect stdin from
@@ -1167,21 +1170,31 @@ class CodeTracer(object):
                 self.report_driver_result(builder, messages)
 
         report = builder.report(source.count('\n'))
-        if dump:
+        if source_width != 0:
+            if source_indent >= 0:
+                indent = source_indent
+                start_char = 0
+            else:
+                indent = 0
+                start_char = -source_indent
             source_lines = source.splitlines()
             reported_source_lines = []
             for first_line, last_line in builder.reported_blocks:
                 for line_number in range(first_line, last_line+1):
-                    reported_source_lines.append(source_lines[line_number-1])
+                    reported_source_lines.append(source_lines[line_number-1][start_char:])
             report_lines = report.splitlines()
             dump_lines = []
-            source_width = max(map(len, reported_source_lines))
-            indent = 4
+            max_width = max(map(len, reported_source_lines))
+            if source_width is None:
+                source_width = max_width + indent
+            elif source_width < 0:
+                source_width += max_width + indent
             for source_line, report_line in izip_longest(reported_source_lines,
                                                          report_lines,
                                                          fillvalue=''):
-                line = (indent * ' ' + source_line +
-                        (source_width-len(source_line))*' ' +
+                padded_source_line = indent * ' ' + source_line
+                padded_source_line += (source_width - len(source_line)) * ' '
+                line = (padded_source_line[:source_width] +
                         ' | ' + report_line)
                 dump_lines.append(line)
             report = '\n'.join(dump_lines)
@@ -1357,10 +1370,17 @@ def main():
                         '--zoomed',
                         action='store_true',
                         help='matplotlib is zoomed to fit the canvas size')
-    parser.add_argument('-d',
-                        '--dump',
-                        action='store_true',
-                        help='dump source code with report')
+    parser.add_argument('--source_width',
+                        type=int,
+                        help='Width of source code - use 0 to hide or '
+                             'negative numbers to trim columns from the end, '
+                             'None to fit source code.')
+    parser.add_argument('-n',
+                        '--source_indent',
+                        type=int,
+                        default=0,
+                        help='Number of spaces to indent source code. '
+                             'Negative to skip first columns of source code.')
     parser.add_argument('-b',
                         '--bad_driver',
                         help="message to display if driver doesn't call module")
@@ -1385,7 +1405,6 @@ def main():
     parser.add_argument('driver',
                         nargs=argparse.REMAINDER,
                         help='script to call traced code, plus any arguments')
-
     args = parser.parse_args()
     if args.driver and args.driver[0] in ('-m', '--module'):
         args.module = True
@@ -1409,7 +1428,8 @@ def main():
     tracer = CodeTracer(canvas)
     tracer.max_width = 200000
     code_report = tracer.trace_code(code,
-                                    dump=args.dump,
+                                    source_width=args.source_width,
+                                    source_indent=args.source_indent,
                                     trace_module=args.trace_module,
                                     is_module=args.module,
                                     driver=args.driver,

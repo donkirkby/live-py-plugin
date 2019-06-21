@@ -37,6 +37,7 @@ class CodeTracerMainTest(ReportTestCase):
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-'])
     def test_main(self, stdin, stdout):
         code = """\
@@ -55,8 +56,8 @@ name = '__main__' """
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '--source', '-',
-        '--dump'])
+        '--source_indent', '4',
+        '--source', '-'])
     def test_dump_arg(self, stdin, stdout):
         code = """\
 i = 1 + 1
@@ -72,7 +73,75 @@ i = 1 + 1
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '--dump',
+        '--source_indent', '2',
+        '--source', '-'])
+    def test_source_indent_small(self, stdin, stdout):
+        code = """\
+i = 1 + 1
+"""
+        expected_report = """\
+  i = 1 + 1 | i = 2 """
+        stdin.read.return_value = code
+
+        main()
+
+        self.assertEqual([call(expected_report), call('\n')],
+                         stdout.write.call_args_list)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--source_indent', '-2',
+        '--source', '-'])
+    def test_source_indent_negative(self, stdin, stdout):
+        code = """\
+i = 1 + 1
+"""
+        expected_report = """\
+= 1 + 1 | i = 2 """
+        stdin.read.return_value = code
+
+        main()
+
+        self.assertEqual([call(expected_report), call('\n')],
+                         stdout.write.call_args_list)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--source_width', '8',
+        '--source', '-'])
+    def test_source_width_positive(self, stdin, stdout):
+        code = """\
+i = 1 + 1
+"""
+        expected_report = """\
+i = 1 +  | i = 2 """
+        stdin.read.return_value = code
+
+        main()
+
+        self.assertEqual([call(expected_report), call('\n')],
+                         stdout.write.call_args_list)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--source_width', '-2',
+        '--source', '-'])
+    def test_source_width_negative(self, stdin, stdout):
+        code = """\
+i = 1 + 1
+"""
+        expected_report = """\
+i = 1 + | i = 2 """
+        stdin.read.return_value = code
+
+        main()
+
+        self.assertEqual([call(expected_report), call('\n')],
+                         stdout.write.call_args_list)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
+        '--source_indent', '4',
         '--live',
         EXAMPLE_SOURCE_PATH])
     def test_source_file_arg(self, stdin, stdout):
@@ -97,6 +166,7 @@ i = 1 + 1
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH])
@@ -120,6 +190,7 @@ return 43
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH,
@@ -144,6 +215,7 @@ return ['99']
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', '__live_coding__',
         '--live',
@@ -167,6 +239,7 @@ x = ['99']
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         '-m',
@@ -192,6 +265,7 @@ return ['99']
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_package.lib_in_package',
         '-m',
@@ -216,6 +290,7 @@ return 'from driver Received'
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         '-m',
@@ -238,6 +313,7 @@ return 42
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH,
@@ -268,6 +344,7 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         EXAMPLE_PYCHARM_FAILURES_PATH])
@@ -297,6 +374,7 @@ foo = 'Hello, World!' | ------------------------- |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'foo',
         'bogus_driver.py'])
@@ -321,6 +399,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'bogus_driver.py' |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'different_source',
         EXAMPLE_DRIVER_PATH])
@@ -347,6 +426,7 @@ example_driver.py doesn't call the different_source module. Try a different driv
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         EXAMPLE_PATCHING_DRIVER_PATH])
@@ -382,6 +462,7 @@ return 109
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '--bad_driver', "Run config 'example' is bad, try something else.",
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'different_source',
         EXAMPLE_DRIVER_PATH])
@@ -408,6 +489,7 @@ Run config 'example' is bad, try something else. |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'foo',
         '-m',
@@ -447,6 +529,7 @@ y = 15
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'foo',
         '-m',
@@ -493,6 +576,7 @@ AssertionError: 510
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         '-m',
@@ -519,6 +603,7 @@ def bar(bucket):
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'foo',
         '-m',
@@ -575,6 +660,7 @@ return 542
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         '-m',
@@ -597,6 +683,7 @@ return 42
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         EXAMPLE_SOURCE_PATH])
     def test_dunder_file(self, stdin, stdout):
@@ -619,6 +706,7 @@ filename = 'example_source.py'
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '-m', 'example_source'])
     def test_dunder_file_for_module(self, stdin, stdout):
@@ -641,6 +729,7 @@ filename = 'example_source.py'
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--canvas'])
     def test_canvas_main(self, stdin, stdout):
@@ -672,6 +761,7 @@ end_canvas
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         EXAMPLE_DRIVER_PATH])
@@ -696,6 +786,7 @@ SystemExit: Bad stuff. | x = 42
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         EXAMPLE_SOURCE_PATH])
     def test_syntax_error(self, stdin, stdout):
@@ -715,6 +806,7 @@ SyntaxError: unexpected EOF while parsing
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--source_width', '0',
         '--source', '-',
         '--trace_module', 'example_source',
         EXAMPLE_DRIVER_SYNTAX_ERROR_PATH])

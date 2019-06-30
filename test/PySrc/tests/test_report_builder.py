@@ -14,9 +14,9 @@ class ReportTestCase(unittest.TestCase):
         super(ReportTestCase, self).setUp()
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
-    def assertReportEqual(self, expected_report, report):
-        self.assertEqual(trim_report(expected_report),
-                         trim_report(report))
+    @staticmethod
+    def assertReportEqual(expected_report, report):
+        assert trim_report(expected_report) == trim_report(report)
 
 
 class ReportBuilderTest(ReportTestCase):
@@ -458,6 +458,47 @@ i = 1 | i = 2
         frame2 = builder.start_frame(1, 2)
         frame2.assign(name='i', value=2, line_number=1)
         builder.add_extra_message('extra message', 2)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_decorated_frame(self):
+        # SETUP
+        expected_report = """\
+i = 1 | i = 2
+n = 2 | """
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.assign(name='i', value=0, line_number=2)
+        frame1 = builder.start_frame(3, 4, is_decorated=True)
+        frame1.assign(name='i', value=1, line_number=3)
+        frame2 = builder.start_frame(3, 4, is_decorated=True)
+        frame2.assign(name='i', value=2, line_number=3)
+        frame1.assign(name='n', value=2, line_number=4)
+        builder.assign(name='i', value=20, line_number=5)
+        report = builder.report()
+
+        # VERIFY
+        self.assertReportEqual(expected_report, report)
+
+    def test_trace_block(self):
+        # SETUP
+        expected_report = """\
+i = 1 | i = 2
+n = 2 | """
+
+        # EXEC
+        builder = ReportBuilder()
+        builder.trace_block(3, 4)
+        builder.assign(name='i', value=0, line_number=2)
+        frame1 = builder.start_frame(3, 4)
+        frame1.assign(name='i', value=1, line_number=3)
+        frame2 = builder.start_frame(3, 4)
+        frame2.assign(name='i', value=2, line_number=3)
+        frame1.assign(name='n', value=2, line_number=4)
+        builder.assign(name='i', value=20, line_number=5)
         report = builder.report()
 
         # VERIFY

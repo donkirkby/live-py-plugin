@@ -31,8 +31,12 @@ class ReportBuilder(object):
         self.current_exception = None
         self.is_decorated = False
 
-        # Filled after calling report().
+        # Updated after calling report().
         self.reported_blocks = set()  # {(first_line, last_line)}
+
+    def trace_block(self, first_line, last_line):
+        """ Mark a block for tracing, and mute everything else. """
+        self.reported_blocks.add((first_line, last_line))
 
     def start_block(self, first_line, last_line):
         """ Cap all the lines from first_line to last_line inclusive with
@@ -308,7 +312,7 @@ class ReportBuilder(object):
         self.check_output()
         self.max_width = None
         self.message_limit = None
-        traced_blocks = set()
+        traced_blocks = set(self.reported_blocks)
         for frame in self.history:
             frame.check_output()
             first_line, last_line = frame.stack_block
@@ -331,7 +335,7 @@ class ReportBuilder(object):
             for first_line, last_line in self.reported_blocks:
                 for line_number in range(first_line, last_line+1):
                     reported_messages.append(self.messages[line_number-1])
-        return '\n'.join(reported_messages)
+        return '\n'.join(line.rstrip() for line in reported_messages)
 
     def _check_line_count(self, line_count):
         while len(self.messages) < line_count:

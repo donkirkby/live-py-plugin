@@ -80,3 +80,37 @@ print(bar(3))
     report = CodeTracer().trace_code(code, source_width=None, source_indent=4)
 
     assert trim_report(expected_report) == trim_report(report)
+
+
+def test_command_line():
+    """ Specify a traced method with command-line option --traced. """
+    code = """\
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+
+def bar(num):
+    s = 'a'
+    for i in range(num):
+        s += 'b'
+    return s
+
+
+print(foo(3))
+print(bar(3))
+"""
+    expected_report = """\
+def bar(num):            | num = 3
+    s = 'a'              | s = 'a'
+    for i in range(num): | i = 0    | i = 1     | i = 2
+        s += 'b'         | s = 'ab' | s = 'abb' | s = 'abbb'
+    return s             | return 'abbb'"""
+
+    report = CodeTracer().trace_code(code,
+                                     traced='__main__.bar',
+                                     source_width=None)
+
+    assert expected_report == report

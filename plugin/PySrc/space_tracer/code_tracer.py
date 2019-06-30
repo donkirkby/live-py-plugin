@@ -47,6 +47,8 @@ else:
     from .canvas import Canvas
     from .mock_turtle import MockTurtle, monkey_patch_pyglet
     from .report_builder import ReportBuilder
+    from .traced_finder import PSEUDO_FILENAME, TracedFinder, LIVE_MODULE_NAME, DEFAULT_MODULE_NAME
+
     document = None
 
 # Import some classes that are only available in Python 3.
@@ -72,9 +74,6 @@ except ImportError:
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
-PSEUDO_FILENAME = '<live coding source>'
-DEFAULT_MODULE_NAME = '__main__'
-LIVE_MODULE_NAME = '__live_coding__'
 
 OPERATOR_CHARS = {Add: '+',
                   Sub: '-',
@@ -90,11 +89,32 @@ OPERATOR_CHARS = {Add: '+',
                   BitOr: '|'}
 
 
+def find_line_numbers(node, line_numbers):
+    """ Populates a set with all line numbers for the node and its descendants.
+
+    :param node: AST node to scan
+    :param set line_numbers: all the line numbers will be added to it.
+    """
+    if FormattedValue is not None and isinstance(node, FormattedValue):
+        # FormattedValue is a separate code block with its own line nums.
+        return
+
+    line_number = getattr(node, 'lineno', None)
+    if line_number is not None:
+        line_numbers.add(line_number)
+    for _, value in iter_fields(node):
+        if isinstance(value, list):
+            for item in value:
+                if isinstance(item, AST):
+                    find_line_numbers(item, line_numbers)
+        elif isinstance(value, AST):
+            find_line_numbers(value, line_numbers)
+
+
 # noinspection PyPep8Naming
 class Tracer(NodeTransformer):
-
-    def _set_statement_line_numbers(self,
-                                    statements,
+    @staticmethod
+    def _set_statement_line_numbers(statements,
                                     previous_line_number=None):
         """ Make sure that a series of statements have line numbers in order.
         previous_line_number is the line number to start with, or None."""
@@ -105,7 +125,7 @@ class Tracer(NodeTransformer):
                 statement.lineno = previous_line_number
             else:
                 line_numbers = set()
-                self._find_line_numbers(statement, line_numbers)
+                find_line_numbers(statement, line_numbers)
                 previous_line_number = max(line_numbers)
 
     def visit(self, node):
@@ -299,7 +319,7 @@ class Tracer(NodeTransformer):
         if any(map(self._is_untraceable_attribute, targets)):
             return existing_node
         line_numbers = set()
-        self._find_line_numbers(existing_node, line_numbers)
+        find_line_numbers(existing_node, line_numbers)
         first_line_number = min(line_numbers)
         last_line_number = max(line_numbers)
         new_nodes = []
@@ -340,7 +360,7 @@ class Tracer(NodeTransformer):
         read_target = deepcopy(node.target)
         existing_node = self.generic_visit(node)
         line_numbers = set()
-        self._find_line_numbers(existing_node, line_numbers)
+        find_line_numbers(existing_node, line_numbers)
         first_line_number = min(line_numbers)
         last_line_number = max(line_numbers)
         new_nodes = []
@@ -377,35 +397,15 @@ class Tracer(NodeTransformer):
 
         return new_nodes
 
-    def _find_line_numbers(self, node, line_numbers):
-        """ Populates a set containing all line numbers used by the node and its
-        descendants.
-
-        line_numbers is a set that all the line numbers will be added to."""
-        if FormattedValue is not None and isinstance(node, FormattedValue):
-            # FormattedValue is a separate code block with its own line nums.
-            return
-
-        line_number = getattr(node, 'lineno', None)
-        if line_number is not None:
-            line_numbers.add(line_number)
-        for _, value in iter_fields(node):
-            if isinstance(value, list):
-                for item in value:
-                    if isinstance(item, AST):
-                        self._find_line_numbers(item, line_numbers)
-            elif isinstance(value, AST):
-                self._find_line_numbers(value, line_numbers)
-
     def visit_For(self, node):
         new_node = self.generic_visit(node)
 
         # Collect line numbers from all except else block.
         line_numbers = set()
-        self._find_line_numbers(new_node.target, line_numbers)
-        self._find_line_numbers(new_node.iter, line_numbers)
+        find_line_numbers(new_node.target, line_numbers)
+        find_line_numbers(new_node.iter, line_numbers)
         for statement in new_node.body:
-            self._find_line_numbers(statement, line_numbers)
+            find_line_numbers(statement, line_numbers)
         line_numbers.add(new_node.lineno)
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
@@ -420,9 +420,9 @@ class Tracer(NodeTransformer):
 
         # Collect line numbers from all except else block.
         line_numbers = set()
-        self._find_line_numbers(new_node.test, line_numbers)
+        find_line_numbers(new_node.test, line_numbers)
         for statement in new_node.body:
-            self._find_line_numbers(statement, line_numbers)
+            find_line_numbers(statement, line_numbers)
         line_numbers.add(new_node.lineno)
         args = [Num(n=min(line_numbers)),
                 Num(n=max(line_numbers))]
@@ -442,7 +442,7 @@ class Tracer(NodeTransformer):
         new_node = self.generic_visit(node)
 
         line_numbers = set()
-        self._find_line_numbers(new_node, line_numbers)
+        find_line_numbers(new_node, line_numbers)
         first_line_number = min(line_numbers)
         last_line_number = max(line_numbers)
         args = [Num(n=first_line_number),
@@ -520,7 +520,7 @@ class Tracer(NodeTransformer):
             while try_body and self._is_module_header(try_body[0]):
                 # noinspection PyUnresolvedReferences
                 new_body.append(try_body.pop(0))
-            self._find_line_numbers(new_node, line_numbers)
+            find_line_numbers(new_node, line_numbers)
         if line_numbers:
             first_line_number = min(line_numbers)
             last_line_number = max(line_numbers)
@@ -542,7 +542,7 @@ class Tracer(NodeTransformer):
         new_node = self.generic_visit(node)
 
         line_numbers = set()
-        self._find_line_numbers(new_node, line_numbers)
+        find_line_numbers(new_node, line_numbers)
 
         arg_names = (getattr(old_arg, 'id', getattr(old_arg, 'arg', None))
                      for old_arg in new_node.args.args)
@@ -735,99 +735,168 @@ class LineNumberCleaner(NodeTransformer):
         return self.generic_visit(node)
 
 
-# noinspection PyAbstractClass
-class TracedModuleImporter(MetaPathFinder, Loader):
-    is_desperate = False
-
-    def __init__(self,
-                 module_name,
-                 traced_code,
-                 environment,
-                 filename,
-                 is_own_driver,
-                 is_zoomed):
-        """ Import the code that has been instrumented for live coding.
-
-        :param module_name: name of the module to load in sys.modules, or None
-        :param traced_code: compiled code for the module
-            to load it as the live coding module
-        :param environment: global variables for the module
-        :param filename: the name of the file this code came from
-        :param is_own_driver: True if this module should be loaded as the main
-            module, but in a package.
-        :param is_zoomed: True if matplotlib should be zoomed
-        """
-        self.module_name = module_name
-        self.traced_code = traced_code
-        self.environment = environment
-        self.filename = filename
-        self.is_own_driver = is_own_driver
-        self.is_zoomed = is_zoomed
-
-    def find_spec(self, fullname, path, target=None):
-        if fullname == self.module_name or (self.is_own_driver and
-                                            fullname in (DEFAULT_MODULE_NAME,
-                                                         LIVE_MODULE_NAME)):
-            return ModuleSpec(fullname, self)
-        if fullname not in ('matplotlib',
-                            'matplotlib.pyplot',
-                            'numpy.random',
-                            'random',
-                            'pyglet'):
-            return None
-        is_after = False
-        for finder in sys.meta_path:
-            if not is_after:
-                is_after = finder is self
-                continue
+class DelegatingModuleFinder(MetaPathFinder):
+    def find_spec(self, fullname, path, target):
+        for finder in self.following_finders:
             finder_find_spec = getattr(finder, 'find_spec', None)
             if finder_find_spec:
                 spec = finder_find_spec(fullname, path, target)
                 if spec is not None:
-                    spec.loader = PatchedModuleLoader(fullname,
-                                                      spec.loader,
-                                                      self.is_zoomed)
                     return spec
-        return None
-
-    def exec_module(self, module):
-        if '.' in self.module_name:
-            package_name, child_name = self.module_name.rsplit('.', 1)
-        else:
-            package_name = None
-        module.__package__ = package_name
-        if self.filename is not None:
-            module.__file__ = self.filename
-        module.__builtins__ = builtins
-        module.__dict__.update(self.environment)
-        self.environment = module.__dict__
-
-        exec(self.traced_code, self.environment)
 
     # find_module() and load_module() are used in Python 2.
-    def find_module(self, fullname, path=None):
-        if fullname == self.module_name or (self.is_own_driver and
-                                            fullname in (DEFAULT_MODULE_NAME,
-                                                         LIVE_MODULE_NAME)):
-            return self
+    def find_module(self, fullname, path):
+        for finder in self.following_finders:
+            loader = finder.find_module(fullname, path)
+            if loader is not None:
+                return loader
+
+    @property
+    def following_finders(self):
+        is_after = False
+        for finder in sys.meta_path:
+            if not is_after:
+                is_after = finder is self
+                continue
+            yield finder
+
+
+class PatchedModuleFinder(DelegatingModuleFinder):
+    is_desperate = False
+
+    def __init__(self, is_zoomed):
+        self.is_zoomed = is_zoomed
+
+    def find_spec(self, fullname, path, target=None):
         if fullname not in ('matplotlib',
                             'matplotlib.pyplot',
                             'numpy.random',
                             'random',
                             'pyglet'):
             return None
-        is_after = False
-        for finder in sys.meta_path:
-            if not is_after:
-                is_after = finder is self
-                continue
-            loader = finder.find_module(fullname, path)
-            if loader is not None:
-                return PatchedModuleLoader(fullname, loader, self.is_zoomed)
-        if sys.version_info < (3, 0) and not TracedModuleImporter.is_desperate:
+        spec = super(PatchedModuleFinder, self).find_spec(fullname, path, target)
+        if spec is not None:
+            spec.loader = PatchedModuleLoader(fullname,
+                                              spec.loader,
+                                              self.is_zoomed)
+            return spec
+
+    # find_module() and load_module() are used in Python 2.
+    def find_module(self, fullname, path=None):
+        if fullname not in ('matplotlib',
+                            'matplotlib.pyplot',
+                            'numpy.random',
+                            'random',
+                            'pyglet'):
+            return None
+        loader = super(PatchedModuleFinder, self).find_module(fullname, path)
+        if loader is not None:
+            return PatchedModuleLoader(fullname, loader, self.is_zoomed)
+        if sys.version_info < (3, 0) and not PatchedModuleFinder.is_desperate:
             # Didn't find anyone to load the module, get desperate.
-            TracedModuleImporter.is_desperate = True
+            PatchedModuleFinder.is_desperate = True
             return PatchedModuleLoader(fullname, None, self.is_zoomed)
+
+
+# noinspection PyAbstractClass
+class TracedModuleImporter(DelegatingModuleFinder, Loader):
+
+    def __init__(self,
+                 source_code,
+                 traced,
+                 environment,
+                 filename,
+                 driver_module):
+        """ Import the code that has been instrumented for live coding.
+
+        :param str source_code: source code to load for traced module
+        :param environment: global variables for the module
+        :param filename: the name of the file this code came from
+        :param str driver_module: module name, if the driver is a module
+        """
+        self.source_code = source_code
+        self.traced = traced
+        self.environment = environment
+        self.filename = filename
+        self.driver_module = driver_module
+        self.source_finder = None
+        self.module_files = {}
+
+    def find_spec(self, fullname, path, target=None):
+        if (fullname == self.traced or
+                fullname in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
+                self.traced.startswith(fullname)):
+            return ModuleSpec(fullname, self, origin=self.filename)
+        return None
+
+    def exec_module(self, module):
+        module_spec = getattr(module, '__spec__', None)
+        if module_spec:
+            module_file = module.__spec__.origin
+        else:
+            module_file = self.filename
+        if (self.traced.startswith(DEFAULT_MODULE_NAME) or
+                self.traced.startswith(LIVE_MODULE_NAME)):
+            # self.source_finder = TracedFinder(self.source_code, self.traced)
+            source_code = self.source_code
+        elif self.filename is not None and module_file == self.filename:
+            if self.source_code is None:
+                with open(self.filename) as source_file:
+                    self.source_code = source_file.read()
+            source_code = self.source_code
+        else:
+            with open(module_file) as source_file:
+                source_code = source_file.read()
+        module_name = module.__name__
+        is_module_traced = False
+        source_tree = None
+        if self.traced == module_name:
+            is_module_traced = True
+        else:
+            if self.traced.startswith(module_name):
+                traced_child = self.traced[len(module_name)+1:]
+            elif self.traced in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
+                traced_child = self.traced
+            else:
+                traced_child = None
+            if traced_child:
+                source_finder = TracedFinder(source_code, traced_child)
+                source_tree = source_finder.source_tree
+                if source_finder.traced_node is not None:
+                    is_module_traced = True
+                    self.source_finder = source_finder
+        if source_tree is None:
+            source_tree = parse(source_code, PSEUDO_FILENAME)
+        if is_module_traced:
+            source_tree = Tracer().visit(source_tree)
+            fix_missing_locations(source_tree)
+            LineNumberCleaner().visit(source_tree)
+        if (module_name in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
+                self.driver_module):
+            target_module = self.driver_module
+        else:
+            target_module = module_name
+        if '.' in target_module:
+            package_name, child_name = target_module.rsplit('.', 1)
+        else:
+            package_name = None
+        module.__package__ = package_name
+        module.__file__ = module_file
+        module.__builtins__ = builtins
+        module.__dict__.update(self.environment)
+        self.environment = module.__dict__
+        # from ast import dump
+        # print(dump(source_tree, include_attributes=True))
+        compiled_code = compile(source_tree, PSEUDO_FILENAME, 'exec')
+
+        exec(compiled_code, self.environment)
+
+    # find_module() and load_module() are used in Python 2.
+    def find_module(self, fullname, path=None):
+        if (fullname == self.traced or
+                fullname in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
+                self.traced.startswith(fullname)):
+            return self
 
     def load_module(self, fullname):
         # noinspection PyDeprecation
@@ -873,7 +942,7 @@ class PatchedModuleLoader(Loader):
             module = self.main_loader.load_module(fullname)
         else:
             module = import_module(fullname)
-            TracedModuleImporter.is_desperate = False
+            PatchedModuleFinder.is_desperate = False
         self.exec_module(module)
         return module
 
@@ -1060,20 +1129,19 @@ class CodeTracer(object):
 
     def trace_code(self,
                    source,
-                   trace_module=DEFAULT_MODULE_NAME,
+                   traced=DEFAULT_MODULE_NAME,
                    is_module=False,
                    source_width=0,
                    source_indent=0,
                    driver=None,
-                   filename=None,
+                   traced_file=None,
                    stdin=None,
                    bad_driver=None,
-                   is_zoomed=False,
-                   is_live=False):
+                   is_zoomed=False):
         """ Trace a module of source code, possibly by running a driver script.
 
-        :param str source: the source code to trace
-        :param str trace_module: the module name to load the source code as
+        :param str source: the source code to trace, or None to load normally
+        :param str traced: the module, method, or function name to trace
         :param bool is_module: True if the driver is a module name instead of a
         file name
         :param int? source_width: Width of source code - use 0 to hide or
@@ -1081,12 +1149,11 @@ class CodeTracer(object):
         :param int source_indent: Number of spaces to indent source code.
         Negative to skip first columns of source code.
         :param list driver: the driver script's file name or module name and args
-        :param str filename: the file name of the source code
+        :param str traced_file: the file name of the source code
         :param str stdin: the file name to redirect stdin from
         :param str bad_driver: a message to display if the driver doesn't call
         the module
         :param bool is_zoomed: True if matplotlib is zoomed
-        :param bool is_live: Load main module as __live_coding__, instead of
         __main__.
         """
         builder = ReportBuilder(self.message_limit)
@@ -1094,41 +1161,35 @@ class CodeTracer(object):
         self.return_code = 0
 
         try:
-            tree = parse(source, PSEUDO_FILENAME)
-
-            new_tree = Tracer().visit(tree)
-            fix_missing_locations(new_tree)
-            LineNumberCleaner().visit(new_tree)
-            # from ast import dump
-            # print(dump(new_tree, include_attributes=True))
-            code = compile(new_tree, PSEUDO_FILENAME, 'exec')
-
             # Set sys.argv properly.
             old_argv = sys.argv
-            sys.argv = driver or [filename or trace_module]
+            sys.argv = driver or [traced_file or traced]
 
             try:
-                self.run_code(code,
+                self.run_code(source,
                               builder,
-                              trace_module,
+                              traced,
                               is_module,
                               driver,
-                              filename,
+                              traced_file,
                               bad_driver,
                               is_zoomed,
-                              stdin,
-                              is_live)
+                              stdin)
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
 
                 # During testing, we import these modules for every test case,
                 # so force a reload. This is only likely to happen during testing.
-                for target in (trace_module, LIVE_MODULE_NAME):
-                    if target in sys.modules:
-                        del sys.modules[target]
+                to_delete = []
+                for name in sys.modules:
+                    if traced.startswith(name) or name == LIVE_MODULE_NAME:
+                        to_delete.append(name)
+                for target in to_delete:
+                    del sys.modules[target]
                 for i in reversed(range(len(sys.meta_path))):
-                    if isinstance(sys.meta_path[i], TracedModuleImporter):
+                    if (isinstance(sys.meta_path[i], TracedModuleImporter) or
+                            isinstance(sys.meta_path[i], PatchedModuleFinder)):
                         sys.meta_path.pop(i)
 
             for value in self.environment.values():
@@ -1152,14 +1213,14 @@ class CodeTracer(object):
             etype, value, tb = sys.exc_info()
             is_reported = False
             entries = traceback.extract_tb(tb)
-            for filename, _, _, _ in entries:
-                if filename == PSEUDO_FILENAME:
+            for traced_file, _, _, _ in entries:
+                if traced_file == PSEUDO_FILENAME:
                     is_reported = True
             while not is_reported and tb is not None:
                 frame = tb.tb_frame
                 code = frame.f_code
-                filename = code.co_filename
-                if __file__ not in (filename, filename + 'c'):
+                traced_file = code.co_filename
+                if __file__ not in (traced_file, traced_file + 'c'):
                     break
                 tb = tb.tb_next
             if not is_reported:
@@ -1204,19 +1265,19 @@ class CodeTracer(object):
     def run_code(self,
                  code,
                  builder,
-                 load_as,
+                 traced,
                  is_module,
                  driver,
                  filename,
                  bad_driver,
                  is_zoomed,
-                 stdin_path=None,
-                 is_live=False):
+                 stdin_path=None):
         """ Run the traced module, plus its driver.
 
-        :param code: the compiled code for the traced module
+        :param code: the source code for the traced module, or None to load
+        from the normal file
         :param builder: the report builder
-        :param str load_as: the module name to load the source code as
+        :param str traced: the module, method, or function name to trace
         :param bool is_module: True if the driver is a module name instead of a
         file name
         :param list driver: the driver script's file name or module name and args
@@ -1225,56 +1286,62 @@ class CodeTracer(object):
         the module
         :param bool is_zoomed: True if matplotlib is zoomed
         :param str stdin_path: Path to redirect stdin from
-        :param bool is_live: Load main module as __live_coding__, instead of
         __main__.
         """
         self.environment[CONTEXT_NAME] = builder
-        if load_as in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
-            is_own_driver = True
-        else:
-            is_own_driver = is_module and driver and driver[0] == load_as
         for module_name in ('random', 'numpy.random'):
             random_module = sys.modules.get(module_name)
             if random_module is not None:
                 random_module.seed(0)
 
-        module_importer = TracedModuleImporter(load_as,
-                                               code,
+        sys.meta_path.insert(0, PatchedModuleFinder(is_zoomed))
+        driver_module = driver[0] if is_module and driver else None
+        module_importer = TracedModuleImporter(code,
+                                               traced,
                                                self.environment,
                                                filename,
-                                               is_own_driver,
-                                               is_zoomed)
+                                               driver_module)
         sys.meta_path.insert(0, module_importer)
-        main_module_name = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
         output_context = swallow_output(stdin_path)
-        if is_own_driver:
-            with output_context:
-                import_module(main_module_name)
-        else:
-            with output_context:
-                try:
-                    if not is_module:
-                        self.run_python_file(driver[0])
-                    else:
-                        module_name = driver[0]
-                        self.run_python_module(module_name)
-                    if sys.stdout.saw_failures:
-                        self.report_driver_result(builder, ['Pytest reported failures.'])
-                        self.return_code = 1
-                except SystemExit as ex:
-                    if ex.code:
-                        self.return_code = ex.code
-                        messages = traceback.format_exception_only(type(ex),
-                                                                   ex)
-                        message = messages[-1].strip()
-                        self.report_driver_result(builder, [message])
-            if load_as not in sys.modules:
-                driver_name = os.path.basename(driver[0])
-                message = (bad_driver or "{} doesn't call the {} module."
-                                         " Try a different driver.".format(driver_name,
-                                                                           load_as))
-                self.report_driver_result(builder, [message])
-        self.environment = module_importer.environment
+        try:
+            if traced.startswith(DEFAULT_MODULE_NAME):
+                with output_context:
+                    import_module(DEFAULT_MODULE_NAME)
+            elif traced.startswith(LIVE_MODULE_NAME):
+                with output_context:
+                    import_module(LIVE_MODULE_NAME)
+            else:
+                with output_context:
+                    try:
+                        if not is_module:
+                            self.run_python_file(driver[0])
+                        else:
+                            module_name = driver[0]
+                            self.run_python_module(module_name)
+                        if sys.stdout.saw_failures:
+                            self.report_driver_result(builder, ['Pytest reported failures.'])
+                            self.return_code = 1
+                    except SystemExit as ex:
+                        if ex.code:
+                            self.return_code = ex.code
+                            messages = traceback.format_exception_only(type(ex),
+                                                                       ex)
+                            message = messages[-1].strip()
+                            self.report_driver_result(builder, [message])
+                if traced not in sys.modules:
+                    driver_name = os.path.basename(driver[0])
+                    message = (bad_driver or "{} doesn't call the {} module."
+                                             " Try a different driver.".format(driver_name,
+                                                                               traced))
+                    self.report_driver_result(builder, [message])
+        finally:
+            self.environment = module_importer.environment
+            if (module_importer.source_finder and
+                    module_importer.source_finder.traced_node):
+                line_numbers = set()
+                find_line_numbers(module_importer.source_finder.traced_node,
+                                  line_numbers)
+                builder.trace_block(min(line_numbers), max(line_numbers))
 
 
 class FileSwallower(object):
@@ -1387,16 +1454,15 @@ def main():
     parser.add_argument('-i',
                         '--input',
                         help="file to redirect stdin from")
-    parser.add_argument('--source',
-                        help='file to read the traced module from, or - for '
-                             'stdin. (default: %(default)s for standard '
-                             'Python loading)')
-    parser.add_argument('--trace_module',
-                        default=DEFAULT_MODULE_NAME,
-                        help='module to display trace for.')
+    parser.add_argument('--traced_file',
+                        help='file to replace with source code from stdin')
+    parser.add_argument('--traced',
+                        help='module, function, or method to display trace '
+                             'for. Default: %%(default)s to trace %s or %s.' %
+                             (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME))
     parser.add_argument('--live',
                         action='store_true',
-                        help='load traced module as %s instead of %s.' %
+                        help='load main module as %s instead of %s.' %
                              (LIVE_MODULE_NAME, DEFAULT_MODULE_NAME))
     parser.add_argument('-m',
                         dest='module',
@@ -1409,35 +1475,34 @@ def main():
     if args.driver and args.driver[0] in ('-m', '--module'):
         args.module = True
         args.driver = args.driver[1:]
-    filename = None
-    if args.trace_module in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
+
+    code = None
+    if args.traced_file is not None:
+        code = sys.stdin.read()
+    elif args.traced in (None, DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
         if args.driver:
             if args.module:
-                filename = find_module_path(args.driver[0])
+                args.traced_file = find_module_path(args.driver[0])
             else:
-                filename = args.driver[0]
-    else:
-        filename = find_module_path(args.trace_module)
+                args.traced_file = args.driver[0]
+            with open(args.traced_file) as source_file:
+                code = source_file.read()
+    if args.traced in (None, DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
+        args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
 
-    if args.source == '-':
-        code = sys.stdin.read()
-    else:
-        with open(args.source or filename, 'r') as source:
-            code = source.read()
     canvas = Canvas(args.width, args.height)
     tracer = CodeTracer(canvas)
     tracer.max_width = 200000
     code_report = tracer.trace_code(code,
                                     source_width=args.source_width,
                                     source_indent=args.source_indent,
-                                    trace_module=args.trace_module,
+                                    traced=args.traced,
                                     is_module=args.module,
                                     driver=args.driver,
-                                    filename=filename,
+                                    traced_file=args.traced_file,
                                     stdin=args.input,
                                     bad_driver=args.bad_driver,
-                                    is_zoomed=args.zoomed,
-                                    is_live=args.live)
+                                    is_zoomed=args.zoomed)
     turtle_report = MockTurtle.get_all_reports()
     if turtle_report and args.canvas:
         print('start_canvas')

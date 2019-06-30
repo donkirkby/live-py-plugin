@@ -1,3 +1,4 @@
+import os
 import sys
 from sys import version_info
 from tempfile import TemporaryFile
@@ -8,6 +9,7 @@ from mock import patch
 from space_tracer.code_tracer import CodeTracer, FileSwallower
 from space_tracer.mock_turtle import MockTurtle
 from space_tracer.report_builder import ReportBuilder
+from test_code_tracer_main import EXAMPLE_LIB_PATH
 from test_report_builder import ReportTestCase
 
 
@@ -712,8 +714,7 @@ y = 13 """
 
         # EXEC
         report = tracer.trace_code(code,
-                                   trace_module='__live_coding__',
-                                   is_live=True)
+                                   traced='__live_coding__')
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -1294,10 +1295,11 @@ s = 'example_package'
 """
 
         report = CodeTracer().trace_code(code,
-                                         trace_module='example_package.foo',
+                                         traced='example_package.lib_in_package',
+                                         traced_file=EXAMPLE_LIB_PATH,
                                          is_module=True,
                                          driver=['unittest',
-                                                 'example_package.foo'])
+                                                 'example_package.lib_in_package'])
 
         self.assertReportEqual(expected_report, report)
 
@@ -1311,11 +1313,14 @@ s = 'example_package'
 s = '__live_coding__'
 """
 
+        foo_path = os.path.join(os.path.dirname(__name__),
+                                'example_package',
+                                'foo.py')
         report = CodeTracer().trace_code(code,
-                                         trace_module='example_package.foo',
+                                         traced_file=foo_path,
+                                         traced='__live_coding__',
                                          is_module=True,
-                                         driver=['example_package.foo'],
-                                         is_live=True)
+                                         driver=['example_package.foo'])
 
         self.assertReportEqual(expected_report, report)
 

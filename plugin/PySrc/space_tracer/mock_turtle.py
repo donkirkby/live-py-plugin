@@ -1,6 +1,6 @@
 from collections import namedtuple
-# noinspection PyDeprecation
 import io
+# noinspection PyDeprecation
 import imp
 from base64 import standard_b64encode
 import importlib

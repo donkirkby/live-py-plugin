@@ -86,8 +86,8 @@ each iteration of the loop. Then I insert calls to `start_block()` and
 the modified for loop.
 
 One of the most challenging parts was to register the instrumented code as a
-module so a developer can register callbacks to the instrumented code. This is
-useful for running unit tests, for example. David Beazley wrote
+module so a developer can see calls into the instrumented code from another
+module. This is useful for running unit tests, for example. David Beazley wrote
 [an exhaustive review][beaz] of Python's module system, and that showed how to
 manually override the import process.
 
@@ -142,4 +142,40 @@ as registering an instance of MockTurtle that will record all its commands.
 The `mainloop()` method usually keeps the turtle window open, but the
 replacement does nothing, because there is no window to keep open.
 
+Both of those features work better if you can wait until the user's code
+imports a module before replacing it with a traced or monkey patched version.
+For example, if I always imported matplotlib and monkey patched it, it would
+slow down scripts that don't use matplotlib. To detect when a module is being
+imported, I added two new [import hooks] to the meta path.
+
+The main classes are:
+
+* `Tracer` visits the abstract syntax tree for a module, and adds all the
+    tracing calls.
+* `CodeTracer` is a main control class that coordinates `Tracer` and the import
+    hooks. It also loads the main module and prints the results.
+* `TracedModuleImporter` is an import hook that decides which module should
+    have the tracing calls added when it is imported. It's an importer, which
+    means that it is both a finder and a loader.
+* `PatchedModuleFinder` is an import hook that decides which modules should be
+    monkey patched when they are imported. This delegates the basic loading to
+    other entries in the meta path, and then patches the resulting module.
+* `PatchedModuleLoader` is the loader for the `PatchedModuleFinder`.
+* `FileSwallower` reports calls to `print()`, `stderr.write()` and other output.
+* `TracedStringIO` reports `write()` calls on local variables that hold
+    `StringIO` objects.
+* `Canvas` records calls to drawing methods, usually from the `turtle` module.
+* `MockTurtle` replaces the regular `Turtle`, and records all its commands.
+* `MockPygletWindow` replaces the `pyglet`'s regular `Window` class, and
+    displays its interface on the preview canvas.
+* `ReportBuilder` records all of the assignments and loop events, then displays
+    them in a text report.
+* `DeletionTarget` wraps an object before it has an item or attribute deleted
+    from it. If the object's `repr()` changes, then it records an assignment
+    event.
+* `TracedFinder` and `TreeVisitor` parse the source code for a new module during
+    the import process, and check which methods or classes have been selected
+    for tracing.
+
 [beaz]: http://www.dabeaz.com/modulepackage/
+[import hooks]: https://docs.python.org/3/reference/import.html#the-meta-path

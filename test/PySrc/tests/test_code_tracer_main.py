@@ -13,6 +13,8 @@ EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_driver.py')
 EXAMPLE_SOURCE_PATH = os.path.join(os.path.dirname(__file__),
                                    'example_source.py')
+EXAMPLE_PRINTING_PATH = os.path.join(os.path.dirname(__file__),
+                                     'example_printing.py')
 EXAMPLE_LIB_PATH = os.path.join(os.path.dirname(__file__),
                                 'example_package',
                                 'lib_in_package.py')
@@ -442,6 +444,12 @@ BAR = 'baz'
 example_driver.py doesn't call the different_source module. Try a different driver. |
 ----------------------------------------------------------------------------------- |
 
+
+
+
+
+
+
 """
         stdin.read.return_value = source
 
@@ -504,6 +512,12 @@ BAR = 'baz'
 ------------------------------------------------ |
 Run config 'example' is bad, try something else. |
 ------------------------------------------------ |
+
+
+
+
+
+
 
 """
         stdin.read.return_value = source
@@ -847,5 +861,63 @@ x = 'Hello, World!'
 
     with pytest.raises(SystemExit):
         main()
+
+    assert expected_report == stdout.getvalue()
+
+
+def test_trace_default_module(stdout, argv):
+    argv.extend([
+        'dummy.py',
+        EXAMPLE_PRINTING_PATH])
+    expected_report = """\
+from __future__ import print_function   | 
+                                        | 
+                                        | 
+def custom_print(text, suffix):         | text = 'Hello, example' | suffix = '!'
+    print(text + suffix)                | print('Hello, example!')
+                                        | 
+                                        | 
+if __name__ == '__main__':              | 
+    custom_print('Hello, example', '!') | 
+"""
+
+    main()
+
+    assert expected_report == stdout.getvalue()
+
+
+def test_dump_whole_file(stdout, argv):
+    argv.extend([
+        'dummy.py',
+        '--traced', '__main__',
+        EXAMPLE_PRINTING_PATH])
+    expected_report = """\
+from __future__ import print_function   | 
+                                        | 
+                                        | 
+def custom_print(text, suffix):         | text = 'Hello, example' | suffix = '!'
+    print(text + suffix)                | print('Hello, example!')
+                                        | 
+                                        | 
+if __name__ == '__main__':              | 
+    custom_print('Hello, example', '!') | 
+"""
+
+    main()
+
+    assert expected_report == stdout.getvalue()
+
+
+def test_traced(stdout, argv):
+    argv.extend([
+        'dummy.py',
+        '--traced', '__main__.custom_print',
+        EXAMPLE_PRINTING_PATH])
+    expected_report = """\
+def custom_print(text, suffix): | text = 'Hello, example' | suffix = '!'
+    print(text + suffix)        | print('Hello, example!')
+"""
+
+    main()
 
     assert expected_report == stdout.getvalue()

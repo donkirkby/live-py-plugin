@@ -91,25 +91,6 @@ def bar():
     assert expected_line_number == node.lineno
 
 
-def test_suffix_match():
-    source = """\
-def foo(n):
-    return n + 1
-
-def bar(n):
-    return n - 1
-"""
-    traced = 'parent.child.bar'
-    expected_line_number = 4
-    expected_module = 'parent.child'
-
-    finder = TracedFinder(source, traced, is_suffix_allowed=True)
-
-    node = finder.traced_node
-    assert expected_line_number == node.lineno
-    assert expected_module == finder.traced_module
-
-
 def test_suffix_not_allowed():
     source = """\
 def foo(n):

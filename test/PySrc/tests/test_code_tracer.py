@@ -1,6 +1,5 @@
 import os
 import sys
-from sys import version_info
 from tempfile import TemporaryFile
 from unittest import skipIf
 
@@ -1361,23 +1360,17 @@ class FileSwallowerTest(ReportTestCase):
 
     def test_report(self):
         source = """\
+from __future__ import print_function
 import example_printing
 __live_coding_context__ = globals()['report_builder']  # variable name is important!
 example_printing.custom_print('42', 'xyz')
 """
-        expected_report_python2 = """\
+        expected_report = """\
 
-
-print '42xyz'
-"""
-        expected_report_python3 = """\
 
 
 print('42xyz')
 """
-        expected_report = (expected_report_python3
-                           if version_info.major >= 3
-                           else expected_report_python2)
         report_builder = ReportBuilder()
         environment = dict(report_builder=report_builder)
         swallower = FileSwallower(sys.stdout)

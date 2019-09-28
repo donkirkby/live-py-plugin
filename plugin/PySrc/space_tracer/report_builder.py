@@ -30,13 +30,23 @@ class ReportBuilder(object):
         self.has_print_function = True
         self.current_exception = None
         self.is_decorated = False
+        self.minimum_blocks = set()  # {(first_line, last_line)}
 
         # Updated after calling report().
         self.reported_blocks = set()  # {(first_line, last_line)}
 
-    def trace_block(self, first_line, last_line):
-        """ Mark a block for tracing, and mute everything else. """
-        self.reported_blocks.add((first_line, last_line))
+    def trace_block(self, first_line, last_line, is_minimum=False):
+        """ Mark a block for tracing, and mute everything else.
+
+        :param int first_line: start the block on this line (1-based)
+        :param int last_line: end the block on this line (1-based, included)
+        :param bool is_minimum: True if this is just a minimum set of lines,
+            and other lines should not be muted.
+        """
+        if is_minimum:
+            self.minimum_blocks.add((first_line, last_line))
+        else:
+            self.reported_blocks.add((first_line, last_line))
 
     def start_block(self, first_line, last_line):
         """ Cap all the lines from first_line to last_line inclusive with
@@ -327,14 +337,21 @@ class ReportBuilder(object):
         self.history = []
         self._check_line_count(total_lines)
         if not traced_blocks:
-            reported_messages = self.messages
-            self.reported_blocks = [(1, len(self.messages))]
-        else:
-            reported_messages = []
-            self.reported_blocks = sorted(traced_blocks)
-            for first_line, last_line in self.reported_blocks:
-                for line_number in range(first_line, last_line+1):
-                    reported_messages.append(self.messages[line_number-1])
+            end = len(self.messages)
+            if self.minimum_blocks:
+                end = max(end,
+                          *(block_end
+                            for block_start, block_end in self.minimum_blocks))
+            traced_blocks = [(1, end)]
+        reported_messages = []
+        self.reported_blocks = sorted(traced_blocks)
+        for first_line, last_line in self.reported_blocks:
+            for line_number in range(first_line, last_line+1):
+                try:
+                    message = self.messages[line_number - 1]
+                except IndexError:
+                    message = ''
+                reported_messages.append(message)
         return '\n'.join(line.rstrip() for line in reported_messages)
 
     def _check_line_count(self, line_count):

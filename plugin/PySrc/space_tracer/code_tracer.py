@@ -798,9 +798,15 @@ class PatchedModuleFinder(DelegatingModuleFinder):
             return PatchedModuleLoader(fullname, None, self.is_zoomed)
 
 
+def trace_source_tree(source_tree):
+    source_tree = Tracer().visit(source_tree)
+    fix_missing_locations(source_tree)
+    LineNumberCleaner().visit(source_tree)
+    return source_tree
+
+
 # noinspection PyAbstractClass
 class TracedModuleImporter(DelegatingModuleFinder, Loader):
-
     def __init__(self,
                  source_code,
                  traced,
@@ -820,6 +826,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.filename = filename
         self.driver_module = driver_module
         self.source_finder = None
+        self.driver_finder = None
         self.module_files = {}
 
     def find_spec(self, fullname, path, target=None):
@@ -827,18 +834,26 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                 fullname in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
                 self.traced.startswith(fullname)):
             return ModuleSpec(fullname, self, origin=self.filename)
+        spec = super(TracedModuleImporter, self).find_spec(fullname,
+                                                           path,
+                                                           target)
+        if spec is not None:
+            if spec.origin == self.filename:
+                return ModuleSpec(fullname, self, origin=self.filename)
+            return spec
         return None
 
     def exec_module(self, module):
         module_spec = getattr(module, '__spec__', None)
         if module_spec:
-            module_file = module.__spec__.origin
+            module_file = module_spec.origin
         else:
             module_file = self.filename
+        parsed_filename = module_file
         if (self.traced.startswith(DEFAULT_MODULE_NAME) or
                 self.traced.startswith(LIVE_MODULE_NAME)):
-            # self.source_finder = TracedFinder(self.source_code, self.traced)
             source_code = self.source_code
+            parsed_filename = PSEUDO_FILENAME
         elif self.filename is not None and module_file == self.filename:
             if self.source_code is None:
                 with open(self.filename) as source_file:
@@ -852,6 +867,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         source_tree = None
         if self.traced == module_name:
             is_module_traced = True
+            self.source_finder = TracedFinder(source_code, '', parsed_filename)
         else:
             if self.traced.startswith(module_name):
                 traced_child = self.traced[len(module_name)+1:]
@@ -860,17 +876,17 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             else:
                 traced_child = None
             if traced_child:
-                source_finder = TracedFinder(source_code, traced_child)
+                source_finder = TracedFinder(source_code,
+                                             traced_child,
+                                             parsed_filename)
                 source_tree = source_finder.source_tree
                 if source_finder.traced_node is not None:
                     is_module_traced = True
                     self.source_finder = source_finder
         if source_tree is None:
-            source_tree = parse(source_code, PSEUDO_FILENAME)
+            source_tree = parse(source_code, parsed_filename)
         if is_module_traced:
-            source_tree = Tracer().visit(source_tree)
-            fix_missing_locations(source_tree)
-            LineNumberCleaner().visit(source_tree)
+            source_tree = trace_source_tree(source_tree)
         if (module_name in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
                 self.driver_module):
             target_module = self.driver_module
@@ -1016,7 +1032,7 @@ class CodeTracer(object):
         self.environment = {}
         self.return_code = None
 
-    def run_python_module(self, modulename):
+    def run_python_module(self, modulename, module_importer):
         """Run a python module, as though with ``python -m name args...``.
 
         `modulename` is the name of the module, possibly a dot-separated name.
@@ -1026,8 +1042,16 @@ class CodeTracer(object):
         """
         if find_spec:
             spec = find_spec(modulename)
-            pathname = spec.origin
-            packagename = spec.name
+            if spec is not None:
+                pathname = spec.origin
+                packagename = spec.name
+            elif (module_importer.traced in (DEFAULT_MODULE_NAME,
+                                             LIVE_MODULE_NAME) and
+                  module_importer.source_code):
+                pathname = module_importer.filename
+                packagename = module_importer.driver_module
+            else:
+                raise ImportError(modulename)
             if pathname.endswith("__init__.py") and not modulename.endswith("__init__"):
                 mod_main = modulename + ".__main__"
                 spec = find_spec(mod_main)
@@ -1045,60 +1069,121 @@ class CodeTracer(object):
             try:
                 # Search for the module - inside its parent package, if any -
                 # using standard import mechanics.
-                if '.' in modulename:
-                    packagename, name = modulename.rsplit('.', 1)
-                    package = __import__(packagename, glo, loc, ['__path__'])
-                    searchpath = package.__path__
-                else:
-                    packagename, name = None, modulename
-                    searchpath = None  # "top-level search" in imp.find_module()
-                # noinspection PyDeprecation
-                openfile, pathname, _ = imp.find_module(name, searchpath)
-
-                # If `modulename` is actually a package, not a mere module,
-                # then we pretend to be Python 2.7 and try running its
-                # __main__.py script.
-                if openfile is None:
-                    packagename = modulename
-                    name = '__main__'
-                    package = __import__(packagename, glo, loc, ['__path__'])
-                    searchpath = package.__path__
+                try:
+                    if '.' in modulename:
+                        packagename, name = modulename.rsplit('.', 1)
+                        package = __import__(packagename, glo, loc, ['__path__'])
+                        searchpath = package.__path__
+                    else:
+                        packagename, name = None, modulename
+                        searchpath = None  # "top-level search" in imp.find_module()
                     # noinspection PyDeprecation
-                    openfile, pathname, _ = imp.find_module(name, searchpath) 
+                    openfile, pathname, _ = imp.find_module(name, searchpath)
+
+                    # If `modulename` is actually a package, not a mere module,
+                    # then we pretend to be Python 2.7 and try running its
+                    # __main__.py script.
+                    if openfile is None:
+                        packagename = modulename
+                        name = '__main__'
+                        package = __import__(packagename, glo, loc, ['__path__'])
+                        searchpath = package.__path__
+                        # noinspection PyDeprecation
+                        openfile, pathname, _ = imp.find_module(name, searchpath)
+                except ImportError:
+                    if (module_importer.traced in (DEFAULT_MODULE_NAME,
+                                                   LIVE_MODULE_NAME) and
+                            module_importer.source_code):
+                        pathname = module_importer.filename
+                        packagename = module_importer.driver_module
+                        packagename = packagename.rpartition(".")[0]
+                    else:
+                        raise
             finally:
                 if openfile:
                     openfile.close()
 
         # Finally, hand the file off to run_python_file for execution.
         pathname = os.path.abspath(pathname)
-        self.run_python_file(pathname, package=packagename)
+        self.run_python_file(pathname,
+                             package=packagename,
+                             traced=module_importer and module_importer.traced,
+                             module_importer=module_importer)
 
-    def run_python_file(self, filename, package=None):
+    def run_python_file(self,
+                        filename,
+                        package=None,
+                        traced=None,
+                        source_code=None,
+                        module_importer=None):
         """Run a python file as if it were the main program on the command line.
 
-        `filename` is the path to the file to execute.
+        :param str filename: the path to the file to execute.
+        :param str package: the package name to set on the module.
+        :param str traced: the full path to a module, function, or method to
+            trace.
+        :param str source_code: custom source code to replace the file contents.
+        :param module_importer: where to record the TracedFinder used by the
+            driver.
         """
         # Create a module to serve as __main__
         # noinspection PyUnresolvedReferences
-        main_mod = types.ModuleType('__main__')
-        sys.modules['__main__'] = main_mod
+        module_name = (LIVE_MODULE_NAME
+                       if traced == LIVE_MODULE_NAME
+                       else DEFAULT_MODULE_NAME)
+        main_mod = types.ModuleType(module_name)
+        sys.modules[module_name] = main_mod
         main_mod.__file__ = filename
         main_mod.__builtins__ = builtins
         if package:
             main_mod.__package__ = package
 
-        code = self.make_code_from_py(filename)
+        code = self.make_code_from_py(filename,
+                                      traced,
+                                      source_code,
+                                      module_importer)
 
+        if module_importer.driver_finder.is_tracing:
+            main_mod.__dict__.update(self.environment)
+            module_importer.environment = main_mod.__dict__
         # Execute the code object.
         exec(code, main_mod.__dict__)
 
     @staticmethod
-    def make_code_from_py(filename):
+    def make_code_from_py(filename, traced, source, module_importer):
         """Get source from `filename` and make a code object of it."""
-        with open(filename, 'rU') as f:
-            source = f.read()
+        if source is None:
+            if (module_importer is not None and
+                    module_importer.filename is not None and
+                    (os.path.abspath(module_importer.filename) ==
+                     os.path.abspath(filename)) and
+                    module_importer.source_code is not None):
+                source = module_importer.source_code
+                traced = traced or DEFAULT_MODULE_NAME
+            else:
+                with open(filename, 'rU') as f:
+                    source = f.read()
 
-        code = compile(source, filename, "exec")
+        if traced:
+            if traced.startswith(DEFAULT_MODULE_NAME):
+                traced = traced[len(DEFAULT_MODULE_NAME)+1:]
+            elif traced.startswith(LIVE_MODULE_NAME):
+                traced = traced[len(LIVE_MODULE_NAME)+1:]
+            parsed_file = PSEUDO_FILENAME if traced == '' else filename
+            module_importer.driver_finder = TracedFinder(source,
+                                                         traced,
+                                                         parsed_file)
+            to_compile = module_importer.driver_finder.source_tree
+            if (traced == '' or
+                    module_importer.driver_finder.traced_node is not None):
+                to_compile = trace_source_tree(to_compile)
+                module_importer.driver_finder.is_tracing = True
+        else:
+            module_importer.driver_finder = TracedFinder(source,
+                                                         '',
+                                                         PSEUDO_FILENAME)
+            to_compile = module_importer.driver_finder.source_tree
+        code = compile(to_compile, filename or PSEUDO_FILENAME, "exec")
 
         return code
 
@@ -1158,6 +1243,13 @@ class CodeTracer(object):
         """
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
+        driver_module = driver[0] if is_module and driver else None
+        traced_importer = TracedModuleImporter(source,
+                                               traced,
+                                               self.environment,
+                                               traced_file,
+                                               driver_module)
+        patched_finder = PatchedModuleFinder(is_zoomed)
         self.return_code = 0
 
         try:
@@ -1165,6 +1257,8 @@ class CodeTracer(object):
             old_argv = sys.argv
             sys.argv = driver or [traced_file or traced]
 
+            sys.meta_path.insert(0, patched_finder)
+            sys.meta_path.insert(0, traced_importer)
             try:
                 self.run_code(source,
                               builder,
@@ -1174,7 +1268,8 @@ class CodeTracer(object):
                               traced_file,
                               bad_driver,
                               is_zoomed,
-                              stdin)
+                              stdin,
+                              traced_importer)
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
@@ -1187,10 +1282,8 @@ class CodeTracer(object):
                         to_delete.append(name)
                 for target in to_delete:
                     del sys.modules[target]
-                for i in reversed(range(len(sys.meta_path))):
-                    if (isinstance(sys.meta_path[i], TracedModuleImporter) or
-                            isinstance(sys.meta_path[i], PatchedModuleFinder)):
-                        sys.meta_path.pop(i)
+                sys.meta_path.remove(traced_importer)
+                sys.meta_path.remove(patched_finder)
 
             for value in self.environment.values():
                 if isinstance(value, types.GeneratorType):
@@ -1230,7 +1323,7 @@ class CodeTracer(object):
                     messages = traceback.format_exception_only(etype, value)
                 self.report_driver_result(builder, messages)
 
-        report = builder.report(source.count('\n'))
+        report = builder.report()
         if source_width != 0:
             if source_indent >= 0:
                 indent = source_indent
@@ -1238,7 +1331,8 @@ class CodeTracer(object):
             else:
                 indent = 0
                 start_char = -source_indent
-            source_lines = source.splitlines()
+            used_finder = traced_importer.source_finder or traced_importer.driver_finder
+            source_lines = used_finder.source_code.splitlines()
             reported_source_lines = []
             for first_line, last_line in builder.reported_blocks:
                 for line_number in range(first_line, last_line+1):
@@ -1268,10 +1362,11 @@ class CodeTracer(object):
                  traced,
                  is_module,
                  driver,
-                 filename,
+                 traced_file,
                  bad_driver,
                  is_zoomed,
-                 stdin_path=None):
+                 stdin_path=None,
+                 traced_importer=None):
         """ Run the traced module, plus its driver.
 
         :param code: the source code for the traced module, or None to load
@@ -1281,11 +1376,12 @@ class CodeTracer(object):
         :param bool is_module: True if the driver is a module name instead of a
         file name
         :param list driver: the driver script's file name or module name and args
-        :param str filename: the file name of the source code
+        :param str traced_file: the file name of the source code
         :param str bad_driver: a message to display if the driver doesn't call
         the module
         :param bool is_zoomed: True if matplotlib is zoomed
         :param str stdin_path: Path to redirect stdin from
+        :param traced_importer: holds details of what to trace
         __main__.
         """
         self.environment[CONTEXT_NAME] = builder
@@ -1294,54 +1390,54 @@ class CodeTracer(object):
             if random_module is not None:
                 random_module.seed(0)
 
-        sys.meta_path.insert(0, PatchedModuleFinder(is_zoomed))
-        driver_module = driver[0] if is_module and driver else None
-        module_importer = TracedModuleImporter(code,
-                                               traced,
-                                               self.environment,
-                                               filename,
-                                               driver_module)
-        sys.meta_path.insert(0, module_importer)
         output_context = swallow_output(stdin_path)
         try:
-            if traced.startswith(DEFAULT_MODULE_NAME):
-                with output_context:
-                    import_module(DEFAULT_MODULE_NAME)
-            elif traced.startswith(LIVE_MODULE_NAME):
-                with output_context:
-                    import_module(LIVE_MODULE_NAME)
-            else:
-                with output_context:
-                    try:
-                        if not is_module:
-                            self.run_python_file(driver[0])
-                        else:
-                            module_name = driver[0]
-                            self.run_python_module(module_name)
-                        if sys.stdout.saw_failures:
-                            self.report_driver_result(builder, ['Pytest reported failures.'])
-                            self.return_code = 1
-                    except SystemExit as ex:
-                        if ex.code:
-                            self.return_code = ex.code
-                            messages = traceback.format_exception_only(type(ex),
-                                                                       ex)
-                            message = messages[-1].strip()
-                            self.report_driver_result(builder, [message])
-                if traced not in sys.modules:
-                    driver_name = os.path.basename(driver[0])
-                    message = (bad_driver or "{} doesn't call the {} module."
-                                             " Try a different driver.".format(driver_name,
-                                                                               traced))
-                    self.report_driver_result(builder, [message])
+            with output_context:
+                try:
+                    if not is_module:
+                        self.run_python_file(
+                            driver and driver[0],
+                            traced=traced,
+                            source_code=(code
+                                         if not driver or traced_file == driver[0]
+                                         else None),
+                            module_importer=traced_importer)
+                    else:
+                        module_name = driver[0]
+                        self.run_python_module(module_name, traced_importer)
+                    if sys.stdout.saw_failures:
+                        self.report_driver_result(builder, ['Pytest reported failures.'])
+                        self.return_code = 1
+                except SystemExit as ex:
+                    if ex.code:
+                        self.return_code = ex.code
+                        messages = traceback.format_exception_only(type(ex),
+                                                                   ex)
+                        message = messages[-1].strip()
+                        self.report_driver_result(builder, [message])
+            if traced not in sys.modules and traced not in (DEFAULT_MODULE_NAME,
+                                                            LIVE_MODULE_NAME):
+                driver_name = os.path.basename(driver[0])
+                message = (bad_driver or "{} doesn't call the {} module."
+                                         " Try a different driver.".format(driver_name,
+                                                                           traced))
+                self.report_driver_result(builder, [message])
         finally:
-            self.environment = module_importer.environment
-            if (module_importer.source_finder and
-                    module_importer.source_finder.traced_node):
+            self.environment = traced_importer.environment
+            is_decorated = any(frame.is_decorated for frame in builder.history)
+            used_finder = traced_importer.source_finder or traced_importer.driver_finder
+            if used_finder and not is_decorated:
                 line_numbers = set()
-                find_line_numbers(module_importer.source_finder.traced_node,
-                                  line_numbers)
-                builder.trace_block(min(line_numbers), max(line_numbers))
+                if used_finder.traced_node:
+                    find_line_numbers(used_finder.traced_node, line_numbers)
+                    is_minimum = False
+                else:
+                    find_line_numbers(used_finder.source_tree, line_numbers)
+                    is_minimum = True
+                if line_numbers:
+                    builder.trace_block(min(line_numbers),
+                                        max(line_numbers),
+                                        is_minimum)
 
 
 class FileSwallower(object):
@@ -1458,7 +1554,8 @@ def main():
                         help='file to replace with source code from stdin')
     parser.add_argument('--traced',
                         help='module, function, or method to display trace '
-                             'for. Default: %%(default)s to trace %s or %s.' %
+                             'for. Default: %%(default)s to trace %s, %s,'
+                             'or whatever is replaced by --traced_file.' %
                              (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME))
     parser.add_argument('--live',
                         action='store_true',
@@ -1479,15 +1576,7 @@ def main():
     code = None
     if args.traced_file is not None:
         code = sys.stdin.read()
-    elif args.traced in (None, DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
-        if args.driver:
-            if args.module:
-                args.traced_file = find_module_path(args.driver[0])
-            else:
-                args.traced_file = args.driver[0]
-            with open(args.traced_file) as source_file:
-                code = source_file.read()
-    if args.traced in (None, DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
+    if args.traced is None:
         args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
 
     canvas = Canvas(args.width, args.height)

@@ -10,44 +10,6 @@ Which version are you using? What did you do? What did you expect to happen? Are
 you planning to submit your own fix in a pull request? Please include a small
 code sample and what you would like the live code display to show for that code.
 
-## Eclipse Development ##
-Live Coding in Python is an Eclipse Plug-in, so you need the
-[Plug-in Development Environment (PDE)][pde]. You might find the
-[PDE tutorial][tutorial] helpful.
-
-If you want to see what's currently being worked on, check out the latest
-[milestone].
-
-### Running from source code ###
-1. You need to install the PDE. You can either install the standard edition of
-   Eclipse that includes it, or you can open the Help menu, choose Eclipse
-   Marketplace..., click on the Yoxos marketplace, search for PDE, and install it.
-2. Open the plugin.xml file with the Plug-in Manifest Editor.
-3. Click on the green play button to launch the Eclipse application.
-4. Create a new PyDev project, add a Python file, and then turn on Live Coding.
-5. Now you can hack on the live-py source code and see the results.
-
-### Creating an Install Package for the Eclipse plugin ###
-Be sure that you test everything with the latest versions of [PyDev][pdrel] and
-[Python][pyrel].
-
-1. Check that all the Java unit tests run.
-2. Use `tox` to check that all the Python unit tests run in the latest versions
-   of both Python 2 and Python 3.
-3. Open these files and increment the Version field in each file.
-    * `plugin/plugin.xml`
-    * `feature/feature.xml`
-    * `emacs-live-py-mode/live-py-mode.el`
-5. Look in the `docs` folder with the update project nested inside, and
-    open the update project's `site.xml`.
-6. Click the Add Feature... button, type "live", select `live_py_feature`
-    from the list, and click OK.
-7. Drag `live_py_feature` under the devtools group, and click the Build button.
-8. Commit the new version files, push, and create a release on GitHub. (Finish
-    the PyCharm release before marking the release on GitHub, if you're releasing
-    both).
-9. Update the version number on the [Eclipse marketplace][mkt].
-
 ## PyCharm Development ##
 There is also a PyCharm version of the plugin. You can work on it with
 IntelliJ [IDEA], and follow the [plugin development guidelines][idea-dev].
@@ -96,9 +58,9 @@ through the code after the breakpoint.
     and choose Install plugin from disk... from the menu.
 6. Select the jar file you just created, and click the Restart button.
 7. Once it restarts, open a Python file, and check that live coding works.
-8. Commit the version number changes, push, and create a release on GitHub. (Finish
-    the Eclipse release before marking the release on GitHub, if you're releasing
-    both).
+8. Commit the version number changes, push, and create a release on GitHub.
+    (Finish the other releases before marking the release on GitHub, if you're
+    releasing more).
 9. Upload the jar file to the plugin repository by clicking the Update plugin
     button on the [plugin page].
 
@@ -205,12 +167,6 @@ call the live coding file.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
 [@donkirkby]: https://twitter.com/donkirkby
-[pde]: https://eclipse.org/pde/
-[tutorial]: http://www.vogella.com/tutorials/EclipsePlugIn/article.html
-[waffle]: https://waffle.io/donkirkby/live-py-plugin
-[pdrel]: http://pydev.org/history_pydev.html
-[pyrel]: https://www.python.org/downloads/
-[mkt]: https://marketplace.eclipse.org/content/live-coding-python/edit
 [melpa.org]: https://melpa.org
 [good first issues]: https://github.com/donkirkby/live-py-plugin/labels/good%20first%20issue
 [help wanted]: https://github.com/donkirkby/live-py-plugin/labels/help%20wanted

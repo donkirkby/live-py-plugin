@@ -4,7 +4,7 @@ live-py-plugin
 [![Build Status]][travis]
 [![Code Coverage]][codecov]
 
-Live coding in Python with PyCharm, Emacs, Sublime Text, Eclipse, or even a browser.
+Live coding in Python with PyCharm, Emacs, Sublime Text, or even a browser.
 
 [Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
 [travis]: https://travis-ci.org/live-py-plugin
@@ -43,17 +43,17 @@ So far, the Emacs mode seems to be the most popular way to use live coding in
 Python. The PyCharm plugin has the most features.
 
 
-| Feature              | PyCharm |  Emacs  | Sublime | Eclipse | browser |
-| -------------------- | ------- | ------- | ------- | ------- | ------- |
-| variable assignments | &check; | &check; | &check; | &check; | &check; |
-| looping              | &check; | &check; | &check; | &check; | &check; |
-| function calls       | &check; | &check; | &check; | &check; | &check; |
-| errors and exceptions| &check; | &check; | &check; | &check; | &check; |
-| print function       | &check; | &check; | &check; | &check; | &check; |
-| unit tests           | &check; | &check; | &cross; | &check; | &cross; |
-| turtle graphics      | &check; | &cross; | &cross; | &check; | &cross; |
-| matplotlib preview   | &check; | &cross; | &check; | &check; | &cross; |
-| pyglet preview       | &check; | &cross; | &check; | &check; | &cross; |
+| Feature              | PyCharm |  Emacs  | Sublime | browser |
+| -------------------- | ------- | ------- | ------- | ------- |
+| variable assignments | &check; | &check; | &check; | &check; |
+| looping              | &check; | &check; | &check; | &check; |
+| function calls       | &check; | &check; | &check; | &check; |
+| errors and exceptions| &check; | &check; | &check; | &check; |
+| print function       | &check; | &check; | &check; | &check; |
+| unit tests           | &check; | &check; | &cross; | &cross; |
+| turtle graphics      | &check; | &cross; | &cross; | &cross; |
+| matplotlib preview   | &check; | &cross; | &check; | &cross; |
+| pyglet preview       | &check; | &cross; | &check; | &cross; |
 
 If you find the project useful, help us [make it better][contributing].
 
@@ -174,43 +174,6 @@ Uninstalling the Sublime Text plugin
 2. Navigate to Preferences -> Browse packages...
 3. Delete the `python_live_coding` package folder.
 
-Installing the Eclipse plugin
------------------------------
-
-1. Install the [PyDev plugin][pydev] and Eclipse if you don't already have them.
-   It's been tested with PyDev 4.5.5, Eclipse 4.4, Python 2.7 and 3.4. It
-   seems to be particularly sensitive to changes in PyDev.
-2. In Eclipse, choose Help: Eclipse Marketplace... from the menu.
-3. Search for Live Coding in Python, and install it.
-4. Restart Eclipse.
-5. Open any Python file, and from the Live Coding menu, choose Start Live Coding.
-   You should see an extra panel on the right that shows the results of running
-   your code.
-6. To try the turtle graphics features, open the Live Coding menu, and choose
-    Start Live Turtle. The panel on the right shows the turtle graphics display.
-7. You can also use another script or a unit test to drive your live code.
-    Run your driver script or unit test as usual in Eclipse, then click on the
-    small arrow next to the big live coding arrow in the toolbar. You should see
-    all the different Python and unit test launches listed there. Click on the
-    one you want, and it will call the live version of your code. To run a
-    single unit test method, open the test file, and type
-    <kbd>Ctrl</kbd>+<kbd>F9</kbd>, then choose the test method you want to run.
-    Edit your run configurations to give the new configuration a meaningful name,
-    then choose it from the live coding arrow's menu.
-
-If you don't want to use the Eclipse marketplace, you can also install from the
-[update site][update].
-
-[update]: http://donkirkby.github.io/live-py-plugin/update
-
-Uninstalling the Eclipse plugin
--------------------------------
-
-1. In Eclipse, choose Help: Installation Details from the menu.
-2. Select Live Coding in Python, and click the Uninstall... button.
-3. Restart Eclipse.
-
-[pydev]: http://pydev.org/download.html
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [starting]: http://donkirkby.github.com/live-py-plugin/gettingstarted
 [emacs]: http://www.gnu.org/software/emacs/

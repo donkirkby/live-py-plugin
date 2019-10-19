@@ -98,15 +98,12 @@ START, STOP and LEN are required by `after-change-functions' but unused."
                          (locate-file (concat (file-name-as-directory "space_tracer")
                                               "code_tracer.py")
                                       load-path)))))
-         (trace-module (if live-py-driver live-py-module "__live_coding__"))
          (command-line-start (concat
 			      (shell-quote-argument live-py-version)
 			      " "
                               live-py-args
                               " -m space_tracer --live --source_width 0 --traced_file "
-                              buffer-file-name
-                              " "
-                              trace-module))
+                              buffer-file-name))
 	 (command-line (if live-py-driver
 			   (concat
 			    command-line-start

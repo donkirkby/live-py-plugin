@@ -21,6 +21,6 @@ print('What do you get when you multiply six by nine?')
 
 # My environment
 Describe the versions of everything you were using:
-* Editor (PyCharm, Eclipse, or Emacs)
+* Editor (PyCharm, Emacs, or SublimeText)
 * Operating system
 * Python

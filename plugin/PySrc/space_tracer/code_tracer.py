@@ -1267,7 +1267,6 @@ class CodeTracer(object):
                               driver,
                               traced_file,
                               bad_driver,
-                              is_zoomed,
                               stdin,
                               traced_importer)
             finally:
@@ -1364,7 +1363,6 @@ class CodeTracer(object):
                  driver,
                  traced_file,
                  bad_driver,
-                 is_zoomed,
                  stdin_path=None,
                  traced_importer=None):
         """ Run the traced module, plus its driver.
@@ -1379,7 +1377,6 @@ class CodeTracer(object):
         :param str traced_file: the file name of the source code
         :param str bad_driver: a message to display if the driver doesn't call
         the module
-        :param bool is_zoomed: True if matplotlib is zoomed
         :param str stdin_path: Path to redirect stdin from
         :param traced_importer: holds details of what to trace
         __main__.

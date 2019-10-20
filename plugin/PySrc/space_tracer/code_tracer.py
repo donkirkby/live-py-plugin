@@ -449,7 +449,7 @@ class Tracer(NodeTransformer):
                 Num(n=last_line_number)]
         start_frame_keywords = []
         for decorator in new_node.decorator_list:
-            if decorator.id == 'traced':
+            if getattr(decorator, 'id', None) == 'traced':
                 start_frame_keywords.append(
                     keyword(arg='is_decorated', value=Name(id='True',
                                                            ctx=Load())))
@@ -1348,8 +1348,9 @@ class CodeTracer(object):
                                                          fillvalue=''):
                 padded_source_line = indent * ' ' + source_line
                 padded_source_line += (source_width - len(source_line)) * ' '
-                line = (padded_source_line[:source_width] +
-                        ' | ' + report_line)
+                line = padded_source_line[:source_width] + ' |'
+                if report_line:
+                    line += ' ' + report_line
                 dump_lines.append(line)
             report = '\n'.join(dump_lines)
 

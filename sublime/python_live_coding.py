@@ -28,7 +28,10 @@ def find_view(view_id):
     return None
 
 
-def trace_code(input, pargs=None):
+def trace_code(input_view):
+    view_settings = input_view.settings()
+    tracer_args = view_settings.get(INPUT_VIEW_TRACER_ARGS)
+    contents = input_view.substr(sublime.Region(0, input_view.size()))
 
     # Pull location of python exe and code_tracer.py script from user settings.
     settings = sublime.load_settings('python_live_coding.sublime-settings')
@@ -38,10 +41,14 @@ def trace_code(input, pargs=None):
     tracer_path = os.path.abspath(os.path.dirname(tracer_path))
     python_path = os.pathsep.join([tracer_path] + sys.path)
     new_env = dict(os.environ, PYTHONPATH=python_path)
-    args = [executable, '-m', 'space_tracer']
-    if pargs is not None:
-        args.extend(pargs)
-    args.append('-')
+    args = [executable,
+            '-m', 'space_tracer',
+            '--live',
+            '--source_width', '0',
+            '--traced_file', input_view.file_name()]
+    if tracer_args:
+        args.extend(tracer_args)
+    args.append(input_view.file_name())
 
     # Startup info so we don't open a new command prompt in windows.
     startupinfo = None
@@ -49,6 +56,7 @@ def trace_code(input, pargs=None):
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
+    # logger.info('space_tracer args: ' + ' '.join(args))
     # Launch, pipe in code and return.
     proc = subprocess.Popen(
         args, 
@@ -58,16 +66,14 @@ def trace_code(input, pargs=None):
         startupinfo=startupinfo,
         universal_newlines=True,
         env=new_env)
-    return proc.communicate(input=input)
+    return proc.communicate(input=contents)
 
 
 def update_output_for_view(input_view):
 
     # Trace the code in input view's buffer.
     view_settings = input_view.settings()
-    contents = input_view.substr(sublime.Region(0, input_view.size()))
-    tracer_args = view_settings.get(INPUT_VIEW_TRACER_ARGS)
-    out, err = trace_code(contents, tracer_args)
+    out, err = trace_code(input_view)
     if err:
         logger.error(err)
 
@@ -84,7 +90,7 @@ def update_output_for_view(input_view):
                     encoded = cmd.options['image']
                     img_src = 'data:image/png;base64,{}'.format(encoded)
                     img = '<img src="{}" width="800" height="600">'.format(img_src)
-            line = reader.readline() # Skip a line.
+            reader.readline()  # Skip a line.
         elif line:
             stdout += line
         else:
@@ -166,7 +172,7 @@ class CanvasReader(object):
                     else:
                         writer += c
                         writer += c2
-                        break;
+                        break
         return value
 
     def read_commands(self):
@@ -176,7 +182,7 @@ class CanvasReader(object):
             command = self.read()
             done = command is None or command.name == CANVAS_END
             if not done:
-               new_commands.append(command)
+                new_commands.append(command)
         return new_commands
 
 
@@ -235,8 +241,8 @@ class ResetCommand(BaseWindowCommand):
             output_view_id = view.settings().get(OUTPUT_VIEW_ID)
             output_view = find_view(output_view_id)
             if output_view is not None:
-               logger.info('Closing view: "{}"'.format(output_view.name()))
-               output_view.close()
+                logger.info('Closing view: "{}"'.format(output_view.name()))
+                output_view.close()
             view.settings().erase(OUTPUT_VIEW_ID)
             view.settings().erase(HAS_IDLE_TIMER)
 

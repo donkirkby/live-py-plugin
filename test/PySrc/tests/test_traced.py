@@ -114,3 +114,73 @@ def bar(num):            | num = 3
                                      source_width=None)
 
     assert expected_report == report
+
+
+def test_other_decorator():
+    """ Other decorators shouldn't affect tracing. """
+    code = """\
+from __future__ import print_function
+class Foo(object):
+    def foo(self, x):
+        return x + 1
+    
+    @staticmethod
+    def bar(x):
+        return x + 2
+
+f = Foo()
+print(f.foo(10))
+print(f.bar(20))
+"""
+    expected_report = """\
+from __future__ import print_function |
+class Foo(object):                    |
+    def foo(self, x):                 | x = 10
+        return x + 1                  | return 11
+                                      |
+    @staticmethod                     |
+    def bar(x):                       | x = 20
+        return x + 2                  | return 22
+                                      |
+f = Foo()                             |
+print(f.foo(10))                      | print('11')
+print(f.bar(20))                      | print('22')"""
+
+    report = CodeTracer().trace_code(code, source_width=None)
+
+    assert expected_report == report
+
+
+def test_attribute_decorator():
+    """ The decorator is a module attribute. """
+    code = """\
+from __future__ import print_function
+class Foo(object):
+    def foo(self, x):
+        return x + 1
+    
+    @__builtins__.staticmethod
+    def bar(x):
+        return x + 2
+
+f = Foo()
+print(f.foo(10))
+print(f.bar(20))
+"""
+    expected_report = """\
+from __future__ import print_function |
+class Foo(object):                    |
+    def foo(self, x):                 | x = 10
+        return x + 1                  | return 11
+                                      |
+    @__builtins__.staticmethod        |
+    def bar(x):                       | x = 20
+        return x + 2                  | return 22
+                                      |
+f = Foo()                             |
+print(f.foo(10))                      | print('11')
+print(f.bar(20))                      | print('22')"""
+
+    report = CodeTracer().trace_code(code, source_width=None)
+
+    assert expected_report == report

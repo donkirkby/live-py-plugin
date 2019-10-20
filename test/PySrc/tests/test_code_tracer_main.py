@@ -870,15 +870,15 @@ def test_trace_default_module(stdout, argv):
         'dummy.py',
         EXAMPLE_PRINTING_PATH])
     expected_report = """\
-from __future__ import print_function   | 
-                                        | 
-                                        | 
+from __future__ import print_function   |
+                                        |
+                                        |
 def custom_print(text, suffix):         | text = 'Hello, example' | suffix = '!'
     print(text + suffix)                | print('Hello, example!')
-                                        | 
-                                        | 
-if __name__ == '__main__':              | 
-    custom_print('Hello, example', '!') | 
+                                        |
+                                        |
+if __name__ == '__main__':              |
+    custom_print('Hello, example', '!') |
 """
 
     main()
@@ -892,15 +892,15 @@ def test_dump_whole_file(stdout, argv):
         '--traced', '__main__',
         EXAMPLE_PRINTING_PATH])
     expected_report = """\
-from __future__ import print_function   | 
-                                        | 
-                                        | 
+from __future__ import print_function   |
+                                        |
+                                        |
 def custom_print(text, suffix):         | text = 'Hello, example' | suffix = '!'
     print(text + suffix)                | print('Hello, example!')
-                                        | 
-                                        | 
-if __name__ == '__main__':              | 
-    custom_print('Hello, example', '!') | 
+                                        |
+                                        |
+if __name__ == '__main__':              |
+    custom_print('Hello, example', '!') |
 """
 
     main()

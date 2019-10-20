@@ -108,11 +108,14 @@ the files and `space_tracer` folder, instead of copying them.
 8. Set path to preferred Python executable, particularly if you want to use a
     virtual environment.
 9. Save and close this pane.
-10. Open a new window.
+10. Open or create a Python file.
 11. Navigate to Live Coding -> Start
 12. This should bring up a new pane on the right with the live coding display.
 13. Begin typing in the left pane and see the code trace results on the right.
-
+14. To debug problems, click on the View menu, and choose Show Console. You can
+    add `logger.info()` calls to `python_live_coding.py`, and then restart
+    Sublime Text. Instead of restarting, you can save the plugin settings file
+    to trigger a reload.
 
 ## Browser Development
 The browser version uses the [Pyodide] project to run Python code in the browser.

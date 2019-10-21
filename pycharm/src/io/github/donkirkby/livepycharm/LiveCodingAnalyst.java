@@ -187,7 +187,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                     ? getModuleName(new File(mainFile.getPath()), oldPythonPath)
                     : "__live_coding__";
             if (inputFilePath != null && inputFilePath.length() > 0) {
-                paramsGroup.addParameterAt(i++, "--input");
+                paramsGroup.addParameterAt(i++, "--stdin");
                 paramsGroup.addParameterAt(i++, inputFilePath);
             }
             String badDriverMessage = buildBadDriverMessage(configuration, moduleName);

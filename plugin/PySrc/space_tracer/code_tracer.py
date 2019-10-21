@@ -998,7 +998,7 @@ class PatchedModuleLoader(Loader):
 
 @contextmanager
 def swallow_output(stdin_path=None):
-    old_main_mod = sys.modules.pop(DEFAULT_MODULE_NAME, None)
+    old_main_mod = sys.modules.get(DEFAULT_MODULE_NAME, None)
     old_stdout = sys.stdout
     old_stderr = sys.stderr
     old_stdin = sys.stdin
@@ -1546,7 +1546,7 @@ def main():
                         '--bad_driver',
                         help="message to display if driver doesn't call module")
     parser.add_argument('-i',
-                        '--input',
+                        '--stdin',
                         help="file to redirect stdin from")
     parser.add_argument('--traced_file',
                         help='file to replace with source code from stdin')
@@ -1587,7 +1587,7 @@ def main():
                                     is_module=args.module,
                                     driver=args.driver,
                                     traced_file=args.traced_file,
-                                    stdin=args.input,
+                                    stdin=args.stdin,
                                     bad_driver=args.bad_driver,
                                     is_zoomed=args.zoomed)
     turtle_report = MockTurtle.get_all_reports()

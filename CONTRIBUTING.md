@@ -121,6 +121,9 @@ the files and `space_tracer` folder, instead of copying them.
 The browser version uses the [Pyodide] project to run Python code in the browser.
 
 ### Updating and Testing
+This was broken by the refactoring in issue #223 and will be fixed by issue #235
+when the space_tracer module is included with the deployment.
+
 To deploy the latest version of `code_tracer.py` and `report_builder.py` to the
 web site, run `test/PySrc/tools/serve_demo.py`.
 

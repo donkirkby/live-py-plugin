@@ -1,7 +1,7 @@
 import sys
 from sys import version_info
 
-from space_tracer.code_tracer import CodeTracer
+from space_tracer.main import TraceRunner
 from test_report_builder import trim_report
 
 
@@ -21,7 +21,7 @@ print('x')
     expected_report = (expected_report_python3
                        if version_info.major >= 3
                        else expected_report_python2)
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -44,7 +44,7 @@ s = 'Hello, World!'
 print('Hello, World!')
 
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -62,7 +62,7 @@ for i in range(3):
 i = 0      | i = 1      | i = 2
 print('0') | print('1') | print('2')
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -80,7 +80,7 @@ sys.stdout.write(s)
 s = 'x'
 sys.stdout.write('x')
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -100,7 +100,7 @@ sys.stderr.write(s)
 s = 'x'
 sys.stderr.write('x')
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -134,7 +134,7 @@ f.write('x')
     expected_report = (expected_report_python3
                        if version_info.major >= 3
                        else expected_report_python2)
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -159,7 +159,7 @@ s = '--'
 print('Bob--23')
 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert expected_report == trim_report(report)
 
@@ -178,7 +178,7 @@ args = ['Bob', 23]
 print('Bob 23')
 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert expected_report == trim_report(report)
 
@@ -234,7 +234,7 @@ self.f.write('Hello, Alice.')
                        if version_info.major >= 3
                        else expected_report_python2)
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert expected_report == trim_report(report)
 
@@ -247,7 +247,7 @@ s = input()
 EOFError: EOF when reading a line
 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert expected_report == trim_report(report)
 
@@ -268,7 +268,7 @@ s = 'first line'
     with open(stdin_path, 'w') as f:
         f.write(input_text)
 
-    report = CodeTracer().trace_code(code, stdin=stdin_path)
+    report = TraceRunner().trace_code(code, stdin=stdin_path)
 
     assert expected_report == trim_report(report)
 
@@ -289,6 +289,6 @@ sys.stdout.write('What comes first?') | s = 'first line'
     with open(stdin_path, 'w') as f:
         f.write(input_text)
 
-    report = CodeTracer().trace_code(code, stdin=stdin_path)
+    report = TraceRunner().trace_code(code, stdin=stdin_path)
 
     assert expected_report == trim_report(report)

@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from space_tracer.code_tracer import CodeTracer
+from space_tracer.main import TraceRunner
 from test_report_builder import trim_report
 
 
@@ -13,7 +13,7 @@ i = 1
     expected_report = """\
 i = 1 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -28,7 +28,7 @@ i: int = 1
     expected_report = """\
 i = 1 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -42,7 +42,7 @@ i += 1
 i = 1
 i = 2 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -75,7 +75,7 @@ a[2:1:-1] = [100]
 b = [2, 9, 100]
 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -100,7 +100,7 @@ a[2][1] = 19
 b = [10, 2, [3, 19]]
 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -130,7 +130,7 @@ b = [1, 20, 1, 20, 300]
 a[:2] += [21]
 b = [1, 20, 21, 1, 20, 300] """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -191,6 +191,6 @@ foo[1:10] &= 3
 foo[1:10] ^= 3
 foo[1:10] |= 3 """
 
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)

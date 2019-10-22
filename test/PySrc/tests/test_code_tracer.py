@@ -5,7 +5,7 @@ from unittest import skipIf
 
 from mock import patch
 
-from space_tracer.code_tracer import CodeTracer, FileSwallower
+from space_tracer.main import TraceRunner, FileSwallower
 from space_tracer.mock_turtle import MockTurtle
 from space_tracer.report_builder import ReportBuilder
 from test_code_tracer_main import EXAMPLE_LIB_PATH
@@ -22,7 +22,7 @@ class CodeTracerTest(ReportTestCase):
 
     def test_empty(self):
         # EXEC
-        report = CodeTracer().trace_code("")
+        report = TraceRunner().trace_code("")
         expected_report = ""
 
         # VERIFY
@@ -40,7 +40,7 @@ i = 1
 j = 0 | j = 1 | j = 2
 i = 1 | i = 2 | i = 4 """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -55,7 +55,7 @@ for a,b in [(1,2)]:
 a = 1 | b = 2
 c = 3
 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -79,7 +79,7 @@ n = 0                 | n = 4
 j = 0 | j = 1 | j = 2 | j = 0 | j = 1 | j = 2
 n = 0 | n = 1 | n = 3 | n = 4 | n = 5 | n = 7 """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -100,7 +100,7 @@ i = 1 | i = 2 | i = 4
 
 i = 40 """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -121,7 +121,7 @@ i = 1 | i = 2
 
 i = 20 """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -137,7 +137,7 @@ a.sort() # second call makes no change, nothing printed
 a = [2, 1]
 a = [1, 2] """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -160,7 +160,7 @@ f.items.append(2)
 f.items = []
 f.items = [2] """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -177,7 +177,7 @@ heappush(l, 5)
 l = []
 l = [5] """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -195,7 +195,7 @@ i = 0 | i = 1 | i = 2
       |       |
       | c = 5 |
 c = 2 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -222,7 +222,7 @@ return 3
 
 m = 2
 n = 3 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -243,7 +243,7 @@ x = 10
 
 
 n = None """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -264,7 +264,7 @@ x = 10
 
 
 n = None """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -287,7 +287,7 @@ a = [2, 3]
 return 3
 
 n = 3 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -314,7 +314,7 @@ y = 3
 return 11
 
 n = 11 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -329,7 +329,7 @@ s = 'abc'.replace('a', 'A')
 """
         expected_report = """\
 s = 'Abc' """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -354,7 +354,7 @@ return 12 | return 12
 
 n = 12
 r = 12 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -373,7 +373,7 @@ n = Decimal('10')
 
 
 n = Decimal('10') """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -394,7 +394,7 @@ n -= 1
 
 
 IndentationError: expected an indented block """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -413,7 +413,7 @@ while True:
 n = 0
       |       |
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
         tracer.message_limit = 8
 
         # EXEC
@@ -433,7 +433,7 @@ while True:
 n = 0
       |       |
 n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
         tracer.max_width = 20
 
         # EXEC
@@ -456,7 +456,7 @@ RuntimeError: live coding message limit exceeded | RuntimeError: live coding mes
 
 RuntimeError: live coding message limit exceeded
 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
         tracer.max_width = 13
 
         # EXEC
@@ -473,7 +473,7 @@ while True:
 """
         expected_report = """\
 RuntimeError: live coding message limit exceeded """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
         tracer.message_limit = 3
 
         # EXEC
@@ -497,7 +497,7 @@ RuntimeError: live coding message limit exceeded
 
 
 RuntimeError: live coding message limit exceeded """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
         tracer.message_limit = 3
 
         # EXEC
@@ -528,7 +528,7 @@ s2 = 'x'
 
 s2 = 'x'
 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -567,7 +567,7 @@ return 'bar'
 
 f = Foobar
 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -590,7 +590,7 @@ dog.name = "Spot"
 
 
 dog.name = 'Spot' """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -615,7 +615,7 @@ shelf.counts[2] = 3
 
 shelf.counts = {}
 shelf.counts[2] = 3 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -640,7 +640,7 @@ f.child.name = 'bob'
 
 
 f.child.name = 'bob' """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -663,7 +663,7 @@ dog.name = "Spot"
 
 
 dog.name = 'Spot' """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -686,7 +686,7 @@ return 13
 
 
 y = 13 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -709,7 +709,7 @@ return 13
 
 
 y = 13 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code,
@@ -727,7 +727,7 @@ x = f(10)
         expected_report = """\
 (10 => 11)
 x = 11 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -750,7 +750,7 @@ create_line
     fill='black'
     pensize=1
 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_turtle(code)
@@ -771,7 +771,7 @@ done()  # alias for mainloop()
 
 
 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -800,7 +800,7 @@ yield 12
 
 
 s = 22 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -823,7 +823,7 @@ return 'abc'
 s = 'ABC'
 """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -847,7 +847,7 @@ r = 2 | r = 4 |          | r = 2    |
 return 4      | return 1 | return 2 | return 1
 
 r = 4 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -874,7 +874,7 @@ m = 1                    | m = 0
 RuntimeError: Invalid n. |
 
 RuntimeError: Invalid n. """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -911,7 +911,7 @@ state = 'Done'
 
 x = 0
 """
-        tracer = CodeTracer()
+        tracer = TraceRunner()
 
         # EXEC
         report = tracer.trace_code(code)
@@ -933,7 +933,7 @@ return (1, 2)
 
 x = (1, 2) """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -952,7 +952,7 @@ x = ''
 y = 2
 RuntimeError: Bad stuff happened. """
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -973,7 +973,7 @@ yield None
 x = None """
 
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -1008,7 +1008,7 @@ x = 10 | x = 20 | x = 11 | x = 21
 """
 
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -1031,7 +1031,7 @@ yield 1
 x = 1 """
 
         # EXEC
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -1047,7 +1047,7 @@ print('x')
 
 print('x') """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1070,7 +1070,7 @@ print('x')
 
 print('x') """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1087,7 +1087,7 @@ args = ('Bob', 1)
 
 """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1104,7 +1104,7 @@ kwargs = {'name': 'Bob'}
 
 """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1117,7 +1117,7 @@ del l[1]
 l = [0, 10, 20]
 l = [0, 20] """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1152,7 +1152,7 @@ f = Foo('Bob')
 f = Foo()
 g = Foo() """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1171,7 +1171,7 @@ del f.l[1]
 f.l = [0, 10, 20]
 f.l = [0, 20] """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1186,7 +1186,7 @@ s = f'The answer is {x}.'
 x = 42
 s = 'The answer is 42.' """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1209,7 +1209,7 @@ return 'The answer is 42.'
 
 z = 'The answer is 42.' """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1232,7 +1232,7 @@ return '42'
 
 z = '42' """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1258,7 +1258,7 @@ i = 50
 j = 98
 """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1270,7 +1270,7 @@ x = __builtins__.sum([1, 2])
 x = 3
 """
 
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
 
         self.assertReportEqual(expected_report, report)
 
@@ -1293,11 +1293,11 @@ class FooTest(TestCase):
 s = 'example_package'
 """
 
-        report = CodeTracer().trace_code(code,
-                                         traced='example_package.lib_in_package',
-                                         traced_file=EXAMPLE_LIB_PATH,
-                                         is_module=True,
-                                         driver=['unittest',
+        report = TraceRunner().trace_code(code,
+                                          traced='example_package.lib_in_package',
+                                          traced_file=EXAMPLE_LIB_PATH,
+                                          is_module=True,
+                                          driver=['unittest',
                                                  'example_package.lib_in_package'])
 
         self.assertReportEqual(expected_report, report)
@@ -1315,11 +1315,11 @@ s = '__live_coding__'
         foo_path = os.path.join(os.path.dirname(__name__),
                                 'example_package',
                                 'foo.py')
-        report = CodeTracer().trace_code(code,
-                                         traced_file=foo_path,
-                                         traced='__live_coding__',
-                                         is_module=True,
-                                         driver=['example_package.foo'])
+        report = TraceRunner().trace_code(code,
+                                          traced_file=foo_path,
+                                          traced='__live_coding__',
+                                          is_module=True,
+                                          driver=['example_package.foo'])
 
         self.assertReportEqual(expected_report, report)
 
@@ -1388,7 +1388,7 @@ y = [x for x in range(100)]
         expected_report = """\
 y = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, [320 chars]91, 92, 93, 94, 95, 96, 97, 98, 99]
 """
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
         self.assertReportEqual(expected_report, report)
 
     def test_long_values_in_function(self):
@@ -1409,5 +1409,5 @@ y = ['x', 'x', 'x', 'x', 'x', 'x', 'x',[430 chars] 'x', 'x', 'x', 'x', 'x', 'x',
 'x', 'x', 'x', 'x',[930 chars] 'x', 'x', 'x', 'x', 'x', 'x', 'x']
 
 """
-        report = CodeTracer().trace_code(code)
+        report = TraceRunner().trace_code(code)
         self.assertReportEqual(expected_report, report)

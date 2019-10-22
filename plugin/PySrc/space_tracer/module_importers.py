@@ -22,7 +22,7 @@ try:
 except ImportError:
     import builtins
 
-from . import code_tracer
+from .code_tracer import trace_source_tree
 from .mock_turtle import MockTurtle, monkey_patch_pyglet
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME, TracedFinder
@@ -135,7 +135,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         if source_tree is None:
             source_tree = parse(source_code, parsed_filename)
         if is_module_traced:
-            source_tree = code_tracer.trace_source_tree(source_tree)
+            source_tree = trace_source_tree(source_tree)
         if (module_name in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
                 self.driver_module):
             target_module = self.driver_module

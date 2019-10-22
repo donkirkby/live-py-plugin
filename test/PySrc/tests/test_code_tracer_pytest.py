@@ -1,7 +1,7 @@
 import pytest
 import sys
 
-from space_tracer.code_tracer import CodeTracer
+from space_tracer.main import TraceRunner
 from test_report_builder import trim_report
 
 
@@ -38,7 +38,7 @@ print('1')
 (a, b) = (1, 2)
 (c, d) = (3, 4)
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -52,7 +52,7 @@ a, (b, c) = (1, (2, 3))
     expected_report = """\
 (a, (b, c)) = (1, (2, 3))
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -66,7 +66,7 @@ a, [b, c] = (1, (2, 3))
     expected_report = """\
 (a, (b, c)) = (1, (2, 3))
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -80,7 +80,7 @@ a, b = (3*i for i in range(2))
     expected_report = """\
 (a, b) = (0, 3)
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -94,7 +94,7 @@ a = b = 2
     expected_report = """\
 a = b = 2
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -113,7 +113,7 @@ e = list(c)
 d = (0, 3)
 e = []
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -132,7 +132,7 @@ Foo().x = 2
 
 
 """
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert expected_report == trim_report(report)
 
@@ -147,7 +147,7 @@ a = [1, 2, 3]
 a = [1, 2, 3]
 
 """
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert expected_report == trim_report(report)
 
@@ -162,7 +162,7 @@ a = [1, 2, 3]
 a = [1, 2, 3]
 
 """
-    report = CodeTracer().trace_code(code)
+    report = TraceRunner().trace_code(code)
 
     assert expected_report == trim_report(report)
 
@@ -179,7 +179,7 @@ print(b)
 (a, *b) = (1, 2, 3)
 print('[2, 3]')
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -193,7 +193,7 @@ def test_docstring():
     expected_report = """\
 
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -209,7 +209,7 @@ raise RuntimeError('Bad stuff happened.')
 x = 2
 RuntimeError: Bad stuff happened.
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -231,7 +231,7 @@ raise RuntimeError('Bad stuff happened.')
 x = 3
 RuntimeError: Bad stuff happened.
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -254,7 +254,7 @@ f = RuntimeError('Bad stuff happened.',)
     if sys.version_info >= (3, 7, 0):
         expected_report = expected_report.replace(',)', ')')
 
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -275,7 +275,7 @@ RuntimeError: Bad stuff happened.
 f = 'Worse stuff'
 """
 
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -295,7 +295,7 @@ c = '1'     | c = 'x'
             |
 quality = 1 | ValueError: invalid literal for int() with base 10: 'x'
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -316,7 +316,7 @@ RuntimeError: Bad stuff happened.
 RuntimeError: Bad stuff happened.
 """
 
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -338,7 +338,7 @@ RuntimeError: Bad stuff happened.
 
 RuntimeError: Bad stuff happened.
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -366,7 +366,7 @@ RuntimeError: Bad stuff happened.
 
 RuntimeError: Bad stuff happened.
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 

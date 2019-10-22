@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from space_tracer.code_tracer import CodeTracer
+from space_tracer.main import TraceRunner
 from test_report_builder import trim_report
 
 
@@ -28,7 +28,7 @@ self.name = 'Spot'
 
 dog = Dog('Spot')
 animal = Dog('Spot') """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -60,7 +60,7 @@ dog1 = Dog('Spot')
 dog2 = Dog('Fido')
 s = "Dog('Fido')"
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -94,7 +94,7 @@ return Foo(23)
 
 y = Foo(23)
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -128,7 +128,7 @@ yield Foo(23)
 
 y = [Foo(23)]
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -162,7 +162,7 @@ yield (23, Foo(23))
 
 y = [(23, Foo(23))]
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -190,7 +190,7 @@ self.x = 0 | self.x = 1
 
 (0 => Foo(0)) | (1 => Foo(1)) | y = [Foo(0), Foo(1)] 
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -211,7 +211,7 @@ m = Mock(name='foo')
 
 m = Mock(name='foo')
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -232,7 +232,7 @@ m = MagicMock(name='foo')
 
 m = MagicMock(name='foo')
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -253,7 +253,7 @@ m = Mock()
 
 m = Mock()
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -276,7 +276,7 @@ eric = Animal.BEE
 
 eric = <Animal.BEE: 2>
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -312,7 +312,7 @@ print('Start.')
 
 print('End.')
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
@@ -335,7 +335,7 @@ eric = Animal.BEE
 
 eric = <Animal.BEE: 2>
 """
-    tracer = CodeTracer()
+    tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 

@@ -1,3 +1,6 @@
-from .code_tracer import main
+from .main import IS_PYODIDE, main, web_main
 
-main()
+if IS_PYODIDE:
+    web_main()
+else:
+    main()

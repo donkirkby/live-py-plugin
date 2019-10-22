@@ -6,7 +6,7 @@ import sys
 import pytest
 from mock import call, DEFAULT, patch
 
-from space_tracer.code_tracer import main
+from space_tracer import main
 from test_report_builder import ReportTestCase
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),

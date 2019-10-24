@@ -9,7 +9,10 @@ import traceback
 import types
 from contextlib import contextmanager
 from inspect import currentframe
-
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 try:
     # noinspection PyUnresolvedReferences
@@ -37,17 +40,20 @@ except ImportError:
     from itertools import zip_longest as izip_longest
 
 from .canvas import Canvas
-from .code_tracer import trace_source_tree, CONTEXT_NAME, find_line_numbers
+from .code_tracer import CONTEXT_NAME, find_line_numbers
 from .mock_turtle import MockTurtle
-from .module_importers import imp, builtins, TracedModuleImporter, \
+from .module_importers import imp, TracedModuleImporter, \
     PatchedModuleFinder
+from .module_runner import ModuleRunner
 from .report_builder import ReportBuilder
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
-    PSEUDO_FILENAME, TracedFinder
+    PSEUDO_FILENAME
 
 
-def main():
-    launcher = sys.argv[0]
+def parse_args(command_args=None):
+    if command_args is None:
+        command_args = sys.argv
+    launcher = command_args[0]
     if launcher.endswith("__main__.py"):
         executable = os.path.basename(sys.executable)
         launcher = executable + " -m " + __package__
@@ -102,39 +108,18 @@ def main():
                         help='load main module as %s instead of %s.' %
                              (LIVE_MODULE_NAME, DEFAULT_MODULE_NAME))
     parser.add_argument('-m',
-                        dest='module',
+                        dest='is_module',
                         action='store_true',
                         help='driver is an importable module, not a script')
     parser.add_argument('driver',
                         nargs=argparse.REMAINDER,
                         help='script to call traced code, plus any arguments')
-    args = parser.parse_args()
+    return parser.parse_args(command_args[1:])
 
-    code = None
-    if args.traced_file is not None:
-        code = sys.stdin.read()
-    if args.traced is None:
-        args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
 
-    canvas = Canvas(args.width, args.height)
-    tracer = TraceRunner(canvas)
-    tracer.max_width = 200000
-    code_report = tracer.trace_code(code,
-                                    source_width=args.source_width,
-                                    source_indent=args.source_indent,
-                                    traced=args.traced,
-                                    is_module=args.module,
-                                    driver=args.driver,
-                                    traced_file=args.traced_file,
-                                    stdin=args.stdin,
-                                    bad_driver=args.bad_driver,
-                                    is_zoomed=args.zoomed)
-    turtle_report = MockTurtle.get_all_reports()
-    if turtle_report and args.canvas:
-        print('start_canvas')
-        print('\n'.join(turtle_report))
-        print('end_canvas')
-        print('.')
+def main():
+    tracer = TraceRunner()
+    code_report = tracer.trace_command()
     print(code_report)
     if tracer.return_code:
         exit(tracer.return_code)
@@ -177,17 +162,27 @@ def swallow_output(stdin_path=None):
         io.StringIO = old_string_io
 
 
+@contextmanager
+def replace_input(stdin_text=None):
+    old_stdin = sys.stdin
+    sys.stdin = StringIO(stdin_text)
+    try:
+        yield
+    finally:
+        sys.stdin = old_stdin
+
+
 class TraceRunner(object):
-    def __init__(self, canvas=None):
+    def __init__(self):
+        self.canvas = None
         self.message_limit = 10000
-        self.max_width = None
+        self.max_width = 200000
         self.keepalive = False
-        if MockTurtle is not None:
-            MockTurtle.monkey_patch(canvas)
         self.environment = {}
         self.return_code = None
 
-    def run_python_module(self, modulename, module_importer):
+    @staticmethod
+    def run_python_module(modulename, module_importer):
         """Run a python module, as though with ``python -m name args...``.
 
         `modulename` is the name of the module, possibly a dot-separated name.
@@ -260,87 +255,12 @@ class TraceRunner(object):
 
         # Finally, hand the file off to run_python_file for execution.
         pathname = os.path.abspath(pathname)
-        self.run_python_file(pathname,
-                             package=packagename,
-                             traced=module_importer and module_importer.traced,
-                             module_importer=module_importer)
-
-    def run_python_file(self,
-                        filename,
-                        package=None,
-                        traced=None,
-                        source_code=None,
-                        module_importer=None):
-        """Run a python file as if it were the main program on the command line.
-
-        :param str filename: the path to the file to execute.
-        :param str package: the package name to set on the module.
-        :param str traced: the full path to a module, function, or method to
-            trace.
-        :param str source_code: custom source code to replace the file contents.
-        :param module_importer: where to record the TracedFinder used by the
-            driver.
-        """
-        # Create a module to serve as __main__
-        # noinspection PyUnresolvedReferences
-        module_name = (LIVE_MODULE_NAME
-                       if traced == LIVE_MODULE_NAME
-                       else DEFAULT_MODULE_NAME)
-        main_mod = types.ModuleType(module_name)
-        sys.modules[module_name] = main_mod
-        main_mod.__file__ = filename
-        main_mod.__builtins__ = builtins
-        if package:
-            main_mod.__package__ = package
-
-        code = self.make_code_from_py(filename,
-                                      traced,
-                                      source_code,
-                                      module_importer)
-
-        if module_importer.driver_finder.is_tracing:
-            main_mod.__dict__.update(self.environment)
-            module_importer.environment = main_mod.__dict__
-        # Execute the code object.
-        exec(code, main_mod.__dict__)
-
-    @staticmethod
-    def make_code_from_py(filename, traced, source, module_importer):
-        """Get source from `filename` and make a code object of it."""
-        if source is None:
-            if (module_importer is not None and
-                    module_importer.filename is not None and
-                    (os.path.abspath(module_importer.filename) ==
-                     os.path.abspath(filename)) and
-                    module_importer.source_code is not None):
-                source = module_importer.source_code
-                traced = traced or DEFAULT_MODULE_NAME
-            else:
-                with open(filename, 'rU') as f:
-                    source = f.read()
-
-        if traced:
-            if traced.startswith(DEFAULT_MODULE_NAME):
-                traced = traced[len(DEFAULT_MODULE_NAME)+1:]
-            elif traced.startswith(LIVE_MODULE_NAME):
-                traced = traced[len(LIVE_MODULE_NAME)+1:]
-            parsed_file = PSEUDO_FILENAME if traced == '' else filename
-            module_importer.driver_finder = TracedFinder(source,
-                                                         traced,
-                                                         parsed_file)
-            to_compile = module_importer.driver_finder.source_tree
-            if (traced == '' or
-                    module_importer.driver_finder.traced_node is not None):
-                to_compile = trace_source_tree(to_compile)
-                module_importer.driver_finder.is_tracing = True
-        else:
-            module_importer.driver_finder = TracedFinder(source,
-                                                         '',
-                                                         PSEUDO_FILENAME)
-            to_compile = module_importer.driver_finder.source_tree
-        code = compile(to_compile, filename or PSEUDO_FILENAME, "exec")
-
-        return code
+        module_runner = module_importer.module_runner
+        module_runner.run_python_file(
+            pathname,
+            package=packagename,
+            traced=module_importer and module_importer.traced,
+            module_importer=module_importer)
 
     @staticmethod
     def split_lines(messages):
@@ -349,7 +269,14 @@ class TraceRunner(object):
                 yield line
 
     def trace_turtle(self, source):
-        self.trace_code(source)
+        with replace_input(source):
+            self.trace_command(['space_tracer',
+                                '--traced_file', PSEUDO_FILENAME,
+                                '--source_width', '0',
+                                '--width', '0',
+                                '--height', '0',
+                                '--live',
+                                PSEUDO_FILENAME])
 
         return '\n'.join(MockTurtle.get_all_reports())
 
@@ -367,62 +294,67 @@ class TraceRunner(object):
         builder.add_message(header, block_size)
         builder.start_block(1, block_size)
 
-    def trace_code(self,
-                   source,
-                   traced=DEFAULT_MODULE_NAME,
-                   is_module=False,
-                   source_width=0,
-                   source_indent=0,
-                   driver=None,
-                   traced_file=None,
-                   stdin=None,
-                   bad_driver=None,
-                   is_zoomed=False):
-        """ Trace a module of source code, possibly by running a driver script.
+    def trace_code(self, source):
+        """ Trace a module of source code.
 
-        :param str source: the source code to trace, or None to load normally
-        :param str traced: the module, method, or function name to trace
-        :param bool is_module: True if the driver is a module name instead of a
-        file name
-        :param int? source_width: Width of source code - use 0 to hide or
-        negative numbers to trim columns from the end, None to fit source code.
-        :param int source_indent: Number of spaces to indent source code.
-        Negative to skip first columns of source code.
-        :param list driver: the driver script's file name or module name and args
-        :param str traced_file: the file name of the source code
-        :param str stdin: the file name to redirect stdin from
-        :param str bad_driver: a message to display if the driver doesn't call
-        the module
-        :param bool is_zoomed: True if matplotlib is zoomed
-        __main__.
+        :param str source: source code to trace and run.
         """
+        with replace_input(source):
+            return self.trace_command(['space_tracer',
+                                       '--traced_file', PSEUDO_FILENAME,
+                                       '--source_width', '0',
+                                       '--live',
+                                       PSEUDO_FILENAME])
+
+    def trace_command(self, command_args=None):
+        """ Trace a module, based on arguments from the command line.
+        :param command_args: list of strings, like sys.argv
+        :return: the tracing report, but not the canvas report
+        """
+        args = parse_args(command_args)
+        code = None
+        if args.traced_file is not None:
+            code = sys.stdin.read()
+        if args.traced is None:
+            args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
+        if self.canvas is None:
+            self.canvas = Canvas(args.width, args.height)
+        if MockTurtle is not None:
+            MockTurtle.monkey_patch(self.canvas)
+
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
-        driver_module = driver[0] if is_module and driver else None
-        traced_importer = TracedModuleImporter(source,
-                                               traced,
-                                               self.environment,
-                                               traced_file,
-                                               driver_module)
-        patched_finder = PatchedModuleFinder(is_zoomed)
+
+        module_runner = ModuleRunner(builder, self.environment)
+        traced_importer = TracedModuleImporter(
+            code,
+            args.traced,
+            self.environment,
+            args.traced_file,
+            args.driver[0] if args.is_module and args.driver else None,
+            module_runner)
+
+        module_runner = traced_importer.module_runner
+        builder = module_runner.report_builder
+        patched_finder = PatchedModuleFinder(args.zoomed)
         self.return_code = 0
 
         try:
             # Set sys.argv properly.
             old_argv = sys.argv
-            sys.argv = driver or [traced_file or traced]
+            sys.argv = args.driver or [args.traced_file or args.traced]
 
             sys.meta_path.insert(0, patched_finder)
             sys.meta_path.insert(0, traced_importer)
             try:
-                self.run_code(source,
+                self.run_code(code,
                               builder,
-                              traced,
-                              is_module,
-                              driver,
-                              traced_file,
-                              bad_driver,
-                              stdin,
+                              args.traced,
+                              args.is_module,
+                              args.driver,
+                              args.traced_file,
+                              args.bad_driver,
+                              args.stdin,
                               traced_importer)
             finally:
                 # Restore the old argv and path
@@ -432,7 +364,7 @@ class TraceRunner(object):
                 # so force a reload. This is only likely to happen during testing.
                 to_delete = []
                 for name in sys.modules:
-                    if traced.startswith(name) or name == LIVE_MODULE_NAME:
+                    if args.traced.startswith(name) or name == LIVE_MODULE_NAME:
                         to_delete.append(name)
                 for target in to_delete:
                     del sys.modules[target]
@@ -463,11 +395,13 @@ class TraceRunner(object):
             for traced_file, _, _, _ in entries:
                 if traced_file == PSEUDO_FILENAME:
                     is_reported = True
+            space_tracer_folder = os.path.dirname(__file__)
             while not is_reported and tb is not None:
                 frame = tb.tb_frame
                 code = frame.f_code
                 traced_file = code.co_filename
-                if __file__ not in (traced_file, traced_file + 'c'):
+                traced_folder = os.path.dirname(traced_file)
+                if traced_folder != space_tracer_folder:
                     break
                 tb = tb.tb_next
             if not is_reported:
@@ -478,13 +412,14 @@ class TraceRunner(object):
                 self.report_driver_result(builder, messages)
 
         report = builder.report()
+        source_width = args.source_width
         if source_width != 0:
-            if source_indent >= 0:
-                indent = source_indent
+            if args.source_indent >= 0:
+                indent = args.source_indent
                 start_char = 0
             else:
                 indent = 0
-                start_char = -source_indent
+                start_char = -args.source_indent
             used_finder = traced_importer.source_finder or traced_importer.driver_finder
             source_lines = used_finder.source_code.splitlines()
             reported_source_lines = []
@@ -508,7 +443,12 @@ class TraceRunner(object):
                     line += ' ' + report_line
                 dump_lines.append(line)
             report = '\n'.join(dump_lines)
-
+        turtle_report = MockTurtle.get_all_reports()
+        if turtle_report and args.canvas:
+            report = ('start_canvas\n' +
+                      '\n'.join(turtle_report) +
+                      '\nend_canvas\n.\n' +
+                      report)
         return report
 
     def run_code(self,
@@ -537,6 +477,7 @@ class TraceRunner(object):
         :param traced_importer: holds details of what to trace
         __main__.
         """
+        module_runner = traced_importer.module_runner
         self.environment[CONTEXT_NAME] = builder
         for module_name in ('random', 'numpy.random'):
             random_module = sys.modules.get(module_name)
@@ -548,7 +489,7 @@ class TraceRunner(object):
             with output_context:
                 try:
                     if not is_module:
-                        self.run_python_file(
+                        module_runner.run_python_file(
                             driver and driver[0],
                             traced=traced,
                             source_code=(code

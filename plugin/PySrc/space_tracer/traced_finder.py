@@ -1,6 +1,6 @@
 from ast import parse, NodeVisitor
 
-PSEUDO_FILENAME = '<live coding source>'
+PSEUDO_FILENAME = 'live_source.py'
 DEFAULT_MODULE_NAME = '__main__'
 LIVE_MODULE_NAME = '__live_coding__'
 

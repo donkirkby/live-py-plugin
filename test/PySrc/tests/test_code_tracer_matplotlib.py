@@ -3,7 +3,6 @@ import re
 import pytest
 import sys
 
-from space_tracer.canvas import Canvas
 from space_tracer.main import TraceRunner
 from test_report_builder import trim_report
 
@@ -41,8 +40,7 @@ create_image
     0
     image='...'
 """
-    canvas = Canvas(width=100, height=100)
-    tracer = TraceRunner(canvas)
+    tracer = TraceRunner()
 
     report = tracer.trace_turtle(code)
 

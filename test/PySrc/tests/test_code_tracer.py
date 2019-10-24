@@ -5,7 +5,7 @@ from unittest import skipIf
 
 from mock import patch
 
-from space_tracer.main import TraceRunner, FileSwallower
+from space_tracer.main import TraceRunner, FileSwallower, replace_input
 from space_tracer.mock_turtle import MockTurtle
 from space_tracer.report_builder import ReportBuilder
 from test_code_tracer_main import EXAMPLE_LIB_PATH
@@ -689,7 +689,12 @@ y = 13 """
         tracer = TraceRunner()
 
         # EXEC
-        report = tracer.trace_code(code)
+        with replace_input(code):
+            report = tracer.trace_command([
+                'space_tracer',
+                '--source_width', '0',
+                '--traced_file', 'example.py',
+                'example.py'])
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -712,8 +717,7 @@ y = 13 """
         tracer = TraceRunner()
 
         # EXEC
-        report = tracer.trace_code(code,
-                                   traced='__live_coding__')
+        report = tracer.trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -1293,12 +1297,15 @@ class FooTest(TestCase):
 s = 'example_package'
 """
 
-        report = TraceRunner().trace_code(code,
-                                          traced='example_package.lib_in_package',
-                                          traced_file=EXAMPLE_LIB_PATH,
-                                          is_module=True,
-                                          driver=['unittest',
-                                                 'example_package.lib_in_package'])
+        with replace_input(code):
+            report = TraceRunner().trace_command([
+                'space_tracer',
+                '--source_width', '0',
+                '--traced', 'example_package.lib_in_package',
+                '--traced_file', EXAMPLE_LIB_PATH,
+                '-m',
+                'unittest',
+                'example_package.lib_in_package'])
 
         self.assertReportEqual(expected_report, report)
 
@@ -1315,11 +1322,15 @@ s = '__live_coding__'
         foo_path = os.path.join(os.path.dirname(__name__),
                                 'example_package',
                                 'foo.py')
-        report = TraceRunner().trace_code(code,
-                                          traced_file=foo_path,
-                                          traced='__live_coding__',
-                                          is_module=True,
-                                          driver=['example_package.foo'])
+        with replace_input(code):
+            report = TraceRunner().trace_command([
+                'space_tracer',
+                '--source_width', '0',
+                '--traced_file', foo_path,
+                '--traced', '__live_coding__',
+                '--live',
+                '-m',
+                'example_package.foo'])
 
         self.assertReportEqual(expected_report, report)
 

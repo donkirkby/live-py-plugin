@@ -1,4 +1,4 @@
-from space_tracer.main import TraceRunner
+from space_tracer.main import TraceRunner, replace_input
 from test_report_builder import trim_report
 
 
@@ -33,7 +33,12 @@ print(bar(3))
             s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'
         return s           | return 'xyyy' """
 
-    report = TraceRunner().trace_code(code, source_width=None, source_indent=4)
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_indent', '4',
+            '--traced_file', 'example.py',
+            'example.py'])
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -77,7 +82,12 @@ print(bar(3))
         return s             | return 'abbb'
 """
 
-    report = TraceRunner().trace_code(code, source_width=None, source_indent=4)
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_indent', '4',
+            '--traced_file', 'example.py',
+            'example.py'])
 
     assert trim_report(expected_report) == trim_report(report)
 
@@ -109,9 +119,12 @@ def bar(num):            | num = 3
         s += 'b'         | s = 'ab' | s = 'abb' | s = 'abbb'
     return s             | return 'abbb'"""
 
-    report = TraceRunner().trace_code(code,
-                                      traced='__main__.bar',
-                                      source_width=None)
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced', '__main__.bar',
+            '--traced_file', 'example.py',
+            'example.py'])
 
     assert expected_report == report
 
@@ -146,7 +159,11 @@ f = Foo()                             |
 print(f.foo(10))                      | print('11')
 print(f.bar(20))                      | print('22')"""
 
-    report = TraceRunner().trace_code(code, source_width=None)
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
 
     assert expected_report == report
 
@@ -181,6 +198,10 @@ f = Foo()                             |
 print(f.foo(10))                      | print('11')
 print(f.bar(20))                      | print('22')"""
 
-    report = TraceRunner().trace_code(code, source_width=None)
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
 
     assert expected_report == report

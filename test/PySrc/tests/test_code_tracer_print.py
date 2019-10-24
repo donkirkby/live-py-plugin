@@ -1,7 +1,7 @@
 import sys
 from sys import version_info
 
-from space_tracer.main import TraceRunner
+from space_tracer.main import TraceRunner, replace_input
 from test_report_builder import trim_report
 
 
@@ -268,7 +268,13 @@ s = 'first line'
     with open(stdin_path, 'w') as f:
         f.write(input_text)
 
-    report = TraceRunner().trace_code(code, stdin=stdin_path)
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--stdin', stdin_path,
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
 
     assert expected_report == trim_report(report)
 
@@ -289,6 +295,12 @@ sys.stdout.write('What comes first?') | s = 'first line'
     with open(stdin_path, 'w') as f:
         f.write(input_text)
 
-    report = TraceRunner().trace_code(code, stdin=stdin_path)
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--stdin', stdin_path,
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
 
     assert expected_report == trim_report(report)

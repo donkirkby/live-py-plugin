@@ -61,19 +61,22 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                  traced,
                  environment,
                  filename,
-                 driver_module):
+                 driver_module,
+                 module_runner):
         """ Import the code that has been instrumented for live coding.
 
         :param str source_code: source code to load for traced module
         :param environment: global variables for the module
         :param filename: the name of the file this code came from
         :param str driver_module: module name, if the driver is a module
+        :param module_runner: ModuleRunner for launching key modules
         """
         self.source_code = source_code
         self.traced = traced
         self.environment = environment
         self.filename = filename
         self.driver_module = driver_module
+        self.module_runner = module_runner
         self.source_finder = None
         self.driver_finder = None
         self.module_files = {}

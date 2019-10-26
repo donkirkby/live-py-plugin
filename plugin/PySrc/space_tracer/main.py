@@ -39,14 +39,14 @@ try:
 except ImportError:
     from itertools import zip_longest as izip_longest
 
-from .canvas import Canvas
-from .code_tracer import CONTEXT_NAME, find_line_numbers
-from .mock_turtle import MockTurtle
-from .module_importers import imp, TracedModuleImporter, \
+from space_tracer.canvas import Canvas
+from space_tracer.code_tracer import CONTEXT_NAME, find_line_numbers
+from space_tracer.mock_turtle import MockTurtle
+from space_tracer.module_importers import imp, TracedModuleImporter, \
     PatchedModuleFinder
-from .module_runner import ModuleRunner
-from .report_builder import ReportBuilder
-from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
+from space_tracer.module_runner import ModuleRunner
+from space_tracer.report_builder import ReportBuilder
+from space_tracer.traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME
 
 
@@ -591,3 +591,7 @@ class TracedStringIO(io.StringIO):
                                                   target_name=name)
                         return
             frame = frame.f_back
+
+
+if __name__ == '__main__':
+    main()

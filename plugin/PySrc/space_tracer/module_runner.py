@@ -1,3 +1,4 @@
+import inspect
 import os
 import types
 
@@ -41,6 +42,15 @@ class ModuleRunner(object):
         main_mod.__builtins__ = builtins
         if package:
             main_mod.__package__ = package
+
+        top_file = inspect.stack()[-1][0].f_code.co_filename
+        expected_path0 = os.path.abspath(os.path.dirname(top_file))
+        # Check that sys.path is as expected, otherwise leave it alone.
+        # This doesn't support "python -m space_tracer", because that calls
+        # the runpy module.
+        if os.path.abspath(sys.path[0]) == expected_path0:
+            # Set sys.path to target script's folder instead of space_tracer.
+            sys.path[0] = os.path.abspath(os.path.dirname(filename))
 
         code = self.make_code_from_py(filename,
                                       traced,

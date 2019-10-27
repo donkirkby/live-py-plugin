@@ -39,14 +39,14 @@ try:
 except ImportError:
     from itertools import zip_longest as izip_longest
 
-from space_tracer.canvas import Canvas
-from space_tracer.code_tracer import CONTEXT_NAME, find_line_numbers
-from space_tracer.mock_turtle import MockTurtle
-from space_tracer.module_importers import imp, TracedModuleImporter, \
+from .canvas import Canvas
+from .code_tracer import CONTEXT_NAME, find_line_numbers
+from .mock_turtle import MockTurtle
+from .module_importers import imp, TracedModuleImporter, \
     PatchedModuleFinder
-from space_tracer.module_runner import ModuleRunner
-from space_tracer.report_builder import ReportBuilder
-from space_tracer.traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
+from .module_runner import ModuleRunner
+from .report_builder import ReportBuilder
+from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME
 
 
@@ -198,7 +198,7 @@ class TraceRunner(object):
             elif (module_importer.traced in (DEFAULT_MODULE_NAME,
                                              LIVE_MODULE_NAME) and
                   module_importer.source_code):
-                pathname = module_importer.filename
+                pathname = module_importer.traced_file
                 packagename = module_importer.driver_module
             else:
                 raise ImportError(modulename)
@@ -244,7 +244,7 @@ class TraceRunner(object):
                     if (module_importer.traced in (DEFAULT_MODULE_NAME,
                                                    LIVE_MODULE_NAME) and
                             module_importer.source_code):
-                        pathname = module_importer.filename
+                        pathname = module_importer.traced_file
                         packagename = module_importer.driver_module
                         packagename = packagename.rpartition(".")[0]
                     else:
@@ -312,9 +312,6 @@ class TraceRunner(object):
         :return: the tracing report, but not the canvas report
         """
         args = parse_args(command_args)
-        code = None
-        if args.traced_file is not None:
-            code = sys.stdin.read()
         if args.traced is None:
             args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
         if self.canvas is None:
@@ -327,7 +324,6 @@ class TraceRunner(object):
 
         module_runner = ModuleRunner(builder, self.environment)
         traced_importer = TracedModuleImporter(
-            code,
             args.traced,
             self.environment,
             args.traced_file,
@@ -347,12 +343,10 @@ class TraceRunner(object):
             sys.meta_path.insert(0, patched_finder)
             sys.meta_path.insert(0, traced_importer)
             try:
-                self.run_code(code,
-                              builder,
+                self.run_code(builder,
                               args.traced,
                               args.is_module,
                               args.driver,
-                              args.traced_file,
                               args.bad_driver,
                               args.stdin,
                               traced_importer)
@@ -397,9 +391,7 @@ class TraceRunner(object):
                     is_reported = True
             space_tracer_folder = os.path.dirname(__file__)
             while not is_reported and tb is not None:
-                frame = tb.tb_frame
-                code = frame.f_code
-                traced_file = code.co_filename
+                traced_file = tb.tb_frame.f_code.co_filename
                 traced_folder = os.path.dirname(traced_file)
                 if traced_folder != space_tracer_folder:
                     break
@@ -452,25 +444,20 @@ class TraceRunner(object):
         return report
 
     def run_code(self,
-                 code,
                  builder,
                  traced,
                  is_module,
                  driver,
-                 traced_file,
                  bad_driver,
                  stdin_path=None,
                  traced_importer=None):
         """ Run the traced module, plus its driver.
 
-        :param code: the source code for the traced module, or None to load
-        from the normal file
         :param builder: the report builder
         :param str traced: the module, method, or function name to trace
         :param bool is_module: True if the driver is a module name instead of a
         file name
         :param list driver: the driver script's file name or module name and args
-        :param str traced_file: the file name of the source code
         :param str bad_driver: a message to display if the driver doesn't call
         the module
         :param str stdin_path: Path to redirect stdin from
@@ -492,8 +479,8 @@ class TraceRunner(object):
                         module_runner.run_python_file(
                             driver and driver[0],
                             traced=traced,
-                            source_code=(code
-                                         if not driver or traced_file == driver[0]
+                            source_code=(traced_importer.source_code
+                                         if not driver or traced_importer.traced_file == driver[0]
                                          else None),
                             module_importer=traced_importer)
                     else:

@@ -31,6 +31,22 @@ class ModuleRunner(object):
         :param module_importer: where to record the TracedFinder used by the
             driver.
         """
+        call_stack_files = [frame[0].f_code.co_filename
+                            for frame in inspect.stack()]
+        top_file = call_stack_files[-1]
+        if os.path.basename(top_file) == 'runpy.py':
+            # Exclude runpy.py, used for python -m.
+            call_stack_files = [
+                frame_filename
+                for frame_filename in call_stack_files
+                if os.path.basename(frame_filename) != 'runpy.py']
+            top_file = os.path.dirname(call_stack_files[-1])
+        expected_path0 = os.path.abspath(os.path.dirname(top_file))
+        # Check that sys.path is as expected, otherwise leave it alone.
+        if os.path.abspath(sys.path[0]) == expected_path0:
+            # Set sys.path to target script's folder instead of space_tracer.
+            sys.path[0] = os.path.abspath(os.path.dirname(filename))
+
         # Create a module to serve as __main__
         # noinspection PyUnresolvedReferences
         module_name = (LIVE_MODULE_NAME
@@ -42,15 +58,6 @@ class ModuleRunner(object):
         main_mod.__builtins__ = builtins
         if package:
             main_mod.__package__ = package
-
-        top_file = inspect.stack()[-1][0].f_code.co_filename
-        expected_path0 = os.path.abspath(os.path.dirname(top_file))
-        # Check that sys.path is as expected, otherwise leave it alone.
-        # This doesn't support "python -m space_tracer", because that calls
-        # the runpy module.
-        if os.path.abspath(sys.path[0]) == expected_path0:
-            # Set sys.path to target script's folder instead of space_tracer.
-            sys.path[0] = os.path.abspath(os.path.dirname(filename))
 
         code = self.make_code_from_py(filename,
                                       traced,
@@ -68,8 +75,8 @@ class ModuleRunner(object):
         """Get source from `filename` and make a code object of it."""
         if source is None:
             if (module_importer is not None and
-                    module_importer.filename is not None and
-                    (os.path.abspath(module_importer.filename) ==
+                    module_importer.traced_file is not None and
+                    (os.path.abspath(module_importer.traced_file) ==
                      os.path.abspath(filename)) and
                     module_importer.source_code is not None):
                 source = module_importer.source_code

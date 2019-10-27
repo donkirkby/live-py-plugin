@@ -57,24 +57,23 @@ class DelegatingModuleFinder(MetaPathFinder):
 # noinspection PyAbstractClass
 class TracedModuleImporter(DelegatingModuleFinder, Loader):
     def __init__(self,
-                 source_code,
                  traced,
                  environment,
-                 filename,
+                 traced_file,
                  driver_module,
                  module_runner):
         """ Import the code that has been instrumented for live coding.
 
-        :param str source_code: source code to load for traced module
         :param environment: global variables for the module
-        :param filename: the name of the file this code came from
+        :param traced_file: name of the file to replace with source code from
+            stdin, or None if all source code comes from files
         :param str driver_module: module name, if the driver is a module
         :param module_runner: ModuleRunner for launching key modules
         """
-        self.source_code = source_code
         self.traced = traced
         self.environment = environment
-        self.filename = filename
+        self.traced_file = traced_file
+        self.source_code = traced_file and sys.stdin.read()
         self.driver_module = driver_module
         self.module_runner = module_runner
         self.source_finder = None
@@ -85,13 +84,13 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         if (fullname == self.traced or
                 fullname in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
                 self.traced.startswith(fullname)):
-            return ModuleSpec(fullname, self, origin=self.filename)
+            return ModuleSpec(fullname, self, origin=self.traced_file)
         spec = super(TracedModuleImporter, self).find_spec(fullname,
                                                            path,
                                                            target)
         if spec is not None:
-            if spec.origin == self.filename:
-                return ModuleSpec(fullname, self, origin=self.filename)
+            if spec.origin == self.traced_file:
+                return ModuleSpec(fullname, self, origin=self.traced_file)
             return spec
         return None
 
@@ -100,15 +99,15 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         if module_spec:
             module_file = module_spec.origin
         else:
-            module_file = self.filename
+            module_file = self.traced_file
         parsed_filename = module_file
         if (self.traced.startswith(DEFAULT_MODULE_NAME) or
                 self.traced.startswith(LIVE_MODULE_NAME)):
             source_code = self.source_code
             parsed_filename = PSEUDO_FILENAME
-        elif self.filename is not None and module_file == self.filename:
+        elif self.traced_file is not None and module_file == self.traced_file:
             if self.source_code is None:
-                with open(self.filename) as source_file:
+                with open(self.traced_file) as source_file:
                     self.source_code = source_file.read()
             source_code = self.source_code
         else:

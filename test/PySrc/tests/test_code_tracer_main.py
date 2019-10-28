@@ -7,6 +7,7 @@ import pytest
 from mock import call, DEFAULT, patch
 
 from space_tracer import main
+from space_tracer.main import replace_input, TraceRunner
 from test_report_builder import ReportTestCase
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
@@ -749,6 +750,7 @@ def test_dunder_file_for_module(stdin, stdout, argv):
     argv.extend([
         'dummy.py',
         '--source_width', '0',
+        '--traced', 'example_source',
         '--traced_file', EXAMPLE_SOURCE_PATH,
         '-m', 'example_source'])
     source = """\
@@ -921,3 +923,65 @@ def custom_print(text, suffix): | text = 'Hello, example' | suffix = '!'
     main()
 
     assert expected_report == stdout.getvalue()
+
+
+def test_no_driver(capsys):
+    expected_error = ('space_tracer: error: one of the following arguments '
+                      'are required: driver or traced_file')
+    with pytest.raises(SystemExit):
+        TraceRunner().trace_command(['space_tracer'])
+    error = capsys.readouterr().err.splitlines()[-1]
+    assert error == expected_error
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 0),
+    reason="Can't tell which file is about to be imported before 3.0.")
+def test_traced_file_without_traced():
+    code = '''\
+def foo(n):
+    return n + 20
+'''
+    expected_report = '''\
+n = 42
+return 62'''
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_width', '0',
+            '--traced_file', EXAMPLE_SOURCE_PATH,
+            EXAMPLE_DRIVER_PATH])
+
+    assert report == expected_report
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 0),
+    reason="Can't tell which file is about to be imported before 3.0.")
+def test_bad_driver_for_traced_file_without_traced():
+    code = '''\
+def foo(n):
+    return n + 20
+'''
+    expected_report = '''\
+--------------------------------------------------------------------------- |
+example_driver.py doesn't call example_printing.py. Try a different driver. |
+--------------------------------------------------------------------------- |
+
+
+
+
+
+
+
+'''
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_width', '0',
+            '--traced_file', EXAMPLE_PRINTING_PATH,
+            EXAMPLE_DRIVER_PATH])
+
+    assert report == expected_report

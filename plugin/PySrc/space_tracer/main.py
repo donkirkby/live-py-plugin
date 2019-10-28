@@ -113,8 +113,25 @@ def parse_args(command_args=None):
                         help='driver is an importable module, not a script')
     parser.add_argument('driver',
                         nargs=argparse.REMAINDER,
-                        help='script to call traced code, plus any arguments')
-    return parser.parse_args(command_args[1:])
+                        help='script to call traced code, plus any arguments. '
+                             'Default: %%(default)s to use --traced_file.')
+    args = parser.parse_args(command_args[1:])
+    if not args.driver:
+        if args.traced_file:
+            args.driver = [args.traced_file]
+        else:
+            parser.error('one of the following arguments are required: '
+                         'driver or traced_file')
+    if args.traced is None:
+        if args.traced_file is None or args.traced_file == args.driver[0]:
+            args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
+        elif sys.version_info < (3, 0):
+            parser.error('the following argument is required with traced_file '
+                         'in Python 2: traced')
+        else:
+            # Wait until the file is imported to see what module got traced.
+            pass
+    return args
 
 
 def main():
@@ -240,6 +257,8 @@ class TraceRunner(object):
                         searchpath = package.__path__
                         # noinspection PyDeprecation
                         openfile, pathname, _ = imp.find_module(name, searchpath)
+                    if pathname == module_importer.traced_file:
+                        module_importer.record_module(modulename)
                 except ImportError:
                     if (module_importer.traced in (DEFAULT_MODULE_NAME,
                                                    LIVE_MODULE_NAME) and
@@ -309,11 +328,9 @@ class TraceRunner(object):
     def trace_command(self, command_args=None):
         """ Trace a module, based on arguments from the command line.
         :param command_args: list of strings, like sys.argv
-        :return: the tracing report, but not the canvas report
+        :return: the tracing report, including the canvas report
         """
         args = parse_args(command_args)
-        if args.traced is None:
-            args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
         if self.canvas is None:
             self.canvas = Canvas(args.width, args.height)
         if MockTurtle is not None:
@@ -327,10 +344,11 @@ class TraceRunner(object):
             args.traced,
             self.environment,
             args.traced_file,
-            args.driver[0] if args.is_module and args.driver else None,
+            args.driver,
+            args.is_module,
+            args.live,
             module_runner)
 
-        module_runner = traced_importer.module_runner
         builder = module_runner.report_builder
         patched_finder = PatchedModuleFinder(args.zoomed)
         self.return_code = 0
@@ -338,13 +356,12 @@ class TraceRunner(object):
         try:
             # Set sys.argv properly.
             old_argv = sys.argv
-            sys.argv = args.driver or [args.traced_file or args.traced]
+            sys.argv = args.driver
 
             sys.meta_path.insert(0, patched_finder)
             sys.meta_path.insert(0, traced_importer)
             try:
                 self.run_code(builder,
-                              args.traced,
                               args.is_module,
                               args.driver,
                               args.bad_driver,
@@ -358,7 +375,9 @@ class TraceRunner(object):
                 # so force a reload. This is only likely to happen during testing.
                 to_delete = []
                 for name in sys.modules:
-                    if args.traced.startswith(name) or name == LIVE_MODULE_NAME:
+                    traced = traced_importer.traced
+                    if (traced and traced.startswith(name) or
+                            name == LIVE_MODULE_NAME):
                         to_delete.append(name)
                 for target in to_delete:
                     del sys.modules[target]
@@ -405,15 +424,17 @@ class TraceRunner(object):
 
         report = builder.report()
         source_width = args.source_width
-        if source_width != 0:
+        used_finder = (traced_importer.source_finder or
+                       traced_importer.driver_finder)
+        source_code = used_finder and used_finder.source_code
+        if source_code is not None and source_width != 0:
             if args.source_indent >= 0:
                 indent = args.source_indent
                 start_char = 0
             else:
                 indent = 0
                 start_char = -args.source_indent
-            used_finder = traced_importer.source_finder or traced_importer.driver_finder
-            source_lines = used_finder.source_code.splitlines()
+            source_lines = source_code.splitlines()
             reported_source_lines = []
             for first_line, last_line in builder.reported_blocks:
                 for line_number in range(first_line, last_line+1):
@@ -445,7 +466,6 @@ class TraceRunner(object):
 
     def run_code(self,
                  builder,
-                 traced,
                  is_module,
                  driver,
                  bad_driver,
@@ -454,7 +474,6 @@ class TraceRunner(object):
         """ Run the traced module, plus its driver.
 
         :param builder: the report builder
-        :param str traced: the module, method, or function name to trace
         :param bool is_module: True if the driver is a module name instead of a
         file name
         :param list driver: the driver script's file name or module name and args
@@ -478,7 +497,7 @@ class TraceRunner(object):
                     if not is_module:
                         module_runner.run_python_file(
                             driver and driver[0],
-                            traced=traced,
+                            traced=traced_importer.traced,
                             source_code=(traced_importer.source_code
                                          if not driver or traced_importer.traced_file == driver[0]
                                          else None),
@@ -496,12 +515,19 @@ class TraceRunner(object):
                                                                    ex)
                         message = messages[-1].strip()
                         self.report_driver_result(builder, [message])
+            traced = traced_importer.traced
             if traced not in sys.modules and traced not in (DEFAULT_MODULE_NAME,
                                                             LIVE_MODULE_NAME):
                 driver_name = os.path.basename(driver[0])
-                message = (bad_driver or "{} doesn't call the {} module."
-                                         " Try a different driver.".format(driver_name,
-                                                                           traced))
+                if bad_driver:
+                    message = bad_driver
+                elif traced is None:
+                    traced_name = os.path.basename(traced_importer.traced_file)
+                    message = ("{} doesn't call {}. Try a different "
+                               "driver.").format(driver_name, traced_name)
+                else:
+                    message = ("{} doesn't call the {} module. Try a different "
+                               "driver.").format(driver_name, traced)
                 self.report_driver_result(builder, [message])
         finally:
             self.environment = traced_importer.environment

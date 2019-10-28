@@ -60,25 +60,31 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                  traced,
                  environment,
                  traced_file,
-                 driver_module,
+                 driver,
+                 is_module,
+                 is_live,
                  module_runner):
         """ Import the code that has been instrumented for live coding.
 
         :param environment: global variables for the module
         :param traced_file: name of the file to replace with source code from
             stdin, or None if all source code comes from files
-        :param str driver_module: module name, if the driver is a module
+        :param str driver: command-line arguments for the driver script
+        :param bool is_module: True if the driver is a module, not a script
+        :param bool is_live: True if in live coding mode
         :param module_runner: ModuleRunner for launching key modules
         """
         self.traced = traced
         self.environment = environment
         self.traced_file = traced_file
         self.source_code = traced_file and sys.stdin.read()
-        self.driver_module = driver_module
+        self.driver_module = driver[0] if is_module else None
+        self.is_live = is_live
         self.module_runner = module_runner
         self.source_finder = None
         self.driver_finder = None
-        self.module_files = {}
+        if self.traced is not None and self.traced == self.driver_module:
+            self.traced = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
 
     def find_spec(self, fullname, path, target=None):
         if (fullname == self.traced or
@@ -90,9 +96,20 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                                                            target)
         if spec is not None:
             if spec.origin == self.traced_file:
+                self.record_module(fullname)
                 return ModuleSpec(fullname, self, origin=self.traced_file)
             return spec
         return None
+
+    def record_module(self, module_name):
+        """ Record the module that was traced. """
+        if self.traced is None:
+            if module_name != self.driver_module:
+                self.traced = module_name
+            elif self.is_live:
+                self.traced = LIVE_MODULE_NAME
+            else:
+                self.traced = DEFAULT_MODULE_NAME
 
     def exec_module(self, module):
         module_spec = getattr(module, '__spec__', None)

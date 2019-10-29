@@ -44,7 +44,6 @@ from .code_tracer import CONTEXT_NAME, find_line_numbers
 from .mock_turtle import MockTurtle
 from .module_importers import imp, TracedModuleImporter, \
     PatchedModuleFinder
-from .module_runner import ModuleRunner
 from .report_builder import ReportBuilder
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME
@@ -274,8 +273,7 @@ class TraceRunner(object):
 
         # Finally, hand the file off to run_python_file for execution.
         pathname = os.path.abspath(pathname)
-        module_runner = module_importer.module_runner
-        module_runner.run_python_file(
+        module_importer.run_python_file(
             pathname,
             package=packagename,
             traced=module_importer and module_importer.traced,
@@ -339,17 +337,14 @@ class TraceRunner(object):
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
 
-        module_runner = ModuleRunner(builder, self.environment)
         traced_importer = TracedModuleImporter(
             args.traced,
             self.environment,
             args.traced_file,
             args.driver,
             args.is_module,
-            args.live,
-            module_runner)
+            args.live)
 
-        builder = module_runner.report_builder
         patched_finder = PatchedModuleFinder(args.zoomed)
         self.return_code = 0
 
@@ -360,6 +355,16 @@ class TraceRunner(object):
 
             sys.meta_path.insert(0, patched_finder)
             sys.meta_path.insert(0, traced_importer)
+
+            # During testing, we import these modules for every test case,
+            # so force a reload. This is only likely to happen during testing.
+            traced = traced_importer.traced
+            for name, module in list(sys.modules.items()):
+                module_file = getattr(module, '__file__', '')
+                if (traced and traced.startswith(name) or
+                        name == LIVE_MODULE_NAME or
+                        module_file == traced_importer.traced_file):
+                    del sys.modules[name]
             try:
                 self.run_code(builder,
                               args.is_module,
@@ -370,17 +375,6 @@ class TraceRunner(object):
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
-
-                # During testing, we import these modules for every test case,
-                # so force a reload. This is only likely to happen during testing.
-                to_delete = []
-                for name in sys.modules:
-                    traced = traced_importer.traced
-                    if (traced and traced.startswith(name) or
-                            name == LIVE_MODULE_NAME):
-                        to_delete.append(name)
-                for target in to_delete:
-                    del sys.modules[target]
                 sys.meta_path.remove(traced_importer)
                 sys.meta_path.remove(patched_finder)
 
@@ -483,7 +477,6 @@ class TraceRunner(object):
         :param traced_importer: holds details of what to trace
         __main__.
         """
-        module_runner = traced_importer.module_runner
         self.environment[CONTEXT_NAME] = builder
         for module_name in ('random', 'numpy.random'):
             random_module = sys.modules.get(module_name)
@@ -495,7 +488,7 @@ class TraceRunner(object):
             with output_context:
                 try:
                     if not is_module:
-                        module_runner.run_python_file(
+                        traced_importer.run_python_file(
                             driver and driver[0],
                             traced=traced_importer.traced,
                             source_code=(traced_importer.source_code

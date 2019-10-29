@@ -985,3 +985,35 @@ example_driver.py doesn't call example_printing.py. Try a different driver. |
             EXAMPLE_DRIVER_PATH])
 
     assert report == expected_report
+
+
+def test_traced_driver_environment():
+    code = '''\
+try:
+    sys.exit("Sys exists, but it wasn't imported!")
+except NameError:
+    pass
+sys = None  # Would mess up driver script if they shared module name spaces.
+
+def foo(x):
+    return x + 20
+'''
+    expected_report = '''\
+
+NameError: name 'sys' is not defined
+
+
+sys = None
+
+x = 42
+return 62'''
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_width', '0',
+            '--traced_file', EXAMPLE_SOURCE_PATH,
+            '--traced', 'example_source',
+            EXAMPLE_DRIVER_PATH])
+
+    assert report == expected_report

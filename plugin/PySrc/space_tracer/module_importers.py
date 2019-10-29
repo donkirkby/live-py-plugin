@@ -80,7 +80,9 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.environment = {CONTEXT_NAME: report_builder}
         self.traced_file = traced_file
         self.source_code = traced_file and sys.stdin.read()
+        self.driver = driver
         self.driver_module = driver[0] if is_module else None
+        self.is_module = is_module
         self.is_live = is_live
         self.source_finder = None
         self.driver_finder = None
@@ -191,6 +193,17 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
 
         self.exec_module(new_mod)
         return new_mod
+
+    def run_main(self):
+        if self.driver_module is None:
+            self.run_python_file(
+                self.driver and self.driver[0],
+                source_code=(self.source_code
+                             if (not self.driver or
+                                 self.traced_file == self.driver[0])
+                             else None))
+        else:
+            self.run_python_module(self.driver_module)
 
     def run_python_module(self, modulename):
         """ Run a python module, as though with ``python -m name args...``.

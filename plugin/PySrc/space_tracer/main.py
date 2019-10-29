@@ -282,11 +282,7 @@ class TraceRunner(object):
                         module_file == traced_importer.traced_file):
                     del sys.modules[name]
             try:
-                self.run_code(args.is_module,
-                              args.driver,
-                              args.bad_driver,
-                              args.stdin,
-                              traced_importer)
+                self.run_code(args.bad_driver, args.stdin, traced_importer)
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
@@ -374,16 +370,11 @@ class TraceRunner(object):
         return report
 
     def run_code(self,
-                 is_module,
-                 driver,
                  bad_driver,
                  stdin_path,
                  traced_importer):
         """ Run the traced module, plus its driver.
 
-        :param bool is_module: True if the driver is a module name instead of a
-        file name
-        :param list driver: the driver script's file name or module name and args
         :param str bad_driver: a message to display if the driver doesn't call
         the module
         :param str stdin_path: Path to redirect stdin from
@@ -400,17 +391,10 @@ class TraceRunner(object):
         try:
             with output_context:
                 try:
-                    if not is_module:
-                        traced_importer.run_python_file(
-                            driver and driver[0],
-                            source_code=(traced_importer.source_code
-                                         if not driver or traced_importer.traced_file == driver[0]
-                                         else None))
-                    else:
-                        module_name = driver[0]
-                        traced_importer.run_python_module(module_name)
+                    traced_importer.run_main()
                     if sys.stdout.saw_failures:
-                        self.report_driver_result(builder, ['Pytest reported failures.'])
+                        self.report_driver_result(builder,
+                                                  ['Pytest reported failures.'])
                         self.return_code = 1
                 except SystemExit as ex:
                     if ex.code:
@@ -422,7 +406,7 @@ class TraceRunner(object):
             traced = traced_importer.traced
             if traced not in sys.modules and traced not in (DEFAULT_MODULE_NAME,
                                                             LIVE_MODULE_NAME):
-                driver_name = os.path.basename(driver[0])
+                driver_name = os.path.basename(traced_importer.driver[0])
                 if bad_driver:
                     message = bad_driver
                 elif traced is None:

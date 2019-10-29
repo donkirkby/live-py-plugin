@@ -273,11 +273,7 @@ class TraceRunner(object):
 
         # Finally, hand the file off to run_python_file for execution.
         pathname = os.path.abspath(pathname)
-        module_importer.run_python_file(
-            pathname,
-            package=packagename,
-            traced=module_importer and module_importer.traced,
-            module_importer=module_importer)
+        module_importer.run_python_file(pathname, package=packagename)
 
     @staticmethod
     def split_lines(messages):
@@ -490,11 +486,9 @@ class TraceRunner(object):
                     if not is_module:
                         traced_importer.run_python_file(
                             driver and driver[0],
-                            traced=traced_importer.traced,
                             source_code=(traced_importer.source_code
                                          if not driver or traced_importer.traced_file == driver[0]
-                                         else None),
-                            module_importer=traced_importer)
+                                         else None))
                     else:
                         module_name = driver[0]
                         self.run_python_module(module_name, traced_importer)

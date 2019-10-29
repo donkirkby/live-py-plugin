@@ -42,8 +42,7 @@ except ImportError:
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers
 from .mock_turtle import MockTurtle
-from .module_importers import imp, TracedModuleImporter, \
-    PatchedModuleFinder
+from .module_importers import TracedModuleImporter, PatchedModuleFinder
 from .report_builder import ReportBuilder
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME
@@ -194,86 +193,7 @@ class TraceRunner(object):
         self.message_limit = 10000
         self.max_width = 200000
         self.keepalive = False
-        self.environment = {}
         self.return_code = None
-
-    @staticmethod
-    def run_python_module(modulename, module_importer):
-        """Run a python module, as though with ``python -m name args...``.
-
-        `modulename` is the name of the module, possibly a dot-separated name.
-
-        This is based on code from coverage.py, by Ned Batchelder.
-        https://bitbucket.org/ned/coveragepy
-        """
-        if find_spec:
-            spec = find_spec(modulename)
-            if spec is not None:
-                pathname = spec.origin
-                packagename = spec.name
-            elif (module_importer.traced in (DEFAULT_MODULE_NAME,
-                                             LIVE_MODULE_NAME) and
-                  module_importer.source_code):
-                pathname = module_importer.traced_file
-                packagename = module_importer.driver_module
-            else:
-                raise ImportError(modulename)
-            if pathname.endswith("__init__.py") and not modulename.endswith("__init__"):
-                mod_main = modulename + ".__main__"
-                spec = find_spec(mod_main)
-                if not spec:
-                    raise ImportError(
-                        "No module named %s; "
-                        "%r is a package and cannot be directly executed"
-                        % (mod_main, modulename))
-                pathname = spec.origin
-                packagename = spec.name
-            packagename = packagename.rpartition(".")[0]
-        else:
-            openfile = None
-            glo, loc = globals(), locals()
-            try:
-                # Search for the module - inside its parent package, if any -
-                # using standard import mechanics.
-                try:
-                    if '.' in modulename:
-                        packagename, name = modulename.rsplit('.', 1)
-                        package = __import__(packagename, glo, loc, ['__path__'])
-                        searchpath = package.__path__
-                    else:
-                        packagename, name = None, modulename
-                        searchpath = None  # "top-level search" in imp.find_module()
-                    # noinspection PyDeprecation
-                    openfile, pathname, _ = imp.find_module(name, searchpath)
-
-                    # If `modulename` is actually a package, not a mere module,
-                    # then we pretend to be Python 2.7 and try running its
-                    # __main__.py script.
-                    if openfile is None:
-                        packagename = modulename
-                        name = '__main__'
-                        package = __import__(packagename, glo, loc, ['__path__'])
-                        searchpath = package.__path__
-                        # noinspection PyDeprecation
-                        openfile, pathname, _ = imp.find_module(name, searchpath)
-                    if pathname == module_importer.traced_file:
-                        module_importer.record_module(modulename)
-                except ImportError:
-                    if (module_importer.traced in (DEFAULT_MODULE_NAME,
-                                                   LIVE_MODULE_NAME) and
-                            module_importer.source_code):
-                        pathname = module_importer.traced_file
-                        packagename = module_importer.driver_module
-                        packagename = packagename.rpartition(".")[0]
-                    else:
-                        raise
-            finally:
-                if openfile:
-                    openfile.close()
-
-        # Finally, hand the file off to run_python_file for execution.
-        pathname = os.path.abspath(pathname)
-        module_importer.run_python_file(pathname, package=packagename)
 
     @staticmethod
     def split_lines(messages):
@@ -335,11 +255,11 @@ class TraceRunner(object):
 
         traced_importer = TracedModuleImporter(
             args.traced,
-            self.environment,
             args.traced_file,
             args.driver,
             args.is_module,
-            args.live)
+            args.live,
+            builder)
 
         patched_finder = PatchedModuleFinder(args.zoomed)
         self.return_code = 0
@@ -362,8 +282,7 @@ class TraceRunner(object):
                         module_file == traced_importer.traced_file):
                     del sys.modules[name]
             try:
-                self.run_code(builder,
-                              args.is_module,
+                self.run_code(args.is_module,
                               args.driver,
                               args.bad_driver,
                               args.stdin,
@@ -374,7 +293,7 @@ class TraceRunner(object):
                 sys.meta_path.remove(traced_importer)
                 sys.meta_path.remove(patched_finder)
 
-            for value in self.environment.values():
+            for value in traced_importer.environment.values():
                 if isinstance(value, types.GeneratorType):
                     value.close()
         except SyntaxError:
@@ -455,15 +374,13 @@ class TraceRunner(object):
         return report
 
     def run_code(self,
-                 builder,
                  is_module,
                  driver,
                  bad_driver,
-                 stdin_path=None,
-                 traced_importer=None):
+                 stdin_path,
+                 traced_importer):
         """ Run the traced module, plus its driver.
 
-        :param builder: the report builder
         :param bool is_module: True if the driver is a module name instead of a
         file name
         :param list driver: the driver script's file name or module name and args
@@ -473,12 +390,12 @@ class TraceRunner(object):
         :param traced_importer: holds details of what to trace
         __main__.
         """
-        self.environment[CONTEXT_NAME] = builder
         for module_name in ('random', 'numpy.random'):
             random_module = sys.modules.get(module_name)
             if random_module is not None:
                 random_module.seed(0)
 
+        builder = traced_importer.report_builder
         output_context = swallow_output(stdin_path)
         try:
             with output_context:
@@ -491,7 +408,7 @@ class TraceRunner(object):
                                          else None))
                     else:
                         module_name = driver[0]
-                        self.run_python_module(module_name, traced_importer)
+                        traced_importer.run_python_module(module_name)
                     if sys.stdout.saw_failures:
                         self.report_driver_result(builder, ['Pytest reported failures.'])
                         self.return_code = 1
@@ -517,7 +434,6 @@ class TraceRunner(object):
                                "driver.").format(driver_name, traced)
                 self.report_driver_result(builder, [message])
         finally:
-            self.environment = traced_importer.environment
             is_decorated = any(frame.is_decorated for frame in builder.history)
             used_finder = traced_importer.source_finder or traced_importer.driver_finder
             if used_finder and not is_decorated:

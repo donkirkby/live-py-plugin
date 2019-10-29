@@ -25,7 +25,7 @@ try:
 except ImportError:
     import builtins
 
-from .code_tracer import trace_source_tree
+from .code_tracer import trace_source_tree, CONTEXT_NAME
 from .mock_turtle import MockTurtle, monkey_patch_pyglet
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME, TracedFinder
@@ -61,28 +61,30 @@ class DelegatingModuleFinder(MetaPathFinder):
 class TracedModuleImporter(DelegatingModuleFinder, Loader):
     def __init__(self,
                  traced,
-                 environment,
                  traced_file,
                  driver,
                  is_module,
-                 is_live):
+                 is_live,
+                 report_builder):
         """ Import the code that has been instrumented for live coding.
 
-        :param environment: global variables for the module
         :param traced_file: name of the file to replace with source code from
             stdin, or None if all source code comes from files
         :param str driver: command-line arguments for the driver script
         :param bool is_module: True if the driver is a module, not a script
         :param bool is_live: True if in live coding mode
+        :param ReportBuilder report_builder: to record events when the code
+            runs.
         """
         self.traced = traced
-        self.environment = environment
+        self.environment = {CONTEXT_NAME: report_builder}
         self.traced_file = traced_file
         self.source_code = traced_file and sys.stdin.read()
         self.driver_module = driver[0] if is_module else None
         self.is_live = is_live
         self.source_finder = None
         self.driver_finder = None
+        self.report_builder = report_builder
         if self.traced is not None and self.traced == self.driver_module:
             self.traced = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
 
@@ -190,6 +192,83 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.exec_module(new_mod)
         return new_mod
 
+    def run_python_module(self, modulename):
+        """ Run a python module, as though with ``python -m name args...``.
+
+        :param str modulename: the name of the module, possibly dot separated.
+
+        This is based on code from coverage.py, by Ned Batchelder.
+        https://bitbucket.org/ned/coveragepy
+        """
+        if find_spec:
+            spec = find_spec(modulename)
+            if spec is not None:
+                pathname = spec.origin
+                packagename = spec.name
+            elif (self.traced in (DEFAULT_MODULE_NAME,
+                                  LIVE_MODULE_NAME) and
+                  self.source_code):
+                pathname = self.traced_file
+                packagename = self.driver_module
+            else:
+                raise ImportError(modulename)
+            if pathname.endswith("__init__.py") and not modulename.endswith("__init__"):
+                mod_main = modulename + ".__main__"
+                spec = find_spec(mod_main)
+                if not spec:
+                    raise ImportError(
+                        "No module named %s; "
+                        "%r is a package and cannot be directly executed"
+                        % (mod_main, modulename))
+                pathname = spec.origin
+                packagename = spec.name
+            packagename = packagename.rpartition(".")[0]
+        else:
+            openfile = None
+            glo, loc = globals(), locals()
+            try:
+                # Search for the module - inside its parent package, if any -
+                # using standard import mechanics.
+                try:
+                    if '.' in modulename:
+                        packagename, name = modulename.rsplit('.', 1)
+                        package = __import__(packagename, glo, loc, ['__path__'])
+                        searchpath = package.__path__
+                    else:
+                        packagename, name = None, modulename
+                        searchpath = None  # "top-level search" in imp.find_module()
+                    # noinspection PyDeprecation
+                    openfile, pathname, _ = imp.find_module(name, searchpath)
+
+                    # If `modulename` is actually a package, not a mere module,
+                    # then we pretend to be Python 2.7 and try running its
+                    # __main__.py script.
+                    if openfile is None:
+                        packagename = modulename
+                        name = '__main__'
+                        package = __import__(packagename, glo, loc, ['__path__'])
+                        searchpath = package.__path__
+                        # noinspection PyDeprecation
+                        openfile, pathname, _ = imp.find_module(name, searchpath)
+                    if pathname == self.traced_file:
+                        self.record_module(modulename)
+                except ImportError:
+                    if (self.traced in (DEFAULT_MODULE_NAME,
+                                        LIVE_MODULE_NAME) and
+                            self.source_code):
+                        pathname = self.traced_file
+                        packagename = self.driver_module
+                        packagename = packagename.rpartition(".")[0]
+                    else:
+                        raise
+            finally:
+                if openfile:
+                    openfile.close()
+
+        # Finally, hand the file off to run_python_file for execution.
+        pathname = os.path.abspath(pathname)
+        self.run_python_file(pathname, package=packagename)
+
     def run_python_file(self, filename, package=None, source_code=None):
         """Run a python file as if it were the main program on the command line.
 
@@ -261,9 +340,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                 to_compile = trace_source_tree(to_compile)
                 self.driver_finder.is_tracing = True
         else:
-            self.driver_finder = TracedFinder(source,
-                                                         '',
-                                              PSEUDO_FILENAME)
+            self.driver_finder = TracedFinder(source, '', PSEUDO_FILENAME)
             to_compile = self.driver_finder.source_tree
         code = compile(to_compile, filename or PSEUDO_FILENAME, "exec")
 

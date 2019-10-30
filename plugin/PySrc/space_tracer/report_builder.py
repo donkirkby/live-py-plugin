@@ -318,7 +318,7 @@ class ReportBuilder(object):
     def record_delete(self, name, target, line_number):
         return DeletionTarget(name, target, line_number, self)
 
-    def report(self, total_lines=0):
+    def report(self, total_lines=None):
         self.check_output()
         self.max_width = None
         self.message_limit = None
@@ -335,7 +335,6 @@ class ReportBuilder(object):
                     line_number = i+1
                     self.add_message(message, line_number)
         self.history = []
-        self._check_line_count(total_lines)
         if not traced_blocks:
             end = len(self.messages)
             if self.minimum_blocks:
@@ -346,12 +345,18 @@ class ReportBuilder(object):
         reported_messages = []
         self.reported_blocks = sorted(traced_blocks)
         for first_line, last_line in self.reported_blocks:
+            if total_lines:
+                reported_messages.extend([''] * (first_line -
+                                                 len(reported_messages) - 1))
             for line_number in range(first_line, last_line+1):
                 try:
                     message = self.messages[line_number - 1]
                 except IndexError:
                     message = ''
                 reported_messages.append(message)
+        if total_lines:
+            reported_messages.extend([''] * (total_lines -
+                                             len(reported_messages)))
         return '\n'.join(line.rstrip() for line in reported_messages)
 
     def _check_line_count(self, line_count):

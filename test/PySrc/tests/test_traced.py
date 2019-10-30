@@ -205,3 +205,60 @@ print(f.bar(20))                      | print('22')"""
             'example.py'])
 
     assert expected_report == report
+
+
+def test_one_function_live_mode():
+    """ Need to keep original vertical position to line up with editor. """
+    code = """\
+from space_tracer import traced
+
+
+@traced
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+
+def bar(num):
+    s = 'a'
+    for i in range(num):
+        s += 'b'
+    return s
+
+
+print(foo(3))
+print(bar(3))
+"""
+    expected_report = """\
+
+
+
+
+n = 3
+s = 'x'
+i = 0    | i = 1     | i = 2
+s = 'xy' | s = 'xyy' | s = 'xyyy'
+return 'xyyy'
+
+
+
+
+
+
+
+
+
+
+"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_width', '0',
+            '--live',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert trim_report(expected_report) == trim_report(report)

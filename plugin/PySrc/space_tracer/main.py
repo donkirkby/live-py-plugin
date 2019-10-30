@@ -327,11 +327,16 @@ class TraceRunner(object):
                     messages = traceback.format_exception_only(etype, value)
                 self.report_driver_result(builder, messages)
 
-        report = builder.report()
-        source_width = args.source_width
         used_finder = (traced_importer.source_finder or
                        traced_importer.driver_finder)
         source_code = used_finder and used_finder.source_code
+        source_lines = source_code and source_code.splitlines()
+        if source_lines and traced_importer.is_live:
+            total_lines = len(source_lines)
+        else:
+            total_lines = 0
+        report = builder.report(total_lines)
+        source_width = args.source_width
         if source_code is not None and source_width != 0:
             if args.source_indent >= 0:
                 indent = args.source_indent
@@ -339,7 +344,6 @@ class TraceRunner(object):
             else:
                 indent = 0
                 start_char = -args.source_indent
-            source_lines = source_code.splitlines()
             reported_source_lines = []
             for first_line, last_line in builder.reported_blocks:
                 for line_number in range(first_line, last_line+1):

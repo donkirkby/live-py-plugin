@@ -26,13 +26,14 @@ try:
     from importlib.abc import MetaPathFinder, Loader
     from importlib.machinery import ModuleSpec
     from importlib.util import find_spec
+    from os import get_terminal_size
 except ImportError:
     # Stub out the classes for older versions of Python.
     class MetaPathFinder(object):
         pass
 
     Loader = ModuleSpec = object
-    find_spec = None
+    find_spec = get_terminal_size = None
 
 try:
     from itertools import izip_longest
@@ -55,6 +56,13 @@ def parse_args(command_args=None):
     if launcher.endswith("__main__.py"):
         executable = os.path.basename(sys.executable)
         launcher = executable + " -m " + __package__
+    if get_terminal_size is None:
+        terminal_width = 0
+    else:
+        try:
+            terminal_width, _ = get_terminal_size()
+        except OSError:
+            terminal_width = 0
     parser = argparse.ArgumentParser(
         launcher,
         description='Trace Python code.',
@@ -86,6 +94,11 @@ def parse_args(command_args=None):
                         '--source_indent',
                         type=int,
                         default=0,
+                        help='Number of spaces to indent source code. '
+                             'Negative to skip first columns of source code.')
+    parser.add_argument('--trace_width',
+                        type=int,
+                        default=terminal_width,
                         help='Number of spaces to indent source code. '
                              'Negative to skip first columns of source code.')
     parser.add_argument('-b',
@@ -276,6 +289,8 @@ class TraceRunner(object):
             # so force a reload. This is only likely to happen during testing.
             traced = traced_importer.traced
             for name, module in list(sys.modules.items()):
+                if name == DEFAULT_MODULE_NAME:
+                    continue
                 module_file = getattr(module, '__file__', '')
                 if (traced and traced.startswith(name) or
                         name == LIVE_MODULE_NAME or
@@ -337,7 +352,10 @@ class TraceRunner(object):
             total_lines = 0
         report = builder.report(total_lines)
         source_width = args.source_width
-        if source_code is not None and source_width != 0:
+        if source_code is None or source_width == 0:
+            reported_source_lines = []
+            indent = 0
+        else:
             if args.source_indent >= 0:
                 indent = args.source_indent
                 start_char = 0
@@ -347,22 +365,38 @@ class TraceRunner(object):
             reported_source_lines = []
             for first_line, last_line in builder.reported_blocks:
                 for line_number in range(first_line, last_line+1):
-                    reported_source_lines.append(source_lines[line_number-1][start_char:])
+                    reported_source_lines.append(
+                        source_lines[line_number-1][start_char:])
+            max_source_width = max(map(len, reported_source_lines))
+            if source_width is None:
+                source_width = max_source_width + indent
+            elif source_width < 0:
+                source_width += max_source_width + indent
+
+        trace_width = args.trace_width
+        if trace_width or reported_source_lines:
             report_lines = report.splitlines()
             dump_lines = []
-            max_width = max(map(len, reported_source_lines))
-            if source_width is None:
-                source_width = max_width + indent
-            elif source_width < 0:
-                source_width += max_width + indent
+            if trace_width < 0:
+                max_report_width = max(len(report_line)
+                                       for report_line in report_lines)
+                if source_width:
+                    trace_width += source_width + 3
+                trace_width += max_report_width
             for source_line, report_line in izip_longest(reported_source_lines,
                                                          report_lines,
                                                          fillvalue=''):
                 padded_source_line = indent * ' ' + source_line
                 padded_source_line += (source_width - len(source_line)) * ' '
-                line = padded_source_line[:source_width] + ' |'
+                line = padded_source_line[:source_width]
+                if line:
+                    line += ' |'
+                    if report_line:
+                        line += ' '
                 if report_line:
-                    line += ' ' + report_line
+                    line += report_line
+                if trace_width:
+                    line = line[:trace_width]
                 dump_lines.append(line)
             report = '\n'.join(dump_lines)
         turtle_report = MockTurtle.get_all_reports()

@@ -1,4 +1,5 @@
 from space_tracer.main import TraceRunner, replace_input
+from test_code_tracer_main import EXAMPLE_DRIVER_PATH, EXAMPLE_PRINTING_PATH
 from test_report_builder import trim_report
 
 
@@ -123,6 +124,84 @@ def bar(num):            | num = 3
         report = TraceRunner().trace_command([
             'space_tracer',
             '--traced', '__main__.bar',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert expected_report == report
+
+
+def test_without_traced_file():
+    expected_report = """\
+def foo(x):                       | x = 42
+    return x + 1                  | return 43
+                                  |
+                                  |
+def bar(bucket):                  |
+    bucket.add('bar')             |
+                                  |
+                                  |
+if __name__ == '__live_coding__': |
+    y = foo(3)                    |"""
+
+    report = TraceRunner().trace_command([
+        'space_tracer',
+        '--traced', 'example_source',
+        EXAMPLE_DRIVER_PATH])
+
+    assert expected_report == report
+
+
+def test_default_traced():
+    expected_report = """\
+from __future__ import print_function   |
+                                        |
+                                        |
+def custom_print(text, suffix):         | text = 'Hello, example' | suffix = '!'
+    print(text + suffix)                | print('Hello, example!')
+                                        |
+                                        |
+if __name__ == '__main__':              |
+    custom_print('Hello, example', '!') |"""
+
+    report = TraceRunner().trace_command([
+        'space_tracer',
+        EXAMPLE_PRINTING_PATH])
+
+    assert expected_report == report
+
+
+def test_traced_main_without_traced_file():
+    expected_report = """\
+def custom_print(text, suffix): | text = 'Hello, example' | suffix = '!'
+    print(text + suffix)        | print('Hello, example!')"""
+
+    report = TraceRunner().trace_command([
+        'space_tracer',
+        '--traced=__main__.custom_print',
+        EXAMPLE_PRINTING_PATH])
+
+    assert expected_report == report
+
+
+def test_traced_function():
+    code = """\
+def foo(n):
+    return n + 1
+
+def bar(n):
+    return n - 1
+
+foo(10)
+bar(20)
+"""
+    expected_report = """\
+def bar(n):      | n = 20
+    return n - 1 | return 19"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced=bar',
             '--traced_file', 'example.py',
             'example.py'])
 

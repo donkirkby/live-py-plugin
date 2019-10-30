@@ -4,7 +4,7 @@ import re
 import sys
 
 import pytest
-from mock import call, DEFAULT, patch
+from mock import DEFAULT, patch
 
 from space_tracer import main
 from space_tracer.main import replace_input, TraceRunner
@@ -82,91 +82,6 @@ name = '__main__' """
 
         self.assertReportEqual(expected_report,
                                stdout.write.call_args_list[0][0][0])
-
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
-        'dummy.py',
-        '--source_indent', '4',
-        '--traced_file', 'foo.py'])
-    def test_dump_arg(self, stdin, stdout):
-        code = """\
-i = 1 + 1
-"""
-        expected_report = """\
-    i = 1 + 1 | i = 2"""
-        stdin.read.return_value = code
-
-        main()
-
-        self.assertEqual([call(expected_report), call('\n')],
-                         stdout.write.call_args_list)
-
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
-        'dummy.py',
-        '--source_indent', '2',
-        '--traced_file', 'foo.py'])
-    def test_source_indent_small(self, stdin, stdout):
-        code = """\
-i = 1 + 1
-"""
-        expected_report = """\
-  i = 1 + 1 | i = 2"""
-        stdin.read.return_value = code
-
-        main()
-
-        self.assertEqual([call(expected_report), call('\n')],
-                         stdout.write.call_args_list)
-
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
-        'dummy.py',
-        '--source_indent', '-2',
-        '--traced_file', 'foo.py'])
-    def test_source_indent_negative(self, stdin, stdout):
-        code = """\
-i = 1 + 1
-"""
-        expected_report = """\
-= 1 + 1 | i = 2"""
-        stdin.read.return_value = code
-
-        main()
-
-        self.assertEqual([call(expected_report), call('\n')],
-                         stdout.write.call_args_list)
-
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
-        'dummy.py',
-        '--source_width', '8',
-        '--traced_file', 'foo.py'])
-    def test_source_width_positive(self, stdin, stdout):
-        code = """\
-i = 1 + 1
-"""
-        expected_report = """\
-i = 1 +  | i = 2"""
-        stdin.read.return_value = code
-
-        main()
-
-        self.assertEqual([call(expected_report), call('\n')],
-                         stdout.write.call_args_list)
-
-    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
-        'dummy.py',
-        '--source_width', '-2',
-        '--traced_file', 'foo.py'])
-    def test_source_width_negative(self, stdin, stdout):
-        code = """\
-i = 1 + 1
-"""
-        expected_report = """\
-i = 1 + | i = 2"""
-        stdin.read.return_value = code
-
-        main()
-
-        self.assertEqual([call(expected_report), call('\n')],
-                         stdout.write.call_args_list)
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',

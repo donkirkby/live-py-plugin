@@ -91,10 +91,6 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             self.traced = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
 
     def find_spec(self, fullname, path, target=None):
-        if (fullname == self.traced or
-                fullname in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
-                self.traced.startswith(fullname)):
-            return ModuleSpec(fullname, self, origin=self.traced_file)
         spec = super(TracedModuleImporter, self).find_spec(fullname,
                                                            path,
                                                            target)
@@ -102,7 +98,11 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             if spec.origin == self.traced_file:
                 self.record_module(fullname)
                 return ModuleSpec(fullname, self, origin=self.traced_file)
-            return spec
+            if self.traced_file is None and self.traced.startswith(fullname):
+                return ModuleSpec(fullname, self, origin=spec.origin)
+
+        if fullname == self.traced:
+            return ModuleSpec(fullname, self, origin=self.traced_file)
         return None
 
     def record_module(self, module_name):

@@ -1,3 +1,7 @@
+import sys
+
+import pytest
+
 from space_tracer.main import TraceRunner, replace_input
 from test_code_tracer_main import EXAMPLE_DRIVER_PATH, EXAMPLE_PRINTING_PATH
 from test_report_builder import trim_report
@@ -130,6 +134,9 @@ def bar(num):            | num = 3
     assert expected_report == report
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 0),
+    reason="Can't tell which file to load source code from before 3.0.")
 def test_without_traced_file():
     expected_report = """\
 def foo(x):                       | x = 42

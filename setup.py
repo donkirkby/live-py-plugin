@@ -6,7 +6,7 @@ with open("space_tracer.md", "r") as f:
 # noinspection PyUnresolvedReferences
 setuptools.setup(
     name="space_tracer",
-    version="2.25",
+    version="3.0b0",
     author="Don Kirkby",
     author_email="donkirkby@gmail.com",
     description="Trade time for space when debugging your code.",

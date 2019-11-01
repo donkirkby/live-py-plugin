@@ -13,7 +13,7 @@ changes to that variable, before printing out the final message.
     print(message)
    
 A regular debugger would let you set break points, look at variable values, and
-step through the code. Space Tracer would show you the code with all of the
+step through the code. Space Tracer shows you the code with all of the
 variable assignments, and the loop iterations in columns. Here, you see the
 script on the left, and the variable values and loops on the right, so you can
 read through what happened, like reading a book.
@@ -24,13 +24,13 @@ read through what happened, like reading a book.
     print(message)           | print('Hello, World!!!') 
 
 You can run Space Tracer as a command-line tool, or you can use it in the
-[Live Coding in Python] plugins for PyCharm, Emacs, Eclipse, and Sublime Text.
+[Live Coding in Python] plugins for PyCharm, Emacs, and Sublime Text.
 
 Installing Space Tracer
 -----------------------
 Use `pip` to install it:
 
-    $ pip install git+https://github.com/donkirkby/live-py-plugin@decorator
+    $ pip install git+https://github.com/donkirkby/live-py-plugin
 
 Then copy the script above into a file called `hello.py`, and run it with the `space_tracer` command:
 

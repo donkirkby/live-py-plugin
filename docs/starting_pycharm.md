@@ -1,8 +1,8 @@
 ---
-title: Getting Started with Live Coding
-subtitle: Plug ins for PyCharm, Emacs, Eclipse, or even a browser
+title: Getting Started with Live Coding in PyCharm
+subtitle: Instantly Visualize Your Code
 ---
-I've built a tool that lets you run your Python code as you type it. For
+Live Coding in Python lets you run your Python code as you type it. For
 example, this code draws a 50x50 pixel square.
 
 ![code that draws a 50x50 square][square50]
@@ -10,13 +10,15 @@ example, this code draws a 50x50 pixel square.
 When I change the forward distance to 75, the square immediately changes. I
 don't even have to save the file.
 
-![code that draws a 50x50 square][square75]
+![code that draws a 75x75 square][square75]
 
-In this tutorial, I'll demonstrate three things: live turtle graphics that make a
-fun learning tool, a live coding display that can be used with regular code
-to show you what's happening inside it, and live unit tests. To try it
-yourself, visit [donkirkby.github.com][livepy]. To see it in action, watch
-[my demo video][video], or read on.
+In this tutorial, I'll demonstrate three things: live turtle graphics that make
+a fun learning tool, a live coding display that can be used with regular code
+to show you what's happening inside it, and live unit tests. To try it yourself,
+follow the PyCharm [installation instructions], then type some turtle graphics
+code, as in the example above. Finally, from the Run menu, choose Start Live
+Turtle. You should see a preview of your turtle graphics. You can also watch
+[my demo video][video].
 
 ## Live Turtle Graphics ##
 ![running the turtle code in a window][turtle_window]
@@ -61,7 +63,7 @@ point in his Inventing on Principle video that inspired me to build this tool.
 
 ## Live Coding Display ##
 That was the fun learning tool, now what can you do with real code? I did
-create a turtle class that writes to PDF, so that will let you use turtle
+create turtle classes that write to PDF or SVG, so that will let you use turtle
 graphics in a few more situations, but the main feature is a different view that
 helps you visualize what's happening inside your code so you don't have to keep
 running it in your head. I'll start with a trivial chunk of code where I assign
@@ -74,8 +76,9 @@ That's easy to step through in your head and see that `s` is now
 `'Hello, World!'` Remember, though, that I want to let your brain focus on
 writing code instead of stepping through it.
 
-I open the live coding display on the right, and it shows me what's in the
-variable after each change.
+From PyCharm's Run menu, I choose Start Live Coding, and it opens the live
+coding display like the one on the right (below). The display shows me what's in
+the variable after each change.
 
     # Original source code                   | # Displays variables and loops
     s = 'Hello'                              | s = 'Hello' 
@@ -91,7 +94,7 @@ happening in our code so we don't have to hold it all in our heads.
 It's a bad search function that never finds anything, but let's see how it works
 when we call it.
 
-    def search(n, a):                        | n = 2 a = [1, 2, 4] 
+    def search(n, a):                        | n = 2 | a = [1, 2, 4]
         return -1                            | return -1 
                                              | 
     i = search(2, [1, 2, 4])                 | i = -1 
@@ -102,7 +105,7 @@ value at the end.
 We'll start looking for the value in the array, and the first place to look is
 the middle item.
 
-    def search(n, a):                        | n = 2 a = [1, 2, 4] 
+    def search(n, a):                        | n = 2 | a = [1, 2, 4] 
         low = 0                              | low = 0 
         high = len(a) - 1                    | high = 2 
         mid = low + high // 2                | mid = 1 
@@ -119,7 +122,7 @@ display, like `high = 2`. However, a search function usually won't find the
 item we're searching for on the first try. Let's ask for an item earlier in the
 list and use a while loop to find it.
 
-    def search(n, a):                        | n = 1 a = [1, 2, 4] 
+    def search(n, a):                        | n = 1 | a = [1, 2, 4] 
         low = 0                              | low = 0 
         high = len(a) - 1                    | high = 2 
         while True:                          |          | 
@@ -143,7 +146,7 @@ follow than animated sorting algorithms.
 
 Now let's look for an item later in the list.
 
-    def search(n, a):                        | n = 4 a = [1, 2, 4] 
+    def search(n, a):                        | n = 4 | a = [1, 2, 4] 
         low = 0                              | low = 0 
         high = len(a) - 1                    | high = 2 
         while True:                          |         | 
@@ -166,7 +169,7 @@ value, and it's calculated at the top of the loop. The two values that go into
 it are both 2, so they should average to 2. Oh, I need parentheses to calculate
 the average.
 
-    def search(n, a):                        | n = 4 a = [1, 2, 4] 
+    def search(n, a):                        | n = 4 | a = [1, 2, 4] 
         low = 0                              | low = 0 
         high = len(a) - 1                    | high = 2 
         while True:                          |         | 
@@ -184,7 +187,7 @@ the average.
 
 What happens if we try to find a value that's not in the list?
 
-    def search(n, a):                        | n = 3 a = [1, 2, 4] 
+    def search(n, a):                        | n = 3 | a = [1, 2, 4] 
         low = 0                              | low = 0 
         high = len(a) - 1                    | high = 2 
         while True:                          |         |          |         |         | 
@@ -209,7 +212,7 @@ to exit from the second or third run. If you look at the end of the second run,
 you can see that high is lower than low. That means that we've searched all the
 way from both ends to meet in the middle, and it's time to give up.
 
-    def search(n, a):                        | n = 3 a = [1, 2, 4] 
+    def search(n, a):                        | n = 3 | a = [1, 2, 4] 
         low = 0                              | low = 0 
         high = len(a) - 1                    | high = 2 
         while low <= high:                   |         | 
@@ -232,19 +235,6 @@ I'm in live coding mode.
 
     if __name__ == '__live_coding__':
         i = search(3, [1, 2, 4])
-
-The live coding display is also available for Emacs, thanks to several
-Emacs users who contributed most of it.
-
-![Emacs screen shot][emacs]
-
-I have also started working on a PyCharm plugin. Contributions are
-welcome if you want to help out.
-
-![PyCharm screen shot][pycharm]
-
-Don't feel like installing anything before you can try it out? Try the
-[browser version].
 
 
 ## Live Unit Tests ##
@@ -273,29 +263,31 @@ To start, I write a simple unit test that doesn't have any duplicates.
 
             self.assertEqual(2, n)
 
-Of course, that fails when I run it as a unit test, because I haven't
-written the `count_anagrams()` method. I start by creating
-`anagrams.py` with a stupid version that always returns zero.
+I can run that in PyCharm by pressing
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>. Of course, that fails when I
+run it as a unit test, because I haven't written the `count_anagrams()` method.
+I start by creating `anagrams.py` with a stupid version that always returns
+zero.
 
     def count_anagrams(words):
         return 0
 
 The test now fails with a reasonable complaint.
 
-    FAIL: test_words (test_anagrams.AnagramsTest)
-    ----------------------------------------------------------------------
-    Traceback (most recent call last):
-      File "/home/don/workspace/scratch/test_anagrams.py", line 12, in test_words
-        self.assertEqual(2, n)
-    AssertionError: 2 != 0
+    test_word_counter.py::AnagramsTest::test_words FAILED                    [100%]
+     
+    0 != 2
+    
+    Expected :2
+    Actual   :0
+    <Click to see difference>
 
 I want to see what's happening as I make the unit test pass, so I open
-`anagrams.py`, click on the drop down menu next to the live coding
-button, and choose the `test_anagrams` configuration.
+`anagrams.py`, and then from the Run menu, choose Start Live Coding.
 
-                               | ---------------------- |
-                               | unittest: (failures=1) |
-                               | ---------------------- |
+                               | ---------------- |
+                               | SystemExit: True |
+                               | ---------------- |
     def count_anagrams(words): | words = ['apple', 'melon']
         return 0               | return 0
 
@@ -320,26 +312,23 @@ words is still two.
 I could make the test pass now, but it's a little confusing when both
 tests are being displayed.
 
-                               | ---------------------- | 
-                               | unittest: (failures=1) | 
-                               | ---------------------- | 
+                               | ---------------- | 
+                               | SystemExit: True | 
+                               | ---------------- | 
     def count_anagrams(words): | words = ['apple', 'melon', 'melon'] | words = ['apple', 'melon'] 
         return len(words)      | return 3                            | return 2 
 
-Instead, I'll convince Eclipse to just run the new test method. That
-becomes even more useful as we add more and more test methods. Open
-the test file, and press <kbd>Ctrl</kbd>+<kbd>F9</kbd>. That opens a
-dialog that lets you choose which test methods to run. Double click on
-`test_duplicate_words`, and it will run. Open the `anagrams.py` file, and
-click on the drop down menu next to the live coding button and choose
-the `test_anagrams (1)` configuration. Every time you choose a new
-test method to run, it will add a configuration to the list. When you
-finish a coding session, just remove all the extra configurations. Now
+Instead, I'll convince PyCharm to only run the new test method. That becomes
+even more useful as we add more and more test methods. Open the test file, click
+somewhere in the new test method, and press
+<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>. That creates a new run
+configuration that only runs the current test method. Open the `anagrams.py`
+file, and from the Run menu, choose Start Live Coding again. Now
 you can see the failing test on its own.
 
-                               | ---------------------- |
-                               | unittest: (failures=1) |
-                               | ---------------------- |
+                               | ---------------- |
+                               | SystemExit: True |
+                               | ---------------- |
     def count_anagrams(words): | words = ['apple', 'melon', 'melon']
         return len(words)      | return 3
 
@@ -353,8 +342,7 @@ To remove duplicates, just put all the words into a set before counting.
 
 When you get to the second copy of 'melon', the set doesn't change.
 
-Now we get to the interesting part: detecting anagrams. One way is to
-sort the letters in each word.
+Now we get to the interesting part: detecting anagrams.
 
     def test_anagrams(self):
         words = ['apple', 'melon', 'lemon']
@@ -363,6 +351,7 @@ sort the letters in each word.
 
         self.assertEqual(2, n)
 
+One way is to sort the letters in each word.
 
     def count_anagrams(words): | words = ['apple', 'melon', 'lemon']
         anagrams = set()       | anagrams = set()
@@ -386,13 +375,12 @@ the same, so I add a new test case.
 
         self.assertEqual(1, n)
 
-I choose the new test with <kbd>Ctrl</kbd>+<kbd>F9</kbd>, then open
-`anagrams.py` and choose `test_anagrams.py (2)` from the live coding
-drop down menu.
+I choose the new test with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>, then
+open `anagrams.py` and restart live coding with the new run configuration.
 
-                               | ---------------------- |
-                               | unittest: (failures=1) |
-                               | ---------------------- |
+                               | ---------------- |
+                               | SystemExit: True |
+                               | ---------------- |
     def count_anagrams(words): | words = ['Melon', 'Lemon']
         anagrams = set()       | anagrams = set()
         for word in words:     | word = 'Melon'       | word = 'Lemon'
@@ -405,9 +393,9 @@ You can see that 'Melon' and 'Lemon' get sorted into 'Melno' and
 'Lemno', because upper-case letters sort before lower-case letters. We
 can fix that by switching all the words to lower case.
 
-                                | ---------------------- |
-                                | unittest: (failures=1) |
-                                | ---------------------- |
+                                | ---------------- |
+                                | SystemExit: True |
+                                | ---------------- |
     def count_anagrams(words):  | words = ['Melon', 'Lemon']
         anagrams = set()        | anagrams = set()
         for word in words:      | word = 'Melon'       | word = 'Lemon'
@@ -442,12 +430,11 @@ add another test case.
 
         self.assertEqual(1, n)
 
-If I choose the new test case from the live coding drop down, the
-words are counted separately.
+When I run the new test case, the words are counted separately.
 
-                                | ---------------------- |
-                                | unittest: (failures=1) |
-                                | ---------------------- |
+                                | ---------------- |
+                                | SystemExit: True |
+                                | ---------------- |
     def count_anagrams(words):  | words = ['Straße', 'Strasse']
         anagrams = set()        | anagrams = set()
         for word in words:      | word = 'Straße'       | word = 'Strasse'
@@ -471,40 +458,27 @@ To fix it, I just switch `lower()` to `casefold()`.
 You can see that `casefold()` converts 'ß' to 'ss', while still
 converting 'S' to 's', and the test passes.
 
-Now that I've made each test pass, I run the full test suite again to
-make sure I didn't break any of the other tests.
+Now that I've made each test pass, I run the full test suite again to make sure
+I didn't break any of the other tests. The easiest way to run it is to go to the
+top of the test file, and type <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>.
 
-    Finding files... done.
-    Importing test modules ... done.
-
-    ----------------------------------------------------------------------
-    Ran 4 tests in 0.001s
-
+    Ran 5 tests in 0.002s
+    
     OK
 
-It looks good, so I remove the extra run configurations and publish my
-new software.
+It looks good, so I can publish my new library.
 
-Live unit tests are also available in the Emacs version. In this
-example, I chose the unit test with the command
-
-	C-c M-d -m unittest test_anagrams.AnagramsTest.test_case_folding
-
-![Emacs testing screen shot][emacs-test]
-
-Remember, you can try this tool yourself by visiting
-[donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
-love to hear about any other projects working on the same kind of tools.
+Remember, you can find installation instructions and descriptions of all the
+other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test
+it, and report your bugs. I'd also love to hear about any other projects working
+on the same kind of tools.
 
 [square50]: https://donkirkby.github.io/live-py-plugin/images/demo_square50.png
 [square75]: https://donkirkby.github.io/live-py-plugin/images/demo_square75.png
+[installation instructions]: https://donkirkby.github.io/live-py-plugin/#installing-the-pycharm-plugin
 [livepy]: https://donkirkby.github.io/live-py-plugin/
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [turtle_window]: https://donkirkby.github.io/live-py-plugin/images/demo_turtle_window.png
 [star]: https://donkirkby.github.io/live-py-plugin/images/demo_star.png
 [pinwheel]: https://donkirkby.github.io/live-py-plugin/images/demo_pinwheel.png
 [tdd]: https://donkirkby.github.io/testing/
-[emacs]: https://donkirkby.github.io/live-py-plugin/images/emacs.png
-[pycharm]: https://donkirkby.github.io/live-py-plugin/images/pycharm.png
-[emacs-test]: https://donkirkby.github.io/live-py-plugin/images/emacs-test.png
-[browser version]: https://donkirkby.github.io/live-py-plugin/demo/

@@ -11,12 +11,12 @@ Live coding in Python with PyCharm, Emacs, Sublime Text, or even a browser.
 [Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
 [codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
 
-To see how to use it, watch the [demo video][video] or read the 
-[getting started page][starting]. Want to try it without installing anything?
-Try the [browser version]. This project includes the [Space Tracer] that trades
-time for space when you debug, and the Space Tracer can also be installed as a
-command-line tool. You might also find some useful examples in the
-[tools folder][tools]. To learn more, read about [how it works][how].
+To see how to use one of the Live Coding in Python plugins, watch the
+[demo video][video] or read the getting started pages for [PyCharm], [Emacs],
+or [Sublime Text]. Want to try it without installing anything? Try the
+[browser version]. You can also try [Space Tracer], the command-line tool that
+trades time for space when you debug. You might also find some useful examples
+in the [tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
 
@@ -34,6 +34,9 @@ If you like this project, check out some of my [other projects][projects].
 [cpaulik]: https://github.com/cpaulik
 [JetBrains]: https://www.jetbrains.com/?from=live-py-plugin
 [browser version]: https://donkirkby.github.io/live-py-plugin/demo/
+[PyCharm]: https://donkirkby.github.io/live-py-plugin/starting_pycharm
+[Emacs]: https://donkirkby.github.io/live-py-plugin/starting_emacs
+[Sublime Text]: https://donkirkby.github.io/live-py-plugin/starting_sublime_text
 [Space Tracer]: http://donkirkby.github.io/live-py-plugin/space_tracer
 [James Davies]: https://github.com/Derfies
 
@@ -175,7 +178,6 @@ Uninstalling the Sublime Text plugin
 3. Delete the `python_live_coding` package folder.
 
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
-[starting]: http://donkirkby.github.com/live-py-plugin/gettingstarted
 [emacs]: http://www.gnu.org/software/emacs/
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
 [projects]: http://donkirkby.github.io/

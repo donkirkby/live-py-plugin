@@ -34,17 +34,17 @@ So far, the Emacs mode seems to be the most popular way to use live coding in
 Python. The PyCharm plugin has the most features.
 
 
-| Feature              | PyCharm |  Emacs  | Sublime | browser |
-| -------------------- | ------- | ------- | ------- | ------- |
-| variable assignments | &check; | &check; | &check; | &check; |
-| looping              | &check; | &check; | &check; | &check; |
-| function calls       | &check; | &check; | &check; | &check; |
-| errors and exceptions| &check; | &check; | &check; | &check; |
-| print function       | &check; | &check; | &check; | &check; |
-| unit tests           | &check; | &check; | &cross; | &cross; |
-| turtle graphics      | &check; | &cross; | &cross; | &cross; |
-| matplotlib preview   | &check; | &cross; | &check; | &cross; |
-| pyglet preview       | &check; | &cross; | &check; | &cross; |
+| Feature              | PyCharm |  Emacs  | Sublime | browser | space_tracer |
+| -------------------- | ------- | ------- | ------- | ------- | ------------ |
+| variable assignments | &check; | &check; | &check; | &check; |    &check;   |
+| looping              | &check; | &check; | &check; | &check; |    &check;   |
+| function calls       | &check; | &check; | &check; | &check; |    &check;   |
+| errors and exceptions| &check; | &check; | &check; | &check; |    &check;   |
+| print function       | &check; | &check; | &check; | &check; |    &check;   |
+| unit tests           | &check; | &check; | &cross; | &cross; |    &check;   |
+| turtle graphics      | &check; | &cross; | &cross; | &cross; |    &cross;   |
+| matplotlib preview   | &check; | &cross; | &check; | &cross; |    &cross;   |
+| pyglet preview       | &check; | &cross; | &check; | &cross; |    &cross;   |
 
 If you find the project useful, help us [make it better][contributing].
 
@@ -153,7 +153,7 @@ We'll be adding it to package control soon, but here's the manual method:
 8. Set path to preferred Python executable, particularly if you want to use a
     virtual environment.
 9. Save and close this pane.
-10. Open a new window.
+10. Open or create a Python file.
 11. Navigate to Live Coding -> Start
 12. This should bring up a new pane on the right with the live coding display.
 13. Begin typing in the left pane and see the code trace results on the right.

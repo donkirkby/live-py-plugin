@@ -3,6 +3,8 @@
 *.class
 *.elc
 *~
+/build
+/dist
 .tox
 .cache
 /.coverage

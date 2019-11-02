@@ -43,17 +43,17 @@ So far, the Emacs mode seems to be the most popular way to use live coding in
 Python. The PyCharm plugin has the most features.
 
 
-| Feature              | PyCharm |  Emacs  | Sublime | browser |
-| -------------------- | ------- | ------- | ------- | ------- |
-| variable assignments | &check; | &check; | &check; | &check; |
-| looping              | &check; | &check; | &check; | &check; |
-| function calls       | &check; | &check; | &check; | &check; |
-| errors and exceptions| &check; | &check; | &check; | &check; |
-| print function       | &check; | &check; | &check; | &check; |
-| unit tests           | &check; | &check; | &cross; | &cross; |
-| turtle graphics      | &check; | &cross; | &cross; | &cross; |
-| matplotlib preview   | &check; | &cross; | &check; | &cross; |
-| pyglet preview       | &check; | &cross; | &check; | &cross; |
+| Feature              | PyCharm |  Emacs  | Sublime | browser | space_tracer |
+| -------------------- | ------- | ------- | ------- | ------- | ------------ |
+| variable assignments | &check; | &check; | &check; | &check; |    &check;   |
+| looping              | &check; | &check; | &check; | &check; |    &check;   |
+| function calls       | &check; | &check; | &check; | &check; |    &check;   |
+| errors and exceptions| &check; | &check; | &check; | &check; |    &check;   |
+| print function       | &check; | &check; | &check; | &check; |    &check;   |
+| unit tests           | &check; | &check; | &cross; | &cross; |    &check;   |
+| turtle graphics      | &check; | &cross; | &cross; | &cross; |    &cross;   |
+| matplotlib preview   | &check; | &cross; | &check; | &cross; |    &cross;   |
+| pyglet preview       | &check; | &cross; | &check; | &cross; |    &cross;   |
 
 If you find the project useful, help us [make it better][contributing].
 

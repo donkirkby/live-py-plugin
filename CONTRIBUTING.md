@@ -60,7 +60,7 @@ through the code after the breakpoint.
 7. Once it restarts, open a Python file, and check that live coding works.
 8. Commit the version number changes, push, and create a release on GitHub.
     (Finish the other releases before marking the release on GitHub, if you're
-    releasing more).
+    releasing more.)
 9. Upload the jar file to the plugin repository by clicking the Update plugin
     button on the [plugin page].
 
@@ -116,6 +116,41 @@ the files and `space_tracer` folder, instead of copying them.
     add `logger.info()` calls to `python_live_coding.py`, and then restart
     Sublime Text. Instead of restarting, you can save the plugin settings file
     to trigger a reload.
+
+## Space Tracer Development
+`space_tracer` is the command-line version that you can install with `pip`. It
+doesn't require any special development tools.
+
+### Deploying a new release
+The details are at [packaging.python.org], but the main steps are:
+
+1. Update the version number and development status in `setup.py`.
+2. Activate the latest Python's virtual environment.
+
+        source .tox/py37/bin/activate
+
+3. Install the build tools.
+
+        pip install --upgrade setuptools wheel twine
+
+4. Build the release files.
+
+        python setup.py sdist bdist_wheel
+
+5. Upload the release to PyPI. You'll need a user name and password.
+
+        twine upload dist/*
+
+6. Check that the new version is on the [package page], and try installing it.
+
+        pip install space_tracer
+
+8. Commit the version number changes, push, and create a release on GitHub.
+    (Finish the other releases before marking the release on GitHub, if you're
+    releasing more.)
+
+[packaging.python.org]: https://packaging.python.org/tutorials/packaging-projects/
+[package page]: https://pypi.org/project/space-tracer/
 
 ## Browser Development
 The browser version uses the [Pyodide] project to run Python code in the browser.

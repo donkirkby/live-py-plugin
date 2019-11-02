@@ -359,6 +359,29 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
 
         return code
 
+    def report_driver_result(self, messages):
+        if self.driver[0] == self.traced_file:
+            # Error is already visible, no extra display needed.
+            return
+        messages = list(split_lines(messages))
+        block_size = len(messages) + 2
+        self.report_builder.start_block(1, block_size)
+        message_width = 1
+        for lineno, message in enumerate(messages, 2):
+            message_width = max(len(message), message_width)
+            self.report_builder.add_message(message, lineno)
+
+        header = '-' * message_width + ' '
+        self.report_builder.add_message(header, 1)
+        self.report_builder.add_message(header, block_size)
+        self.report_builder.start_block(1, block_size)
+
+
+def split_lines(messages):
+    for message in messages:
+        for line in message.splitlines():
+            yield line
+
 
 class PatchedModuleFinder(DelegatingModuleFinder):
     is_desperate = False

@@ -932,3 +932,21 @@ return 62'''
             EXAMPLE_DRIVER_PATH])
 
     assert report == expected_report
+
+
+def test_top_level_error():
+    code = '''\
+exit('Failed')
+'''
+    expected_report = '''\
+SystemExit: Failed'''
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_width', '0',
+            '--traced_file', EXAMPLE_DRIVER_PATH,
+            '--traced=__main__',
+            EXAMPLE_DRIVER_PATH])
+
+    assert report == expected_report

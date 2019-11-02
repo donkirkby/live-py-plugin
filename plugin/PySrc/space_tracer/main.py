@@ -208,12 +208,6 @@ class TraceRunner(object):
         self.keepalive = False
         self.return_code = None
 
-    @staticmethod
-    def split_lines(messages):
-        for message in messages:
-            for line in message.splitlines():
-                yield line
-
     def trace_turtle(self, source):
         with replace_input(source):
             self.trace_command(['space_tracer',
@@ -225,20 +219,6 @@ class TraceRunner(object):
                                 PSEUDO_FILENAME])
 
         return '\n'.join(MockTurtle.get_all_reports())
-
-    def report_driver_result(self, builder, messages):
-        messages = list(self.split_lines(messages))
-        block_size = len(messages) + 2
-        builder.start_block(1, block_size)
-        message_width = 1
-        for lineno, message in enumerate(messages, 2):
-            message_width = max(len(message), message_width)
-            builder.add_message(message, lineno)
-
-        header = '-' * message_width + ' '
-        builder.add_message(header, 1)
-        builder.add_message(header, block_size)
-        builder.start_block(1, block_size)
 
     def trace_code(self, source):
         """ Trace a module of source code.
@@ -340,7 +320,7 @@ class TraceRunner(object):
                     messages = traceback.format_exception(etype, value, tb)
                 else:
                     messages = traceback.format_exception_only(etype, value)
-                self.report_driver_result(builder, messages)
+                traced_importer.report_driver_result(messages)
 
         used_finder = (traced_importer.source_finder or
                        traced_importer.driver_finder)
@@ -431,8 +411,8 @@ class TraceRunner(object):
                 try:
                     traced_importer.run_main()
                     if sys.stdout.saw_failures:
-                        self.report_driver_result(builder,
-                                                  ['Pytest reported failures.'])
+                        traced_importer.report_driver_result(
+                            ['Pytest reported failures.'])
                         self.return_code = 1
                 except SystemExit as ex:
                     if ex.code:
@@ -440,7 +420,7 @@ class TraceRunner(object):
                         messages = traceback.format_exception_only(type(ex),
                                                                    ex)
                         message = messages[-1].strip()
-                        self.report_driver_result(builder, [message])
+                        traced_importer.report_driver_result([message])
             traced = traced_importer.traced
             if traced not in sys.modules and traced not in (DEFAULT_MODULE_NAME,
                                                             LIVE_MODULE_NAME):
@@ -454,7 +434,7 @@ class TraceRunner(object):
                 else:
                     message = ("{} doesn't call the {} module. Try a different "
                                "driver.").format(driver_name, traced)
-                self.report_driver_result(builder, [message])
+                traced_importer.report_driver_result([message])
         finally:
             is_decorated = any(frame.is_decorated for frame in builder.history)
             used_finder = traced_importer.source_finder or traced_importer.driver_finder

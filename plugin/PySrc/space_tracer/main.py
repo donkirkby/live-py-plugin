@@ -123,9 +123,9 @@ def parse_args(command_args=None):
                         action='store_true',
                         help='driver is an importable module, not a script')
     parser.add_argument('driver',
-                        nargs=argparse.REMAINDER,
+                        nargs='*',
                         help='script to call traced code, plus any arguments. '
-                             'Default: %%(default)s to use --traced_file.')
+                             'Default: %(default)s to use --traced_file.')
     args = parser.parse_args(command_args[1:])
     if not args.driver:
         if args.traced_file:

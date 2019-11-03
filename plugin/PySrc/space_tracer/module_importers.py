@@ -302,8 +302,12 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         expected_path0 = os.path.abspath(os.path.dirname(top_file))
         # Check that sys.path is as expected, otherwise leave it alone.
         if os.path.abspath(sys.path[0]) == expected_path0:
-            # Set sys.path to target script's folder instead of space_tracer.
-            sys.path[0] = os.path.abspath(os.path.dirname(filename))
+            if package is not None:
+                # add current directory to Python path
+                sys.path[0] = os.getcwd()
+            else:
+                # Set sys.path to target script's folder instead of space_tracer.
+                sys.path[0] = os.path.abspath(os.path.dirname(filename))
 
         # Create a module to serve as __main__
         module_name = (LIVE_MODULE_NAME

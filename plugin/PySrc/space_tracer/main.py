@@ -422,8 +422,8 @@ class TraceRunner(object):
                         message = messages[-1].strip()
                         traced_importer.report_driver_result([message])
             traced = traced_importer.traced
-            if traced not in sys.modules and traced not in (DEFAULT_MODULE_NAME,
-                                                            LIVE_MODULE_NAME):
+            if ((not traced_importer.is_traced_module_imported) and
+                    traced not in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME)):
                 driver_name = os.path.basename(traced_importer.driver[0])
                 if bad_driver:
                     message = bad_driver

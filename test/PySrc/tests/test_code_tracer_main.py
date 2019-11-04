@@ -950,3 +950,19 @@ SystemExit: Failed'''
             EXAMPLE_DRIVER_PATH])
 
     assert report == expected_report
+
+
+@pytest.mark.skipif(
+    sys.version_info < (3, 0),
+    reason="Can't tell which file is about to be imported before 3.0.")
+def test_trace_child_package():
+    expected_report = """\
+def add_message(s):        | s = 'from driver'
+    return s + ' received' | return 'from driver received'"""
+
+    report = TraceRunner().trace_command([
+        'space_tracer',
+        '--traced=example_package.lib_in_package.add_message',
+        EXAMPLE_DRIVER_PATH])
+
+    assert report == expected_report

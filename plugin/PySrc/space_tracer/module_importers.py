@@ -76,6 +76,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         :param ReportBuilder report_builder: to record events when the code
             runs.
         """
+        self.is_traced_module_imported = False
         self.traced = traced
         self.environment = {CONTEXT_NAME: report_builder}
         self.traced_file = traced_file
@@ -87,6 +88,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.source_finder = None
         self.driver_finder = None
         self.report_builder = report_builder
+        self.original_loaders = {}  # {fullname: loader}
         if self.traced is not None and self.traced == self.driver_module:
             self.traced = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
 
@@ -99,7 +101,9 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                 self.record_module(fullname)
                 return ModuleSpec(fullname, self, origin=self.traced_file)
             if self.traced_file is None and self.traced.startswith(fullname):
-                return ModuleSpec(fullname, self, origin=spec.origin)
+                self.original_loaders[fullname] = spec.loader
+                spec.loader = self
+                return spec
 
         if fullname == self.traced:
             return ModuleSpec(fullname, self, origin=self.traced_file)
@@ -155,10 +159,17 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                 if source_finder.traced_node is not None:
                     is_module_traced = True
                     self.source_finder = source_finder
+                else:
+                    original_loader = self.original_loaders.get(module.__name__)
+                    if original_loader is not None:
+                        module_spec.loader = original_loader
+                        return original_loader.exec_module(module)
+
         if source_tree is None:
             source_tree = parse(source_code, parsed_filename)
         if is_module_traced:
             source_tree = trace_source_tree(source_tree)
+            self.is_traced_module_imported = True
         if (module_name in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
                 self.driver_module):
             target_module = self.driver_module

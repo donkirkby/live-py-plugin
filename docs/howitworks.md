@@ -152,8 +152,8 @@ The main classes are:
 
 * `Tracer` visits the abstract syntax tree for a module, and adds all the
     tracing calls.
-* `CodeTracer` is a main control class that coordinates `Tracer` and the import
-    hooks. It also loads the main module and prints the results.
+* `TraceRunner` is a main control class that coordinates `Tracer` and the import
+    hooks.
 * `TracedModuleImporter` is an import hook that decides which module should
     have the tracing calls added when it is imported. It's an importer, which
     means that it is both a finder and a loader.

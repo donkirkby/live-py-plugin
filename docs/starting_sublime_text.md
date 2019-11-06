@@ -13,10 +13,11 @@ don't even have to save the file.
 ![Hello Bob]
 
 In this tutorial, I'll demonstrate a live coding display that can be used to
-show you what's happening inside your code. To try it yourself, follow the
-Sublime Text [installation instructions], then type some code, as in the example
-above. Finally, from the Live Coding menu, choose Start. You should see the
-display on the right. You can also watch [my demo video][video].
+show you what's happening inside your code, as well as previews of Matplotlib
+plots and Pyglet user interfaces. To try it yourself, follow the Sublime Text
+[installation instructions], then type some code, as in the example above.
+Finally, from the Live Coding menu, choose Start. You should see the display on
+the right. You can also watch [my demo video][video].
 
 ## Live Coding Display ##
 I'll start with a trivial chunk of code where I assign
@@ -189,13 +190,60 @@ I'm in live coding mode.
     if __name__ == '__live_coding__':
         i = search(3, [1, 2, 4])
 
+
+## Matplotlib Preview
+The Matplotlib graphing library has a lot of features, and it can be easier to
+fiddle with the settings if you have a preview that updates as you change them.
+I can see a preview by typing the following code, and then choosing Start Live
+Turtle from the Run menu.
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    x = np.linspace(-np.pi, np.pi)
+    c, s = np.cos(x), np.sin(x)
+    
+    plt.plot(x, c)
+    plt.plot(x, s)
+    
+    plt.show()
+
+If I decide that I'd rather put the tick marks at &pi; and -&pi;, I can add a
+call to `plt.xticks()`, and the preview immediately updates.
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    x = np.linspace(-np.pi, np.pi)
+    c, s = np.cos(x), np.sin(x)
+    
+    plt.plot(x, c)
+    plt.plot(x, s)
+    plt.xticks(np.linspace(-np.pi, np.pi, 3))
+    
+    plt.show()
+
+There are lots of Matplotlib tutorials around, and this preview can be useful
+for following along with a tutorial.
+
+## Pyglet Preview
+Pyglet is a library for building user interfaces, and I can preview the user
+interface in the Live Turtle view.
+
+![Pyglet preview]
+
+See the [Pyglet documentation] for details on how to build an interface.
+
+## Learn More
 Remember, you can find installation instructions and descriptions of all the
-other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test
-it, and report your bugs. I'd also love to hear about any other projects working
-on the same kind of tools.
+other Live Coding in Python plugins and tools by visiting
+[donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
+love to hear about any other projects working on the same kind of tools.
 
 [Hello Alice]: https://donkirkby.github.io/live-py-plugin/images/sublime_alice.png
 [Hello Bob]: https://donkirkby.github.io/live-py-plugin/images/sublime_bob.png
 [installation instructions]: https://donkirkby.github.io/live-py-plugin/#installing-the-sublime-text-plugin
 [livepy]: https://donkirkby.github.io/live-py-plugin/
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
+[Pyglet preview]: https://donkirkby.github.io/live-py-plugin/images/sublime_pyglet.png
+[Pyglet documentation]: https://pyglet.readthedocs.io/en/stable/

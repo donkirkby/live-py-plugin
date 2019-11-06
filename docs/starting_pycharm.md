@@ -12,13 +12,18 @@ don't even have to save the file.
 
 ![code that draws a 75x75 square][square75]
 
-In this tutorial, I'll demonstrate three things: live turtle graphics that make
-a fun learning tool, a live coding display that can be used with regular code
-to show you what's happening inside it, and live unit tests. To try it yourself,
-follow the PyCharm [installation instructions], then type some turtle graphics
-code, as in the example above. Finally, from the Run menu, choose Start Live
-Turtle. You should see a preview of your turtle graphics. You can also watch
-[my demo video][video].
+In this tutorial, I'll demonstrate these features:
+* live turtle graphics that make a fun learning tool
+* a live coding display that can be used with regular code to show you what's
+    happening inside it
+* live unit tests
+* matplotlib previews
+* pyglet previews
+
+To try it yourself, follow the PyCharm [installation instructions], then type
+some turtle graphics code, as in the example above. Finally, from the Run menu,
+choose Start Live Turtle. You should see a preview of your turtle graphics. You
+can also watch [my demo video][video].
 
 ## Live Turtle Graphics ##
 ![running the turtle code in a window][turtle_window]
@@ -468,10 +473,35 @@ top of the test file, and type <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>.
 
 It looks good, so I can publish my new library.
 
+## Matplotlib Preview
+The Matplotlib graphing library has a lot of features, and it can be easier to
+fiddle with the settings if you have a preview that updates as you change them.
+I can see a preview by typing the following code, and then choosing Start Live
+Turtle from the Run menu.
+
+![Matplotlib plot of sine and cosine][matplotlib1]
+
+If I decide that I'd rather put the tick marks at &pi; and -&pi;, I can add a
+call to `plt.xticks()`, and the preview immediately updates.
+
+![Matplotlib plot with changed tick positions][matplotlib2]
+
+There are lots of Matplotlib tutorials around, and this preview can be useful
+for following along with a tutorial.
+
+## Pyglet Preview
+Pyglet is a library for building user interfaces, and I can preview the user
+interface in the Live Turtle view.
+
+![Pyglet preview]
+
+See the [Pyglet documentation] for details on how to build an interface.
+
+## Learn More
 Remember, you can find installation instructions and descriptions of all the
-other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test
-it, and report your bugs. I'd also love to hear about any other projects working
-on the same kind of tools.
+other Live Coding in Python plugins and tools by visiting
+[donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
+love to hear about any other projects working on the same kind of tools.
 
 [square50]: https://donkirkby.github.io/live-py-plugin/images/demo_square50.png
 [square75]: https://donkirkby.github.io/live-py-plugin/images/demo_square75.png
@@ -482,3 +512,7 @@ on the same kind of tools.
 [star]: https://donkirkby.github.io/live-py-plugin/images/demo_star.png
 [pinwheel]: https://donkirkby.github.io/live-py-plugin/images/demo_pinwheel.png
 [tdd]: https://donkirkby.github.io/testing/
+[matplotlib1]: https://donkirkby.github.io/live-py-plugin/images/demo_matplotlib1.png
+[matplotlib2]: https://donkirkby.github.io/live-py-plugin/images/demo_matplotlib2.png
+[Pyglet preview]: https://donkirkby.github.io/live-py-plugin/images/demo_pyglet.png
+[Pyglet documentation]: https://pyglet.readthedocs.io/en/stable/

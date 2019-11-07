@@ -194,8 +194,8 @@ I'm in live coding mode.
 ## Matplotlib Preview
 The Matplotlib graphing library has a lot of features, and it can be easier to
 fiddle with the settings if you have a preview that updates as you change them.
-I can see a preview by typing the following code, and then choosing Start Live
-Turtle from the Run menu.
+I can see a preview by typing the following code, and then choosing Start Canvas
+from the Live Coding menu.
 
     import matplotlib.pyplot as plt
     import numpy as np
@@ -228,7 +228,7 @@ for following along with a tutorial.
 
 ## Pyglet Preview
 Pyglet is a library for building user interfaces, and I can preview the user
-interface in the Live Turtle view.
+interface in the Live Canvas view.
 
 ![Pyglet preview]
 

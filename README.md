@@ -94,7 +94,7 @@ Installing the Emacs mode
 It's probably easiest to use the MELPA package archive, as described in this
 section, but the next section gives instructions for installing without MELPA.
 
-1. Install [GNU Emacs][emacs] if you don't already have it.
+1. [Install GNU Emacs] if you don't already have it.
 2. [Install MELPA][melpa]. You probably want to follow the instructions
     for the stable version, instead of the default bleeding-edge version.
 3. Launch the package installer with `M-x package-list-packages`.
@@ -112,7 +112,7 @@ section, but the next section gives instructions for installing without MELPA.
 
 Installing the Emacs mode without MELPA
 ---------------------------------------
-1. Install [GNU Emacs][emacs] if you don't already have it.
+1. [Install GNU Emacs] if you don't already have it.
 2. Clone the latest version of the live-py Emacs mode:
 
         git clone https://github.com/donkirkby/live-py-plugin.git
@@ -178,7 +178,7 @@ Uninstalling the Sublime Text plugin
 3. Delete the `python_live_coding` package folder.
 
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
-[emacs]: http://www.gnu.org/software/emacs/
+[Install GNU Emacs]: http://www.gnu.org/software/emacs/
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
 [projects]: http://donkirkby.github.io/
 [contributing]: https://github.com/donkirkby/live-py-plugin/blob/master/CONTRIBUTING.md

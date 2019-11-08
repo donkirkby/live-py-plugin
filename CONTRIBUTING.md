@@ -47,7 +47,7 @@ through the code after the breakpoint.
     restart IDEA.
 10. Configure a Python SDK in the new project. It's in the File menu under Project Structure.
 
-### Creating an Install Package for the PyCharm plugin ###
+### Publish a new release for the PyCharm plugin
 1. Check that all of the Python unit tests pass, by running tox.
 2. Update the version number and change notes in `pycharm/resources/META-INF/plugin.xml`
 3. Right-click the plugin module in the Project view and select Prepare Plugin
@@ -117,14 +117,21 @@ the files and `space_tracer` folder, instead of copying them.
     Sublime Text. Instead of restarting, you can save the plugin settings file
     to trigger a reload.
 
+### Publish a new release for the Sublime Text plugin
+1. Update the version number in `about.py` and run the `sublime_publish.py`
+    script.
+2. Commit the version number changes and the new package zip, push, and create a
+    release on GitHub. (Finish the other releases before marking the release on
+    GitHub, if you're releasing more.)
+
 ## Space Tracer Development
 `space_tracer` is the command-line version that you can install with `pip`. It
 doesn't require any special development tools.
 
-### Deploying a new release
+### Deploying a new release of Space Tracer
 The details are at [packaging.python.org], but the main steps are:
 
-1. Update the version number and development status in `setup.py`.
+1. Update the version number in `about.py` and development status in `setup.py`.
 2. Activate the latest Python's virtual environment.
 
         source .tox/py37/bin/activate
@@ -145,7 +152,7 @@ The details are at [packaging.python.org], but the main steps are:
 
         pip install space_tracer
 
-8. Commit the version number changes, push, and create a release on GitHub.
+7. Commit the version number changes, push, and create a release on GitHub.
     (Finish the other releases before marking the release on GitHub, if you're
     releasing more.)
 

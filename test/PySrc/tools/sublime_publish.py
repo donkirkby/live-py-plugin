@@ -35,17 +35,23 @@ def existing_folder(folder_name: str) -> Path:
 
 def main():
     args = parse_args()
+    space_tracer_path: Path = args.space_tracer
+    about = {}
+    exec((space_tracer_path / "about.py").read_text(), about)
+    next_version = about['__version__']
+
     out_path: Path = args.out
     package_details_path = out_path / 'package.json'
     package_details = json.loads(package_details_path.read_text())
 
     releases: list = package_details['packages'][0]['releases']
-    last_release: dict = releases[0]
-    next_release = create_release(last_release['version'])
+    for release in releases:
+        if release['version'] == next_version:
+            exit(f'Version {next_version} has already been published.')
+    next_release = create_release(next_version)
     releases.insert(0, next_release)
     package_details_path.write_text(json.dumps(package_details, indent=2))
 
-    next_version = next_release['version']
     print('Packaging', next_version)
     package_path = out_path / f'python_live_coding_v{next_version}.zip'
     with ZipFile(package_path, 'w', ZIP_DEFLATED) as package_zip:
@@ -71,10 +77,7 @@ def main():
     print('Done.')
 
 
-def create_release(last_version):
-    version_parts = last_version.split('.')
-    version_parts[-1] = str(int(version_parts[-1]) + 1)
-    version = '.'.join(version_parts)
+def create_release(version):
     utc_now = datetime.now(timezone.utc)
     package_url = (f'https://donkirkby.github.io/live-py-plugin/'
                    f'sublime-package/python_live_coding_v{version}.zip')

@@ -152,7 +152,13 @@ The details are at [packaging.python.org], but the main steps are:
 
         pip install space_tracer
 
-7. Commit the version number changes, push, and create a release on GitHub.
+7. Remove the uploaded files and recreate the tox environment.
+
+        rm dist/*
+        deactivate
+        tox -r -epy37
+
+8. Commit the version number changes, push, and create a release on GitHub.
     (Finish the other releases before marking the release on GitHub, if you're
     releasing more.)
 

@@ -5,7 +5,7 @@ sublime and space_tracer folders, then it updates the version number in the
 package.json file.
 """
 import json
-from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, ArgumentError
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, ArgumentError, FileType
 from datetime import datetime, timezone
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -23,6 +23,9 @@ def parse_args():
     parser.add_argument('--space_tracer',
                         type=existing_folder,
                         default='../../../plugin/PySrc/space_tracer')
+    parser.add_argument('--license',
+                        type=FileType(),
+                        default='../../../license.txt')
     return parser.parse_args()
 
 
@@ -74,6 +77,10 @@ def main():
                 arc_path = arc_path_folder / relative_path
                 print(arc_path)
                 package_zip.write(child_path, arc_path)
+        license_text = args.license.read()
+        arc_path = package_root / 'LICENSE'
+        print(arc_path)
+        package_zip.writestr(str(arc_path), license_text)
     print('Done.')
 
 

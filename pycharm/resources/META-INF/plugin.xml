@@ -1,17 +1,16 @@
 <idea-plugin>
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>2.25.1</version>
-    <vendor url="http://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
+    <version>3.0.0</version>
+    <vendor url="https://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
       Lets you run your Python code as you type it. Displays variable values,
-      matplotlib, or turtle graphics.
+      matplotlib, Pyglet, or turtle graphics.
     ]]></description>
 
     <change-notes><![CDATA[
-        More improvements to scrolling, handle type hints and broken repr(),
-        plus a fix for Unicode on Windows.
+        Redirect stdin, add Pyglet preview, and control tracing with a decorator.
     ]]>
     </change-notes>
 

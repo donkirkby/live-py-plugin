@@ -1,12 +1,11 @@
 ;;; live-py-mode.el --- Live Coding in Python -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2018 Don Kirkby
+;; Copyright (C) 2019 Don Kirkby
 
 ;; Author: Don Kirkby http://donkirkby.github.io
 ;; Keywords: live coding
 ;; URL: http://donkirkby.github.io/live-py-plugin/
-;; Version: 2018
-;; X-Original-Version: 2.25
+;; Version: 3.0
 ;; Package-Requires: ((emacs "24.3"))
 
 ;; This program is distributed under the MIT License

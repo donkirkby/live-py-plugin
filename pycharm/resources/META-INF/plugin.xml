@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
     <vendor url="https://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
@@ -11,6 +11,7 @@
 
     <change-notes><![CDATA[
         Redirect stdin, add Pyglet preview, and control tracing with a decorator.
+        Fixes unit test drivers, broken by v3.0.0.
     ]]>
     </change-notes>
 

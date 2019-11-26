@@ -75,7 +75,7 @@ Install the `live-py-mode` package as described in the README file, then replace
 `~/.emacs.d/elpa/live-py-mode-X.Y` with symbolic links to your git repository.
 
 Releases are built automatically on each commit, and published at [melpa.org].
-Stable releases are built from each tag.
+Stable releases are built from each tag, but do update the version number.
 
 ### Debugging live-py-mode in Emacs ###
 When adding temporary debugging messages it is recommended to open a second

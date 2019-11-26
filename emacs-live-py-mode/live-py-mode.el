@@ -107,7 +107,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 	 (command-line (if live-py-driver
 			   (concat
 			    command-line-start
-                            " "
+                            " -- "
 			    live-py-driver)
                          command-line-start))
          (pythonpath (concat "PYTHONPATH=" (concat (shell-quote-argument tracer-path)

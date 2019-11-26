@@ -207,7 +207,8 @@ public class LiveCodingAnalyst implements DocumentListener {
             paramsGroup.addParameterAt(i++, "--source_width");
             paramsGroup.addParameterAt(i++, "0");
             paramsGroup.addParameterAt(i++, "--traced");
-            paramsGroup.addParameterAt(i, moduleName);
+            paramsGroup.addParameterAt(i++, moduleName);
+            paramsGroup.addParameterAt(i, "--");
         };
         isRunning = true;
         schedule();

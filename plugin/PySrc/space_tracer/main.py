@@ -127,7 +127,11 @@ def parse_args(command_args=None):
                         help='script to call traced code, plus any arguments. '
                              'Default: %(default)s to use --traced_file.')
     args = parser.parse_args(command_args[1:])
-    if not args.driver:
+    if args.driver:
+        if args.driver[0] == '-m':
+            args.is_module = True
+            args.driver = args.driver[1:]
+    else:
         if args.traced_file:
             args.driver = [args.traced_file]
         else:

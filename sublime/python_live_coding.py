@@ -2,7 +2,6 @@ import io
 import logging
 import os
 import subprocess
-import sys
 
 import sublime, sublime_plugin
 
@@ -35,11 +34,14 @@ def trace_code(input_view):
 
     # Pull location of python exe and code_tracer.py script from user settings.
     settings = sublime.load_settings('python_live_coding.sublime-settings')
-    executable = settings.get('python_executable', sys.executable)
+    executable = settings.get('python_executable', 'python')
     default_space_tracer = os.path.join(__file__, '../space_tracer')
     tracer_path = settings.get('space_tracer', default_space_tracer)
     tracer_path = os.path.abspath(os.path.dirname(tracer_path))
-    python_path = os.pathsep.join([tracer_path] + sys.path)
+
+    # You don't want the current PYTHONPATH/sys.path, because it refers to
+    # SublimeText's bundled Python interpreter.
+    python_path = os.pathsep.join([tracer_path])
     new_env = dict(os.environ, PYTHONPATH=python_path)
     args = [executable,
             '-m', 'space_tracer',
@@ -70,7 +72,6 @@ def trace_code(input_view):
 
 
 def update_output_for_view(input_view):
-
     # Trace the code in input view's buffer.
     view_settings = input_view.settings()
     out, err = trace_code(input_view)
@@ -108,7 +109,6 @@ def update_output_for_view(input_view):
 
 
 class CanvasCommand(object):
-    
     def __init__(self, *args, **kwargs):
         self.name = None
         self.coordinates = []
@@ -116,7 +116,6 @@ class CanvasCommand(object):
     
 
 class CanvasReader(object):
-
     def __init__(self, input_reader):
         self.input_reader = input_reader
         self.next_line = None
@@ -186,52 +185,16 @@ class CanvasReader(object):
         return new_commands
 
 
-class BaseWindowCommand(sublime_plugin.WindowCommand):
-
-    def fixed_set_layout(self, window, layout):
-
-        # A bug was introduced in Sublime Text 3, sometime before 3053, in that 
-        # it changes the active group to 0 when the layout is changed. Annoying.
-        active_group = window.active_group()
-        window.run_command('set_layout', layout)
-        num_groups = len(layout['cells'])
-        window.focus_group(min(active_group, num_groups - 1))
-
-    def get_layout(self):
-        layout = self.window.get_layout()
-        cells = layout['cells']
-        rows = layout['rows']
-        cols = layout['cols']
-        return rows, cols, cells
-
-    def create_pane(self):
-        
-        rows, cols, cells = self.get_layout()
-        active_group = self.window.active_group()
-
-        old_cell = cells[active_group]
-
-        cols.insert(old_cell[XMAX], (cols[old_cell[XMIN]] + cols[old_cell[XMAX]]) / 2)
-        new_cell = [old_cell[XMAX], old_cell[YMIN], old_cell[XMAX] + 1, old_cell[YMAX]]
-        cells.append(new_cell)
-
-        self.fixed_set_layout(self.window, {
-            'cols': cols, 
-            'rows': rows, 
-            'cells': cells
-        })
-
-        # Create a new file in the new group, then switch active group back.
-        self.window.focus_group(len(cells) - 1)
-        output_view = self.window.new_file()
-        self.window.focus_group(active_group)
-        logger.info('Created output view id: {}'.format(output_view.id()))
-
-        return output_view
+def fixed_set_layout(window, layout):
+    # A bug was introduced in Sublime Text 3, sometime before 3053, in that
+    # it changes the active group to 0 when the layout is changed. Annoying.
+    active_group = window.active_group()
+    window.run_command('set_layout', layout)
+    num_groups = len(layout['cells'])
+    window.focus_group(min(active_group, num_groups - 1))
 
 
-class ResetCommand(BaseWindowCommand):
-
+class PythonLiveCodingResetCommand(sublime_plugin.WindowCommand):
     def run(self):
         
         # Close any output views and remove their tag.
@@ -247,16 +210,14 @@ class ResetCommand(BaseWindowCommand):
             view.settings().erase(HAS_IDLE_TIMER)
 
         # Set the layout back to a single group.
-        rows, cols, cells = self.get_layout()
-        self.fixed_set_layout(self.window, {
+        fixed_set_layout(self.window, {
             'cols': [0, 1], 
             'rows': [0, 1], 
             'cells': [[0, 0, 1, 1]]
         })
 
 
-class StartCommand(BaseWindowCommand):
-
+class PythonLiveCodingStartCommand(sublime_plugin.WindowCommand):
     TRACER_ARGS = []
 
     def run(self):
@@ -278,20 +239,44 @@ class StartCommand(BaseWindowCommand):
 
         update_output_for_view(input_view)
 
+    def get_layout(self):
+        layout = self.window.get_layout()
+        cells = layout['cells']
+        rows = layout['rows']
+        cols = layout['cols']
+        return rows, cols, cells
 
-class StartCanvasCommand(StartCommand):
+    def create_pane(self):
+        rows, cols, cells = self.get_layout()
+        active_group = self.window.active_group()
 
+        old_cell = cells[active_group]
+
+        cols.insert(old_cell[XMAX], (cols[old_cell[XMIN]] + cols[old_cell[XMAX]]) / 2)
+        new_cell = [old_cell[XMAX], old_cell[YMIN], old_cell[XMAX] + 1, old_cell[YMAX]]
+        cells.append(new_cell)
+
+        fixed_set_layout(self.window, dict(cols=cols, rows=rows, cells=cells))
+
+        # Create a new file in the new group, then switch active group back.
+        self.window.focus_group(len(cells) - 1)
+        output_view = self.window.new_file()
+        self.window.focus_group(active_group)
+        logger.info('Created output view id: {}'.format(output_view.id()))
+
+        return output_view
+
+
+class PythonLiveCodingStartCanvasCommand(PythonLiveCodingStartCommand):
     TRACER_ARGS = ['--canvas']
 
 
 class OutputViewReplaceCommand(sublime_plugin.TextCommand):
-
     def run(self, edit, text=''):
         self.view.replace(edit, sublime.Region(0, self.view.size()), text)
 
 
 class InputViewEventListener(sublime_plugin.ViewEventListener):
-
     """
     Will execute live coding update once the timeout expires. Based on the 
     IdleWatcher example here: http://www.sublimetext.com/docs/plugin-examples

@@ -1,0 +1,14 @@
+[
+    {
+        "command": "python_live_coding_start",
+        "caption": "Start Python Live Coding"
+    },
+    {
+        "command": "python_live_coding_start_canvas",
+        "caption": "Start Python Live Coding Canvas"
+    },
+    {
+        "command": "python_live_coding_reset",
+        "caption": "Reset Python Live Coding"
+    }
+]

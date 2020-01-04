@@ -14,22 +14,11 @@
                 "children": [
                     {
                         "caption": "Python Live Coding",
-                        "children": [
-                            {
-                                "caption": "Settings – Default",
-                                "command": "open_file",
-                                "args": {
-                                    "file": "${packages}/python_live_coding/python_live_coding.sublime-settings"
-                                }
-                            },
-                            {
-                                "caption": "Settings – User",
-                                "command": "open_file",
-                                "args": {
-                                    "file": "${packages}/User/python_live_coding.sublime-settings"
-                                }
-                            }
-                        ]
+                        "command": "edit_settings",
+                        "args": {
+                            "base_file": "${packages}/python_live_coding/python_live_coding.sublime-settings",
+                            "default": "{\n    \n}"
+                        }
                     }
                 ]
             }
@@ -40,15 +29,15 @@
         "caption": "Live Coding",
         "children": [
             {
-                "command": "start", 
+                "command": "python_live_coding_start",
                 "caption": "Start"
             },
             {
-                "command": "start_canvas", 
+                "command": "python_live_coding_start_canvas",
                 "caption": "Start Canvas"
             },
             {   
-                "command": "reset", 
+                "command": "python_live_coding_reset",
                 "caption": "Reset"
             }
         ]

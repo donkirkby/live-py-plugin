@@ -48,15 +48,15 @@ Python. The PyCharm plugin has the most features.
 
 | Feature              | PyCharm |  Emacs  | Sublime | browser | space_tracer |
 | -------------------- | ------- | ------- | ------- | ------- | ------------ |
-| variable assignments | &check; | &check; | &check; | &check; |    &check;   |
-| looping              | &check; | &check; | &check; | &check; |    &check;   |
-| function calls       | &check; | &check; | &check; | &check; |    &check;   |
-| errors and exceptions| &check; | &check; | &check; | &check; |    &check;   |
-| print function       | &check; | &check; | &check; | &check; |    &check;   |
-| unit tests           | &check; | &check; | &cross; | &cross; |    &check;   |
-| turtle graphics      | &check; | &cross; | &cross; | &cross; |    &cross;   |
-| matplotlib preview   | &check; | &cross; | &check; | &cross; |    &cross;   |
-| pyglet preview       | &check; | &cross; | &check; | &cross; |    &cross;   |
+| variable assignments |    Y    |    Y    |    Y    |    Y    |       Y      |
+| looping              |    Y    |    Y    |    Y    |    Y    |       Y      |
+| function calls       |    Y    |    Y    |    Y    |    Y    |       Y      |
+| errors and exceptions|    Y    |    Y    |    Y    |    Y    |       Y      |
+| print function       |    Y    |    Y    |    Y    |    Y    |       Y      |
+| unit tests           |    Y    |    Y    |         |         |       Y      |
+| turtle graphics      |    Y    |         |         |         |              |
+| matplotlib preview   |    Y    |         |    Y    |         |              |
+| pyglet preview       |    Y    |         |    Y    |         |              |
 
 If you find the project useful, help us [make it better][contributing].
 
@@ -148,34 +148,37 @@ steps:
 
 Installing the Sublime Text plugin
 ----------------------------------
-We'll be adding it to package control soon, but here's the manual method:
+It's easiest to install from package control, but you can find a manual method
+in the CONTRIBUTING file.
 
-1. Open Sublime Text 3.
-2. Navigate to Preferences -> Browse packages...
-3. Create a `python_live_coding` folder under the `Packages` folder.
-4. Download the source code for this project, and copy all the files from the
-    `sublime` folder into the `python_live_coding` package folder you just
-    created.
-5. Also copy the `plugin/PySrc/space_tracer` folder into the same
-    `python_live_coding` package folder.
-6. New menus should now be available, and the live coding should work for
-    simple scripts.
-7. Navigate to Preferences -> Package settings -> Python Live Coding
-    -> Settings - Default
+1. Install [package control].
+2. Open the command palette by typing
+    <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>.
+3. Type "Package" and then select Package Control: Install Package.
+4. Start typing "Live Coding in Python" and select it when it appears in the
+    list.
+5. When it finishes installing, you should see a new "Live Coding" menu.
+6. Live coding should now work for simple scripts.
+7. Navigate to Preferences -> Package settings -> Python Live Coding.
 8. Set path to preferred Python executable, particularly if you want to use a
-    virtual environment.
+    virtual environment. The default is `python3`.
 9. Save and close this pane.
 10. Open or create a Python file.
 11. Navigate to Live Coding -> Start
 12. This should bring up a new pane on the right with the live coding display.
 13. Begin typing in the left pane and see the code trace results on the right.
 
+[package control]: https://packagecontrol.io/installation
+
 Uninstalling the Sublime Text plugin
 ------------------------------------
 
 1. Open Sublime Text 3.
-2. Navigate to Preferences -> Browse packages...
-3. Delete the `python_live_coding` package folder.
+2. Open the command palette by typing
+    <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>.
+3. Type "Package" and then select Package Control: Remove Package.
+4. Start typing "Live Coding in Python" and select it when it appears in the
+    list.
 
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [Install GNU Emacs]: http://www.gnu.org/software/emacs/

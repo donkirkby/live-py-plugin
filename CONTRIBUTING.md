@@ -87,8 +87,8 @@ to check for compiler warnings and test regressions.
 
 
 ## Sublime Text Development
-Follow the regular installation instructions, but create symbolic links to
-the files and `space_tracer` folder, instead of copying them.
+Manually install the package using symbolic links to the files and
+`space_tracer` folder, so changes will be loaded when you restart Sublime Text.
 
 1. Open Sublime Text 3.
 2. Navigate to Preferences -> Browse packages...
@@ -115,7 +115,7 @@ the files and `space_tracer` folder, instead of copying them.
 14. To debug problems, click on the View menu, and choose Show Console. You can
     add `logger.info()` calls to `python_live_coding.py`, and then restart
     Sublime Text. Instead of restarting, you can save the plugin settings file
-    to trigger a reload.
+    to trigger a reload, although that doesn't always work.
 
 ### Publish a new release for the Sublime Text plugin
 1. Update the version number in `about.py` and run the `sublime_publish.py`

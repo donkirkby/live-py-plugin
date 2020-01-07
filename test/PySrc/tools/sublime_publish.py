@@ -91,7 +91,7 @@ def create_release(version):
     next_release = dict(version=version,
                         url=package_url,
                         date=utc_now.strftime('%Y-%m-%d %H:%M:%S'),
-                        sublime_text='*')
+                        sublime_text='>=3000')
     return next_release
 
 

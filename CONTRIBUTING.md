@@ -92,7 +92,7 @@ Manually install the package using symbolic links to the files and
 
 1. Open Sublime Text 3.
 2. Navigate to Preferences -> Browse packages...
-3. Create a `python_live_coding` folder under the `Packages` folder.
+3. Create a `Python Live Coding` folder under the `Packages` folder.
 4. Download the source code for this project, and link most of the files from
     the `sublime` folder into the `python_live_coding` package folder you just
     created. By using symbolic links, your Sublime package files will stay the
@@ -100,7 +100,7 @@ Manually install the package using symbolic links to the files and
     `python_live_coding.sublime-settings` file, because your settings might be
     different from the defaults.
 5. Also link the `plugin/PySrc/space_tracer` folder into the same
-    `python_live_coding` package folder.
+    `Python Live Coding` package folder.
 6. New menus should now be available, and the live coding should work for
     simple scripts.
 7. Navigate to Preferences -> Package settings -> Python Live Coding

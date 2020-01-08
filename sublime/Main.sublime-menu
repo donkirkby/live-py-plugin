@@ -4,10 +4,6 @@
         "caption": "Preferences",
         "mnemonic": "n",
         "children": [
-            {   
-                "command": "reset", 
-                "caption": "Reset"
-            },
             {
                 "caption": "Package Settings",
                 "id": "package-settings",
@@ -16,7 +12,7 @@
                         "caption": "Python Live Coding",
                         "command": "edit_settings",
                         "args": {
-                            "base_file": "${packages}/python_live_coding/python_live_coding.sublime-settings",
+                            "base_file": "${packages}/Python Live Coding/python_live_coding.sublime-settings",
                             "default": "{\n    \n}"
                         }
                     }

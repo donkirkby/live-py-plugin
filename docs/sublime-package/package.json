@@ -2,9 +2,15 @@
   "schema_version": "3.0.0",
   "packages": [
     {
-      "name": "Live Coding in Python",
+      "name": "Python Live Coding",
       "details": "https://github.com/donkirkby/live-py-plugin",
       "releases": [
+        {
+          "version": "3.0.2",
+          "url": "https://donkirkby.github.io/live-py-plugin/sublime-package/python_live_coding_v3.0.2.zip",
+          "date": "2020-01-08 05:43:59",
+          "sublime_text": ">=3000"
+        },
         {
           "version": "3.0.1",
           "url": "https://donkirkby.github.io/live-py-plugin/sublime-package/python_live_coding_v3.0.1.zip",

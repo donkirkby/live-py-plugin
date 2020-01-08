@@ -9,10 +9,10 @@
                 "id": "package-settings",
                 "children": [
                     {
-                        "caption": "Python Live Coding",
+                        "caption": "Live Coding",
                         "command": "edit_settings",
                         "args": {
-                            "base_file": "${packages}/Python Live Coding/python_live_coding.sublime-settings",
+                            "base_file": "${packages}/Live Coding in Python/python_live_coding.sublime-settings",
                             "default": "{\n    \n}"
                         }
                     }

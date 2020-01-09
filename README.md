@@ -1,10 +1,11 @@
-live-py-plugin
-==============
+Live Coding in Python
+=====================
 
 [![Build Status]][travis]
 [![Code Coverage]][codecov]
 
-Live coding in Python with PyCharm, Emacs, Sublime Text, or even a browser.
+Visualize your Python code while you type it in PyCharm, Emacs, Sublime Text, or
+even your browser.
 
 [Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
 [travis]: https://travis-ci.org/live-py-plugin
@@ -159,9 +160,9 @@ in the CONTRIBUTING file.
     list.
 5. When it finishes installing, you should see a new "Live Coding" menu.
 6. Live coding should now work for simple scripts.
-7. Navigate to Preferences -> Package settings -> Python Live Coding.
-8. Set path to preferred Python executable, particularly if you want to use a
-    virtual environment. The default is `python3`.
+7. Navigate to Preferences -> Package settings -> Live Coding.
+8. Set the path to your preferred Python executable, particularly if you want to
+    use a virtual environment. The default is `python`.
 9. Save and close this pane.
 10. Open or create a Python file.
 11. Navigate to Live Coding -> Start

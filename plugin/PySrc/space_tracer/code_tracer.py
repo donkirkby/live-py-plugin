@@ -1,26 +1,16 @@
-from ast import (fix_missing_locations, iter_fields, Add, Assign, AST,
-                 Attribute, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
+from ast import (arg, fix_missing_locations, iter_fields, keyword, Add, Assign,
+                 AST, Attribute, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
-                 Pow, Raise, Return, RShift, Slice, Store, Str, Sub, Subscript,
-                 Tuple, Yield, keyword)
+                 Pow, Raise, Return, RShift, Slice, Starred, Store, Str, Sub,
+                 Subscript, Try, Tuple, Yield)
 from copy import deepcopy
 
-# Import some classes that are only available in Python 3.
-try:
-    from ast import arg, Starred
-except ImportError:
-    arg = Starred = None
 try:
     from ast import FormattedValue
 except ImportError:
+    # Not available in Python 3.5
     FormattedValue = None
-try:
-    from ast import TryExcept, TryFinally
-except ImportError:
-    # Make Python 3.3 try class compatible with old versions.
-    from ast import Try as TryExcept
-    TryFinally = TryExcept
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
@@ -293,11 +283,11 @@ class Tracer(NodeTransformer):
                 [Str(s=format_string), Num(n=existing_node.lineno)]))
         end_assignment = self._create_context_call('end_assignment')
         finally_body = [end_assignment]
-        new_nodes.append(TryFinally(body=try_body,
-                                    finalbody=finally_body,
-                                    handlers=[],
-                                    orelse=[],
-                                    lineno=first_line_number))
+        new_nodes.append(Try(body=try_body,
+                             finalbody=finally_body,
+                             handlers=[],
+                             orelse=[],
+                             lineno=first_line_number))
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(finally_body, last_line_number)
 
@@ -337,11 +327,11 @@ class Tracer(NodeTransformer):
                 [Str(s=format_string), Num(n=existing_node.lineno)]))
         end_assignment = self._create_context_call('end_assignment')
         finally_body = [end_assignment]
-        new_nodes.append(TryFinally(body=try_body,
-                                    finalbody=finally_body,
-                                    handlers=[],
-                                    orelse=[],
-                                    lineno=first_line_number))
+        new_nodes.append(Try(body=try_body,
+                             finalbody=finally_body,
+                             handlers=[],
+                             orelse=[],
+                             lineno=first_line_number))
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(finally_body, last_line_number)
 
@@ -445,10 +435,10 @@ class Tracer(NodeTransformer):
             handler_body = [self._create_context_call('exception'),
                             Raise()]
             new_node.body.append(
-                TryExcept(body=try_body,
-                          handlers=[ExceptHandler(body=handler_body)],
-                          orelse=[],
-                          finalbody=[]))
+                Try(body=try_body,
+                    handlers=[ExceptHandler(body=handler_body)],
+                    orelse=[],
+                    finalbody=[]))
             self._set_statement_line_numbers(try_body, first_line_number)
             self._set_statement_line_numbers(handler_body, last_line_number)
         return new_node
@@ -478,10 +468,10 @@ class Tracer(NodeTransformer):
                             Raise()]
             handler = ExceptHandler(body=handler_body,
                                     lineno=last_line_number)
-            new_body.append(TryExcept(body=try_body,
-                                      handlers=[handler],
-                                      orelse=[],
-                                      finalbody=[]))
+            new_body.append(Try(body=try_body,
+                                handlers=[handler],
+                                orelse=[],
+                                finalbody=[]))
             new_node.body = new_body
             self._set_statement_line_numbers(try_body, first_line_number)
             self._set_statement_line_numbers(handler_body, last_line_number)

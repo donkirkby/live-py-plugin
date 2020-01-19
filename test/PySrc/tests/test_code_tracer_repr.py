@@ -1,7 +1,3 @@
-import sys
-
-import pytest
-
 from space_tracer.main import TraceRunner
 from test_report_builder import trim_report
 
@@ -197,9 +193,6 @@ self.x = 0 | self.x = 1
     assert trim_report(expected_report) == trim_report(report)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 3),
-    reason='unittest.mock not available before Python 3.3')
 def test_repr_mock():
     code = """\
 from unittest.mock import Mock
@@ -218,9 +211,6 @@ m = Mock(name='foo')
     assert trim_report(expected_report) == trim_report(report)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 3),
-    reason='unittest.mock not available before Python 3.3')
 def test_repr_magic_mock():
     code = """\
 from unittest.mock import MagicMock
@@ -239,9 +229,6 @@ m = MagicMock(name='foo')
     assert trim_report(expected_report) == trim_report(report)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 3),
-    reason='unittest.mock not available before Python 3.3')
 def test_repr_unnamed_mock():
     code = """\
 from unittest.mock import Mock
@@ -260,9 +247,6 @@ m = Mock()
     assert trim_report(expected_report) == trim_report(report)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 4),
-    reason='enum not available before Python 3.4')
 def test_repr_enum():
     code = """\
 from enum import Enum
@@ -311,29 +295,6 @@ return <Foo object>
 print('Start.')
 
 print('End.')
-"""
-    tracer = TraceRunner()
-
-    report = tracer.trace_code(code)
-
-    assert trim_report(expected_report) == trim_report(report)
-
-
-@pytest.mark.skipif(
-    sys.version_info < (3, 4),
-    reason='enum not available before Python 3.4')
-def test_repr_enum():
-    code = """\
-from enum import Enum
-
-Animal = Enum('Animal', 'ANT BEE CAT DOG')
-eric = Animal.BEE
-"""
-    expected_report = """\
-
-
-
-eric = <Animal.BEE: 2>
 """
     tracer = TraceRunner()
 

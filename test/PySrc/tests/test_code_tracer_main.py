@@ -849,9 +849,6 @@ def test_no_driver(capsys):
     assert error == expected_error
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 0),
-    reason="Can't tell which file is about to be imported before 3.0.")
 def test_traced_file_without_traced():
     code = '''\
 def foo(n):
@@ -871,9 +868,6 @@ return 62'''
     assert report == expected_report
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 0),
-    reason="Can't tell which file is about to be imported before 3.0.")
 def test_bad_driver_for_traced_file_without_traced():
     code = '''\
 def foo(n):
@@ -952,9 +946,6 @@ SystemExit: Failed'''
     assert report == expected_report
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 0),
-    reason="Can't tell which file is about to be imported before 3.0.")
 def test_trace_child_package():
     expected_report = """\
 def add_message(s):        | s = 'from driver'

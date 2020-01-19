@@ -982,8 +982,6 @@ x = None """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    @skipIf(sys.version_info < (3, 3),
-            'yield from not supported before Python 3.3.')
     def test_yield_from(self):
         # SETUP
         code = """\

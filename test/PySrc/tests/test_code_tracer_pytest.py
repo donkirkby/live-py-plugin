@@ -1,4 +1,3 @@
-import pytest
 import sys
 
 from space_tracer.main import TraceRunner
@@ -167,9 +166,6 @@ a = [1, 2, 3]
     assert expected_report == trim_report(report)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 0),
-    reason='starred assignment not supported before Python 3.0.')
 def test_assign_starred():
     code = """\
 a, *b = (1, 2, 3)

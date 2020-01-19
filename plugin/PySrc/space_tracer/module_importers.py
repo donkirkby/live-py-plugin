@@ -1,34 +1,20 @@
+from ast import parse
+from base64 import standard_b64encode
+import builtins
+from importlib.abc import MetaPathFinder, Loader
+from importlib.machinery import ModuleSpec
+from importlib.util import find_spec
 import inspect
 import io
 import os
 import sys
 import types
-from ast import parse
-from importlib import import_module
-from base64 import standard_b64encode
-
-try:
-    from importlib.abc import MetaPathFinder, Loader
-    from importlib.machinery import ModuleSpec
-    from importlib.util import find_spec
-    imp = None
-except ImportError:
-    # Stub out the classes for older versions of Python.
-    class MetaPathFinder(object):
-        pass
-
-    Loader = ModuleSpec = object
-    find_spec = None
-    import imp
-try:
-    builtins = import_module('__builtin__')
-except ImportError:
-    import builtins
 
 from .code_tracer import trace_source_tree, CONTEXT_NAME
 from .mock_turtle import MockTurtle, monkey_patch_pyglet
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME, TracedFinder
+imp = None
 
 
 class DelegatingModuleFinder(MetaPathFinder):
@@ -39,13 +25,6 @@ class DelegatingModuleFinder(MetaPathFinder):
                 spec = finder_find_spec(fullname, path, target)
                 if spec is not None:
                     return spec
-
-    # find_module() and load_module() are used in Python 2.
-    def find_module(self, fullname, path):
-        for finder in self.following_finders:
-            loader = finder.find_module(fullname, path)
-            if loader is not None:
-                return loader
 
     @property
     def following_finders(self):
@@ -190,21 +169,6 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
 
         exec(compiled_code, self.environment)
 
-    # find_module() and load_module() are used in Python 2.
-    def find_module(self, fullname, path=None):
-        if (fullname == self.traced or
-                fullname in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
-                self.traced.startswith(fullname)):
-            return self
-
-    def load_module(self, fullname):
-        # noinspection PyDeprecation
-        new_mod = imp.new_module(fullname)
-        sys.modules[fullname] = new_mod
-
-        self.exec_module(new_mod)
-        return new_mod
-
     def run_main(self):
         if self.driver_module is None:
             self.run_python_file(
@@ -224,70 +188,28 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         This is based on code from coverage.py, by Ned Batchelder.
         https://bitbucket.org/ned/coveragepy
         """
-        if find_spec:
-            spec = find_spec(modulename)
-            if spec is not None:
-                pathname = spec.origin
-                packagename = spec.name
-            elif (self.traced in (DEFAULT_MODULE_NAME,
-                                  LIVE_MODULE_NAME) and
-                  self.source_code):
-                pathname = self.traced_file
-                packagename = self.driver_module
-            else:
-                raise ImportError(modulename)
-            if pathname.endswith("__init__.py") and not modulename.endswith("__init__"):
-                mod_main = modulename + ".__main__"
-                spec = find_spec(mod_main)
-                if not spec:
-                    raise ImportError(
-                        "No module named %s; "
-                        "%r is a package and cannot be directly executed"
-                        % (mod_main, modulename))
-                pathname = spec.origin
-                packagename = spec.name
-            packagename = packagename.rpartition(".")[0]
+        spec = find_spec(modulename)
+        if spec is not None:
+            pathname = spec.origin
+            packagename = spec.name
+        elif (self.traced in (DEFAULT_MODULE_NAME,
+                              LIVE_MODULE_NAME) and
+              self.source_code):
+            pathname = self.traced_file
+            packagename = self.driver_module
         else:
-            openfile = None
-            glo, loc = globals(), locals()
-            try:
-                # Search for the module - inside its parent package, if any -
-                # using standard import mechanics.
-                try:
-                    if '.' in modulename:
-                        packagename, name = modulename.rsplit('.', 1)
-                        package = __import__(packagename, glo, loc, ['__path__'])
-                        searchpath = package.__path__
-                    else:
-                        packagename, name = None, modulename
-                        searchpath = None  # "top-level search" in imp.find_module()
-                    # noinspection PyDeprecation
-                    openfile, pathname, _ = imp.find_module(name, searchpath)
-
-                    # If `modulename` is actually a package, not a mere module,
-                    # then we pretend to be Python 2.7 and try running its
-                    # __main__.py script.
-                    if openfile is None:
-                        packagename = modulename
-                        name = '__main__'
-                        package = __import__(packagename, glo, loc, ['__path__'])
-                        searchpath = package.__path__
-                        # noinspection PyDeprecation
-                        openfile, pathname, _ = imp.find_module(name, searchpath)
-                    if pathname == self.traced_file:
-                        self.record_module(modulename)
-                except ImportError:
-                    if (self.traced in (DEFAULT_MODULE_NAME,
-                                        LIVE_MODULE_NAME) and
-                            self.source_code):
-                        pathname = self.traced_file
-                        packagename = self.driver_module
-                        packagename = packagename.rpartition(".")[0]
-                    else:
-                        raise
-            finally:
-                if openfile:
-                    openfile.close()
+            raise ImportError(modulename)
+        if pathname.endswith("__init__.py") and not modulename.endswith("__init__"):
+            mod_main = modulename + ".__main__"
+            spec = find_spec(mod_main)
+            if not spec:
+                raise ImportError(
+                    "No module named %s; "
+                    "%r is a package and cannot be directly executed"
+                    % (mod_main, modulename))
+            pathname = spec.origin
+            packagename = spec.name
+        packagename = packagename.rpartition(".")[0]
 
         # Finally, hand the file off to run_python_file for execution.
         pathname = os.path.abspath(pathname)
@@ -418,22 +340,6 @@ class PatchedModuleFinder(DelegatingModuleFinder):
                                               self.is_zoomed)
             return spec
 
-    # find_module() and load_module() are used in Python 2.
-    def find_module(self, fullname, path=None):
-        if fullname not in ('matplotlib',
-                            'matplotlib.pyplot',
-                            'numpy.random',
-                            'random',
-                            'pyglet'):
-            return None
-        loader = super(PatchedModuleFinder, self).find_module(fullname, path)
-        if loader is not None:
-            return PatchedModuleLoader(fullname, loader, self.is_zoomed)
-        if sys.version_info < (3, 0) and not PatchedModuleFinder.is_desperate:
-            # Didn't find anyone to load the module, get desperate.
-            PatchedModuleFinder.is_desperate = True
-            return PatchedModuleLoader(fullname, None, self.is_zoomed)
-
 
 # noinspection PyAbstractClass
 class PatchedModuleLoader(Loader):
@@ -464,15 +370,6 @@ class PatchedModuleLoader(Loader):
         elif self.fullname == 'pyglet':
             # noinspection PyProtectedMember
             monkey_patch_pyglet(MockTurtle._screen.cv)
-
-    def load_module(self, fullname):
-        if self.main_loader is not None:
-            module = self.main_loader.load_module(fullname)
-        else:
-            module = import_module(fullname)
-            PatchedModuleFinder.is_desperate = False
-        self.exec_module(module)
-        return module
 
     def mock_show(self, *_args, **_kwargs):
         figure = self.plt.gcf()

@@ -2,14 +2,8 @@ import re
 
 import sys
 import traceback
-try:
-    from unittest.mock import Mock
-except ImportError:
-    Mock = None
-try:
-    from enum import Enum
-except ImportError:
-    Enum = None
+from unittest.mock import Mock
+from enum import Enum
 
 
 class ReportBuilder(object):
@@ -232,7 +226,7 @@ class ReportBuilder(object):
         assignment = self.assignments[-1]
         # noinspection PyBroadException
         try:
-            if Mock is not None and isinstance(assignment.value, Mock):
+            if isinstance(assignment.value, Mock):
                 # noinspection PyProtectedMember
                 mock_name = assignment.value._mock_name
                 args = '' if mock_name is None else 'name={!r}'.format(mock_name)
@@ -244,7 +238,7 @@ class ReportBuilder(object):
 
             display = format_string.format(*(assignment.indexes +
                                              [value_repr]))
-            if Enum is not None and isinstance(assignment.value, Enum):
+            if isinstance(assignment.value, Enum):
                 # Leave the representation of enums alone.
                 pass
             elif display.endswith('>'):

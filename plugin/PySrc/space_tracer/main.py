@@ -1,18 +1,16 @@
-import __future__
 import argparse
+from contextlib import contextmanager
+from inspect import currentframe
 import io
+from io import StringIO
+from itertools import zip_longest as izip_longest
 import os
 import os.path
+from os import get_terminal_size
 import re
 import sys
 import traceback
 import types
-from contextlib import contextmanager
-from inspect import currentframe
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 
 try:
     # noinspection PyUnresolvedReferences
@@ -21,24 +19,6 @@ try:
 except ImportError:
     IS_PYODIDE = False
     document = window = None
-
-try:
-    from importlib.abc import MetaPathFinder, Loader
-    from importlib.machinery import ModuleSpec
-    from importlib.util import find_spec
-    from os import get_terminal_size
-except ImportError:
-    # Stub out the classes for older versions of Python.
-    class MetaPathFinder(object):
-        pass
-
-    Loader = ModuleSpec = object
-    find_spec = get_terminal_size = None
-
-try:
-    from itertools import izip_longest
-except ImportError:
-    from itertools import zip_longest as izip_longest
 
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers
@@ -140,9 +120,6 @@ def parse_args(command_args=None):
     if args.traced is None:
         if args.traced_file is None or args.traced_file == args.driver[0]:
             args.traced = LIVE_MODULE_NAME if args.live else DEFAULT_MODULE_NAME
-        elif sys.version_info < (3, 0):
-            parser.error('the following argument is required with traced_file '
-                         'in Python 2: traced')
         else:
             # Wait until the file is imported to see what module got traced.
             pass
@@ -477,9 +454,7 @@ class FileSwallower(object):
         while frame is not None:
             report_builder = frame.f_locals.get(CONTEXT_NAME)
             if report_builder is not None:
-                has_print_function = (
-                    sys.version_info >= (3, 0) or
-                    __future__.print_function in frame.f_globals.values())
+                has_print_function = True
                 report_builder.add_output(text,
                                           frame.f_lineno,
                                           has_print_function,

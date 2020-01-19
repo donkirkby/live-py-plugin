@@ -1,25 +1,22 @@
+import types
 from collections import namedtuple
 import io
-# noinspection PyDeprecation
-import imp
 from base64 import standard_b64encode
-import importlib
 import sys
 
 from .canvas import Canvas
 
-if sys.version_info.major >= 3:
-    tkinter_name = 'tkinter'
-else:
-    tkinter_name = 'Tkinter'
 try:
-    tk = importlib.import_module(tkinter_name)
+    import tkinter as tk
 except ImportError:
-    tk = sys.modules[tkinter_name] = imp.new_module(tkinter_name)
+    tkinter_name = 'tkinter'
+    tk = sys.modules[tkinter_name] = types.ModuleType(tkinter_name)
+
     tk.Frame = tk.Canvas = tk.Tk = object
     tk.mainloop = lambda *args, **kwargs: None
-    tk.simpledialog = imp.new_module(tkinter_name)
-    sys.modules[tkinter_name + '.simpledialog'] = tk.simpledialog
+
+    dialog_name = tkinter_name + '.simpledialog'
+    tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
 
 from turtle import TNavigator, TPen  # noqa
 

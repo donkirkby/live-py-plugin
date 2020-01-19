@@ -4,7 +4,7 @@ import re
 import sys
 
 import pytest
-from mock import DEFAULT, patch
+from unittest.mock import DEFAULT, patch
 
 from space_tracer import main
 from space_tracer.main import replace_input, TraceRunner

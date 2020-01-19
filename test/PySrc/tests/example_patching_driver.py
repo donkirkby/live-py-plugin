@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 
 # noinspection PyUnresolvedReferences
 with patch.object(__builtins__, 'sum', return_value=99):

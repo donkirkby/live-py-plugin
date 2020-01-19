@@ -3,7 +3,7 @@ import sys
 from tempfile import TemporaryFile
 from unittest import skipIf
 
-from mock import patch
+from unittest.mock import patch
 
 from space_tracer.main import TraceRunner, FileSwallower, replace_input
 from space_tracer.mock_turtle import MockTurtle

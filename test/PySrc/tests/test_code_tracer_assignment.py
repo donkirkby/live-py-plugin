@@ -138,7 +138,7 @@ b = [1, 20, 21, 1, 20, 300] """
 def test_slice_magic():
     """ All augmented assignments on slices, possible with mocks. """
     code = """\
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class Foo(MagicMock):

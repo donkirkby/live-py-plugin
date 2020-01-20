@@ -33,6 +33,25 @@ i = 1 """
     assert trim_report(expected_report) == trim_report(report)
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 6),
+    reason='type hints not available before Python 3.6')
+def test_annotated_variable():
+    code = """\
+i: int
+for i in range(2):
+    pass
+"""
+    expected_report = """\
+
+i = 0 | i = 1
+      |"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert report == expected_report
+
+
 def test_increment():
     code = """\
 i = 1

@@ -272,7 +272,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                 source = self.source_code
                 traced = self.traced or DEFAULT_MODULE_NAME
             else:
-                with open(filename, 'rU') as f:
+                with open(filename, 'r') as f:
                     source = f.read()
 
         if traced:

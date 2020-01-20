@@ -258,6 +258,8 @@ class Tracer(NodeTransformer):
             targets = [existing_node.target]
         if any(map(self._is_untraceable_attribute, targets)):
             return existing_node
+        if existing_node.value is None:
+            return existing_node
         line_numbers = set()
         find_line_numbers(existing_node, line_numbers)
         first_line_number = min(line_numbers)

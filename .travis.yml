@@ -16,6 +16,10 @@ matrix:
       dist: xenial
       env:
       - TOX_ENV=py37
+    - python: 3.8
+      dist: xenial
+      env:
+      - TOX_ENV=py38
 
 install:
   - travis_retry pip install "tox" "coverage"

@@ -420,18 +420,20 @@ class Tracer(NodeTransformer):
             new_node.body.insert(0, try_body.pop(0))
 
         # trace function parameter values
-        for target in new_node.args.args:
+        arg_nodes = []
+        arg_nodes.extend(getattr(new_node.args, 'posonlyargs', []))
+        arg_nodes.extend(new_node.args.args)
+        arg_nodes.append(new_node.args.kwarg)
+        arg_nodes.append(new_node.args.vararg)
+        arg_nodes.extend(new_node.args.kwonlyargs)
+        for target in arg_nodes:
+            if target is None:
+                continue
             if isinstance(target, Name) and target.id == 'self':
                 continue
-            if arg and isinstance(target, arg) and target.arg == 'self':
+            if isinstance(target, arg) and target.arg == 'self':
                 continue
             new_node.body.append(self._trace_assignment(target, node.lineno))
-        if new_node.args.vararg is not None:
-            new_node.body.append(
-                self._trace_assignment(new_node.args.vararg, node.lineno))
-        if new_node.args.kwarg is not None:
-            new_node.body.append(
-                self._trace_assignment(new_node.args.kwarg, node.lineno))
 
         if try_body:
             handler_body = [self._create_context_call('exception'),

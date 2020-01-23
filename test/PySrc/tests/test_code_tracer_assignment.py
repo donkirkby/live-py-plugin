@@ -11,11 +11,11 @@ def test_assignment():
 i = 1
 """
     expected_report = """\
-i = 1 """
+i = 1"""
 
     report = TraceRunner().trace_code(code)
 
-    assert trim_report(expected_report) == trim_report(report)
+    assert report == expected_report
 
 
 @pytest.mark.skipif(
@@ -213,3 +213,17 @@ foo[1:10] |= 3 """
     report = TraceRunner().trace_code(code)
 
     assert trim_report(expected_report) == trim_report(report)
+
+
+@pytest.mark.skipif(sys.version_info < (3, 8),
+                    reason='Walrus operator added in 3.8.')
+def test_walrus():
+    code = """\
+a = (b := 2) + 3
+"""
+    expected_report = """\
+b = 2 | a = 5"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert report == expected_report

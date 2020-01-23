@@ -264,6 +264,13 @@ class Tracer(NodeTransformer):
         find_line_numbers(existing_node, line_numbers)
         first_line_number = min(line_numbers)
         last_line_number = max(line_numbers)
+        if len(targets) == 1 and isinstance(targets[0], Name):
+            existing_node.value = self._create_bare_context_call(
+                'assign',
+                [Str(s=targets[0].id),
+                 existing_node.value,
+                 Num(n=first_line_number)])
+            return existing_node
         new_nodes = []
         format_string = self._wrap_assignment_targets(
             targets)
@@ -296,6 +303,9 @@ class Tracer(NodeTransformer):
         return new_nodes
 
     def visit_AnnAssign(self, node):
+        return self.visit_Assign(node)
+
+    def visit_NamedExpr(self, node):
         return self.visit_Assign(node)
 
     def visit_AugAssign(self, node):

@@ -49,7 +49,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
 
         :param traced_file: name of the file to replace with source code from
             stdin, or None if all source code comes from files
-        :param str driver: command-line arguments for the driver script
+        :param [str] driver: command-line arguments for the driver script
         :param bool is_module: True if the driver is a module, not a script
         :param bool is_live: True if in live coding mode
         :param ReportBuilder report_builder: to record events when the code
@@ -70,6 +70,14 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.original_loaders = {}  # {fullname: loader}
         if self.traced is not None and self.traced == self.driver_module:
             self.traced = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
+        if self.driver_module == 'pytest':
+            # Assertion rewriting interferes with our module importer,
+            # so disable it. Leave it alone if it's explicitly set.
+            for driver_arg in self.driver:
+                if driver_arg.startswith('--assert'):
+                    break
+            else:
+                self.driver.append('--assert=plain')
 
     def find_spec(self, fullname, path, target=None):
         spec = super(TracedModuleImporter, self).find_spec(fullname,

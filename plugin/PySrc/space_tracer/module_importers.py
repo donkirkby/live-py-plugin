@@ -9,6 +9,7 @@ import io
 import os
 import sys
 import types
+from pathlib import Path
 
 from .code_tracer import trace_source_tree, CONTEXT_NAME
 from .mock_turtle import MockTurtle, monkey_patch_pyglet
@@ -59,7 +60,13 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.is_traced_module_imported = False
         self.traced = traced
         self.environment = {CONTEXT_NAME: report_builder}
-        self.traced_file = traced_file
+        if traced_file is None:
+            self.traced_file = traced_file
+        else:
+            try:
+                self.traced_file = str(Path(traced_file).resolve())
+            except FileNotFoundError:
+                self.traced_file = traced_file
         self.source_code = traced_file and sys.stdin.read()
         self.driver = driver
         self.driver_module = driver[0] if is_module else None

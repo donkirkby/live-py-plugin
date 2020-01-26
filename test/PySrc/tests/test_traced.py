@@ -1,5 +1,7 @@
+import os
+
 from space_tracer.main import TraceRunner, replace_input
-from test_code_tracer_main import EXAMPLE_DRIVER_PATH, EXAMPLE_PRINTING_PATH
+from test_code_tracer_main import EXAMPLE_DRIVER_PATH, EXAMPLE_PRINTING_PATH, EXAMPLE_SOURCE_PATH
 from test_report_builder import trim_report
 
 
@@ -341,3 +343,46 @@ return 'xyyy'
             'example.py'])
 
     assert trim_report(expected_report) == trim_report(report)
+
+
+def test_relative_traced_file():
+    code = """\
+def foo(x):
+    return x + 100
+"""
+    expected_report = """\
+def foo(x):        | x = 42
+    return x + 100 | return 142"""
+    relative_path = os.path.relpath(EXAMPLE_SOURCE_PATH, os.getcwd())
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced_file', relative_path,
+            EXAMPLE_DRIVER_PATH])
+
+    assert report == expected_report
+
+
+def test_unknown_traced_file():
+    code = 'Yo!'
+    expected_report = """\
+--------------------------------------------------------------------- |
+example_driver.py doesn't call bogus_file.py. Try a different driver. |
+--------------------------------------------------------------------- |
+
+
+
+
+
+
+
+"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced_file', 'bogus_path/bogus_file.py',
+            EXAMPLE_DRIVER_PATH])
+
+    assert report == expected_report

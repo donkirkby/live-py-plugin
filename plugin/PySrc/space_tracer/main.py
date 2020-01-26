@@ -326,8 +326,11 @@ class TraceRunner(object):
             reported_source_lines = []
             for first_line, last_line in builder.reported_blocks:
                 for line_number in range(first_line, last_line+1):
-                    reported_source_lines.append(
-                        source_lines[line_number-1][start_char:])
+                    if line_number > len(source_lines):
+                        reported_source_lines.append('')
+                    else:
+                        reported_source_lines.append(
+                            source_lines[line_number-1][start_char:])
             max_source_width = max(map(len, reported_source_lines))
             if source_width is None:
                 source_width = max_source_width + indent

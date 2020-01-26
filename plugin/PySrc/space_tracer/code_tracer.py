@@ -202,7 +202,9 @@ class Tracer(NodeTransformer):
             comparisons.append(('.'.join(names[:-1]),
                                 existing_node.func.value))
 
-        for arg_node in existing_node.args:
+        func_args = existing_node.args + [kwarg.value
+                                          for kwarg in existing_node.keywords]
+        for arg_node in func_args:
             if isinstance(arg_node, Name):
                 comparisons.append((arg_node.id, arg_node))
 

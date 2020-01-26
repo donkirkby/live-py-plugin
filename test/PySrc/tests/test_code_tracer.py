@@ -28,62 +28,6 @@ class CodeTracerTest(ReportTestCase):
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    def test_method_call(self):
-        # SETUP
-        code = """\
-a = [2, 1]
-a.sort()
-a.sort() # second call makes no change, nothing printed
-"""
-        expected_report = """\
-a = [2, 1]
-a = [1, 2] """
-        # EXEC
-        report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_nested_method_call(self):
-        # SETUP
-        code = """\
-class Foo(object):
-    pass
-
-f = Foo()
-f.items = []
-f.items.append(2)
-"""
-        expected_report = """\
-
-
-
-
-f.items = []
-f.items = [2] """
-        # EXEC
-        report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_method_call_output_param(self):
-        # SETUP
-        code = """\
-from heapq import heappush
-l = []
-heappush(l, 5)
-"""
-        expected_report = """\
-
-l = []
-l = [5] """
-        # EXEC
-        report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
     def test_chained_function(self):
         # SETUP
         code = """\

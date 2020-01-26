@@ -127,3 +127,75 @@ print('1 2')
     report = tracer.trace_code(code)
 
     assert report == expected_report
+
+
+def test_method_call():
+    code = """\
+a = [2, 1]
+a.sort()
+a.sort() # second call makes no change, nothing printed
+"""
+    expected_report = """\
+a = [2, 1]
+a = [1, 2]
+"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert report == expected_report
+
+
+def test_nested_method_call():
+    code = """\
+class Foo(object):
+    pass
+
+f = Foo()
+f.items = []
+f.items.append(2)
+"""
+    expected_report = """\
+
+
+
+
+f.items = []
+f.items = [2]"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert report == expected_report
+
+
+def test_method_call_output_param():
+    code = """\
+from heapq import heappush
+l = []
+heappush(l, 5)
+"""
+    expected_report = """\
+
+l = []
+l = [5]"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert report == expected_report
+
+
+def test_method_call_output_param_keyword():
+    code = """\
+def grow(l):
+    l.append(0)
+a = []
+grow(l=a)
+"""
+    expected_report = """\
+l = []
+l = [0]
+a = []
+a = [0]"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert report == expected_report

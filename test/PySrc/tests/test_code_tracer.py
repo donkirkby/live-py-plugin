@@ -538,43 +538,6 @@ RuntimeError: Invalid n. """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    def test_incomplete_iterator(self):
-        # SETUP
-        code = """\
-def gen(n):
-    state = 'Starting'
-    try:
-        for i in range(n):
-            yield i
-    finally:
-        state = 'Done'
-
-
-g = gen(999)
-x = next(g)
-"""
-
-        expected_report = """\
-n = 999
-state = 'Starting'
-
-i = 0
-yield 0 GeneratorExit
-
-state = 'Done'
-
-
-
-x = 0
-"""
-        tracer = TraceRunner()
-
-        # EXEC
-        report = tracer.trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
     def test_return_tuple(self):
         # SETUP
         code = """\

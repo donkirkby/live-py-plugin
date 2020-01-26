@@ -264,10 +264,6 @@ class TraceRunner(object):
                 sys.argv = old_argv
                 sys.meta_path.remove(traced_importer)
                 sys.meta_path.remove(patched_finder)
-
-            for value in traced_importer.environment.values():
-                if isinstance(value, types.GeneratorType):
-                    value.close()
         except SyntaxError:
             self.return_code = 1
             ex = sys.exc_info()[1]
@@ -409,6 +405,9 @@ class TraceRunner(object):
                                                                    ex)
                         message = messages[-1].strip()
                         traced_importer.report_driver_result([message])
+                for value in traced_importer.environment.values():
+                    if isinstance(value, types.GeneratorType):
+                        value.close()
             traced = traced_importer.traced
             if ((not traced_importer.is_traced_module_imported) and
                     traced not in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME)):

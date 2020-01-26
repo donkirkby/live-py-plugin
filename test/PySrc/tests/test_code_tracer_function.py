@@ -199,3 +199,71 @@ a = [0]"""
     report = TraceRunner().trace_code(code)
 
     assert report == expected_report
+
+
+def test_incomplete_iterator():
+    code = """\
+def gen(n):
+    state = 'Starting'
+    try:
+        for i in range(n):
+            yield i
+    finally:
+        state = 'Done'
+
+
+g = gen(999)
+x = next(g)
+"""
+
+    expected_report = """\
+n = 999
+state = 'Starting'
+
+i = 0
+yield 0 GeneratorExit
+
+state = 'Done'
+
+
+
+x = 0"""
+    tracer = TraceRunner()
+
+    report = tracer.trace_code(code)
+
+    assert report == expected_report
+
+
+def test_incomplete_iterator_prints():
+    code = """\
+def gen(n):
+    print('Starting')
+    try:
+        for i in range(n):
+            yield i
+    finally:
+        print('Done')
+
+
+g = gen(999)
+x = next(g)
+"""
+
+    expected_report = """\
+n = 999
+print('Starting')
+
+i = 0
+yield 0 GeneratorExit
+
+print('Done')
+
+
+
+x = 0"""
+    tracer = TraceRunner()
+
+    report = tracer.trace_code(code)
+
+    assert report == expected_report

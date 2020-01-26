@@ -227,3 +227,17 @@ b = 2 | a = 5"""
     report = TraceRunner().trace_code(code)
 
     assert report == expected_report
+
+
+def test_starred():
+    code = """\
+a, *b = 'apple'
+print(a, b)
+"""
+    expected_report = """\
+(a, *b) = ('a', 'p', 'p', 'l', 'e')
+print("a ['p', 'p', 'l', 'e']")"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert report == expected_report

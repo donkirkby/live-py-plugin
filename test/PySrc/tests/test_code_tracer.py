@@ -28,104 +28,6 @@ class CodeTracerTest(ReportTestCase):
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    def test_loop(self):
-        # SETUP
-        code = """\
-i = 1
-for j in range(3):
-    i += j
-"""
-        expected_report = """\
-i = 1
-j = 0 | j = 1 | j = 2
-i = 1 | i = 2 | i = 4 """
-        # EXEC
-        report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_loop_target_list(self):
-        # SETUP
-        code = """\
-for a,b in [(1,2)]:
-    c = a + b
-"""
-        expected_report = """\
-a = 1 | b = 2
-c = 3
-"""
-        tracer = TraceRunner()
-
-        # EXEC
-        report = tracer.trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_nested_loop(self):
-        # SETUP
-        code = """\
-n = 0
-for i in range(2):
-    n += i
-    for j in range(3):
-        n += j
-"""
-        expected_report = """\
-n = 0
-i = 0                 | i = 1
-n = 0                 | n = 4
-j = 0 | j = 1 | j = 2 | j = 0 | j = 1 | j = 2
-n = 0 | n = 1 | n = 3 | n = 4 | n = 5 | n = 7 """
-        # EXEC
-        report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_for_else(self):
-        # SETUP
-        code = """\
-i = 1
-for j in range(3):
-    i += j
-else:
-    i *= 10
-"""
-        expected_report = """\
-i = 1
-j = 0 | j = 1 | j = 2
-i = 1 | i = 2 | i = 4
-
-i = 40 """
-        # EXEC
-        report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_while_else(self):
-        # SETUP
-        code = """\
-i = 0
-while i < 2:
-    i += 1
-else:
-    i *= 10
-"""
-        expected_report = """\
-i = 0
-      |
-i = 1 | i = 2
-
-i = 20 """
-        # EXEC
-        report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
     def test_method_call(self):
         # SETUP
         code = """\
@@ -178,27 +80,6 @@ l = []
 l = [5] """
         # EXEC
         report = TraceRunner().trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_loop_conditional(self):
-        # SETUP
-        code = """\
-for i in range(3):
-    if i == 1:
-        c = 5
-c = 2
-"""
-        expected_report = """\
-i = 0 | i = 1 | i = 2
-      |       |
-      | c = 5 |
-c = 2 """
-        tracer = TraceRunner()
-
-        # EXEC
-        report = tracer.trace_code(code)
 
         # VERIFY
         self.assertReportEqual(expected_report, report)
@@ -310,46 +191,6 @@ IndentationError: expected an indented block """
         # VERIFY
         self.assertReportEqual(expected_report, report)
 
-    def test_infinite_loop_by_count(self):
-        # SETUP
-        code = """\
-n = 0
-while True:
-    n += 1
-"""
-        expected_report = """\
-n = 0
-      |       |
-n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
-        tracer = TraceRunner()
-        tracer.message_limit = 8
-
-        # EXEC
-        report = tracer.trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_infinite_loop_by_width(self):
-        # SETUP
-        code = """\
-n = 0
-while True:
-    n += 1
-"""
-        expected_report = """\
-n = 0
-      |       |
-n = 1 | n = 2 | RuntimeError: live coding message limit exceeded """
-        tracer = TraceRunner()
-        tracer.max_width = 20
-
-        # EXEC
-        report = tracer.trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
     def test_infinite_recursion_by_width(self):
         # SETUP
         code = """\
@@ -366,47 +207,6 @@ RuntimeError: live coding message limit exceeded
 """
         tracer = TraceRunner()
         tracer.max_width = 13
-
-        # EXEC
-        report = tracer.trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_infinite_loop_pass(self):
-        # SETUP
-        code = """\
-while True:
-    pass
-"""
-        expected_report = """\
-RuntimeError: live coding message limit exceeded """
-        tracer = TraceRunner()
-        tracer.message_limit = 3
-
-        # EXEC
-        report = tracer.trace_code(code)
-
-        # VERIFY
-        self.assertReportEqual(expected_report, report)
-
-    def test_infinite_loop_pass_in_function(self):
-        # SETUP
-        code = """\
-def foo():
-    while True:
-        pass
-
-foo()
-"""
-        expected_report = """\
-
-RuntimeError: live coding message limit exceeded
-
-
-RuntimeError: live coding message limit exceeded """
-        tracer = TraceRunner()
-        tracer.message_limit = 3
 
         # EXEC
         report = tracer.trace_code(code)

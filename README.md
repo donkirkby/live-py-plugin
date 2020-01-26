@@ -30,7 +30,7 @@ IDEA licenses.
 If you like this project, check out some of my [other projects][projects].
 
 [how]: http://donkirkby.github.io/live-py-plugin/howitworks
-[screenshot]: http://donkirkby.github.com/live-py-plugin/images/demo_star.png
+[screenshot]: https://donkirkby.github.io/live-py-plugin/images/demo_star.png
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik
 [JetBrains]: https://www.jetbrains.com/?from=live-py-plugin

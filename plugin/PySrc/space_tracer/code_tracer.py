@@ -584,7 +584,10 @@ class Tracer(NodeTransformer):
             todo = list(todo)
         except TypeError:
             # wasn't iterable, treat it as a single item
-            trace = self._trace_assignment(targets)
+            try:
+                trace = self._trace_assignment(targets)
+            except TypeError:
+                trace = None
             if trace:
                 new_nodes.append(trace)
             return new_nodes
@@ -599,10 +602,20 @@ class Tracer(NodeTransformer):
             arg_name = target.id
         elif arg and isinstance(target, arg):
             arg_name = target.arg
-        else:
-            assert_message = 'Target type was {}.'.format(type(target))
-            assert isinstance(target, str), assert_message
+        elif isinstance(target, Starred):
+            arg_name = target.value.id
+        elif isinstance(target, Attribute):
+            args = [Str(s='{}.{}'.format(target.value.id, target.attr)),
+                    Attribute(value=Name(id=target.value.id, ctx=Load()),
+                              attr=target.attr,
+                              ctx=Load()),
+                    Num(n=lineno)]
+            return self._create_context_call('assign', args)
+        elif isinstance(target, str):
             arg_name = target
+        else:
+            message = 'Cannot trace assignment to a {}.'.format(type(target))
+            raise TypeError(message)
 
         args = [Str(s=arg_name),
                 Name(id=arg_name, ctx=Load()),

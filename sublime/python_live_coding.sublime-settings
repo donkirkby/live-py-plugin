@@ -1,7 +1,15 @@
 {
-    // Uncomment any of these lines to override the defaults.
+    // Uncomment any of these settings to override the defaults.
     // Location of python interpreter to run the code tracer.
+    // Point to a virtualenv's python command to use all its packages.
     // "python_executable": "/path/to/python",
+
+    // Driver script to launch the file you're editing. Use -m for a module.
+    // "driver": "/path/to/script.py arg1 arg2",
+
+    // Working folder when launching the script, defaults to the current file's
+    // directory.
+    // "working_path": "/path/to/folder",
 
     // Location of space_tracer package folder.
     // "space_tracer": "/path/to/space_tracer",

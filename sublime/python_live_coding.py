@@ -1,6 +1,7 @@
 import io
 import logging
 import os
+import shlex
 import subprocess
 
 import sublime, sublime_plugin
@@ -38,6 +39,9 @@ def trace_code(input_view):
     default_space_tracer = os.path.join(__file__, '../space_tracer')
     tracer_path = settings.get('space_tracer', default_space_tracer)
     tracer_path = os.path.abspath(os.path.dirname(tracer_path))
+    driver = shlex.split(settings.get('driver', input_view.file_name()))
+    working_path = settings.get('working_path',
+                                os.path.dirname(input_view.file_name()))
 
     # You don't want the current PYTHONPATH/sys.path, because it refers to
     # SublimeText's bundled Python interpreter.
@@ -50,8 +54,8 @@ def trace_code(input_view):
             '--traced_file', input_view.file_name()]
     if tracer_args:
         args.extend(tracer_args)
-    args.append(input_view.file_name())
-
+    args.append('--')
+    args.extend(driver)
     # Startup info so we don't open a new command prompt in windows.
     startupinfo = None
     if os.name == 'nt':
@@ -61,11 +65,12 @@ def trace_code(input_view):
     # logger.info('space_tracer args: ' + ' '.join(args))
     # Launch, pipe in code and return.
     proc = subprocess.Popen(
-        args, 
-        stdin=subprocess.PIPE, 
-        stdout=subprocess.PIPE, 
-        stderr=subprocess.PIPE, 
+        args,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         startupinfo=startupinfo,
+        cwd=working_path,
         universal_newlines=True,
         env=new_env)
     return proc.communicate(input=contents)

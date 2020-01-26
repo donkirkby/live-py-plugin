@@ -11,8 +11,8 @@ you planning to submit your own fix in a pull request? Please include a small
 code sample and what you would like the live code display to show for that code.
 
 ## PyCharm Development ##
-There is also a PyCharm version of the plugin. You can work on it with
-IntelliJ [IDEA], and follow the [plugin development guidelines][idea-dev].
+You can work on the PyCharm version of the plugin with IntelliJ [IDEA], and
+follow the [plugin development guidelines][idea-dev].
 
 If you're trying to find the code for some feature of PyCharm, put a breakpoint
 in `ActionUtil.performActionDumbAware()`, then use the feature and step
@@ -49,7 +49,8 @@ through the code after the breakpoint.
 
 ### Publish a new release for the PyCharm plugin
 1. Check that all of the Python unit tests pass, by running tox.
-2. Update the version number and change notes in `pycharm/resources/META-INF/plugin.xml`
+2. Update the version number and change notes in `about.py` and
+    `pycharm/resources/META-INF/plugin.xml`
 3. Right-click the plugin module in the Project view and select Prepare Plugin
     Module 'livepy' For Deployment in the context menu.
 4. Install the new plugin jar into your IntelliJ or PyCharm. Sometimes it
@@ -134,7 +135,7 @@ The details are at [packaging.python.org], but the main steps are:
 1. Update the version number in `about.py` and development status in `setup.py`.
 2. Activate the latest Python's virtual environment.
 
-        source .tox/py37/bin/activate
+        source .tox/py38/bin/activate
 
 3. Install the build tools.
 
@@ -156,7 +157,7 @@ The details are at [packaging.python.org], but the main steps are:
 
         rm dist/*
         deactivate
-        tox -r -epy37
+        tox -r -epy38
 
 8. Commit the version number changes, push, and create a release on GitHub.
     (Finish the other releases before marking the release on GitHub, if you're

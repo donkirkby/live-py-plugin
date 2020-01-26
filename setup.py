@@ -20,7 +20,7 @@ setuptools.setup(
     package_dir={'': 'plugin/PySrc/'},
     entry_points=dict(console_scripts=[
         'space_tracer = space_tracer:main']),
-    classifiers=[
+    classifiers=[  # from https://pypi.org/classifiers/
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Debuggers",
         "Programming Language :: Python :: 3.5",

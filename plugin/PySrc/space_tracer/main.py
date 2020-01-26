@@ -305,8 +305,12 @@ class TraceRunner(object):
 
         used_finder = (traced_importer.source_finder or
                        traced_importer.driver_finder)
-        source_code = used_finder and used_finder.source_code
-        source_lines = source_code and source_code.splitlines()
+        is_traced = (traced_importer.is_traced_module_imported or
+                     (used_finder and used_finder.is_tracing))
+        source_code = (is_traced and
+                       used_finder and
+                       used_finder.source_code) or ''
+        source_lines = source_code.splitlines()
         if source_lines and traced_importer.is_live:
             total_lines = len(source_lines)
         else:

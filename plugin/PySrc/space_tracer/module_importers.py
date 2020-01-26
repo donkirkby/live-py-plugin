@@ -47,6 +47,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                  report_builder):
         """ Import the code that has been instrumented for live coding.
 
+        :param str traced: name of module, function, class, or method to trace
         :param traced_file: name of the file to replace with source code from
             stdin, or None if all source code comes from files
         :param [str] driver: command-line arguments for the driver script

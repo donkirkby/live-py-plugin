@@ -318,9 +318,7 @@ foo = 'Hello, World!' | ------------------------- |
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
-        '--source_width', '0',
         '--traced_file', 'foo.py',
-        '--traced', 'foo',
         'bogus_driver.py'])
     def test_unknown_driver(self, stdin, stdout):
         source = """\
@@ -889,7 +887,6 @@ example_driver.py doesn't call example_printing.py. Try a different driver. |
     with replace_input(code):
         report = TraceRunner().trace_command([
             'space_tracer',
-            '--source_width', '0',
             '--traced_file', EXAMPLE_PRINTING_PATH,
             EXAMPLE_DRIVER_PATH])
 

@@ -151,7 +151,7 @@ The details are at [packaging.python.org], but the main steps are:
 
 6. Check that the new version is on the [package page], and try installing it.
 
-        pip install space_tracer
+        pip install --no-cache space_tracer
 
 7. Remove the uploaded files and recreate the tox environment.
 

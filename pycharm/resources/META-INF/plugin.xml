@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>4.0.0</version>
+    <version>4.0.1</version>
     <vendor url="https://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
@@ -10,7 +10,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        The biggest change in this release is dropping support for Python 2.
+        The biggest change in the 4.0 release is dropping support for Python 2.
         There is also support for Python 3.7 and 3.8 features, like the walrus
         operator, and a bunch of bug fixes.
     ]]>

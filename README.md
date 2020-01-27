@@ -54,7 +54,7 @@ Python. The PyCharm plugin has the most features.
 | function calls       |    Y    |    Y    |    Y    |    Y    |       Y      |
 | errors and exceptions|    Y    |    Y    |    Y    |    Y    |       Y      |
 | print function       |    Y    |    Y    |    Y    |    Y    |       Y      |
-| unit tests           |    Y    |    Y    |         |         |       Y      |
+| unit tests           |    Y    |    Y    |    Y    |         |       Y      |
 | turtle graphics      |    Y    |         |         |         |              |
 | matplotlib preview   |    Y    |         |    Y    |         |              |
 | pyglet preview       |    Y    |         |    Y    |         |              |

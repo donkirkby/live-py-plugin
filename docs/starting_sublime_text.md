@@ -13,11 +13,11 @@ don't even have to save the file.
 ![Hello Bob]
 
 In this tutorial, I'll demonstrate a live coding display that can be used to
-show you what's happening inside your code, as well as previews of Matplotlib
-plots and Pyglet user interfaces. To try it yourself, follow the Sublime Text
-[installation instructions], then type some code, as in the example above.
-Finally, from the Live Coding menu, choose Start. You should see the display on
-the right. You can also watch [my demo video][video].
+show you what's happening inside your code, live unit tests, and previews of
+Matplotlib plots and Pyglet user interfaces. To try it yourself, follow the
+Sublime Text [installation instructions], then type some code, as in the example
+above. Finally, from the Live Coding menu, choose Start. You should see the
+display on the right. You can also watch [my demo video][video].
 
 ## Live Coding Display ##
 I'll start with a trivial chunk of code where I assign
@@ -191,6 +191,278 @@ I'm in live coding mode.
         i = search(3, [1, 2, 4])
 
 
+## Live Unit Tests ##
+In that example, I kept changing the parameters to search for
+different items in the list. Wouldn't each set of search parameters
+make a nice unit test? I think unit tests help you [write better
+code][tdd], so you can use the live coding display as you add each
+unit test and make it pass.
+
+In this section, I'll write a function that counts the number of
+unique words in a list. However, words with the same letters are
+counted as the same word. For example, the words "apple", "lemon", and
+"melon" would only count as two words, because "lemon" and "melon"
+have the same letters in different order.
+
+To start, I write a simple unit test that doesn't have any duplicates.
+
+    from unittest import TestCase
+    from anagrams import count_anagrams
+
+    class AnagramsTest(TestCase):
+        def test_words(self):
+            words = ['apple', 'melon']
+
+            n = count_anagrams(words)
+
+            self.assertEqual(2, n)
+
+I can run that in the shell with a Python command like this:
+
+    python -m unittest test_anagrams.py
+
+Of course, that fails when I
+run it as a unit test, because I haven't written the `count_anagrams()` method.
+I start by creating `anagrams.py` with a stupid version that always returns
+zero.
+
+    def count_anagrams(words):
+        return 0
+
+The test now fails with a reasonable complaint.
+
+    $ python -m unittest test_anagrams.py
+    F
+    ======================================================================
+    FAIL: test_words (test_anagrams.AnagramsTest)
+    ----------------------------------------------------------------------
+    Traceback (most recent call last):
+      File "/home/you/workspace/scratch/test_anagrams.py", line 10, in test_words
+        self.assertEqual(2, n)
+    AssertionError: 2 != 0
+    
+    ----------------------------------------------------------------------
+    Ran 1 test in 0.000s
+    
+    FAILED (failures=1)
+    $
+
+I want to see what's happening as I make the unit test pass, start live unit
+tests with these steps:
+
+1. From the Preferences menu, choose Package Settings: Live Coding. That opens
+    two panes. The one on the left is default settings for the package, and the
+    one on the right is your user settings. You can copy settings from the left
+    to the right, and then uncomment the ones you want to use.
+2. If you haven't already done so, set the `python_executable` setting. Use a
+    virtual environment if you want access to all the packages installed in that
+    virtual environment.
+3. Set the `driver` setting to run your unit test. The user settings should now
+    look something like this:
+
+        {
+            // Uncomment any of these settings to override the defaults.
+            // Location of python interpreter to run the code tracer.
+            // Point to a virtualenv's python command to use all its packages.
+            "python_executable": "/home/you/venv/bin/python3.8",
+        
+            // Driver script to launch the file you're editing. Use -m for a module.
+            "driver": "-m unittest test_anagrams.py"
+        }
+
+4. Save settings and close the settings window.
+5. If the live coding display is still open from the first section, choose Reset
+    from the Live Coding menu.
+6. Open the `anagrams.py` file.
+7. From the Live Coding menu, choose Start. You should see something like this:
+
+                               | ---------------- |
+                               | SystemExit: True |
+                               | ---------------- |
+    def count_anagrams(words): | words = ['apple', 'melon']
+        return 0               | return 0
+
+Now I can see the input parameters and the return value, as well as
+the fact that the test failed. Next, I make that test pass with the
+simplest code that could possibly work.
+
+    def count_anagrams(words): | words = ['apple', 'melon']
+        return len(words)      | return 2
+
+Once the test passes, I can add another test method with another
+scenario. This one includes two copies of 'melon', so the number of unique
+words is still two.
+
+    def test_duplicate_words(self):
+        words = ['apple', 'melon', 'melon']
+
+        n = count_anagrams(words)
+
+        self.assertEqual(2, n)
+
+I could make the test pass now, but it's a little confusing when both
+tests are being displayed.
+
+                               | ---------------- | 
+                               | SystemExit: True | 
+                               | ---------------- | 
+    def count_anagrams(words): | words = ['apple', 'melon', 'melon'] | words = ['apple', 'melon'] 
+        return len(words)      | return 3                            | return 2 
+
+Instead, I'll only run the new test method. That becomes even more useful as we
+add more and more test methods. Open the settings, and change the driver:
+
+    "driver": "-m unittest test_anagrams.AnagramsTest.test_duplicate_words"
+
+That only runs the current test method. Save the settings, switch to the
+`anagrams.py` file, and make a small change. Now you can see the failing test on
+its own.
+
+Each time you add a new test, change the driver command to run that test. It's
+even easier if you start by calling each new test `test()`, and then rename it
+once it passes. Then you can just leave the driver command the same as you add
+each new test.
+
+                               | ---------------- |
+                               | SystemExit: True |
+                               | ---------------- |
+    def count_anagrams(words): | words = ['apple', 'melon', 'melon']
+        return len(words)      | return 3
+
+To remove duplicates, just put all the words into a set before counting.
+
+    def count_anagrams(words): | words = ['apple', 'melon', 'melon'] 
+        anagrams = set()       | anagrams = set() 
+        for word in words:     | word = 'apple'       | word = 'melon'                | word = 'melon' 
+            anagrams.add(word) | anagrams = {'apple'} | anagrams = {'apple', 'melon'} | 
+        return len(anagrams)   | return 2 
+
+When you get to the second copy of 'melon', the set doesn't change.
+
+Now we get to the interesting part: detecting anagrams.
+
+    def test_anagrams(self):
+        words = ['apple', 'melon', 'lemon']
+
+        n = count_anagrams(words)
+
+        self.assertEqual(2, n)
+
+One way is to sort the letters in each word.
+
+    def count_anagrams(words): | words = ['apple', 'melon', 'lemon']
+        anagrams = set()       | anagrams = set()
+        for word in words:     | word = 'apple'       | word = 'melon'                | word = 'lemon'
+            word = ''.join(    | word = 'aelpp'       | word = 'elmno'                | word = 'elmno'
+                sorted(word))  |                      |                               |
+            anagrams.add(word) | anagrams = {'aelpp'} | anagrams = {'elmno', 'aelpp'} |
+        return len(anagrams)   | return 2
+
+You can see that the second and third iteration of the loop convert
+'melon' and 'lemon' to 'elmno', and the set of `anagrams` doesn't
+change in the third iteration.
+
+The next feature I want to add is to treat upper case and lower case
+the same, so I add a new test case.
+
+    def test_upper(self):
+        words = ['Melon', 'Lemon']
+
+        n = count_anagrams(words)
+
+        self.assertEqual(1, n)
+
+Of course, it doesn't pass.
+
+                               | ---------------- |
+                               | SystemExit: True |
+                               | ---------------- |
+    def count_anagrams(words): | words = ['Melon', 'Lemon']
+        anagrams = set()       | anagrams = set()
+        for word in words:     | word = 'Melon'       | word = 'Lemon'
+            word = ''.join(    | word = 'Melno'       | word = 'Lemno'
+                sorted(word))  |                      |
+            anagrams.add(word) | anagrams = {'Melno'} | anagrams = {'Lemno', 'Melno'}
+        return len(anagrams)   | return 2
+
+You can see that 'Melon' and 'Lemon' get sorted into 'Melno' and
+'Lemno', because upper-case letters sort before lower-case letters. We
+can fix that by switching all the words to lower case.
+
+                                | ---------------- |
+                                | SystemExit: True |
+                                | ---------------- |
+    def count_anagrams(words):  | words = ['Melon', 'Lemon']
+        anagrams = set()        | anagrams = set()
+        for word in words:      | word = 'Melon'       | word = 'Lemon'
+            word = ''.join(     | word = 'Melno'       | word = 'Lemno'
+                sorted(word))   |                      |
+            word = word.lower() | word = 'melno'       | word = 'lemno'
+            anagrams.add(word)  | anagrams = {'melno'} | anagrams = {'melno', 'lemno'}
+        return len(anagrams)    | return 2
+
+Oops, 'Melon' and 'Lemon' now get sorted into 'melno' and 'lemno'. We
+fixed the case, but not the sort order. Switching to lower case
+*before* sorting the letters will fix it.
+
+    def count_anagrams(words):  | words = ['Melon', 'Lemon']
+        anagrams = set()        | anagrams = set()
+        for word in words:      | word = 'Melon'       | word = 'Lemon'
+            word = word.lower() | word = 'melon'       | word = 'lemon'
+            word = ''.join(     | word = 'elmno'       | word = 'elmno'
+                sorted(word))   |                      |
+            anagrams.add(word)  | anagrams = {'elmno'} |
+        return len(anagrams)    | return 1
+
+Finally, I want to handle foreign words correctly. For example, the
+German word for street can be written either as 'Straße' or
+'Strasse'. Python knows how to convert from one to the other, so I'll
+add another test case.
+
+    def test_case_folding(self):
+        words = ['Straße', 'Strasse']
+
+        n = count_anagrams(words)
+
+        self.assertEqual(1, n)
+
+When I run the new test case, the words are counted separately.
+
+                                | ---------------- |
+                                | SystemExit: True |
+                                | ---------------- |
+    def count_anagrams(words):  | words = ['Straße', 'Strasse']
+        anagrams = set()        | anagrams = set()
+        for word in words:      | word = 'Straße'       | word = 'Strasse'
+            word = word.lower() | word = 'straße'       | word = 'strasse'
+            word = ''.join(     | word = 'aerstß'       | word = 'aerssst'
+                sorted(word))   |                       |
+            anagrams.add(word)  | anagrams = {'aerstß'} | anagrams = {'aerssst', 'aerstß'}
+        return len(anagrams)    | return 2
+
+To fix it, I just switch `lower()` to `casefold()`.
+
+    def count_anagrams(words):     | words = ['Straße', 'Strasse']
+        anagrams = set()           | anagrams = set()
+        for word in words:         | word = 'Straße'        | word = 'Strasse'
+            word = word.casefold() | word = 'strasse'       | word = 'strasse'
+            word = ''.join(        | word = 'aerssst'       | word = 'aerssst'
+                sorted(word))      |                        |
+            anagrams.add(word)     | anagrams = {'aerssst'} |
+        return len(anagrams)       | return 1
+
+You can see that `casefold()` converts 'ß' to 'ss', while still
+converting 'S' to 's', and the test passes.
+
+Now that I've made each test pass, I run the full test suite again to make sure
+I didn't break any of the other tests. I run the unit tests from the shell again.
+
+    Ran 5 tests in 0.002s
+    
+    OK
+
+It looks good, so I can publish my new library.
+
 ## Matplotlib Preview
 The Matplotlib graphing library has a lot of features, and it can be easier to
 fiddle with the settings if you have a preview that updates as you change them.
@@ -245,5 +517,6 @@ love to hear about any other projects working on the same kind of tools.
 [installation instructions]: https://donkirkby.github.io/live-py-plugin/#installing-the-sublime-text-plugin
 [livepy]: https://donkirkby.github.io/live-py-plugin/
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
+[tdd]: https://donkirkby.github.io/testing/
 [Pyglet preview]: https://donkirkby.github.io/live-py-plugin/images/sublime_pyglet.png
 [Pyglet documentation]: https://pyglet.readthedocs.io/en/stable/

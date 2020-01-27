@@ -331,6 +331,11 @@ configuration that only runs the current test method. Open the `anagrams.py`
 file, and from the Run menu, choose Start Live Coding again. Now
 you can see the failing test on its own.
 
+Each time you add a new test, create a new run configuration to run it. It's
+even easier if you start by calling each new test `test()`, and then rename it
+once it passes. Then you can just leave the run configuration the same as you add
+each new test.
+
                                | ---------------- |
                                | SystemExit: True |
                                | ---------------- |
@@ -380,8 +385,7 @@ the same, so I add a new test case.
 
         self.assertEqual(1, n)
 
-I choose the new test with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F10</kbd>, then
-open `anagrams.py` and restart live coding with the new run configuration.
+Of course, it doesn't pass.
 
                                | ---------------- |
                                | SystemExit: True |

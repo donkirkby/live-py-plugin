@@ -247,8 +247,8 @@ The test now fails with a reasonable complaint.
     FAILED (failures=1)
     $
 
-I want to see what's happening as I make the unit test pass, start live unit
-tests with these steps:
+I want to see what's happening as I make the unit test pass, so I start live
+unit tests with these steps:
 
 1. From the Preferences menu, choose Package Settings: Live Coding. That opens
     two panes. The one on the left is default settings for the package, and the

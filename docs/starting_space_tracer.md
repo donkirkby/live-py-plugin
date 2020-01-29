@@ -40,8 +40,10 @@ How can Space Tracer help? I start by installing it with pip.
 
     pip install space_tracer
 
-Then I use it to run the script. It will show what's happening inside. Just
-replace the `python` part of the command line with `space_tracer`.
+If you haven't installed Python packages before, read Brett Cannon's
+[quick-and-dirty guide]. Then I use it to run the script. It will show what's
+happening inside. Just replace the `python` part of the command line with
+`space_tracer`.
 
     $ space_tracer url_client.py 
     from urllib.parse import urlencode                |
@@ -295,4 +297,5 @@ other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test
 it, and report your bugs. I'd also love to hear about any other projects working
 on the same kind of tools.
 
+[quick-and-dirty guide]: https://snarky.ca/a-quick-and-dirty-guide-on-how-to-install-packages-for-python/
 [livepy]: https://donkirkby.github.io/live-py-plugin/

@@ -24,13 +24,14 @@ read through what happened, like reading a book.
     print(message)           | print('Hello, World!!!') 
 
 You can run Space Tracer as a command-line tool, or you can use it in the
-[Live Coding in Python] plugins for PyCharm, Emacs, and Sublime Text.
+[Live Coding in Python] plugins for PyCharm, Emacs, and Sublime Text. See the
+[Getting Started] page for a full introduction.
 
 Installing Space Tracer
 -----------------------
-Use `pip` to install it:
-
-    $ pip install space_tracer
+Space Tracer is a regular Python package, so you can install it with
+`pip install space_tracer`. If you haven't installed Python packages before,
+read Brett Cannon's [quick-and-dirty guide].
 
 Then copy the script above into a file called `hello.py`, and run it with the
 `space_tracer` command:
@@ -42,7 +43,6 @@ Then copy the script above into a file called `hello.py`, and run it with the
     print(message)           | print('Hello, World!!!') 
     $
 
-See the [Getting Started] page for a full introduction to `space_tracer`.
-
 [Live Coding in Python]: https://donkirkby.github.io/live-py-plugin/
 [Getting Started]: https://donkirkby.github.io/live-py-plugin/starting_space_tracer
+[quick-and-dirty guide]: https://snarky.ca/a-quick-and-dirty-guide-on-how-to-install-packages-for-python/

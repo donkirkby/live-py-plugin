@@ -60,6 +60,9 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.is_traced_module_imported = False
         self.traced = traced
         self.environment = {CONTEXT_NAME: report_builder}
+        if driver and driver[0] == '-':
+            traced_file = PSEUDO_FILENAME
+            driver[0] = PSEUDO_FILENAME
         if traced_file is None:
             self.traced_file = traced_file
         else:
@@ -187,11 +190,15 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
 
     def run_main(self):
         if self.driver_module is None:
+            try:
+                driver_path = self.driver and str(Path(self.driver[0]).resolve())
+            except FileNotFoundError:
+                driver_path = self.driver and self.driver[0] or ''
             self.run_python_file(
                 self.driver and self.driver[0],
                 source_code=(self.source_code
                              if (not self.driver or
-                                 self.traced_file == self.driver[0])
+                                 self.traced_file == driver_path)
                              else None))
         else:
             self.run_python_module(self.driver_module)

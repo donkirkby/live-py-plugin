@@ -46,6 +46,15 @@ def stdout(capsys):
 
 
 @pytest.fixture
+def stderr(capsys):
+    class MockIO(object):
+        @staticmethod
+        def getvalue():
+            return capsys.readouterr().err
+    yield MockIO()
+
+
+@pytest.fixture
 def argv():
     mocked = []
     with patch('sys.argv', mocked):
@@ -845,6 +854,18 @@ def test_no_driver(capsys):
         TraceRunner().trace_command(['space_tracer'])
     error = capsys.readouterr().err.splitlines()[-1]
     assert error == expected_error
+
+
+def test_main_from_stdin(stdin):
+    stdin.read.return_value = """\
+print(40+2)
+"""
+    expected_report = """\
+print(40+2) | print('42')"""
+
+    report = TraceRunner().trace_command(['space_tracer', '-'])
+
+    assert report == expected_report
 
 
 def test_traced_file_without_traced():

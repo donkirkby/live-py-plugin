@@ -153,7 +153,8 @@ The details are at [packaging.python.org], but the main steps are:
 
         pip install --no-cache space_tracer
 
-7. Remove the uploaded files and recreate the tox environment.
+7. Remove the uploaded files and recreate the tox environment. (The browser
+    version uses these files, so don't remove them until you've deployed that.)
 
         rm dist/*
         deactivate
@@ -170,16 +171,33 @@ The details are at [packaging.python.org], but the main steps are:
 The browser version uses the [Pyodide] project to run Python code in the browser.
 
 ### Updating and Testing
-This was broken by the refactoring in issue #223 and will be fixed by issue #235
-when the space_tracer module is included with the deployment.
+To deploy the latest version to the web site, you'll need the `space-tracer`
+package distribution files, so follow those instructions at least as far as
+running `setup.py`.
 
-To deploy the latest version of `code_tracer.py` and `report_builder.py` to the
-web site, run `test/PySrc/tools/serve_demo.py`.
+The first time you build, you'll need to clone the [Pyodide] project from
+GitHub, and install Docker. After that, follow these steps for each release.
 
-To update the Pyodide files, clone it from GitHub, install Docker, then run
-Pyodide's `run_docker` script. See the Pyodide project for full instructions.
-After the lengthy build process, run the `serve_demo.py` script again. It will
-copy all of the Pyodide files into the demo directory.
+1. Update the version number in `html/meta.yaml`.
+2. Copy the package distribution files into the Pyodide project. If you cloned
+   Pyodide and this project as subfolders of the same parent, then you can do
+   something like this:
+
+       cd /path/to/live-py-plugin
+       sudo rm -rf ../pyodide/packages/space-tracer/
+       mkdir ../pyodide/packages/space-tracer
+       cp html/meta.yaml ../pyodide/packages/space-tracer/
+       cd ../pyodide/packages/space-tracer/
+       tar xzf ../../../live-py-plugin/dist/space_tracer-4.0.1.tar.gz
+
+   Replace the version number with whatever you just built.
+3. After the package files are in place, run Pyodide's `run_docker` script. See
+   the Pyodide project for full instructions. If you see the error,
+   'ccache: error: Could not find compiler "emcc" in PATH', you have to roll
+   back the `EMSCRIPTEN_VERSION` to 1.38.22, as described in Pyodide [PR #506].
+4. After the lengthy build process, run the
+   `live-py-plugin/test/PySrc/tools/serve_demo.py` script. It will copy all of
+   the Pyodide files into the demo directory.
 
 To update the ReactJS files, change to the `html` folder, and run
 `npm run build`. You can also use `npm start` to test the ReactJS files without
@@ -189,7 +207,7 @@ into the web site.
 After updating the files, test them out on `http://localhost:8000/`. 
 
 [Pyodide]: https://github.com/iodide-project/pyodide
-
+[PR #506]: https://github.com/iodide-project/pyodide/pull/506
 
 ## Adding Support For a New Editor ##
 

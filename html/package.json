@@ -5,9 +5,9 @@
   "homepage": ".",
   "dependencies": {
     "m-react-splitters": "^1.2.0",
-    "react": "^16.8.5",
-    "react-ace": "^6.4.0",
-    "react-dom": "^16.8.5",
+    "react": "^16.12.0",
+    "react-ace": "^6.6.0",
+    "react-dom": "^16.12.0",
     "react-scripts": "2.1.8"
   },
   "scripts": {

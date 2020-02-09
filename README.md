@@ -122,7 +122,7 @@ Installing the Emacs mode without MELPA
    which is in your Emacs `load-path`. For example:
 
         cd live-py-plugin
-        cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/*.py ~/.emacs.d/
+        cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/space_tracer ~/.emacs.d/
 
    Add ~/.emacs.d/ to your `load-path` in `~/.emacs.d/init.el` or `~/.emacs`:
 

@@ -43,16 +43,6 @@ def parse_args():
                                          '..',
                                          '..',
                                          'pyodide')))
-    parser.add_argument('--tracer_dir',
-                        help='directory to copy code tracer from',
-                        default=os.path.abspath(
-                            os.path.join(__file__,
-                                         '..',
-                                         '..',
-                                         '..',
-                                         '..',
-                                         'plugin',
-                                         'PySrc')))
     parser.add_argument('--react_dir',
                         help='directory to copy React app from',
                         default=os.path.abspath(
@@ -76,7 +66,9 @@ def copy_pyodide(pyodide_dir, demo_dir):
                       'pyodide.asm.js',
                       'pyodide.asm.data.js',
                       'pyodide.asm.data',
-                      'packages.json'):
+                      'packages.json',
+                      'space-tracer.data',
+                      'space-tracer.js'):
         source_path = os.path.join(pyodide_dir, 'build', file_name)
         target_path = os.path.join(demo_dir, 'pyodide', file_name)
         copy_if_needed(source_path, target_path)
@@ -95,32 +87,6 @@ def copy_if_needed(source_path, target_path, file_name=None):
     else:
         shutil.copy(source_path, target_path)
         print(file_name, 'copied.')
-
-
-def copy_tracer(tracer_dir, demo_dir):
-    if not os.path.isdir(tracer_dir):
-        print(f'Code tracer directory {tracer_dir!r} not found.')
-        return
-
-    target_path = os.path.join(demo_dir, 'code_tracer.py')
-    source_names = ('report_builder.py', 'code_tracer.py')
-    source_paths = [os.path.join(tracer_dir, source_name)
-                    for source_name in source_names]
-    source_time = max(os.stat(source_path).st_mtime
-                      for source_path in source_paths)
-    try:
-        target_time = os.stat(target_path).st_mtime
-    except FileNotFoundError:
-        target_time = 0
-
-    if source_time <= target_time:
-        print('Code tracer is up to date.')
-    else:
-        with open(target_path, 'w') as target:
-            for source_path in source_paths:
-                with open(source_path) as source:
-                    shutil.copyfileobj(source, target)
-        print('Code tracer copied.')
 
 
 def copy_react(react_dir, demo_dir):
@@ -173,7 +139,6 @@ def main():
     args = parse_args()
     if not args.no_update:
         copy_pyodide(args.pyodide_dir, args.demo_dir)
-        copy_tracer(args.tracer_dir, args.demo_dir)
         copy_react(args.react_dir, args.demo_dir)
 
     SimpleHTTPRequestHandler.extensions_map.update({

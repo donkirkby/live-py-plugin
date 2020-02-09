@@ -6,7 +6,6 @@ from io import StringIO
 from itertools import zip_longest as izip_longest
 import os
 import os.path
-from os import get_terminal_size
 import re
 import sys
 import traceback
@@ -16,13 +15,15 @@ try:
     # noinspection PyUnresolvedReferences
     from js import document, window
     IS_PYODIDE = True
+    MockTurtle = get_terminal_size = None
 except ImportError:
     IS_PYODIDE = False
     document = window = None
+    from os import get_terminal_size
+    from .mock_turtle import MockTurtle
 
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers
-from .mock_turtle import MockTurtle
 from .module_importers import TracedModuleImporter, PatchedModuleFinder
 from .report_builder import ReportBuilder
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
@@ -39,10 +40,12 @@ def parse_args(command_args=None):
     if get_terminal_size is None:
         terminal_width = 0
     else:
+        terminal_width = 0
         try:
-            terminal_width, _ = get_terminal_size()
+            if get_terminal_size is not None:
+                terminal_width, _ = get_terminal_size()
         except OSError:
-            terminal_width = 0
+            pass
     parser = argparse.ArgumentParser(
         launcher,
         description='Trace Python code.',
@@ -363,7 +366,10 @@ class TraceRunner(object):
                     line = line[:trace_width]
                 dump_lines.append(line)
             report = '\n'.join(dump_lines)
-        turtle_report = MockTurtle.get_all_reports()
+        if MockTurtle is None:
+            turtle_report = None
+        else:
+            turtle_report = MockTurtle.get_all_reports()
         if turtle_report and args.canvas:
             report = ('start_canvas\n' +
                       '\n'.join(turtle_report) +

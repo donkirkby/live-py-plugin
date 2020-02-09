@@ -89,10 +89,9 @@ i = search(1, [1, 2, 4])
             this.state.display = 'Pyodide is not loaded.';
         } else {
             window.languagePluginLoader.then(function() {
-                fetch('code_tracer.py').then(function (response) {
-                    return response.text();
-                }).then(function (code_tracer_source) {
-                    window.pyodide.runPython(code_tracer_source);
+                window.pyodide.loadPackage('space-tracer').then(() => {
+                    window.pyodide.runPython(
+                        'from space_tracer.main import web_main; web_main()');
                     app.handleChange();
                 });
             });

@@ -1,7 +1,7 @@
 import sys
 
 try:
-    from .main import main
+    from .main import main, web_main
     from .about import __title__, __version__, __url__
 except ImportError:
     if sys.version_info < (3,):

@@ -12,10 +12,12 @@ import types
 from pathlib import Path
 
 from .code_tracer import trace_source_tree, CONTEXT_NAME
-from .mock_turtle import MockTurtle, monkey_patch_pyglet
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME, TracedFinder
-imp = None
+try:
+    from .mock_turtle import MockTurtle, monkey_patch_pyglet
+except ImportError:
+    MockTurtle = monkey_patch_pyglet = None
 
 
 class DelegatingModuleFinder(MetaPathFinder):

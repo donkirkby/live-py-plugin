@@ -19,7 +19,7 @@
 
 .splitter-wrapper {
   width: 100%;
-  height: calc(100% - 5em);
+  height: 25em;
   position: relative;
   overflow: hidden; }
 

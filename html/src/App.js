@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import AceEditor from 'react-ace';
+import ReactMarkdown from 'react-markdown';
 import Splitter from 'm-react-splitters';
 import 'm-react-splitters/lib/splitters.css';
 import './App.css';
@@ -7,6 +8,8 @@ import './App.css';
 import 'brace/mode/python';
 import 'brace/mode/markdown';
 import 'brace/theme/github';
+
+const PythonContext = React.createContext('Python is loading...');
 
 class Editor extends Component {
     constructor(props) {
@@ -40,7 +43,7 @@ class Editor extends Component {
             mode={this.props.mode}
             theme="github"
             width="100%"
-            height="calc(100% - 2em)"
+            height="100%"
             fontSize={18}
             showPrintMargin={true}
             showGutter={true}
@@ -55,47 +58,22 @@ class Editor extends Component {
     }
 }
 
-class App extends Component {
+class CodeSample extends Component {
+    static contextType = PythonContext;
+
     constructor(props) {
         super(props);
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
-            display: 'Loading...',
-            source: `\
-def search(n, a):
-    low = 0
-    high = len(a) - 1
-    while low <= high:
-        mid = low + high // 2
-        v = a[mid]
-        if n == v:
-            return mid
-        if n < v:
-            high=mid - 1
-        else:
-            low=mid + 1
-    return -1
-
-i = search(1, [1, 2, 4])
-`};
+            display: this.context,
+            isPythonLoaded: false,
+            source: props.value
+        };
 
         this.handleChange = this.handleChange.bind(this);
         this.handleScroll = this.handleScroll.bind(this);
         this.handleCursorChange = this.handleCursorChange.bind(this);
-        let app = this;
-
-        if (window.languagePluginLoader === undefined) {
-            this.state.display = 'Pyodide is not loaded.';
-        } else {
-            window.languagePluginLoader.then(function() {
-                window.pyodide.loadPackage('space-tracer').then(() => {
-                    window.pyodide.runPython(
-                        'from space_tracer.main import web_main; web_main()');
-                    app.handleChange();
-                });
-            });
-        }
     }
 
     handleChange(newSource) {
@@ -114,14 +92,28 @@ i = search(1, [1, 2, 4])
         this.setState({selectedLine: selection.selectionLead.row});
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        if (this.context !== null) {
+            if (this.context !== this.state.display) {
+                this.setState({display: this.context});
+            }
+        }
+        else if ( ! this.state.isPythonLoaded) {
+            this.handleChange();
+            this.setState({isPythonLoaded: true});
+        }
+    }
+
     render() {
+        let displayValue = this.context;
+        if (displayValue === null) {
+            displayValue = this.state.display;
+        }
         return (
-            <div className="app">
-                <p className="page-header"><a href="..">Home</a></p>
+            <div className="codeSample">
                 <div className="splitter-wrapper">
                     <Splitter position="vertical">
                         <div className="editor-pane">
-                            <p className="editor-header">Type Some Python</p>
                             <Editor
                                 value={this.state.source}
                                 scrollTop={this.state.scrollTop}
@@ -131,9 +123,8 @@ i = search(1, [1, 2, 4])
                                 mode="python"/>
                         </div>
                         <div className="editor-pane">
-                            <p className="editor-header">See Inside</p>
                             <Editor
-                                value={this.state.display}
+                                value={displayValue}
                                 scrollTop={this.state.scrollTop}
                                 readOnly={true}
                                 selectedLine={this.state.selectedLine}
@@ -143,13 +134,75 @@ i = search(1, [1, 2, 4])
                         </div>
                     </Splitter>
                 </div>
-                <div className="page-footer">Change the code, and see the
-                    changes inside. Try to find the bug in the example code.
-                    (Hint: try searching for different numbers.) Paste your own
-                    code to see how it works.</div>
           </div>
     );
   }
+}
+
+class App extends Component {
+    constructor(props) {
+        super(props);
+        let app = this;
+        this.state = {
+            source: `\
+This is a demonstration of Live Coding in Python. Type some Python code in the
+editor on the left side. The right side is a live coding display that shows
+what happens inside your code when it runs. It shows variable values and print()
+calls, as well as a new column each time it runs through a loop or a function.
+
+    def search(n, a):
+        low = 0
+        high = len(a) - 1
+        while low <= high:
+            mid = low + high // 2
+            v = a[mid]
+            if n == v:
+                return mid
+            if n < v:
+                high=mid - 1
+            else:
+                low=mid + 1
+        return -1
+    
+    i = search(1, [1, 2, 4])
+    print(i)
+
+Change the code, and see the changes inside. Try to find the bug in the example
+code. (Hint: try searching for different numbers.) Paste your own code to see
+how it works.
+`,
+            pythonMessage: 'Loading Python...'
+        };
+
+        // noinspection JSUnresolvedVariable
+        if (window.languagePluginLoader === undefined) {
+            this.state.pythonMessage = 'Python is not loaded!';
+        } else {
+            // noinspection JSUnresolvedVariable
+            window.languagePluginLoader.then(function() {
+                // noinspection JSUnresolvedVariable,JSUnresolvedFunction
+                window.pyodide.loadPackage('space-tracer').then(() => {
+                    // noinspection JSUnresolvedVariable,JSUnresolvedFunction
+                    window.pyodide.runPython(
+                        'from space_tracer.main import web_main; web_main()');
+                    app.setState({pythonMessage: null});
+                });
+            });
+        }
+    }
+
+    render() {
+        return (
+            <div className="app">
+                <p className="page-header"><a href="..">Home</a></p>
+                <PythonContext.Provider value={this.state.pythonMessage}>
+                    <ReactMarkdown
+                        source={this.state.source}
+                        renderers={{code: CodeSample}}/>
+                </PythonContext.Provider>
+            </div>
+        );
+    }
 }
 
 export default App;

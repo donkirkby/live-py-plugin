@@ -216,7 +216,7 @@ with two features:
 
 First, launch a process like this:
 
-    python plugin/PySrc/code_tracer.py
+    PYTHONPATH=plugin/PySrc/ python -m space_tracer -
 
 Then pass the source code from the editor as the standard input for that
 process, and capture the standard output.
@@ -224,8 +224,9 @@ process, and capture the standard output.
 Second, display that standard output beside the source code, and keep the two
 windows synchronized as they scroll up and down.
 
-If you use your editor's plug-in system to package that up with the four files
-in the `PySrc` folder, then you're ready to publish your first release.
+If you use your editor's plug-in system to package that up with the
+`plugin/PySrc/space_tracer` folder, then you're ready to publish your first
+release.
 
 To add more features, look at the options by running:
 

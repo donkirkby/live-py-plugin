@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import Splitter from 'm-react-splitters';
 import 'm-react-splitters/lib/splitters.css';
 import './App.css';
+import lessons from './lessons.json';
 
 import 'brace/mode/python';
 import 'brace/mode/markdown';
@@ -188,6 +189,15 @@ how it works.
                     app.setState({pythonMessage: null});
                 });
             });
+        }
+        let search = window.location.search;
+        let params = new URLSearchParams(search);
+        let lessonName = params.get('lesson');
+        if (lessonName) {
+            this.state.source = lessons[lessonName];
+            if (this.state.source === undefined) {
+                this.state.source = 'Lesson not found: ' + lessonName;
+            }
         }
     }
 

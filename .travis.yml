@@ -22,6 +22,8 @@ matrix:
       - TOX_ENV=py38
 
 install:
+  - pip install --upgrade pip
+  - pip install --upgrade virtualenv
   - travis_retry pip install "tox" "coverage"
 
   # Emacs Version Manager

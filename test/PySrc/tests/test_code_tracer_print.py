@@ -165,6 +165,71 @@ print('Bob 23')
     assert expected_report == trim_report(report)
 
 
+def test_report_default():
+    code = """\
+print('Hello,')
+print(6*7)
+"""
+    expected_report = """\
+print('Hello,')
+print('42')"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--report', '-',
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
+def test_report_redirect(tmpdir):
+    code = """\
+print('Hello,')
+print(6*7)
+"""
+    expected_report = """\
+print('Hello,')
+print('42')"""
+
+    report_path = tmpdir.join('report.txt')
+    with replace_input(code):
+        stdout_report = TraceRunner().trace_command([
+            'space_tracer',
+            '--report', str(report_path),
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
+    report = report_path.read_text('utf8')
+
+    assert stdout_report == ''
+    assert report == expected_report
+
+
+def test_report_redirect_to_stderr(capsys):
+    code = """\
+print('Hello,')
+print(6*7)
+"""
+    expected_report = """\
+print('Hello,')
+print('42')"""
+
+    with replace_input(code):
+        stdout_report = TraceRunner().trace_command([
+            'space_tracer',
+            '--report', '!',
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
+    report = capsys.readouterr().err
+
+    assert stdout_report == ''
+    assert report == expected_report
+
+
 def test_string_io_field():
     code = """\
 from __future__ import unicode_literals

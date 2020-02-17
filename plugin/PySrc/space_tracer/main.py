@@ -90,6 +90,12 @@ def parse_args(command_args=None):
     parser.add_argument('-i',
                         '--stdin',
                         help="file to redirect stdin from")
+    parser.add_argument('-r',
+                        '--report',
+                        type=parse_report_file,
+                        default='-',
+                        help="file to write tracing to, or - for stdout, "
+                             "or ! for stderr.")
     parser.add_argument('--traced_file',
                         help='file to replace with source code from stdin')
     parser.add_argument('--traced',
@@ -129,10 +135,19 @@ def parse_args(command_args=None):
     return args
 
 
+def parse_report_file(filename):
+    if filename == '-':
+        return None
+    if filename == '!':
+        return sys.stderr
+    return argparse.FileType('w')(filename)
+
+
 def main():
     tracer = TraceRunner()
     code_report = tracer.trace_command()
-    print(code_report)
+    if code_report:
+        print(code_report)
     if tracer.return_code:
         exit(tracer.return_code)
 
@@ -379,6 +394,11 @@ class TraceRunner(object):
                       '\n'.join(turtle_report) +
                       '\nend_canvas\n.\n' +
                       report)
+        if args.report is not None:
+            args.report.write(report)
+            if args.report is not sys.stderr:
+                args.report.close()
+            report = ''
         return report
 
     def run_code(self,

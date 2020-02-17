@@ -1,6 +1,3 @@
-import sys
-from sys import version_info
-
 from space_tracer.main import TraceRunner, replace_input
 from test_report_builder import trim_report
 
@@ -10,17 +7,11 @@ def test_print():
 s = 'x'
 print(s)
 """
-    expected_report_python2 = """\
-s = 'x'
-print 'x'
-"""
-    expected_report_python3 = """\
+    expected_report_python = """\
 s = 'x'
 print('x')
 """
-    expected_report = (expected_report_python3
-                       if version_info.major >= 3
-                       else expected_report_python2)
+    expected_report = expected_report_python
     tracer = TraceRunner()
 
     report = tracer.trace_code(code)
@@ -117,23 +108,14 @@ from io import StringIO
 f = StringIO()
 f.write('x')
 """
-    expected_report_python2 = """\
-
-
-
-
-f.write(u'x')
-"""
-    expected_report_python3 = """\
+    expected_report_python = """\
 
 
 
 
 f.write('x')
 """
-    expected_report = (expected_report_python3
-                       if version_info.major >= 3
-                       else expected_report_python2)
+    expected_report = expected_report_python
     tracer = TraceRunner()
 
     report = tracer.trace_code(code)
@@ -200,22 +182,7 @@ greetings = StringIO()
 foo = Foo(greetings)
 foo.greet('Alice')
 """
-    expected_report_python2 = """\
-
-
-
-
-
-
-
-
-name = u'Alice'
-self.f.write(u'Hello, Alice.')
-
-
-
-"""
-    expected_report_python3 = """\
+    expected_report_python = """\
 
 
 
@@ -230,9 +197,7 @@ self.f.write('Hello, Alice.')
 
 
 """
-    expected_report = (expected_report_python3
-                       if version_info.major >= 3
-                       else expected_report_python2)
+    expected_report = expected_report_python
 
     report = TraceRunner().trace_code(code)
 
@@ -257,10 +222,7 @@ def test_input(tmpdir):
 first line
 second line
 """
-    if sys.version_info < (3, 0):
-        code = "s = raw_input()"
-    else:
-        code = "s = input()"
+    code = "s = input()"
     expected_report = """\
 s = 'first line'
 """
@@ -279,15 +241,51 @@ s = 'first line'
     assert expected_report == trim_report(report)
 
 
+def test_input_stdin(tmpdir):
+    input_text = """\
+first line
+second line
+"""
+    code = "s = input()"
+    expected_report = """\
+s = 'first line'
+"""
+    code_path = str(tmpdir.join('example.py'))
+    with open(code_path, 'w') as f:
+        f.write(code)
+
+    with replace_input(input_text):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--stdin', '-',
+            '--source_width', '0',
+            code_path])
+
+    assert expected_report == trim_report(report)
+
+
+def test_default_input(tmpdir):
+    code = "s = input()"
+    expected_report = """\
+EOFError: EOF when reading a line
+"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert expected_report == trim_report(report)
+
+
 def test_prompt(tmpdir):
     input_text = """\
 first line
 second line
 """
-    if sys.version_info < (3, 0):
-        code = "s = raw_input('What comes first?')"
-    else:
-        code = "s = input('What comes first?')"
+    code = "s = input('What comes first?')"
     expected_report = """\
 sys.stdout.write('What comes first?') | s = 'first line'
 """

@@ -156,13 +156,15 @@ def swallow_output(stdin_path=None):
     old_stdin = sys.stdin
     # noinspection PyUnresolvedReferences
     old_string_io = io.StringIO
+    new_stdin = None
     try:
         sys.stdout = FileSwallower(old_stdout)
         sys.stderr = FileSwallower(old_stderr, target_name='sys.stderr')
-        sys.stdin = stdin_path and open(stdin_path) or io.StringIO()
-        with sys.stdin:
-            io.StringIO = TracedStringIO
-            yield
+        if stdin_path != '-':
+            new_stdin = stdin_path and open(stdin_path) or io.StringIO()
+            sys.stdin = new_stdin
+        io.StringIO = TracedStringIO
+        yield
     finally:
         if old_main_mod is not None:
             sys.modules[DEFAULT_MODULE_NAME] = old_main_mod
@@ -172,6 +174,8 @@ def swallow_output(stdin_path=None):
         sys.stderr = old_stderr
         sys.stdin = old_stdin
         io.StringIO = old_string_io
+        if new_stdin is not None:
+            new_stdin.close()
 
 
 @contextmanager

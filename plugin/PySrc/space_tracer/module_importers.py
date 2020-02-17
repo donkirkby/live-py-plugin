@@ -322,7 +322,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         return code
 
     def report_driver_result(self, messages):
-        if self.driver[0] == self.traced_file:
+        if self.traced in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
             # Error is already visible, no extra display needed.
             return
         messages = list(split_lines(messages))

@@ -230,6 +230,61 @@ print('42')"""
     assert report == expected_report
 
 
+def test_stdout_redirect(tmpdir):
+    code = """\
+print('Hello,')
+print(6*7)
+"""
+    expected_report = """\
+print('Hello,')
+print('42')"""
+    expected_redirect = """\
+Hello,
+42
+"""
+
+    stdout_path = tmpdir.join('stdout.txt')
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--stdout', str(stdout_path),
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
+    stdout_redirect = stdout_path.read_text('utf8')
+
+    assert report == expected_report
+    assert stdout_redirect == expected_redirect
+
+
+def test_stderr_redirect(tmpdir):
+    code = """\
+import sys
+print('Hello,', file=sys.stderr)
+print(6*7)
+"""
+    expected_report = """\
+
+sys.stderr.write('Hello,\\n')
+print('42')"""
+    expected_redirect = """\
+Hello,
+"""
+
+    stderr_path = tmpdir.join('stderr.txt')
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--stderr', str(stderr_path),
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
+    stderr_redirect = stderr_path.read_text('utf8')
+
+    assert report == expected_report
+    assert stderr_redirect == expected_redirect
+
+
 def test_string_io_field():
     code = """\
 from __future__ import unicode_literals

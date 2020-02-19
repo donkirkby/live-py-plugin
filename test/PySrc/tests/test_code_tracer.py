@@ -950,7 +950,7 @@ s = '__live_coding__'
 
 class FileSwallowerTest(ReportTestCase):
     def test_temp_file(self):
-        expected_contents = 'before\nafter\n'
+        expected_contents = 'before\nline 1\nline 2\nafter\n'
 
         with TemporaryFile('w+') as real_file:
             real_file.write('before\n')
@@ -966,10 +966,11 @@ class FileSwallowerTest(ReportTestCase):
         self.assertEqual(expected_contents, real_contents)
 
     def test_buffer(self):
-        expected_contents = 'before\nafter\n'
+        expected_contents = 'before\nline 1\nline 2\nafter\n'
 
         with TemporaryFile('w+') as real_file:
             real_file.write('before\n')
+            real_file.flush()
 
             swallower = FileSwallower(real_file)
             swallower_buffer = getattr(swallower, 'buffer', swallower)

@@ -89,10 +89,19 @@ def parse_args(command_args=None):
                         help="message to display if driver doesn't call module")
     parser.add_argument('-i',
                         '--stdin',
-                        help="file to redirect stdin from")
+                        default=os.devnull,
+                        help="file to read stdin from, or - for normal stdin")
+    parser.add_argument('-o',
+                        '--stdout',
+                        default=os.devnull,
+                        help="file to write stdout to (not tracing), "
+                             "or - for normal stdout")
+    parser.add_argument('-e',
+                        '--stderr',
+                        default=os.devnull,
+                        help="file to write stderr to, or ! for normal stderr")
     parser.add_argument('-r',
                         '--report',
-                        type=parse_report_file,
                         default='-',
                         help="file to write tracing to, or - for stdout, "
                              "or ! for stderr.")
@@ -135,14 +144,6 @@ def parse_args(command_args=None):
     return args
 
 
-def parse_report_file(filename):
-    if filename == '-':
-        return None
-    if filename == '!':
-        return sys.stderr
-    return argparse.FileType('w')(filename)
-
-
 def main():
     tracer = TraceRunner()
     code_report = tracer.trace_command()
@@ -163,21 +164,49 @@ def web_main():
     window.analyze = analyze
 
 
+class StandardFiles(dict):
+    def __init__(self):
+        super().__init__()
+        self.old_files = dict(stdin=sys.stdin,
+                              stdout=sys.stdout,
+                              stderr=sys.stderr,
+                              report=StringIO())
+        self.new_files = set()
+
+    def __setitem__(self, key, filename):
+        if filename == '-':
+            if key == 'stdin':
+                file = self.old_files[key]
+            else:
+                file = self.old_files['stdout']
+        elif filename == '!':
+            file = self.old_files['stderr']
+        else:
+            if key == 'stdin':
+                mode = 'r'
+            else:
+                mode = 'w'
+            file = argparse.FileType(mode)(filename)
+            self.new_files.add(file)
+        super().__setitem__(key, file)
+
+    def __missing__(self, key):
+        return self.old_files[key]
+
+    def close_all(self):
+        for file in self.new_files:
+            file.close()
+
+
 @contextmanager
-def swallow_output(stdin_path=None):
+def swallow_output(standard_files: StandardFiles):
     old_main_mod = sys.modules.get(DEFAULT_MODULE_NAME, None)
-    old_stdout = sys.stdout
-    old_stderr = sys.stderr
-    old_stdin = sys.stdin
     # noinspection PyUnresolvedReferences
     old_string_io = io.StringIO
-    new_stdin = None
     try:
-        sys.stdout = FileSwallower(old_stdout)
-        sys.stderr = FileSwallower(old_stderr, target_name='sys.stderr')
-        if stdin_path != '-':
-            new_stdin = stdin_path and open(stdin_path) or io.StringIO()
-            sys.stdin = new_stdin
+        sys.stdout = FileSwallower(standard_files['stdout'])
+        sys.stderr = FileSwallower(standard_files['stderr'], target_name='sys.stderr')
+        sys.stdin = standard_files['stdin']
         io.StringIO = TracedStringIO
         yield
     finally:
@@ -185,12 +214,10 @@ def swallow_output(stdin_path=None):
             sys.modules[DEFAULT_MODULE_NAME] = old_main_mod
         else:
             sys.modules.pop(DEFAULT_MODULE_NAME, None)
-        sys.stdout = old_stdout
-        sys.stderr = old_stderr
-        sys.stdin = old_stdin
+        sys.stdout = standard_files.old_files['stdout']
+        sys.stderr = standard_files.old_files['stderr']
+        sys.stdin = standard_files.old_files['stdin']
         io.StringIO = old_string_io
-        if new_stdin is not None:
-            new_stdin.close()
 
 
 @contextmanager
@@ -210,6 +237,7 @@ class TraceRunner(object):
         self.max_width = 200000
         self.keepalive = False
         self.return_code = None
+        self.standard_files = StandardFiles()
 
     def trace_turtle(self, source):
         with replace_input(source):
@@ -245,6 +273,10 @@ class TraceRunner(object):
             self.canvas = Canvas(args.width, args.height)
         if MockTurtle is not None:
             MockTurtle.monkey_patch(self.canvas)
+        self.standard_files['stdin'] = args.stdin
+        self.standard_files['stdout'] = args.stdout
+        self.standard_files['stderr'] = args.stderr
+        self.standard_files['report'] = args.report
 
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
@@ -280,7 +312,7 @@ class TraceRunner(object):
                         module_file == traced_importer.traced_file):
                     del sys.modules[name]
             try:
-                self.run_code(args.bad_driver, args.stdin, traced_importer)
+                self.run_code(args.bad_driver, traced_importer)
             finally:
                 # Restore the old argv and path
                 sys.argv = old_argv
@@ -394,22 +426,19 @@ class TraceRunner(object):
                       '\n'.join(turtle_report) +
                       '\nend_canvas\n.\n' +
                       report)
-        if args.report is not None:
-            args.report.write(report)
-            if args.report is not sys.stderr:
-                args.report.close()
+        if args.report != '-':
+            self.standard_files['report'].write(report)
             report = ''
+        self.standard_files.close_all()
         return report
 
     def run_code(self,
                  bad_driver,
-                 stdin_path,
                  traced_importer):
         """ Run the traced module, plus its driver.
 
         :param str bad_driver: a message to display if the driver doesn't call
         the module
-        :param str stdin_path: Path to redirect stdin from
         :param traced_importer: holds details of what to trace
         __main__.
         """
@@ -419,7 +448,7 @@ class TraceRunner(object):
                 random_module.seed(0)
 
         builder = traced_importer.report_builder
-        output_context = swallow_output(stdin_path)
+        output_context = swallow_output(self.standard_files)
         try:
             with output_context:
                 try:
@@ -482,7 +511,8 @@ class FileSwallower(object):
             if buffer is not None:
                 self.buffer = FileSwallower(buffer, check_buffer=False)
 
-    def write(self, *args, **_):
+    def write(self, *args, **kwargs):
+        self.target.write(*args, **kwargs)
         text = args and str(args[0]) or ''
         if re.search(r'^=+\s*FAILURES\s*=+$', text):
             self.saw_failures = True

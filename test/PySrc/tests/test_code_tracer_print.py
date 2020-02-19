@@ -285,6 +285,36 @@ Hello,
     assert stderr_redirect == expected_redirect
 
 
+def test_redirect_both(tmpdir):
+    code = """\
+import sys
+print('Hello,', file=sys.stderr)
+print(6*7)
+"""
+    expected_report = """\
+
+sys.stderr.write('Hello,\\n')
+print('42')"""
+    expected_redirect = """\
+Hello,
+42
+"""
+
+    out_path = tmpdir.join('out.txt')
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--stdout', str(out_path),
+            '--stderr', str(out_path),
+            '--source_width', '0',
+            '--traced_file', 'example.py',
+            'example.py'])
+    out_redirect = out_path.read_text('utf8')
+
+    assert report == expected_report
+    assert out_redirect == expected_redirect
+
+
 def test_string_io_field():
     code = """\
 from __future__ import unicode_literals

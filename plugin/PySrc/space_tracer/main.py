@@ -171,7 +171,7 @@ class StandardFiles(dict):
                               stdout=sys.stdout,
                               stderr=sys.stderr,
                               report=StringIO())
-        self.new_files = set()
+        self.new_files = {}  # {filename: file}
 
     def __setitem__(self, key, filename):
         if filename == '-':
@@ -186,15 +186,18 @@ class StandardFiles(dict):
                 mode = 'r'
             else:
                 mode = 'w'
-            file = argparse.FileType(mode)(filename)
-            self.new_files.add(file)
+            file_key = (filename, mode)
+            file = self.new_files.get(file_key)
+            if file is None:
+                file = argparse.FileType(mode)(filename)
+                self.new_files[file_key] = file
         super().__setitem__(key, file)
 
     def __missing__(self, key):
         return self.old_files[key]
 
     def close_all(self):
-        for file in self.new_files:
+        for file in self.new_files.values():
             file.close()
 
 

@@ -27,5 +27,5 @@
   overflow: hidden; }
 
 .editor-pane {
-  height: 100%;
+  height: calc(50% - 1em);
 }

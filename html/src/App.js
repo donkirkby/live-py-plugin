@@ -68,6 +68,7 @@ class CodeSample extends Component {
             scrollTop: 0,
             selectedLine: undefined,
             display: this.context,
+            output: "",
             isPythonLoaded: false,
             source: props.value
         };
@@ -81,8 +82,11 @@ class CodeSample extends Component {
         if (newSource === undefined) {
             newSource = this.state.source;
         }
-        let display = window.analyze(newSource);
-        this.setState({source: newSource, display: display});
+        let result = window.analyze(newSource);
+        this.setState({
+            source: newSource,
+            display: result[0],
+            output: result[1]});
     }
 
     handleScroll(scrollTop) {
@@ -122,6 +126,11 @@ class CodeSample extends Component {
                                 onScroll={this.handleScroll}
                                 onCursorChange={this.handleCursorChange}
                                 mode="python"/>
+                            <h4>Goal output</h4>
+                            <Editor
+                                value={this.state.output}
+                                readOnly={true}
+                                mode="text"/>
                         </div>
                         <div className="editor-pane">
                             <Editor
@@ -131,6 +140,11 @@ class CodeSample extends Component {
                                 selectedLine={this.state.selectedLine}
                                 onChange={this.handleChange}
                                 onScroll={this.handleScroll}
+                                mode="text"/>
+                            <h4>Output</h4>
+                            <Editor
+                                value={this.state.output}
+                                readOnly={true}
                                 mode="text"/>
                         </div>
                     </Splitter>

@@ -191,8 +191,9 @@ GitHub, and install Docker. After that, follow these steps for each release.
        tar xzf ../../../live-py-plugin/dist/space_tracer-4.0.1.tar.gz
 
    Replace the version number with whatever you just built.
-3. After the package files are in place, run Pyodide's `run_docker` script. See
-   the Pyodide project for full instructions. If you see the error,
+3. After the package files are in place, run Pyodide's `run_docker` script, and
+   then run `make` inside the container. See the Pyodide project for full
+   instructions. If you see the error,
    'ccache: error: Could not find compiler "emcc" in PATH', you have to roll
    back the `EMSCRIPTEN_VERSION` to 1.38.22, as described in Pyodide [PR #506].
 4. After the lengthy build process, run the

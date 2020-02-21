@@ -154,10 +154,24 @@ def main():
 
 
 def analyze(source_code):
+    """ Trace the source code for display in the browser.
+
+    :param source_code: Source code to trace.
+    :return: (tracing_report, output)
+    """
     tracer = TraceRunner()
+    tracer.standard_files.old_files['stderr'] = StringIO()
     tracer.max_width = 200000
-    code_report = tracer.trace_code(source_code)
-    return code_report
+    with replace_input(source_code):
+        code_report = tracer.trace_command(['space_tracer',
+                                            '--traced_file', PSEUDO_FILENAME,
+                                            '--source_width', '0',
+                                            '--live',
+                                            '--stdout', '!',
+                                            '--stderr', '!',
+                                            PSEUDO_FILENAME])
+    stdout = tracer.standard_files.old_files['stderr'].getvalue()
+    return code_report, stdout
 
 
 def web_main():

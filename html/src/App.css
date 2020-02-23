@@ -29,3 +29,8 @@
 .editor-pane {
   height: calc(50% - 1em);
 }
+
+.change-marker {
+  background-color: salmon;
+  position: absolute;
+}

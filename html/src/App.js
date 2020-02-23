@@ -3,6 +3,7 @@ import AceEditor from 'react-ace';
 import ReactMarkdown from 'react-markdown';
 import Splitter from 'm-react-splitters';
 import 'm-react-splitters/lib/splitters.css';
+import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
 import lessons from './lessons.json';
 
@@ -47,6 +48,7 @@ class Editor extends Component {
             height="100%"
             fontSize={18}
             showPrintMargin={true}
+            markers={this.props.markers}
             showGutter={true}
             highlightActiveLine={true}
             editorProps={{
@@ -64,13 +66,19 @@ class CodeSample extends Component {
 
     constructor(props) {
         super(props);
+        let codeRunner = this.context === null ? window.analyze : undefined,
+            analyst = new SampleAnalyst(props.value, codeRunner);
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
-            display: this.context,
-            output: "",
             isPythonLoaded: false,
-            source: props.value
+            source: analyst.sourceCode,
+            goalSourceCode: analyst.goalSourceCode,
+            display: analyst.display,
+            goalOutput: analyst.goalOutput,
+            output: analyst.output,
+            goalMarkers: analyst.goalMarkers,
+            outputMarkers: analyst.outputMarkers
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -82,11 +90,21 @@ class CodeSample extends Component {
         if (newSource === undefined) {
             newSource = this.state.source;
         }
-        let result = window.analyze(newSource);
+        let codeRunner = this.context === null ? window.analyze : undefined,
+            analyst = new SampleAnalyst(
+                newSource,
+                codeRunner,
+                this.state.goalOutput,
+                this.state.goalSourceCode
+            );
         this.setState({
             source: newSource,
-            display: result[0],
-            output: result[1]});
+            display: analyst.display,
+            output: analyst.output,
+            goalOutput: analyst.goalOutput,
+            goalMarkers: analyst.goalMarkers,
+            outputMarkers: analyst.outputMarkers
+        });
     }
 
     handleScroll(scrollTop) {
@@ -128,7 +146,8 @@ class CodeSample extends Component {
                                 mode="python"/>
                             <h4>Goal output</h4>
                             <Editor
-                                value={this.state.output}
+                                value={this.state.goalOutput}
+                                markers={this.state.goalMarkers}
                                 readOnly={true}
                                 mode="text"/>
                         </div>
@@ -144,6 +163,7 @@ class CodeSample extends Component {
                             <h4>Output</h4>
                             <Editor
                                 value={this.state.output}
+                                markers={this.state.outputMarkers}
                                 readOnly={true}
                                 mode="text"/>
                         </div>

@@ -25,15 +25,22 @@ install:
   - pip install --upgrade pip
   - pip install --upgrade virtualenv
   - travis_retry pip install "tox" "coverage"
+  - pip list --format=columns
+  - cd html
+  - npm --version
+  - npm install
+  - cd ..
 
   # Emacs Version Manager
   - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw | sed 's/24\.3/24\.4/g' > x.sh && source ./x.sh
-script:
-  - pip list --format=columns
-  - travis_wait tox -e $TOX_ENV
   - emacs --version
+script:
+  - travis_wait tox -e $TOX_ENV
   - emacs -Q --batch -L emacs-live-py-mode --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile emacs-live-py-mode/*.el
   - emacs -Q -nw -L emacs-live-py-mode -L plugin/PySrc -l live-py-mode.el -l live-py-test.el -f ert-run-tests-batch-and-exit
+  - cd html
+  - npm test -- --watchAll=false
+  - cd ..
 
 after_success:
   - pip install codecov

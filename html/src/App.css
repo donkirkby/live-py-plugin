@@ -34,3 +34,17 @@
   background-color: salmon;
   position: absolute;
 }
+
+.progressbar-wrapper {
+  height: 2em;
+  width: 100%;
+  border-radius: 5px;
+  border: 2px solid #212121;
+}
+
+.progressbar-filler {
+  background: #4CAF50;
+  height: 100%;
+  border-radius: inherit;
+  transition: width .2s ease-in;
+}

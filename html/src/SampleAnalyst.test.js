@@ -238,4 +238,18 @@ Line the second
         expect(analyst.goalMarkers).toEqual(expectedGoalMarkers);
         expect(analyst.outputMarkers).toEqual(expectedOutputMarkers);
     });
+
+    it('calculates percentage match', () => {
+        let originalSource = `\
+line 1
+line 2
+### Goal ###
+line A
+line B
+`,
+            expectedPercentage = 40/44 * 100,
+            analyst = new SampleAnalyst(originalSource, prefixLines);
+
+        expect(analyst.matchPercentage).toBeCloseTo(expectedPercentage, 4);
+    });
 });

@@ -28,12 +28,19 @@ export default class SampleAnalyst {
                     goalColumnNumber = 0,
                     outputLineNumber = 0,
                     outputColumnNumber = 0,
+                    matchCount = 0,
+                    mismatchCount = 0,
                     allMarkers = diffs.map(diff => {
                         let lineCount = (diff.value.match(/\n/g) || '').length,
                             lastGoalLine = goalLineNumber + lineCount,
                             lastGoalColumn = goalColumnNumber + diff.value.length,
                             lastOutputLine = outputLineNumber + lineCount,
                             lastOutputColumn = outputColumnNumber + diff.value.length;
+                        if (diff.added || diff.removed) {
+                            mismatchCount += diff.value.length;
+                        } else {
+                            matchCount += 2*diff.value.length;
+                        }
                         let marker = {
                             startRow: goalLineNumber,
                             startCol: goalColumnNumber,
@@ -71,6 +78,8 @@ export default class SampleAnalyst {
                     delete marker.added;
                     delete marker.removed;
                 });
+                this.matchPercentage = 100 * (
+                    matchCount / (matchCount + mismatchCount));
             }
         }
     }

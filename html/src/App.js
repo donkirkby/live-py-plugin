@@ -13,6 +13,15 @@ import 'brace/theme/github';
 
 const PythonContext = React.createContext('Python is loading...');
 
+class ProgressBar extends Component {
+    render() {
+        return <div className="progressbar-wrapper">
+            <div className="progressbar-filler"
+                 style={{width: `${this.props.percentage}%`}}/>
+        </div>;
+    }
+}
+
 class Editor extends Component {
     constructor(props) {
         super(props);
@@ -78,7 +87,8 @@ class CodeSample extends Component {
             goalOutput: analyst.goalOutput,
             output: analyst.output,
             goalMarkers: analyst.goalMarkers,
-            outputMarkers: analyst.outputMarkers
+            outputMarkers: analyst.outputMarkers,
+            matchPercentage: analyst.matchPercentage
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -103,7 +113,8 @@ class CodeSample extends Component {
             output: analyst.output,
             goalOutput: analyst.goalOutput,
             goalMarkers: analyst.goalMarkers,
-            outputMarkers: analyst.outputMarkers
+            outputMarkers: analyst.outputMarkers,
+            matchPercentage: analyst.matchPercentage
         });
     }
 
@@ -132,6 +143,26 @@ class CodeSample extends Component {
         if (displayValue === null) {
             displayValue = this.state.display;
         }
+        let goalOutputHeader = null,
+            goalOutput = null,
+            outputHeader = null,
+            outputDisplay = null,
+            progressBar = null;
+        if (this.state.goalOutput !== undefined) {
+            goalOutputHeader = <h4>Goal output</h4>;
+            goalOutput = <Editor
+                    value={this.state.goalOutput}
+                    markers={this.state.goalMarkers}
+                    readOnly={true}
+                    mode="text"/>;
+            outputHeader = <h4>Output</h4>;
+            outputDisplay = <Editor
+                    value={this.state.output}
+                    markers={this.state.outputMarkers}
+                    readOnly={true}
+                    mode="text"/>;
+            progressBar = <ProgressBar percentage={this.state.matchPercentage}/>;
+        }
         return (
             <div className="codeSample">
                 <div className="splitter-wrapper">
@@ -144,12 +175,8 @@ class CodeSample extends Component {
                                 onScroll={this.handleScroll}
                                 onCursorChange={this.handleCursorChange}
                                 mode="python"/>
-                            <h4>Goal output</h4>
-                            <Editor
-                                value={this.state.goalOutput}
-                                markers={this.state.goalMarkers}
-                                readOnly={true}
-                                mode="text"/>
+                            {goalOutputHeader}
+                            {goalOutput}
                         </div>
                         <div className="editor-pane">
                             <Editor
@@ -160,15 +187,12 @@ class CodeSample extends Component {
                                 onChange={this.handleChange}
                                 onScroll={this.handleScroll}
                                 mode="text"/>
-                            <h4>Output</h4>
-                            <Editor
-                                value={this.state.output}
-                                markers={this.state.outputMarkers}
-                                readOnly={true}
-                                mode="text"/>
+                            {outputHeader}
+                            {outputDisplay}
                         </div>
                     </Splitter>
                 </div>
+                {progressBar}
           </div>
     );
   }

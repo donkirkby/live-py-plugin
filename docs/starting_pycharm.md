@@ -3,7 +3,7 @@ title: Getting Started with Live Coding in PyCharm
 subtitle: Instantly Visualize Your Code
 ---
 Live Coding in Python lets you run your Python code as you type it. For
-example, this code draws a 50x50 pixel square.
+example, this code draws a square that's 50 pixels wide and 50 pixels high.
 
 ![code that draws a 50x50 square][square50]
 
@@ -507,16 +507,16 @@ other Live Coding in Python plugins and tools by visiting
 [donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
 love to hear about any other projects working on the same kind of tools.
 
-[square50]: https://donkirkby.github.io/live-py-plugin/images/demo_square50.png
-[square75]: https://donkirkby.github.io/live-py-plugin/images/demo_square75.png
-[installation instructions]: https://donkirkby.github.io/live-py-plugin/#installing-the-pycharm-plugin
-[livepy]: https://donkirkby.github.io/live-py-plugin/
+[square50]: images/demo_square50.png
+[square75]: images/demo_square75.png
+[installation instructions]: index.md#installing-the-pycharm-plugin
+[livepy]: index.md
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
-[turtle_window]: https://donkirkby.github.io/live-py-plugin/images/demo_turtle_window.png
-[star]: https://donkirkby.github.io/live-py-plugin/images/demo_star.png
-[pinwheel]: https://donkirkby.github.io/live-py-plugin/images/demo_pinwheel.png
+[turtle_window]: images/demo_turtle_window.png
+[star]: images/demo_star.png
+[pinwheel]: images/demo_pinwheel.png
 [tdd]: https://donkirkby.github.io/testing/
-[matplotlib1]: https://donkirkby.github.io/live-py-plugin/images/demo_matplotlib1.png
-[matplotlib2]: https://donkirkby.github.io/live-py-plugin/images/demo_matplotlib2.png
-[Pyglet preview]: https://donkirkby.github.io/live-py-plugin/images/demo_pyglet.png
+[matplotlib1]: images/demo_matplotlib1.png
+[matplotlib2]: images/demo_matplotlib2.png
+[Pyglet preview]: images/demo_pyglet.png
 [Pyglet documentation]: https://pyglet.readthedocs.io/en/stable/

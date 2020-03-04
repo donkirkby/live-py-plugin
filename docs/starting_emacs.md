@@ -949,12 +949,7 @@ other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test
 it, and report your bugs. I'd also love to hear about any other projects working
 on the same kind of tools.
 
-[square50]: https://donkirkby.github.io/live-py-plugin/images/demo_square50.png
-[square75]: https://donkirkby.github.io/live-py-plugin/images/demo_square75.png
-[installation instructions]: https://donkirkby.github.io/live-py-plugin/#installing-the-emacs-mode
-[livepy]: https://donkirkby.github.io/live-py-plugin/
+[installation instructions]: index.md#installing-the-emacs-mode
+[livepy]: index.md
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
-[turtle_window]: https://donkirkby.github.io/live-py-plugin/images/demo_turtle_window.png
-[star]: https://donkirkby.github.io/live-py-plugin/images/demo_star.png
-[pinwheel]: https://donkirkby.github.io/live-py-plugin/images/demo_pinwheel.png
 [tdd]: https://donkirkby.github.io/testing/

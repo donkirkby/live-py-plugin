@@ -210,6 +210,16 @@ After updating the files, test them out on `http://localhost:8000/`.
 [Pyodide]: https://github.com/iodide-project/pyodide
 [PR #506]: https://github.com/iodide-project/pyodide/pull/506
 
+### Testing GitHub Pages locally
+GitHub generates all the web pages from markdown files, but it can be useful to
+test out that process before you commit changes. See the detailed instructions
+for setting up [Jekyll], but the main command is this:
+
+    cd docs
+    bundle exec jekyll serve
+
+[Jekyll]: https://help.github.com/en/github/working-with-github-pages/testing-your-github-pages-site-locally-with-jekyll
+
 ## Adding Support For a New Editor ##
 
 If you want to use live coding with a new editor, you can add basic support

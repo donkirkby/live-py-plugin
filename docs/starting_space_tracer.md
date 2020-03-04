@@ -298,4 +298,4 @@ it, and report your bugs. I'd also love to hear about any other projects working
 on the same kind of tools.
 
 [quick-and-dirty guide]: https://snarky.ca/a-quick-and-dirty-guide-on-how-to-install-packages-for-python/
-[livepy]: https://donkirkby.github.io/live-py-plugin/
+[livepy]: index.md

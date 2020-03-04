@@ -512,11 +512,11 @@ other Live Coding in Python plugins and tools by visiting
 [donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
 love to hear about any other projects working on the same kind of tools.
 
-[Hello Alice]: https://donkirkby.github.io/live-py-plugin/images/sublime_alice.png
-[Hello Bob]: https://donkirkby.github.io/live-py-plugin/images/sublime_bob.png
-[installation instructions]: https://donkirkby.github.io/live-py-plugin/#installing-the-sublime-text-plugin
-[livepy]: https://donkirkby.github.io/live-py-plugin/
+[Hello Alice]: images/sublime_alice.png
+[Hello Bob]: images/sublime_bob.png
+[installation instructions]: index.md#installing-the-sublime-text-plugin
+[livepy]: index.md
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [tdd]: https://donkirkby.github.io/testing/
-[Pyglet preview]: https://donkirkby.github.io/live-py-plugin/images/sublime_pyglet.png
+[Pyglet preview]: images/sublime_pyglet.png
 [Pyglet documentation]: https://pyglet.readthedocs.io/en/stable/

@@ -1,1 +1,6 @@
 include space_tracer.md
+include README.md
+include license.txt
+include docs/starting_space_tracer.md
+include pytest.ini
+recursive-include test/PySrc/tests *.py

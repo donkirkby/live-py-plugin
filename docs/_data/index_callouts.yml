@@ -2,15 +2,15 @@ items:
   - title: Emacs
     subtitle: Instantly visualize your code
     call_to_action_name: Get Started
-    call_to_action_link: starting_emacs.html
+    call_to_action_link: /starting_emacs.html
   - title: Sublime Text
     subtitle: See inside your code
     call_to_action_name: Get Started
-    call_to_action_link: starting_sublime_text.html
+    call_to_action_link: /starting_sublime_text.html
   - title: Browser
     subtitle: Try it without installing
     call_to_action_name: Go
-    call_to_action_link: demo
+    call_to_action_link: /demo
   - title: GitHub
     subtitle: See our source code
     call_to_action_name: View

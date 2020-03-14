@@ -2,7 +2,7 @@
 title: Live Coding in Python
 subtitle: Plug ins for PyCharm, Emacs, Sublime Text, or even a browser
 hero_link_text: Get Started in PyCharm
-hero_link: starting_pycharm.html
+hero_link: /starting_pycharm.html
 callouts: index_callouts
 ---
 To see how to use one of the Live Coding in Python plugins, watch the

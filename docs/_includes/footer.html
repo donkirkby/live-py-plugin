@@ -1,0 +1,23 @@
+<footer class="footer">
+    <div class="container">
+
+        {% if site.footer_menu %}
+        <div class="columns is-multiline">
+            {% for item in site.data[site.footer_menu] %}
+            <div class="column has-text-centered">
+                <div>
+                    <a href="{{ item.link | prepend: site.baseurl }}" class="link">{{ item.name }}</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+
+        <div class="content is-small has-text-centered">
+            <p class="">
+                This site is open source. {% github_edit_link "Improve this page" %}.
+            </p>
+        </div>
+    </div>
+</footer>

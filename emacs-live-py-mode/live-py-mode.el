@@ -354,7 +354,6 @@ With arg, turn mode on if and only if arg is positive.
 (provide 'live-py-mode)
 
 ;; Local Variables:
-;;   coding: us-ascii-unix
 ;;   fill-column: 76
 ;;   indent-tabs-mode: nil
 ;; End:

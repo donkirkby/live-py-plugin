@@ -18,12 +18,28 @@
   position: relative;
 }
 
+.editor-header {
+    width: 50%;
+    position: relative;
+}
+
 .editor-wrapper {
   display: flex;
 }
 .change-marker {
-  background-color: salmon;
   position: absolute;
+}
+
+.danger {
+  background: hsl(348, 100%, 61%);
+}
+
+.warning {
+  background: hsl(48, 100%, 67%);
+}
+
+.success {
+  background: hsl(141, 53%, 53%);
 }
 
 .progressbar-wrapper {
@@ -34,7 +50,6 @@
 }
 
 .progressbar-filler {
-  background: #4CAF50;
   height: 100%;
   border-radius: inherit;
   transition: width .2s ease-in;

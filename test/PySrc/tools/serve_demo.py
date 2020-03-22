@@ -116,7 +116,7 @@ def copy_react(react_dir, demo_dir):
                 copy_index(Path(source_path), Path(demo_dir))
             else:
                 copy_if_needed(source_path, target_path, rel_path)
-            copied_files.add(target_path)
+                copied_files.add(target_path)
 
     for target_dir, child_names, file_names in os.walk(demo_dir):
         if os.path.basename(target_dir) == 'pyodide':

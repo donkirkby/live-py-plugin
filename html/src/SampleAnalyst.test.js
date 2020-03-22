@@ -177,7 +177,7 @@ Line the second
                 startCol: 4,
                 endRow: 0,
                 endCol: 10,
-                className: 'change-marker',
+                className: 'change-marker warning',
                 type: 'text'
             },
             {
@@ -187,7 +187,7 @@ Line the second
                 startCol: 4,
                 endRow: 1,
                 endCol: 5,
-                className: 'change-marker',
+                className: 'change-marker warning',
                 type: 'text'
             },
             {
@@ -197,7 +197,7 @@ Line the second
                 startCol: 9,
                 endRow: 1,
                 endCol: 19,
-                className: 'change-marker',
+                className: 'change-marker warning',
                 type: 'text'
             }
         ];
@@ -209,7 +209,7 @@ Line the second
                 startCol: 8,
                 endRow: 0,
                 endCol: 10,
-                className: 'change-marker',
+                className: 'change-marker warning',
                 type: 'text'
             },
             {
@@ -219,7 +219,7 @@ Line the second
                 startCol: 4,
                 endRow: 1,
                 endCol: 5,
-                className: 'change-marker',
+                className: 'change-marker warning',
                 type: 'text'
             },
             {
@@ -229,7 +229,7 @@ Line the second
                 startCol: 9,
                 endRow: 1,
                 endCol: 10,
-                className: 'change-marker',
+                className: 'change-marker warning',
                 type: 'text'
             }
         ];

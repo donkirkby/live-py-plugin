@@ -14,8 +14,13 @@ const PythonContext = React.createContext('Python is loading...');
 
 class ProgressBar extends Component {
     render() {
-        return <div className="progressbar-wrapper">
-            <div className="progressbar-filler"
+        let stateClass = (this.props.percentage < 50) ?
+            "danger" :
+            (this.props.percentage < 100) ?
+                "warning" :
+                "success";
+        return <div className="progressbar-wrapper ">
+            <div className={"progressbar-filler " + stateClass}
                  style={{width: `${this.props.percentage}%`}}/>
         </div>;
     }
@@ -142,25 +147,31 @@ class CodeSample extends Component {
         if (displayValue === null) {
             displayValue = this.state.display;
         }
-        let goalOutputHeader = null,
-            goalOutput = null,
-            outputHeader = null,
-            outputDisplay = null,
-            progressBar = null;
+        let progressBar = null,
+            outputHeaders = null,
+            outputSection = null;
         if (this.state.goalOutput !== undefined) {
-            goalOutputHeader = <h4>Goal output</h4>;
-            goalOutput = <Editor
-                    value={this.state.goalOutput}
-                    markers={this.state.goalMarkers}
-                    readOnly={true}
-                    mode="text"/>;
-            outputHeader = <h4>Output</h4>;
-            outputDisplay = <Editor
-                    value={this.state.output}
-                    markers={this.state.outputMarkers}
-                    readOnly={true}
-                    mode="text"/>;
             progressBar = <ProgressBar percentage={this.state.matchPercentage}/>;
+            outputHeaders = <div className="editor-wrapper">
+                <h4 className="editor-header">Goal output</h4>
+                <h4 className="editor-header">Your output</h4>
+            </div>;
+            outputSection = <div className="editor-wrapper">
+                <div className="editor-pane">
+                    <Editor
+                        value={this.state.goalOutput}
+                        markers={this.state.goalMarkers}
+                        readOnly={true}
+                        mode="text"/>
+                </div>
+                <div className="editor-pane">
+                    <Editor
+                        value={this.state.output}
+                        markers={this.state.outputMarkers}
+                        readOnly={true}
+                        mode="text"/>
+                </div>
+            </div>;
         }
         return (
             <div className="codeSample">
@@ -173,8 +184,6 @@ class CodeSample extends Component {
                             onScroll={this.handleScroll}
                             onCursorChange={this.handleCursorChange}
                             mode="python"/>
-                        {goalOutputHeader}
-                        {goalOutput}
                     </div>
                     <div className="editor-pane">
                         <Editor
@@ -185,11 +194,11 @@ class CodeSample extends Component {
                             onChange={this.handleChange}
                             onScroll={this.handleScroll}
                             mode="text"/>
-                        {outputHeader}
-                        {outputDisplay}
                     </div>
                 </div>
                 {progressBar}
+                {outputHeaders}
+                {outputSection}
           </div>
     );
   }

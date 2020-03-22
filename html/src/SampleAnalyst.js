@@ -46,7 +46,7 @@ export default class SampleAnalyst {
                             startCol: goalColumnNumber,
                             endRow: lastGoalLine,
                             endCol: lastGoalColumn,
-                            className: "change-marker",
+                            className: "change-marker warning",
                             type: "text",
                             added: diff.added,
                             removed: diff.removed

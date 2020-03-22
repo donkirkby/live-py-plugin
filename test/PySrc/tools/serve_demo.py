@@ -1,28 +1,33 @@
 #!/usr/bin/env python
 
-""" Run the demo using the simple HTTP server.
+""" Copy web site files and launch Jekyll server.
 
-Only useful for testing, but it sets the MIME types correctly.
+Copies from pyodide source, space_tracer package, and React app.
 """
-import errno
+from contextlib import contextmanager
+
+from subprocess import run
+
+import re
+
+from pathlib import Path
+
 import shutil
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from http.server import SimpleHTTPRequestHandler
 import os
-import socketserver
-from time import sleep
 
 
 def parse_args():
     parser = ArgumentParser(description='Run the demo web site.',
                             formatter_class=ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--port',
-                        type=int,
-                        default=8000)
     parser.add_argument('--no_update',
                         '-n',
                         action='store_true',
                         help='Serve files without updating them.')
+    parser.add_argument('--update_only',
+                        '-u',
+                        action='store_true',
+                        help='Update files without serving them.')
     parser.add_argument('--demo_dir',
                         help='directory to serve from',
                         default=os.path.abspath(
@@ -107,32 +112,92 @@ def copy_react(react_dir, demo_dir):
             source_path = os.path.join(source_dir, file_name)
             rel_path = os.path.relpath(source_path, react_dir)
             target_path = os.path.join(demo_dir, rel_path)
-            copy_if_needed(source_path, target_path, rel_path)
+            if rel_path == 'index.html':
+                copy_index(Path(source_path), Path(demo_dir))
+            else:
+                copy_if_needed(source_path, target_path, rel_path)
             copied_files.add(target_path)
 
     for target_dir, child_names, file_names in os.walk(demo_dir):
         if os.path.basename(target_dir) == 'pyodide':
             continue
         for file_name in file_names:
-            if file_name == 'code_tracer.py':
-                continue
             file_path = os.path.join(target_dir, file_name)
             if file_path not in copied_files:
-                os.remove(file_path)
                 rel_path = os.path.relpath(file_path, demo_dir)
-                print(f'Deleted {rel_path!r}.')
+                if rel_path != 'index.md':
+                    os.remove(file_path)
+                    print(f'Deleted {rel_path!r}.')
 
 
-def launch(port, retries=20):
+def copy_index(source_path: Path, demo_dir: Path):
+    index_markdown = """\
+---
+title: Live Python in the Browser
+layout: react
+is_react: True
+---
+"""
+    index_source = source_path.read_text()
+    dest_file_path = demo_dir / 'index.md'
+    includes_path = demo_dir.parent / '_includes'
+
+    dest_file_path.write_text(index_markdown)
+
+    match = re.search(r'<link href=".*" rel="stylesheet">',
+                      index_source,
+                      re.MULTILINE | re.DOTALL)
+    dest_file_path = includes_path / 'head-scripts.html'
+    dest_file_path.write_text(wrap_react(match.group(0)))
+
+    match = re.search(r'<div id="root"></div>(.*)</body>',
+                      index_source,
+                      re.MULTILINE | re.DOTALL)
+    dest_file_path = includes_path / 'footer-scripts.html'
+    dest_file_path.write_text(wrap_react(match.group(1)))
+
+
+def wrap_react(source):
+    return f"""\
+{{% if page.is_react %}}
+    {source}
+{{% endif %}}
+"""
+
+
+@contextmanager
+def hacked_jekyll(docs_path: Path):
+    """ Ugly hack to let Jekyll 3.8.5 serve WASM.
+
+    This is only used for local testing, GitHub seems to serve it correctly.
+    Related links:
+    WASM added for Jekyll 4.0.
+    https://github.com/jekyll/jekyll/commit/5157bdc753d7f761e77ce15fe3cf626305639626
+    GitHub pages hasn't upgraded to Jekyll 4.0 yet.
+    https://github.com/github/pages-gem/issues/651
+    """
+    gem_home = Path(os.environ['GEM_HOME'])
+    jekyll_path = gem_home / 'gems' / 'jekyll-3.8.5' / 'lib' / 'jekyll'
+    mime_types_path = jekyll_path / 'mime.types'
+
+    gems_lock_path = docs_path / 'Gemfile.lock'
+    gems_lock = gems_lock_path.read_text()
+    if 'jekyll (= 3.8.5)' not in gems_lock:
+        print('jekyll is not version 3.8.5, not hacking it.')
+        original_mime_types = None
+    else:
+        wasm_type = '\napplication/wasm   wasm\n'
+        original_mime_types = mime_types_path.read_text()
+        if 'wasm' in original_mime_types:
+            print('wasm already in mime types, not hacking it.')
+            original_mime_types = None
+        else:
+            mime_types_path.write_text(original_mime_types + wasm_type)
     try:
-        httpd = socketserver.TCPServer(("", port), SimpleHTTPRequestHandler)
-    except OSError as ex:
-        if ex.errno != errno.EADDRINUSE or retries <= 0:
-            raise
-        print('Address still in use...')
-        sleep(5)
-        httpd = launch(port, retries-1)
-    return httpd
+        yield
+    finally:
+        if original_mime_types is not None:
+            mime_types_path.write_text(original_mime_types)
 
 
 def main():
@@ -141,17 +206,13 @@ def main():
         copy_pyodide(args.pyodide_dir, args.demo_dir)
         copy_react(args.react_dir, args.demo_dir)
 
-    SimpleHTTPRequestHandler.extensions_map.update({
-        '.wasm': 'application/wasm',
-    })
-    os.chdir(args.demo_dir)
-    SimpleHTTPRequestHandler.directory = args.demo_dir
-
-    print("Serving at port", args.port, 'from', SimpleHTTPRequestHandler.directory)
-    httpd = launch(args.port)
-
-    print("Launched.")
-    httpd.serve_forever()
+    if not args.update_only:
+        docs_path = Path(args.demo_dir).parent
+        with hacked_jekyll(docs_path):
+            try:
+                run(['bundle', 'exec', 'jekyll', 'serve'], cwd=docs_path)
+            except KeyboardInterrupt:
+                print('Shutting down...')
 
 
 main()

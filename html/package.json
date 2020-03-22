@@ -15,6 +15,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "postbuild": "../.tox/py38/bin/python ../test/PySrc/tools/serve_demo.py --update_only",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

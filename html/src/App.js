@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import AceEditor from 'react-ace';
 import ReactMarkdown from 'react-markdown';
-import Splitter from 'm-react-splitters';
 import 'm-react-splitters/lib/splitters.css';
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
@@ -165,32 +164,30 @@ class CodeSample extends Component {
         }
         return (
             <div className="codeSample">
-                <div className="splitter-wrapper">
-                    <Splitter position="vertical">
-                        <div className="editor-pane">
-                            <Editor
-                                value={this.state.source}
-                                scrollTop={this.state.scrollTop}
-                                onChange={this.handleChange}
-                                onScroll={this.handleScroll}
-                                onCursorChange={this.handleCursorChange}
-                                mode="python"/>
-                            {goalOutputHeader}
-                            {goalOutput}
-                        </div>
-                        <div className="editor-pane">
-                            <Editor
-                                value={displayValue}
-                                scrollTop={this.state.scrollTop}
-                                readOnly={true}
-                                selectedLine={this.state.selectedLine}
-                                onChange={this.handleChange}
-                                onScroll={this.handleScroll}
-                                mode="text"/>
-                            {outputHeader}
-                            {outputDisplay}
-                        </div>
-                    </Splitter>
+                <div className="editor-wrapper">
+                    <div className="editor-pane">
+                        <Editor
+                            value={this.state.source}
+                            scrollTop={this.state.scrollTop}
+                            onChange={this.handleChange}
+                            onScroll={this.handleScroll}
+                            onCursorChange={this.handleCursorChange}
+                            mode="python"/>
+                        {goalOutputHeader}
+                        {goalOutput}
+                    </div>
+                    <div className="editor-pane">
+                        <Editor
+                            value={displayValue}
+                            scrollTop={this.state.scrollTop}
+                            readOnly={true}
+                            selectedLine={this.state.selectedLine}
+                            onChange={this.handleChange}
+                            onScroll={this.handleScroll}
+                            mode="text"/>
+                        {outputHeader}
+                        {outputDisplay}
+                    </div>
                 </div>
                 {progressBar}
           </div>
@@ -262,7 +259,6 @@ how it works.
     render() {
         return (
             <div className="app">
-                <p className="page-header"><a href="..">Home</a></p>
                 <PythonContext.Provider value={this.state.pythonMessage}>
                     <ReactMarkdown
                         source={this.state.source}

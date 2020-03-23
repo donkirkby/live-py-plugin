@@ -82,12 +82,17 @@ def copy_pyodide(pyodide_dir, demo_dir):
 def copy_if_needed(source_path, target_path, file_name=None):
     if file_name is None:
         file_name = os.path.basename(target_path)
-    source_time = os.stat(source_path).st_mtime
+    source_stat = os.stat(source_path)
+    source_time = source_stat.st_mtime
+    source_size = source_stat.st_size
     try:
-        target_time = os.stat(target_path).st_mtime
+        target_stat = os.stat(target_path)
+        target_time = target_stat.st_mtime
+        target_size = target_stat.st_size
     except FileNotFoundError:
         target_time = 0
-    if source_time <= target_time:
+        target_size = 0
+    if source_time <= target_time and source_size == target_size:
         print(file_name, 'is up to date.')
     else:
         shutil.copy(source_path, target_path)

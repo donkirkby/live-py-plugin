@@ -30,6 +30,15 @@
   position: absolute;
 }
 
+.reset-wrapper {
+  position: relative;
+}
+.reset-code {
+  position: absolute;
+  top: -2em;
+  z-index: 4;
+}
+
 .danger {
   background: hsl(348, 100%, 61%);
 }

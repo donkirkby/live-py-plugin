@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import AceEditor from 'react-ace';
 import ReactMarkdown from 'react-markdown';
-import 'm-react-splitters/lib/splitters.css';
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
 import lessons from './lessons.json';
@@ -86,6 +85,7 @@ class CodeSample extends Component {
             selectedLine: undefined,
             isPythonLoaded: false,
             source: analyst.sourceCode,
+            originalSource: analyst.sourceCode,
             goalSourceCode: analyst.goalSourceCode,
             display: analyst.display,
             goalOutput: analyst.goalOutput,
@@ -96,6 +96,7 @@ class CodeSample extends Component {
         };
 
         this.handleChange = this.handleChange.bind(this);
+        this.handleReset = this.handleReset.bind(this);
         this.handleScroll = this.handleScroll.bind(this);
         this.handleCursorChange = this.handleCursorChange.bind(this);
     }
@@ -120,6 +121,10 @@ class CodeSample extends Component {
             outputMarkers: analyst.outputMarkers,
             matchPercentage: analyst.matchPercentage
         });
+    }
+
+    handleReset() {
+        this.handleChange(this.state.originalSource);
     }
 
     handleScroll(scrollTop) {
@@ -149,7 +154,13 @@ class CodeSample extends Component {
         }
         let progressBar = null,
             outputHeaders = null,
-            outputSection = null;
+            outputSection = null,
+            resetButton = null;
+        if (this.state.source !== this.state.originalSource) {
+            resetButton = <div className="reset-wrapper">
+                <button className="reset-code" onClick={this.handleReset}>Reset</button>
+            </div>;
+        }
         if (this.state.goalOutput !== undefined) {
             progressBar = <ProgressBar percentage={this.state.matchPercentage}/>;
             outputHeaders = <div className="editor-wrapper">
@@ -196,6 +207,7 @@ class CodeSample extends Component {
                             mode="text"/>
                     </div>
                 </div>
+                {resetButton}
                 {progressBar}
                 {outputHeaders}
                 {outputSection}

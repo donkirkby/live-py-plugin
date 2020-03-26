@@ -2,16 +2,28 @@ import { diffChars } from 'diff';
 
 export default class SampleAnalyst {
 
-    constructor(sourceCode, run, goalOutput, goalSourceCode) {
+    constructor(sourceCode, run, goalOutput, goalSourceCode, isLive) {
         if (goalSourceCode !== undefined) {
             this.sourceCode = sourceCode;
             this.goalSourceCode = goalSourceCode;
+            this.isLive = true;
+        } else if (isLive === false) {
+            this.sourceCode = sourceCode;
+            this.isLive = isLive;
         } else {
-            let splitSource = sourceCode.split(/ *#[# ]*Goal[ #]*\n/i);
-            this.sourceCode = splitSource[0];
-            this.goalSourceCode = splitSource[1];
+            let sourcePieces = /^(.*\n)?( *##+ *Static[ #]*\n)(.*)$/is.exec(
+                sourceCode);
+            if (sourcePieces !== null) {
+                this.sourceCode = (sourcePieces[1] || "") + sourcePieces[3];
+                this.isLive = false;
+            } else {
+                this.isLive = true;
+                let splitSource = sourceCode.split(/ *##+ *Goal[ #]*\n/i);
+                this.sourceCode = splitSource[0];
+                this.goalSourceCode = splitSource[1];
+            }
         }
-        if (run !== undefined) {
+        if (run !== undefined && this.isLive) {
             let result = run(this.sourceCode);
             this.display = result[0];
             this.output = result[1];

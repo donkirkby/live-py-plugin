@@ -73,10 +73,6 @@ class Editor extends Component {
     }
 }
 
-function getCoreProps(props) {
-    return props['data-sourcepos'] ? {'data-sourcepos': props['data-sourcepos']} : {}
-}
-
 class FootnoteBuilder extends Component {
     constructor(props) {
         super(props);
@@ -119,7 +115,8 @@ class CodeSample extends Component {
             output: analyst.output,
             goalMarkers: analyst.goalMarkers,
             outputMarkers: analyst.outputMarkers,
-            matchPercentage: analyst.matchPercentage
+            matchPercentage: analyst.matchPercentage,
+            isLive: analyst.isLive
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -137,7 +134,8 @@ class CodeSample extends Component {
                 newSource,
                 codeRunner,
                 this.state.goalOutput,
-                this.state.goalSourceCode
+                this.state.goalSourceCode,
+                this.state.isLive
             );
         this.setState({
             source: newSource,
@@ -179,10 +177,24 @@ class CodeSample extends Component {
         if (displayValue === null) {
             displayValue = this.state.display;
         }
-        let progressBar = null,
+        let displayEditor = null,
+            progressBar = null,
             outputHeaders = null,
             outputSection = null,
             resetButton = null;
+        if (this.state.isLive) {
+            displayEditor = <div className="editor-pane">
+                <Editor
+                    value={displayValue}
+                    scrollTop={this.state.scrollTop}
+                    readOnly={true}
+                    selectedLine={this.state.selectedLine}
+                    onChange={this.handleChange}
+                    onScroll={this.handleScroll}
+                    highlightActiveLine={true}
+                    mode="text"/>
+            </div>;
+        }
         if (this.state.source !== this.state.originalSource) {
             resetButton = <div className="reset-wrapper">
                 <button className="reset-code" onClick={this.handleReset}>Reset</button>
@@ -226,17 +238,7 @@ class CodeSample extends Component {
                             highlightActiveLine={true}
                             mode="python"/>
                     </div>
-                    <div className="editor-pane">
-                        <Editor
-                            value={displayValue}
-                            scrollTop={this.state.scrollTop}
-                            readOnly={true}
-                            selectedLine={this.state.selectedLine}
-                            onChange={this.handleChange}
-                            onScroll={this.handleScroll}
-                            highlightActiveLine={true}
-                            mode="text"/>
-                    </div>
+                    {displayEditor}
                 </div>
                 {resetButton}
                 {progressBar}

@@ -41,6 +41,49 @@ out line 2
         expect(analyst.sourceCode).toBe(expectedSource);
         expect(analyst.display).toBe(expectedDisplay);
         expect(analyst.output).toBe(expectedOutput);
+        expect(analyst.goalOutput).toBeUndefined();
+        expect(analyst.isLive).toBe(true);
+    });
+
+    it('hides analysis if marked as static', () => {
+        let source = `\
+### static ###
+line 1
+line 2
+`;
+        let expectedSource = `\
+line 1
+line 2
+`;
+        let analyst = new SampleAnalyst(source, prefixLines);
+
+        expect(analyst.sourceCode).toBe(expectedSource);
+        expect(analyst.display).toBeUndefined();
+        expect(analyst.output).toBeUndefined();
+        expect(analyst.goalOutput).toBeUndefined();
+        expect(analyst.isLive).toBe(false);
+    });
+
+    it('hides analysis if known to be static', () => {
+        let goalSourceCode = undefined,
+            goalOutput = undefined,
+            isLive = false,
+            expectedSource = `\
+line 1
+line 2
+`;
+        let analyst = new SampleAnalyst(
+            expectedSource,
+            prefixLines,
+            goalOutput,
+            goalSourceCode,
+            isLive);
+
+        expect(analyst.sourceCode).toBe(expectedSource);
+        expect(analyst.display).toBeUndefined();
+        expect(analyst.output).toBeUndefined();
+        expect(analyst.goalOutput).toBeUndefined();
+        expect(analyst.isLive).toBe(false);
     });
 
     it('displays goal', () => {
@@ -79,7 +122,7 @@ out line 2
         let originalSource = `\
 line 1
 line B
-#  goal
+##  goal
 line 1
 line 2
 `;

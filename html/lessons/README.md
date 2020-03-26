@@ -12,6 +12,8 @@ However, there are extra features you can include.
       ### Goal ###
       print('This code is invisible and the output is compared.')
 
+* **Static code samples** - If you don't want a code sample to be a live sample,
+    you can mark it with the `### Static ###` header.
 * **Footnotes** - If you link to `#footnoteX` where `X` is any number, then the
     `<a>` tag will be named `footnoteXref`. Conversely, links to `#footnoteXref`
     will be named `footnoteX`. This lets you link to a footnote and back to the

@@ -62,7 +62,7 @@ class Editor extends Component {
             showPrintMargin={true}
             markers={this.props.markers}
             showGutter={true}
-            highlightActiveLine={true}
+            highlightActiveLine={this.props.highlightActiveLine}
             editorProps={{
                 $blockScrolling: Infinity
             }}
@@ -70,6 +70,33 @@ class Editor extends Component {
                 showLineNumbers: true,
                 tabSize: 4,
             }}/>;
+    }
+}
+
+function getCoreProps(props) {
+    return props['data-sourcepos'] ? {'data-sourcepos': props['data-sourcepos']} : {}
+}
+
+class FootnoteBuilder extends Component {
+    constructor(props) {
+        super(props);
+    }
+
+    render() {
+        let coreProps = {href: this.props.href};
+        if (this.props['data-sourcepos']) {
+            coreProps['data-sourcepos'] = this.props['data-sourcepos'];
+        }
+        let match = /^#(footnote\d+)$/i.exec(coreProps.href);
+        if (match !== null) {
+            coreProps.name = match[1] + "ref";
+        } else {
+            match = /^#(footnote\d+)ref$/i.exec(coreProps.href);
+            if (match !== null) {
+                coreProps.name = match[1];
+            }
+        }
+        return React.createElement('a', coreProps, this.props.children);
     }
 }
 
@@ -173,6 +200,7 @@ class CodeSample extends Component {
                         value={this.state.goalOutput}
                         markers={this.state.goalMarkers}
                         readOnly={true}
+                        highlightActiveLine={false}
                         mode="text"/>
                 </div>
                 <div className="editor-pane">
@@ -180,6 +208,7 @@ class CodeSample extends Component {
                         value={this.state.output}
                         markers={this.state.outputMarkers}
                         readOnly={true}
+                        highlightActiveLine={false}
                         mode="text"/>
                 </div>
             </div>;
@@ -194,6 +223,7 @@ class CodeSample extends Component {
                             onChange={this.handleChange}
                             onScroll={this.handleScroll}
                             onCursorChange={this.handleCursorChange}
+                            highlightActiveLine={true}
                             mode="python"/>
                     </div>
                     <div className="editor-pane">
@@ -204,6 +234,7 @@ class CodeSample extends Component {
                             selectedLine={this.state.selectedLine}
                             onChange={this.handleChange}
                             onScroll={this.handleScroll}
+                            highlightActiveLine={true}
                             mode="text"/>
                     </div>
                 </div>
@@ -221,33 +252,7 @@ class App extends Component {
         super(props);
         let app = this;
         this.state = {
-            source: `\
-This is a demonstration of Live Coding in Python. Type some Python code in the
-editor on the left side. The right side is a live coding display that shows
-what happens inside your code when it runs. It shows variable values and print()
-calls, as well as a new column each time it runs through a loop or a function.
-
-    def search(n, a):
-        low = 0
-        high = len(a) - 1
-        while low <= high:
-            mid = low + high // 2
-            v = a[mid]
-            if n == v:
-                return mid
-            if n < v:
-                high=mid - 1
-            else:
-                low=mid + 1
-        return -1
-    
-    i = search(1, [1, 2, 4])
-    print(i)
-
-Change the code, and see the changes inside. Try to find the bug in the example
-code. (Hint: try searching for different numbers.) Paste your own code to see
-how it works.
-`,
+            source: lessons['index'],
             pythonMessage: 'Loading Python...'
         };
 
@@ -283,7 +288,10 @@ how it works.
                 <PythonContext.Provider value={this.state.pythonMessage}>
                     <ReactMarkdown
                         source={this.state.source}
-                        renderers={{code: CodeSample}}/>
+                        renderers={{
+                            code: CodeSample,
+                            link: FootnoteBuilder
+                        }}/>
                 </PythonContext.Provider>
             </div>
         );

@@ -14,6 +14,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
+    "prebuild": "../.tox/py38/bin/python ../test/PySrc/tools/collect_lessons.py",
     "build": "react-scripts build",
     "postbuild": "../.tox/py38/bin/python ../test/PySrc/tools/serve_demo.py --update_only",
     "test": "react-scripts test",

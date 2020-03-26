@@ -170,6 +170,9 @@ The details are at [packaging.python.org], but the main steps are:
 ## Browser Development
 The browser version uses the [Pyodide] project to run Python code in the browser.
 
+The web site uses the [Bulma Clean theme], which is based on [Bulma]. The
+[Bulma colours] can be particularly helpful to learn about.
+
 ### Updating and Testing
 To deploy the latest version to the web site, you'll need the `space-tracer`
 package distribution files, so follow those instructions at least as far as
@@ -209,6 +212,9 @@ After updating the files, test them out on `http://localhost:8000/`.
 
 [Pyodide]: https://github.com/iodide-project/pyodide
 [PR #506]: https://github.com/iodide-project/pyodide/pull/506
+[Bulma Clean theme]: https://github.com/chrisrhymes/bulma-clean-theme
+[Bulma]: https://bulma.io/documentation/
+[Bulma colours]: https://bulma.io/documentation/overview/colors/
 
 ### Testing GitHub Pages locally
 GitHub generates all the web pages from markdown files, but it can be useful to

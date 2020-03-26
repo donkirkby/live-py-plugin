@@ -19,7 +19,7 @@ def main():
     lessons = {}
     # source_file: Path
     for source_file in args.source.rglob('*.md'):
-        name = source_file.name[:-3]
+        name = str(source_file.relative_to(args.source).with_suffix(''))
         if name == 'README':
             continue
         source = source_file.read_text()

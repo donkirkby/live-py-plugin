@@ -14,6 +14,10 @@ However, there are extra features you can include.
 
 * **Static code samples** - If you don't want a code sample to be a live sample,
     you can mark it with the `### Static ###` header.
+* **REPL code samples** - If a code sample contains ">>>", it will be treated as
+    a static code sample.
+* **Live code samples** - If you need to override the REPL detector, mark your
+    code sample with the `### Live ###` header.
 * **Footnotes** - If you link to `#footnoteX` where `X` is any number, then the
     `<a>` tag will be named `footnoteXref`. Conversely, links to `#footnoteXref`
     will be named `footnoteX`. This lets you link to a footnote and back to the
@@ -22,8 +26,8 @@ However, there are extra features you can include.
     `[[1]](#footnote1)`. Then you could put its mate at the bottom:
     `[[1]](#footnote1ref)`.
 
-New pages can be converted from reStructured text using the `convert_lesson.py`
-script. Here are the lessons under construction:
+New pages can be converted from reStructured text using the `convert_tutorial.py`
+script. Here are the tutorials under construction:
 
 * Control Flow [source][controlflow.md].
 

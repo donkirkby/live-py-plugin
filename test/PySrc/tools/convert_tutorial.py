@@ -26,8 +26,8 @@ def parse_args():
 def main():
     args = parse_args()
     root = Path(__file__).parent.parent.parent.parent
-    lessons: Path = root / 'html' / 'lessons'
-    target = (lessons / args.target).resolve()
+    tutorials: Path = root / 'html' / 'tutorials'
+    target = (tutorials / args.target).resolve()
     source = Path(args.source.name)
     docs_path = source.parent.parent
     links = {}
@@ -43,7 +43,7 @@ def main():
     temp_path = None
     try:
         with NamedTemporaryFile(mode='w+',
-                                prefix='lesson_',
+                                prefix='tutorial_',
                                 suffix=source.suffix,
                                 delete=False) as temp_source:
             temp_path = Path(temp_source.name)

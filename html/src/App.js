@@ -3,7 +3,7 @@ import AceEditor from 'react-ace';
 import ReactMarkdown from 'react-markdown';
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
-import lessons from './lessons.json';
+import tutorials from './tutorials.json';
 
 import 'brace/mode/python';
 import 'brace/mode/markdown';
@@ -254,7 +254,7 @@ class App extends Component {
         super(props);
         let app = this;
         this.state = {
-            source: lessons['index'],
+            source: tutorials['index'],
             pythonMessage: 'Loading Python...'
         };
 
@@ -275,11 +275,11 @@ class App extends Component {
         }
         let search = window.location.search;
         let params = new URLSearchParams(search);
-        let lessonName = params.get('lesson');
-        if (lessonName) {
-            this.state.source = lessons[lessonName];
+        let tutorialName = params.get('tutorial');
+        if (tutorialName) {
+            this.state.source = tutorials[tutorialName];
             if (this.state.source === undefined) {
-                this.state.source = 'Lesson not found: ' + lessonName;
+                this.state.source = 'Tutorial not found: ' + tutorialName;
             }
         }
     }

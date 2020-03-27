@@ -40,7 +40,7 @@ Please try it out, and then send me your feedback at the bottom. You can also
 read the [complete tutorial] with live code samples.
 
 [Python tutorial]: https://docs.python.org/3/tutorial/controlflow.html
-[complete tutorial]: ?lesson=cpython/controlflow
+[complete tutorial]: ?tutorial=cpython/controlflow
 
 ## for Statements
 

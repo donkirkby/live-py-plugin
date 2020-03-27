@@ -9,22 +9,22 @@ def main():
     project_path = Path(__file__).parent.parent.parent.parent
     parser.add_argument('--source',
                         type=Path,
-                        default=project_path / 'html' / 'lessons')
+                        default=project_path / 'html' / 'tutorials')
     parser.add_argument('--target',
                         type=FileType('w'),
                         default=str(project_path / 'html' / 'src' /
-                                    'lessons.json'))
+                                    'tutorials.json'))
     args = parser.parse_args()
 
-    lessons = {}
+    tutorials = {}
     # source_file: Path
     for source_file in args.source.rglob('*.md'):
         name = str(source_file.relative_to(args.source).with_suffix(''))
         if name == 'README':
             continue
         source = source_file.read_text()
-        lessons[name] = source
-    json.dump(lessons, args.target)
+        tutorials[name] = source
+    json.dump(tutorials, args.target)
 
 
 main()

@@ -11,10 +11,14 @@ export default class SampleAnalyst {
             this.sourceCode = sourceCode;
             this.isLive = isLive;
         } else {
-            let sourcePieces = /^(.*\n)?( *##+ *Static[ #]*\n)(.*)$/is.exec(
-                sourceCode);
+            let sourcePieces =
+                /^(.*\n)?( *##+ *((static)|(live))[ #]*\n)(.*)$/is.exec(
+                    sourceCode);
             if (sourcePieces !== null) {
-                this.sourceCode = (sourcePieces[1] || "") + sourcePieces[3];
+                this.sourceCode = (sourcePieces[1] || "") + sourcePieces[6];
+                this.isLive = sourcePieces[3].toLowerCase() === "live";
+            } else if (/>>>/.test(sourceCode)) {
+                this.sourceCode = sourceCode;
                 this.isLive = false;
             } else {
                 this.isLive = true;

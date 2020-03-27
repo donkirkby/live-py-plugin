@@ -86,6 +86,43 @@ line 2
         expect(analyst.isLive).toBe(false);
     });
 
+    it('hides analysis if it contains REPL prompt', () => {
+        let expectedSource = `\
+>>> 1 + 2
+3
+`;
+        let analyst = new SampleAnalyst(expectedSource, prefixLines);
+
+        expect(analyst.sourceCode).toBe(expectedSource);
+        expect(analyst.display).toBeUndefined();
+        expect(analyst.output).toBeUndefined();
+        expect(analyst.goalOutput).toBeUndefined();
+        expect(analyst.isLive).toBe(false);
+    });
+
+    it('shows analysis if marked as live', () => {
+        let source = `\
+### live ###
+print('Here >>> There')
+`,
+            expectedSource = `\
+print('Here >>> There')
+`,
+            expectedDisplay = `\
+> print('Here >>> There')
+`,
+            expectedOutput = `\
+out print('Here >>> There')
+`;
+        let analyst = new SampleAnalyst(source, prefixLines);
+
+        expect(analyst.sourceCode).toBe(expectedSource);
+        expect(analyst.display).toBe(expectedDisplay);
+        expect(analyst.output).toBe(expectedOutput);
+        expect(analyst.goalOutput).toBeUndefined();
+        expect(analyst.isLive).toBe(true);
+    });
+
     it('displays goal', () => {
         let originalSource = `\
 line 1

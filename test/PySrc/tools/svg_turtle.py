@@ -1,6 +1,8 @@
+from collections import namedtuple
 import re
 from turtle import TNavigator, TPen
 
+import svgwrite
 
 ANCHOR_NAMES = dict(left='start',
                     center='middle',
@@ -22,22 +24,44 @@ class SvgTurtle(TNavigator, TPen):
         def window_height(self):
             return self._window_height
 
+    _Stamp = namedtuple('Stamp', 'pos heading color')
+
+    @classmethod
+    def create(cls, width="400px", height="250px") -> "SvgTurtle":
+        svg_drawing = cls.create_svg(width, height)
+        turtle = cls(svg_drawing)
+        return turtle
+
+    @classmethod
+    def create_svg(cls, width, height):
+        if not isinstance(width, str):
+            width = f'{width}px'
+        if not isinstance(height, str):
+            height = f'{height}px'
+        svg_drawing = svgwrite.Drawing(size=(width, height))
+        return svg_drawing
+
     def __init__(self, drawing, width=None, height=None):
         if width is None:
             width = _parse_int(drawing['width'])
         if height is None:
             height = _parse_int(drawing['height'])
+        clip_path = drawing.defs.add(drawing.clipPath(id='border_clip'))
+        clip_path.add(drawing.rect(size=(width, height)))
         self._path = None
         self._lines_to_draw = None
         self.screen = None
         TNavigator.__init__(self)
         TPen.__init__(self)
-        self.screen = SvgTurtle._Screen(drawing, width, height)
+        self.screen = self._Screen(drawing, width, height)
+        self.stamps = []
         self.__xoff = self.window_width()/2
         self.__yoff = -self.window_height()/2
+        self.color('black', 'black')
 
     def _convert_position(self, position):
-        return (position[0] + self.__xoff, -position[1] - self.__yoff)
+        return (round(position[0] + self.__xoff, 3),
+                round(-position[1] - self.__yoff, 3))
 
     def _goto(self, end):
         if self.screen:
@@ -66,7 +90,48 @@ class SvgTurtle(TNavigator, TPen):
                                                (x2, y2),
                                                stroke=pencolor,
                                                stroke_width=pensize,
-                                               stroke_linecap='round'))
+                                               stroke_linecap='round',
+                                               clip_path='url(#border_clip)'))
+
+    def to_svg(self) -> str:
+        self._path = None  # Cancel incomplete fill.
+        self._newLine()
+        self._flush_lines()
+        self._draw_stamps()
+
+        return self.screen.cv.tostring()
+
+    def save_as(self, filename, pretty=False, indent=2):
+        self.screen.cv.saveas(filename, pretty, indent)
+
+    def _draw_stamps(self):
+        start_pos = self.pos()
+        start_heading = self.heading()
+        start_pensize = self.pensize()
+        start_isdown = self.isdown()
+        self.pensize(1)
+        stamps = self.stamps[:]
+        self.stamps.clear()
+        for stamp in stamps:
+            self.up()
+            self.goto(stamp.pos)
+            self.setheading(stamp.heading)
+            self.color(*stamp.color)
+            self.down()
+            self.begin_fill()
+            self.left(151)
+            self.fd(10.296)
+            self.left(140.8)
+            self.fd(5.385)
+            self.right(43.6)
+            self.fd(5.385)
+            self.setpos(stamp.pos)
+            self.end_fill()
+        self.goto(start_pos)
+        self.setheading(start_heading)
+        self.pensize(start_pensize)
+        if not start_isdown:
+            self.up()
 
     def begin_fill(self):
         self.fill(True)
@@ -79,6 +144,7 @@ class SvgTurtle(TNavigator, TPen):
             for x1, y1, x2, y2, pencolor, pensize in self._lines_to_draw:
                 if pencolor is not None:
                     self._draw_line(x1, y1, x2, y2, pencolor, pensize)
+        self._draw_stamps()
 
     def fill(self, flag=None):
         if flag is None:
@@ -88,7 +154,8 @@ class SvgTurtle(TNavigator, TPen):
             points.append(self._lines_to_draw[-1][2:4])
             self.screen.cv.add(self.screen.cv.polygon(points=points,
                                                       fill=self._fillcolor,
-                                                      fill_rule='evenodd'))
+                                                      fill_rule='evenodd',
+                                                      clip_path='url(#border_clip)'))
         self._flush_lines()
         if not flag:
             self._path = None
@@ -101,6 +168,12 @@ class SvgTurtle(TNavigator, TPen):
 
     def window_height(self):
         return self.screen.window_height()
+
+    def stamp(self):
+        self.stamps.append(
+            self._Stamp(self.pos(), self.heading(), self.color()))
+        if not self.fill():
+            self._draw_stamps()
 
     def write(self,
               arg,
@@ -122,7 +195,8 @@ class SvgTurtle(TNavigator, TPen):
                                                insert=(x, y),
                                                text_anchor=ANCHOR_NAMES[align],
                                                style=style,
-                                               fill=self._pencolor))
+                                               fill=self._pencolor,
+                                               clip_path='url(#border_clip)'))
 
     def _colorstr(self, color):
         """Return color string corresponding to args.
@@ -140,12 +214,26 @@ class SvgTurtle(TNavigator, TPen):
             return color_map.get(color.lower(), color)
         try:
             r, g, b = color
-        except:
+        except ValueError:
             return '#000000'
         r, g, b = [round(255.0*x) for x in (r, g, b)]
         if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
             return '#000000'
         return "#%02x%02x%02x" % (r, g, b)
+
+    @staticmethod
+    def _rgb_value(rgbstr):
+        return round(int(rgbstr, 16)/2.55)/100.0
+
+    def _color(self, colorstr):
+        """ Reverse lookup of _colorstr. """
+        if not colorstr.startswith('#'):
+            return colorstr
+        itercolors = getattr(color_map, 'iteritems', color_map.items)
+        for name, code in itercolors():
+            if code == colorstr:
+                return name
+        return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
 
 
 def _parse_int(s):
@@ -154,6 +242,7 @@ def _parse_int(s):
     if match is None:
         raise ValueError('String does not start with digits: {!r}'.format(s))
     return int(match.group(0))
+
 
 # Normally, Tkinter will look up these colour names for you, but we don't
 # actually launch Tkinter when we're analysing code.

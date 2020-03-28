@@ -151,8 +151,17 @@ class MockTurtle(TNavigator, TPen):
         raise AttributeError(name)
 
     def _draw_stamps(self):
+        if not self.stamps:
+            return
+
+        start_pos = self.pos()
+        start_heading = self.heading()
+        start_pensize = self.pensize()
+        start_isdown = self.isdown()
         self.pensize(1)
-        for stamp in self.stamps:
+        stamps = self.stamps[:]
+        self.stamps.clear()
+        for stamp in stamps:
             self.up()
             self.goto(stamp.pos)
             self.setheading(stamp.heading)
@@ -167,6 +176,12 @@ class MockTurtle(TNavigator, TPen):
             self.fd(5.385)
             self.setpos(stamp.pos)
             self.end_fill()
+        self.up()
+        self.goto(start_pos)
+        self.setheading(start_heading)
+        self.pensize(start_pensize)
+        if start_isdown:
+            self.down()
 
     def window_width(self):
         return self.screen.cv.cget('width')
@@ -185,6 +200,7 @@ class MockTurtle(TNavigator, TPen):
             self.screen.cv.create_line(*args, **kwargs)
 
         self._lines_to_draw = []
+        self._draw_stamps()
 
     def fill(self, flag=None):
         if flag is None:
@@ -203,6 +219,8 @@ class MockTurtle(TNavigator, TPen):
     def stamp(self):
         self.stamps.append(
             MockTurtle._Stamp(self.pos(), self.heading(), self.color()))
+        if not self.fill():
+            self._draw_stamps()
 
     def write(self,
               arg,

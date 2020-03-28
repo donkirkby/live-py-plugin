@@ -579,20 +579,6 @@ create_line
     def test_forgotten_end_fill_with_stamp(self):
         # SETUP
         expected_report = """\
-create_line
-    0
-    0
-    100
-    0
-    fill='#ff0000'
-    pensize=1
-create_line
-    100
-    0
-    100
-    100
-    fill='#ff0000'
-    pensize=1
 create_polygon
     0
     0
@@ -633,6 +619,20 @@ create_line
     0
     0
     fill='#000000'
+    pensize=1
+create_line
+    0
+    0
+    100
+    0
+    fill='#ff0000'
+    pensize=1
+create_line
+    100
+    0
+    100
+    100
+    fill='#ff0000'
     pensize=1
 """
 

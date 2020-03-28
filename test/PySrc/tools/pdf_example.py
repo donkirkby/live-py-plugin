@@ -1,31 +1,30 @@
 from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.platypus.flowables import Flowable, Spacer
+from reportlab.platypus.flowables import Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 
 from pdf_turtle import PdfTurtle
 
 
-class TurtleArt(Flowable):
-    def __init__(self, scale=1.0):
-        self.scale = scale
+def create_drawing(scale=1.0):
+    t = PdfTurtle.create(600, 600)
+    t.fillcolor('blue')
+    t.begin_fill()
+    for i in range(20):
+        d = (50 + i*i*1.5)
+        t.pencolor(0, 0.05*i, 0)
+        t.width(i)
+        t.forward(d)
+        t.right(144)
+    t.end_fill()
 
-    def wrap(self, availWidth, availHeight):
-        self.width = availWidth
-        self.height = 600*self.scale
-        return (self.width, self.height)
+    drawing = t.to_reportlab()
 
-    def draw(self):
-        t = PdfTurtle(self.canv, width=self.width, height=self.height)
-        t.fillcolor('blue')
-        t.begin_fill()
-        for i in range(20):
-            d = (50 + i*i*1.5)*self.scale
-            t.pencolor(0, 0.05*i, 0)
-            t.width(i*self.scale)
-            t.forward(d)
-            t.right(144)
-        t.end_fill()
+    # Scale the Drawing.
+    drawing.scale(scale, scale)
+    drawing.width *= scale
+    drawing.height *= scale
+    return drawing
 
 
 def go():
@@ -36,14 +35,15 @@ def go():
 This is an example of how to use turtle graphics in a PDF document."""
     story.append(Paragraph(text, styles['Normal']))
     story.append(Spacer(1, 0.055*inch))
-    story.append(TurtleArt(scale=0.75))
+    story.append(create_drawing(scale=0.75))
     story.append(Paragraph("You can control the size of a graphic.",
                            styles['Normal']))
     story.append(Spacer(1, 0.055*inch))
-    story.append(TurtleArt(scale=0.25))
+    story.append(create_drawing(scale=0.25))
     story.append(Paragraph("Try creating your own documents.",
                            styles['Normal']))
     doc.build(story)
+
 
 go()
 

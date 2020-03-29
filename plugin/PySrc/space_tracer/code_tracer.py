@@ -1,4 +1,4 @@
-from ast import (arg, fix_missing_locations, iter_fields, keyword, Add, Assign,
+from ast import (arg, fix_missing_locations, iter_fields, Add, Assign,
                  AST, Attribute, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer, Num,
@@ -401,12 +401,6 @@ class Tracer(NodeTransformer):
         last_line_number = max(line_numbers)
         args = [Num(n=first_line_number),
                 Num(n=last_line_number)]
-        start_frame_keywords = []
-        for decorator in new_node.decorator_list:
-            if getattr(decorator, 'id', None) == 'traced':
-                start_frame_keywords.append(
-                    keyword(arg='is_decorated', value=Name(id='True',
-                                                           ctx=Load())))
         try_body = new_node.body
         globals_call = Call(func=Name(id='globals', ctx=Load()),
                             args=[],
@@ -420,7 +414,7 @@ class Tracer(NodeTransformer):
                                                attr='start_frame',
                                                ctx=Load()),
                                 args=args,
-                                keywords=start_frame_keywords,
+                                keywords=[],
                                 starargs=None,
                                 kwargs=None)
         context_assign = Assign(targets=[Name(id=CONTEXT_NAME, ctx=Store())],

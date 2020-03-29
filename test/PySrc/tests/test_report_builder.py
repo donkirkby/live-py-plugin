@@ -472,9 +472,11 @@ n = 2 | """
         # EXEC
         builder = ReportBuilder()
         builder.assign(name='i', value=0, line_number=2)
-        frame1 = builder.start_frame(3, 4, is_decorated=True)
+        ReportBuilder.is_tracing_next_block = True
+        frame1 = builder.start_frame(3, 4)
         frame1.assign(name='i', value=1, line_number=3)
-        frame2 = builder.start_frame(3, 4, is_decorated=True)
+        ReportBuilder.is_tracing_next_block = True
+        frame2 = builder.start_frame(3, 4)
         frame2.assign(name='i', value=2, line_number=3)
         frame1.assign(name='n', value=2, line_number=4)
         builder.assign(name='i', value=20, line_number=5)

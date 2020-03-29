@@ -24,7 +24,6 @@ def bar(num):
         s += 'b'
     return s
 
-
 print(foo(3))
 print(bar(3))
 """
@@ -278,6 +277,79 @@ class Foo(object):                    |
 f = Foo()                             |
 print(f.foo(10))                      | print('11')
 print(f.bar(20))                      | print('22')"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert expected_report == report
+
+
+def test_traced_renamed():
+    code = """\
+from space_tracer import traced as space_traced
+
+
+@space_traced
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+    @space_traced          |
+    def foo(n):            | n = 3
+        s = 'x'            | s = 'x'
+        for i in range(n): | i = 0    | i = 1     | i = 2
+            s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'
+        return s           | return 'xyyy' """
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_indent', '4',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert trim_report(expected_report) == trim_report(report)
+
+
+def test_other_decorator_renamed():
+    """ The decorator is a module attribute. """
+    code = """\
+traced = staticmethod
+
+class Foo(object):
+    def foo(self, x):
+        return x + 1
+    
+    @traced
+    def bar(x):
+        return x + 2
+
+f = Foo()
+print(f.foo(10))
+print(f.bar(20))
+"""
+    expected_report = """\
+traced = staticmethod |
+                      |
+class Foo(object):    |
+    def foo(self, x): | x = 10
+        return x + 1  | return 11
+                      |
+    @traced           |
+    def bar(x):       | x = 20
+        return x + 2  | return 22
+                      |
+f = Foo()             |
+print(f.foo(10))      | print('11')
+print(f.bar(20))      | print('22')"""
 
     with replace_input(code):
         report = TraceRunner().trace_command([

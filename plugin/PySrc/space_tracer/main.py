@@ -1,5 +1,6 @@
 import argparse
 from contextlib import contextmanager
+from functools import wraps
 from inspect import currentframe
 import io
 from io import StringIO
@@ -213,6 +214,16 @@ class StandardFiles(dict):
     def close_all(self):
         for file in self.new_files.values():
             file.close()
+
+
+def traced(target):
+    """ A decorator for a function that should be traced. """
+    @wraps(target)
+    def wrapped(*args, **kwargs):
+        ReportBuilder.is_tracing_next_block = True
+        return target(*args, **kwargs)
+
+    return wrapped
 
 
 @contextmanager

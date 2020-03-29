@@ -7,6 +7,8 @@ from enum import Enum
 
 
 class ReportBuilder(object):
+    is_tracing_next_block = False
+
     def __init__(self, message_limit=None):
         self.messages = []
         self.assignments = []
@@ -91,7 +93,7 @@ class ReportBuilder(object):
             if should_throw:
                 raise RuntimeError('live coding message limit exceeded')
 
-    def start_frame(self, first_line, last_line, is_decorated=False):
+    def start_frame(self, first_line, last_line):
         """ Start a new stack frame to support recursive calls.
 
         This allows extra messages to be added to a stack frame after a
@@ -100,9 +102,9 @@ class ReportBuilder(object):
         running.
         :param int last_line: the last line of the function that the frame is
         running.
-        :param bool is_decorated: True if the function is marked by the @traced
-        decorator, and other parts should not be traced.
         """
+        is_decorated = ReportBuilder.is_tracing_next_block
+        ReportBuilder.is_tracing_next_block = False
         if self.is_muted:
             return self
         for frame in self.history:

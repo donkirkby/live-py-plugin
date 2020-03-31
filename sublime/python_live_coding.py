@@ -95,7 +95,7 @@ def update_output_for_view(input_view):
                 if cmd.name == 'create_image':
                     encoded = cmd.options['image']
                     img_src = 'data:image/png;base64,{}'.format(encoded)
-                    img = '<img src="{}" width="800" height="600">'.format(img_src)
+                    img = '<img src="{}">'.format(img_src)
             reader.readline()  # Skip a line.
         elif line:
             stdout += line

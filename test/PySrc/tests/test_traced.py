@@ -487,3 +487,132 @@ example_driver.py doesn't call bogus_file.py. Try a different driver. |
             EXAMPLE_DRIVER_PATH])
 
     assert report == expected_report
+
+
+def test_hide_name():
+    code = """\
+from space_tracer import traced
+
+
+@traced(hide='i')
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+    @traced(hide='i')      |
+    def foo(n):            | n = 3
+        s = 'x'            | s = 'x'
+        for i in range(n): |          |           |
+            s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'
+        return s           | return 'xyyy'"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_indent', '4',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
+def test_hide_names_list():
+    code = """\
+from space_tracer import traced
+
+
+@traced(hide=['i', 'n'])
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+    @traced(hide=['i', 'n']) |
+    def foo(n):              |
+        s = 'x'              | s = 'x'
+        for i in range(n):   |          |           |
+            s += 'y'         | s = 'xy' | s = 'xyy' | s = 'xyyy'
+        return s             | return 'xyyy'"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_indent', '4',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
+def test_hide_garbage():
+    """ Not a string or iterable collection of strings, ignore it. """
+    code = """\
+from space_tracer import traced
+
+
+@traced(hide=42)
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+    @traced(hide=42)       |
+    def foo(n):            | n = 3
+        s = 'x'            | s = 'x'
+        for i in range(n): | i = 0    | i = 1     | i = 2
+            s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'
+        return s           | return 'xyyy'"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_indent', '4',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
+def test_hide_from_command_line():
+    code = """\
+from space_tracer import traced
+
+
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+    def foo(n):            |
+        s = 'x'            | s = 'x'
+        for i in range(n): |          |           |
+            s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'
+        return s           | return 'xyyy'"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--source_indent', '4',
+            '--traced', 'foo',
+            '--hide', 'n', 'i',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report

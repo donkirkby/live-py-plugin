@@ -113,6 +113,9 @@ def parse_args(command_args=None):
                              'for. Default: %%(default)s to trace %s, %s,'
                              'or whatever is replaced by --traced_file.' %
                              (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME))
+    parser.add_argument('--hide',
+                        help='variable names to hide',
+                        nargs='*')
     parser.add_argument('--live',
                         action='store_true',
                         help='load main module as %s instead of %s.' %
@@ -216,13 +219,16 @@ class StandardFiles(dict):
             file.close()
 
 
-def traced(target=None):
+def traced(target=None, hide=None):
     """ A decorator for a function or with block that should be traced. """
 
     @contextmanager
     def traced_options():
+        old_hide = hide
         ReportBuilder.is_tracing_next_block = True
+        ReportBuilder.hide = hide
         yield
+        ReportBuilder.hide = old_hide
 
     if target is None:
         # Not decorating a function, must be a with block.
@@ -316,6 +322,7 @@ class TraceRunner(object):
         self.standard_files['stderr'] = args.stderr
         self.standard_files['report'] = args.report
 
+        ReportBuilder.hide = args.hide
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
 

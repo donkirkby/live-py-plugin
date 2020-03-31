@@ -8,6 +8,7 @@ from enum import Enum
 
 class ReportBuilder(object):
     is_tracing_next_block = False
+    hide = None
 
     def __init__(self, message_limit=None):
         self.messages = []
@@ -229,6 +230,17 @@ class ReportBuilder(object):
         return self.assignments[-1].indexes[index_index]
 
     def report_assignment(self, format_string, line_number):
+        if isinstance(self.hide, str):
+            if format_string.startswith(self.hide + ' ='):
+                return
+        elif self.hide:
+            try:
+                for hide in self.hide:
+                    if format_string.startswith(hide + ' ='):
+                        return
+            except TypeError:
+                # User passed in something weird. Ignore it.
+                pass
         assignment = self.assignments[-1]
         # noinspection PyBroadException
         try:

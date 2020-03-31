@@ -80,11 +80,17 @@ def parse_args(command_args=None):
                         default=0,
                         help='Number of spaces to indent source code. '
                              'Negative to skip first columns of source code.')
+    parser.add_argument('--trace_offset',
+                        type=int,
+                        default=0,
+                        help='Number of columns to skip at start of tracing '
+                             'display.')
     parser.add_argument('--trace_width',
                         type=int,
                         default=terminal_width,
-                        help='Number of spaces to indent source code. '
-                             'Negative to skip first columns of source code.')
+                        help='Number of columns to display, including source '
+                             'code. Negative to trim columns from the end, 0 '
+                             'for no limit.')
     parser.add_argument('-b',
                         '--bad_driver',
                         help="message to display if driver doesn't call module")
@@ -457,7 +463,7 @@ class TraceRunner(object):
                     if report_line:
                         line += ' '
                 if report_line:
-                    line += report_line
+                    line += report_line[args.trace_offset:]
                 if trace_width:
                     line = line[:trace_width]
                 dump_lines.append(line)

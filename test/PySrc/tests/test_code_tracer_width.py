@@ -124,3 +124,20 @@ s = 'aaaaaa"""
                                               '--traced_file', 'foo.py'])
 
     assert report == expected_report
+
+
+def test_trace_offset():
+    code = """\
+i = 1 + 1
+s = 'a' * 10
+"""
+    expected_report = """\
+i = 1 + 1    |  2
+s = 'a' * 10 |  'aaaaaaaaaa'"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command(['space_tracer',
+                                              '--trace_offset', '3',
+                                              '--traced_file', 'foo.py'])
+
+    assert report == expected_report

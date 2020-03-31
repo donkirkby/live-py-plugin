@@ -51,6 +51,7 @@ class ReportBuilder(object):
         not indexes.
         Return the maximum width of all the lines.
         """
+        self.check_tracing(first_line, last_line)
 
         self._check_line_count(last_line)
         self.check_output()
@@ -69,6 +70,11 @@ class ReportBuilder(object):
         else:
             self._increment_message_count()
         return max_width
+
+    def check_tracing(self, first_line, last_line):
+        if ReportBuilder.is_tracing_next_block:
+            ReportBuilder.is_tracing_next_block = False
+            self.trace_block(first_line, last_line)
 
     def _update_frame_width(self, new_width, line_number):
         if not self.max_width:
@@ -103,8 +109,7 @@ class ReportBuilder(object):
         :param int last_line: the last line of the function that the frame is
         running.
         """
-        is_decorated = ReportBuilder.is_tracing_next_block
-        ReportBuilder.is_tracing_next_block = False
+        self.check_tracing(first_line, last_line)
         if self.is_muted:
             return self
         for frame in self.history:
@@ -114,7 +119,6 @@ class ReportBuilder(object):
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths
         new_frame.max_width = self.max_width
-        new_frame.is_decorated = is_decorated
         self.history.append(new_frame)
         return new_frame
 
@@ -322,8 +326,7 @@ class ReportBuilder(object):
         for frame in self.history:
             frame.check_output()
             first_line, last_line = frame.stack_block
-            if frame.is_decorated:
-                traced_blocks.add(frame.stack_block)
+            traced_blocks.update(frame.reported_blocks)
             self.start_block(first_line, last_line)
             for i in range(len(frame.messages)):
                 message = frame.messages[i]

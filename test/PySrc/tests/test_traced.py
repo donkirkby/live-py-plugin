@@ -319,6 +319,35 @@ print(foo(3))
     assert trim_report(expected_report) == trim_report(report)
 
 
+def test_traced_with_block():
+    code = """\
+from space_tracer import traced
+
+def foo(n):
+    s = 'x'
+    with traced():
+        t = 23
+        for i in range(n):
+            s += 'y'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+    with traced():         |
+        t = 23             | t = 23
+        for i in range(n): | i = 0    | i = 1     | i = 2
+            s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
 def test_other_decorator_renamed():
     """ The decorator is a module attribute. """
     code = """\

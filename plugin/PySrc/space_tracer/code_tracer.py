@@ -369,6 +369,23 @@ class Tracer(NodeTransformer):
         new_node.body = new_body
         return new_node
 
+    def visit_With(self, node):
+        new_node = self.generic_visit(node)
+
+        # Collect line numbers from all except else block.
+        line_numbers = set()
+        for item in new_node.items:
+            find_line_numbers(item, line_numbers)
+        for statement in new_node.body:
+            find_line_numbers(statement, line_numbers)
+        line_numbers.add(new_node.lineno)
+        args = [Num(n=min(line_numbers)),
+                Num(n=max(line_numbers))]
+        new_body = [self._create_context_call('start_block', args)]
+        new_body.extend(new_node.body)
+        new_node.body = new_body
+        return new_node
+
     def visit_While(self, node):
         new_node = self.generic_visit(node)
 

@@ -216,12 +216,22 @@ class StandardFiles(dict):
             file.close()
 
 
-def traced(target):
-    """ A decorator for a function that should be traced. """
+def traced(target=None):
+    """ A decorator for a function or with block that should be traced. """
+
+    @contextmanager
+    def traced_options():
+        ReportBuilder.is_tracing_next_block = True
+        yield
+
+    if target is None:
+        # Not decorating a function, must be a with block.
+        return traced_options()
+
     @wraps(target)
     def wrapped(*args, **kwargs):
-        ReportBuilder.is_tracing_next_block = True
-        return target(*args, **kwargs)
+        with traced_options():
+            return target(*args, **kwargs)
 
     return wrapped
 
@@ -330,12 +340,12 @@ class TraceRunner(object):
 
             # During testing, we import these modules for every test case,
             # so force a reload. This is only likely to happen during testing.
-            traced = traced_importer.traced
+            traced_target = traced_importer.traced
             for name, module in list(sys.modules.items()):
                 if name == DEFAULT_MODULE_NAME:
                     continue
                 module_file = getattr(module, '__file__', '')
-                if (traced and traced.startswith(name) or
+                if (traced_target and traced_target.startswith(name) or
                         name == LIVE_MODULE_NAME or
                         module_file == traced_importer.traced_file):
                     del sys.modules[name]
@@ -495,19 +505,19 @@ class TraceRunner(object):
                 for value in traced_importer.environment.values():
                     if isinstance(value, types.GeneratorType):
                         value.close()
-            traced = traced_importer.traced
+            traced_target = traced_importer.traced
             if ((not traced_importer.is_traced_module_imported) and
-                    traced not in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME)):
+                    traced_target not in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME)):
                 driver_name = os.path.basename(traced_importer.driver[0])
                 if bad_driver:
                     message = bad_driver
-                elif traced is None:
+                elif traced_target is None:
                     traced_name = os.path.basename(traced_importer.traced_file)
                     message = ("{} doesn't call {}. Try a different "
                                "driver.").format(driver_name, traced_name)
                 else:
                     message = ("{} doesn't call the {} module. Try a different "
-                               "driver.").format(driver_name, traced)
+                               "driver.").format(driver_name, traced_target)
                 traced_importer.report_driver_result([message])
         finally:
             is_decorated = any(frame.is_decorated for frame in builder.history)

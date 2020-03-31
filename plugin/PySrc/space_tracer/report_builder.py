@@ -356,6 +356,10 @@ class ReportBuilder(object):
         reported_messages = []
         self.reported_blocks = sorted(traced_blocks)
         for first_line, last_line in self.reported_blocks:
+            if first_line is None:
+                first_line = 1
+            if last_line is None:
+                last_line = len(self.messages)
             if total_lines:
                 reported_messages.extend([''] * (first_line -
                                                  len(reported_messages) - 1))

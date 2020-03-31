@@ -122,6 +122,12 @@ def parse_args(command_args=None):
     parser.add_argument('--hide',
                         help='variable names to hide',
                         nargs='*')
+    parser.add_argument('--start_line',
+                        type=int,
+                        help='first line number to trace')
+    parser.add_argument('--end_line',
+                        type=int,
+                        help='last line number to trace')
     parser.add_argument('--live',
                         action='store_true',
                         help='load main module as %s instead of %s.' %
@@ -331,6 +337,8 @@ class TraceRunner(object):
         ReportBuilder.hide = args.hide
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
+        if args.start_line or args.end_line:
+            builder.trace_block(args.start_line, args.end_line)
 
         traced_importer = TracedModuleImporter(
             args.traced,
@@ -430,6 +438,10 @@ class TraceRunner(object):
                 start_char = -args.source_indent
             reported_source_lines = []
             for first_line, last_line in builder.reported_blocks:
+                if first_line is None:
+                    first_line = 1
+                if last_line is None:
+                    last_line = len(source_lines)
                 for line_number in range(first_line, last_line+1):
                     if line_number > len(source_lines):
                         reported_source_lines.append('')

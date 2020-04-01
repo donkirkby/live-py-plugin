@@ -2,13 +2,14 @@ package io.github.donkirkby.livepycharm;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import icons.LivePythonIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class StopAction extends LayoutAction {
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
         SplitFileEditor splitFileEditor = getEditor(e);
         if (splitFileEditor == null) {
             return;
@@ -27,7 +28,9 @@ public class StopAction extends LayoutAction {
     }
 
     @Override
-    boolean isEnabled(boolean isActive) {
-        return ! isActive;
+    boolean isEnabled(
+            SplitFileEditor.SplitEditorLayout currentLayout,
+            boolean isRunningSelectedConfiguration) {
+        return currentLayout != SplitFileEditor.SplitEditorLayout.SINGLE;
     }
 }

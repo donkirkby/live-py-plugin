@@ -71,6 +71,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private CanvasCommand goalImageCommand;
     private boolean isPassing;
     private boolean isDisplayUpdating = true;
+    private String activeConfigurationId;
 
     LiveCodingAnalyst(VirtualFile mainFile,
                       Document displayDocument,
@@ -98,6 +99,21 @@ public class LiveCodingAnalyst implements DocumentListener {
         return isDisplayUpdating;
     }
 
+    boolean isRunningSelectedConfiguration(@Nullable Project project) {
+        if ( ! this.isRunning) {
+            return false;
+        }
+
+        if (project == null || project.isDisposed()) {
+            return false;
+        }
+
+        RunnerAndConfigurationSettings configuration = RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
+        if (configuration == null) {
+            return false;
+        }
+        return configuration.getUniqueID().equals(this.activeConfigurationId);
+    }
     /**
      * Try to start a new analysis job.
      * @param project the project for the current action
@@ -210,6 +226,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             paramsGroup.addParameterAt(i++, moduleName);
             paramsGroup.addParameterAt(i, "--");
         };
+        this.activeConfigurationId = configuration.getUniqueID();
         isRunning = true;
         schedule();
         return true;

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -18,7 +19,9 @@ abstract class LayoutAction extends AnAction {
         return getDefaultIcon();
     }
 
-    boolean isEnabled(boolean isActive) {
+    boolean isEnabled(
+            SplitFileEditor.SplitEditorLayout currentLayout,
+            boolean isRunningSelectedConfiguration) {
         return true;
     }
 
@@ -29,17 +32,28 @@ abstract class LayoutAction extends AnAction {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
         SplitFileEditor splitFileEditor = getEditor(e);
         Icon icon = getDefaultIcon();
-        boolean isActive = splitFileEditor != null &&
-                splitFileEditor.getLayout() == getActiveLayout();
-        if (isActive) {
+        SplitFileEditor.SplitEditorLayout currentLayout =
+                splitFileEditor == null
+                ? null
+                : splitFileEditor.getLayout();
+        boolean isLayoutActive =
+                splitFileEditor != null &&
+                currentLayout == getActiveLayout();
+        if (isLayoutActive) {
             icon = splitFileEditor.isAnalysisPassing()
                     ? getPassingIcon()
                     : getFailingIcon();
         }
         e.getPresentation().setIcon(icon);
-        e.getPresentation().setEnabled(isEnabled(isActive));
+        boolean isRunningSelectedConfiguration =
+                splitFileEditor != null &&
+                        splitFileEditor.isRunningSelectedConfiguration(e.getProject());
+        e.getPresentation().setEnabled(
+                splitFileEditor != null && isEnabled(
+                        currentLayout,
+                        isRunningSelectedConfiguration));
     }
 }

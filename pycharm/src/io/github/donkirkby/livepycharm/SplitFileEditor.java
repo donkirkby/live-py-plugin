@@ -422,6 +422,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         return myAnalyst.isDisplayUpdating();
     }
 
+    boolean isRunningSelectedConfiguration(@Nullable Project project) {
+        return myAnalyst.isRunningSelectedConfiguration(project);
+    }
+
     @NotNull
     private JComponent createComponent() {
         final JBSplitter splitter = new JBSplitter(false, 0.5f, 0.15f, 0.85f);

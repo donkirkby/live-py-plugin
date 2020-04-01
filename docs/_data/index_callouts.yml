@@ -11,7 +11,3 @@ items:
     subtitle: Try it without installing
     call_to_action_name: Go
     call_to_action_link: /demo
-  - title: GitHub
-    subtitle: See our source code
-    call_to_action_name: View
-    call_to_action_link: https://github.com/donkirkby/live-py-plugin

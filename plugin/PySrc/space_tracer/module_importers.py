@@ -83,13 +83,26 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.original_loaders = {}  # {fullname: loader}
         if self.traced is not None and self.traced == self.driver_module:
             self.traced = LIVE_MODULE_NAME if is_live else DEFAULT_MODULE_NAME
+        is_plain_needed = is_divider_needed = False
         if self.driver_module == 'pytest':
+            is_plain_needed = True
+        elif not is_module and driver:
+            try:
+                driver_file = Path(driver[0]).basename
+            except ValueError:
+                driver_file = None
+            if driver_file == '_jb_pytest_runner.py':
+                is_plain_needed = True
+                is_divider_needed = True
+        if is_plain_needed:
             # Assertion rewriting interferes with our module importer,
             # so disable it. Leave it alone if it's explicitly set.
             for driver_arg in self.driver:
                 if driver_arg.startswith('--assert'):
                     break
             else:
+                if is_divider_needed:
+                    self.driver.append('--')
                 self.driver.append('--assert=plain')
 
     def find_spec(self, fullname, path, target=None):

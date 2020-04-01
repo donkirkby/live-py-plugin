@@ -88,7 +88,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             is_plain_needed = True
         elif not is_module and driver:
             try:
-                driver_file = Path(driver[0]).basename
+                driver_file = Path(driver[0]).name
             except ValueError:
                 driver_file = None
             if driver_file == '_jb_pytest_runner.py':

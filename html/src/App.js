@@ -74,10 +74,6 @@ class Editor extends Component {
 }
 
 class FootnoteBuilder extends Component {
-    constructor(props) {
-        super(props);
-    }
-
     render() {
         let coreProps = {href: this.props.href};
         if (this.props['data-sourcepos']) {

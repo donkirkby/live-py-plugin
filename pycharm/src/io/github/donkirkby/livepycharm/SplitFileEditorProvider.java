@@ -83,7 +83,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
             public FileEditor build() {
                 Disposable disposable = () -> {};
                 EditorFactory.getInstance().addEditorFactoryListener(
-                        new EditorFactoryAdapter() {
+                        new EditorFactoryListener() {
                             @Override
                             public void editorCreated(@NotNull EditorFactoryEvent event) {
                                 Editor editor = event.getEditor();
@@ -115,7 +115,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                     if (displayDocument != null) {
                         displayDocument.addDocumentListener(new DocumentListener() {
                             @Override
-                            public void documentChanged(DocumentEvent event) {
+                            public void documentChanged(@NotNull DocumentEvent event) {
                                 updateDisplayFolding(mainEditor, displayEditor);
                             }
                         });

@@ -197,8 +197,11 @@ GitHub, and install Docker. After that, follow these steps for each release.
 3. After the package files are in place, run Pyodide's `run_docker` script, and
    then run `make` inside the container. See the Pyodide project for full
    instructions. If you see the error,
-   'ccache: error: Could not find compiler "emcc" in PATH', you have to roll
+   'ccache: error: Could not find compiler "emcc" in PATH', or
+   'emconfigure: not found' you have to roll
    back the `EMSCRIPTEN_VERSION` to 1.38.22, as described in Pyodide [PR #506].
+   Sometimes, I've had to remove all build products and rebuild. Either
+   `make clean` or `git clean -f -Xd`.
 4. After the lengthy build process, run the
    `live-py-plugin/test/PySrc/tools/serve_demo.py` script. It will copy all of
    the Pyodide files into the demo directory.

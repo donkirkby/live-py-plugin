@@ -97,8 +97,10 @@ class MockTurtle(TNavigator, TPen):
         self.__xoff = self.screen.cv.cget('width')/2
         self.__yoff = self.screen.cv.cget('height')/2
         if x or y:
+            self.up()
             self.setx(x)
             self.sety(y)
+            self.down()
         self.setheading(heading)
         MockTurtle.instances.append(self)
 
@@ -108,28 +110,49 @@ class MockTurtle(TNavigator, TPen):
         h = round(self.heading())
         return 'MockTurtle(%d, %d, %d)' % (x, y, h)
 
+    def _convert_position(self, position):
+        x, y = position
+        return (x*self.screen.xscale + self.__xoff,
+                -y*self.screen.yscale + self.__yoff)
+
     def _goto(self, end):
-        xstart = self.xcor()
-        ystart = self.ycor()
-        xend, yend = end
+        xstart, ystart = self._convert_position(self._position)
+        xend, yend = self._convert_position(end)
         kwargs = {}
         if self._pencolor:
             kwargs['fill'] = self._pencolor
         if self._pensize:
             kwargs['pensize'] = self._pensize
         if self._drawing:
-            args = [xstart*self.screen.xscale + self.__xoff,
-                    -ystart*self.screen.yscale + self.__yoff,
-                    xend*self.screen.xscale + self.__xoff,
-                    -yend*self.screen.yscale + self.__yoff]
+            args = [xstart, ystart, xend, yend]
             if self._path:
                 self._lines_to_draw.append((args, kwargs))
             else:
                 self.screen.cv.create_line(*args, **kwargs)
         if self._path:
-            self._path.append(xend + self.__xoff)
-            self._path.append(-yend + self.__yoff)
+            self._path.append(xend)
+            self._path.append(yend)
         self._position = end
+
+    def dot(self, size=None, *color):
+        x, y = self._position
+        if size is not None:
+            diameter = size
+        else:
+            pensize = self._pensize or 0
+            diameter = max(pensize+4, 2*pensize)
+        if len(color):
+            pencolor = self._colorstr(color)
+        else:
+            pencolor = self._pencolor or 0
+        r = diameter / 2
+        t2 = self.__class__(canvas=self.screen.cv)
+        t2.up()
+        t2.goto(x, y - r)
+        t2.fillcolor(pencolor)
+        t2.begin_fill()
+        t2.circle(r)
+        t2.end_fill()
 
     # noinspection PyProtectedMember
     def __getattr__(self, name):
@@ -241,9 +264,8 @@ class MockTurtle(TNavigator, TPen):
                       font=font)
         if self._pencolor:
             kwargs['fill'] = self._pencolor
-        self.screen.cv.create_text(self.xcor() + self.__xoff,
-                                   -self.ycor() + self.__yoff,
-                                   **kwargs)
+        x, y = self._convert_position(self._position)
+        self.screen.cv.create_text(x, y, **kwargs)
 
     def _update(self, *args, **kwargs):
         if not self._pencolor.startswith('#'):

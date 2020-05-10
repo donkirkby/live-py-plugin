@@ -35,10 +35,8 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.*;
-import java.util.Base64;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
@@ -214,6 +212,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
             if (canvasCommands == null || canvasCommands.size() == 0) {
                 CanvasCommand command = new CanvasCommand();
+                command.setName(CanvasCommand.CREATE_TEXT);
                 command.addCoordinate(bounds.width/2);
                 command.addCoordinate(bounds.height/2);
                 command.setOption("font", "('Arial', 12, 'normal')");
@@ -230,11 +229,18 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                         "import matplotlib.pyplot as plt\n" +
                         "plt.plot([3, 1, 4])\n" +
                         "plt.show()");
-                drawText(graphics, command);
-                return;
+                canvasCommands = new ArrayList<>();
+                canvasCommands.add(command);
             }
             if (isComparing() && paintComparison(graphics)) {
                 return;
+            }
+            if ( ! canvasCommands.get(0).getName().equals(
+                    CanvasCommand.BACKGROUND_COLOR)) {
+                CanvasCommand command = new CanvasCommand();
+                command.setName(CanvasCommand.BACKGROUND_COLOR);
+                command.setOption("fill", "#FFFFFF");
+                canvasCommands.add(0, command);
             }
             for (CanvasCommand command : canvasCommands) {
                 String method = command.getName();

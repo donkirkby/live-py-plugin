@@ -81,6 +81,25 @@ create_line
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
+    def test_dot(self):
+        # SETUP
+        t2 = MockTurtle()
+        t2.up()
+        t2.goto(0, -2.5)
+        t2.begin_fill()
+        t2.circle(2.5)
+        t2.end_fill()
+        expected_report = t2.report
+        MockTurtle._screen = None
+
+        # EXEC
+        t = MockTurtle()
+        t.dot()
+        report = t.report
+
+        # VERIFY
+        self.assertEqual(expected_report, report)
+
     def test_bounds(self):
         # SETUP
         expected_width = 800

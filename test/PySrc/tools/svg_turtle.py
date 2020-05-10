@@ -27,9 +27,13 @@ class SvgTurtle(TNavigator, TPen):
     _Stamp = namedtuple('Stamp', 'pos heading color')
 
     @classmethod
-    def create(cls, width="400px", height="250px") -> "SvgTurtle":
+    def create(cls, width="400px", height="250px", bgcolor=None) -> "SvgTurtle":
         svg_drawing = cls.create_svg(width, height)
         turtle = cls(svg_drawing)
+        if bgcolor is not None:
+            bgcolor_str = turtle._colorstr(bgcolor)
+            svg_drawing.add(svg_drawing.rect(fill=bgcolor_str,
+                                             size=('100%', '100%')))
         return turtle
 
     @classmethod
@@ -92,6 +96,22 @@ class SvgTurtle(TNavigator, TPen):
                                                stroke_width=pensize,
                                                stroke_linecap='round',
                                                clip_path='url(#border_clip)'))
+
+    def dot(self, size=None, *color):
+        x, y = self._convert_position(self._position)
+        if size is not None:
+            diameter = size
+        else:
+            pensize = self._pensize or 0
+            diameter = max(pensize+4, 2*pensize)
+        if len(color):
+            pencolor = self._colorstr(color)
+        else:
+            pencolor = self._pencolor or 0
+        self.screen.cv.add(self.screen.cv.circle((x, y),
+                                                 diameter/2,
+                                                 stroke=pencolor,
+                                                 clip_path='url(#border_clip)'))
 
     def to_svg(self) -> str:
         self._path = None  # Cancel incomplete fill.

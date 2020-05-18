@@ -4,7 +4,7 @@ subtitle: Instrumenting Python Code
 ---
 I want to record each change to the program's state, so I take the original
 source code and add logging calls around each assignment, loop iteration,
-and other interesting features. Each change I make to the code needs to leave
+and every other interesting feature. Each change I make to the code needs to leave
 its behaviour the same while recording enough information to build a display.
 The recording is done by making calls to a new global variable:
 `__live_coding_context__`.

@@ -1,2 +1,10 @@
 remote_theme: chrisrhymes/bulma-clean-theme
+title: Live Coding in Python
 google_analytics: UA-4644630-2
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      hero_image: images/index_hero.jpg
+      hero_darken: True

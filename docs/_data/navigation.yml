@@ -1,0 +1,18 @@
+- name: Get Started
+  link: /starting_pycharm.html
+  dropdown:
+  - name: PyCharm
+    link: /starting_pycharm.html
+  - name: Emacs
+    link: /starting_emacs.html
+  - name: Sublime Text
+    link: /starting_sublime_text.html
+- name: Browser
+  link: /demo/
+- name: Space Tracer
+  link: /space_tracer.html
+  dropdown:
+    - name: Getting Started
+      link: /starting_space_tracer.html
+- name: How it Works
+  link: /howitworks.html

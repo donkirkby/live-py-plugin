@@ -24,3 +24,6 @@ Describe the versions of everything you were using:
 * Editor (PyCharm, Emacs, or SublimeText)
 * Operating system
 * Python
+
+# Other feedback
+While you're here, we'd love to know how you learned about the project, what you use it for, or anything else you'd like to tell us.

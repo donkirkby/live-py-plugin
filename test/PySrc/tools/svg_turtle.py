@@ -111,6 +111,7 @@ class SvgTurtle(TNavigator, TPen):
         self.screen.cv.add(self.screen.cv.circle((x, y),
                                                  diameter/2,
                                                  stroke=pencolor,
+                                                 fill=pencolor,
                                                  clip_path='url(#border_clip)'))
 
     def to_svg(self) -> str:

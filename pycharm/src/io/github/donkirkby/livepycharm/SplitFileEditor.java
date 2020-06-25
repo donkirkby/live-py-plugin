@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.ImageUtil;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private final TurtleCanvas turtleCanvas;
     @NotNull
     private SplitEditorLayout mySplitEditorLayout = SplitEditorLayout.SINGLE;
-    private LiveCodingAnalyst myAnalyst;
+    private final LiveCodingAnalyst myAnalyst;
 
     @NotNull
     private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
@@ -327,13 +327,13 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             if (targetImage == null) {
                 return false;
             }
-            int width = currentImage.getWidth() > targetImage.getWidth()
-                    ? currentImage.getWidth()
-                    : targetImage.getWidth();
-            int height = currentImage.getHeight() > targetImage.getHeight()
-                    ? currentImage.getHeight()
-                    : targetImage.getHeight();
-            BufferedImage diffImage = UIUtil.createImage(
+            int width = Math.max(
+                    currentImage.getWidth(),
+                    targetImage.getWidth());
+            int height = Math.max(
+                    currentImage.getHeight(),
+                    targetImage.getHeight());
+            BufferedImage diffImage = ImageUtil.createImage(
                     width,
                     height,
                     BufferedImage.TYPE_INT_RGB);

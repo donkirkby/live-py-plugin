@@ -288,6 +288,8 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
     """
 
     pending = 0
+    target_display_x = 0
+    last_source_position = last_display_position = None
 
     @classmethod
     def is_applicable(cls, settings):
@@ -299,7 +301,11 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
 
             # There are no more queued up calls to on_timeout, so it must have
             # been 1000ms since the last modification.
+            output_view = find_view(self.view.settings().get(OUTPUT_VIEW_ID))
+            if output_view is None:
+                return
             update_output_for_view(self.view)
+            self.last_source_position = None  # Force display to scroll after code changes.
 
     def on_modified_async(self):
         self.pending = self.pending + 1
@@ -318,7 +324,27 @@ class InputViewEventListener(sublime_plugin.ViewEventListener):
             logger.warning('Attempted to scroll non-existent view')
             return
 
-        output_view.set_viewport_position(self.view.viewport_position())
+        # Check which side moved.
+        source_position = self.view.viewport_position()
+        display_position = output_view.viewport_position()
+        is_scrolling_source = is_scrolling_display = False
+        if self.last_source_position != source_position:
+            is_scrolling_display = True
+        elif self.last_display_position != display_position:
+            is_scrolling_source = True
+
+        # Update scroll if anything moved.
+        if is_scrolling_display or is_scrolling_source:
+            source_x, source_y = self.last_source_position = source_position
+            display_x, display_y = self.last_display_position = display_position
+
+        if is_scrolling_display:
+            output_view.set_viewport_position((self.target_display_x, source_y))
+            self.last_display_position = output_view.viewport_position()
+        if is_scrolling_source:
+            self.target_display_x = display_x
+            self.view.set_viewport_position((source_x, display_y))
+            self.last_source_position = self.view.viewport_position()
 
         # Queue the callback to fire again in order to create an on_idle event.
         if self.is_applicable(self.view.settings()):

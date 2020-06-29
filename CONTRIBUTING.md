@@ -79,9 +79,9 @@ Releases are built automatically on each commit, and published at [melpa.org].
 Stable releases are built from each tag, but do update the version number.
 
 ### Debugging live-py-mode in Emacs ###
-When adding temporary debugging messages it is recommended to open a second
-Emacs frame for the Messages buffer by typing `C-x 5 2` in the Messages
-buffer.
+When adding temporary debugging messages with the `message` function, it is
+recommended to open a second Emacs frame for the Messages buffer by typing
+`C-x 5 2` in the Messages buffer.
 
 Run the commands listed in `.travis.yml` in the section "script:" manually
 to check for compiler warnings and test regressions.

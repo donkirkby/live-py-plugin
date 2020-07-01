@@ -3,7 +3,7 @@
   <component name="DevKit.ModuleBuildProperties" url="file://$MODULE_DIR$/resources/META-INF/plugin.xml" />
   <component name="FacetManager">
     <facet type="Python" name="Python">
-      <configuration sdkName="Python 3.7 (live-py-plugin)" />
+      <configuration sdkName="Python 3.8 (live-py-plugin)" />
     </facet>
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -23,12 +23,12 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>
-          <root url="jar://$USER_HOME$/.IntelliJIdea2018.1/system/plugins-sandbox/plugins/python/lib/python.jar!/" />
+          <root url="jar://$APPLICATION_PLUGINS_DIR$/python/lib/python.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" scope="PROVIDED" name="Python 3.7 (live-py-plugin) interpreter library" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="Python 3.8 (live-py-plugin) interpreter library" level="application" />
   </component>
 </module>

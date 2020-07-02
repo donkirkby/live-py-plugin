@@ -282,11 +282,147 @@ create_text
     assert report == expected_report.splitlines()
 
 
+def test_write_font(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_text
+    100
+    0
+    anchor='sw'
+    fill='black'
+    font=('Courier', 14, 'bold')
+    text='Bob'
+"""
+
+    t = MockTurtle()
+    t.fd(100)
+    t.write('Bob', font=('Courier', 14, 'bold'))
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_write_partial_font(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_text
+    100
+    0
+    anchor='sw'
+    fill='black'
+    font=('Courier', 8, 'normal')
+    text='Bob'
+"""
+
+    t = MockTurtle()
+    t.fd(100)
+    t.write('Bob', font=('Courier',))
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_write_font_string(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_text
+    100
+    0
+    anchor='sw'
+    fill='black'
+    font=('Courier', 8, 'normal')
+    text='Bob'
+"""
+
+    t = MockTurtle()
+    t.fd(100)
+    t.write('Bob', font='Courier')
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_write_font_list(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_text
+    100
+    0
+    anchor='sw'
+    fill='black'
+    font=('Courier', 14, 'italic')
+    text='Bob'
+"""
+
+    t = MockTurtle()
+    t.fd(100)
+    t.write('Bob', font=['Courier', 14, 'italic'])
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_write_font_none(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_text
+    100
+    0
+    anchor='sw'
+    fill='black'
+    font=('Arial', 8, 'normal')
+    text='Bob'
+"""
+
+    t = MockTurtle()
+    t.fd(100)
+    t.write('Bob', font=None)
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
 def test_write_move():
     """ Not supported yet """
     t = MockTurtle()
     with pytest.raises(NotImplementedError):
         t.write('Bob', move=True)
+
+
+def test_write_bad_size():
+    t = MockTurtle()
+    with pytest.raises(ValueError):
+        t.write('Bob', font=('Arial', 'eight', 'normal'))
 
 
 def test_color(patched_turtle):
@@ -385,7 +521,8 @@ def test_get_color_names():
     t.color('blue')
     color = t.color()
 
-    assert color == ('blue', 'blue')
+    # Before Python 3.6, dicts were not ordered, and either name was possible.
+    assert color in (('blue', 'blue'), ('blue1', 'blue1'))
 
 
 def test_get_color_rgb():

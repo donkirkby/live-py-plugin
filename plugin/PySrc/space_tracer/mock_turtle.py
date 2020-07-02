@@ -18,7 +18,9 @@ except ImportError:
     dialog_name = tkinter_name + '.simpledialog'
     tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
 
-from turtle import TNavigator, TPen  # noqa
+from turtle import TNavigator, TPen
+
+DEFAULT_FONT = ("Arial", 8, "normal")
 
 
 class MockTurtle(TNavigator, TPen):
@@ -253,7 +255,7 @@ class MockTurtle(TNavigator, TPen):
               arg,
               move=False,
               align="left",
-              font=("Arial", 8, "normal")):
+              font=DEFAULT_FONT):
         if move:
             raise NotImplementedError('move parameter is not supported.')
         if align == 'left':
@@ -263,6 +265,19 @@ class MockTurtle(TNavigator, TPen):
         else:
             assert align == 'right'
             anchor = 'se'
+
+        # noinspection PyBroadException
+        try:
+            if isinstance(font, str):
+                font = [font]
+            else:
+                font = list(font)
+            font += DEFAULT_FONT[len(font):]
+        except Exception:
+            font = list(DEFAULT_FONT)
+        font[1] = int(font[1])
+        font = tuple(font)
+
         kwargs = dict(text=str(arg),
                       anchor=anchor,
                       font=font)

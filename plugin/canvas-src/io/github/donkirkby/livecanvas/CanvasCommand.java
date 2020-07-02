@@ -99,7 +99,7 @@ public class CanvasCommand {
 		if (value == null) {
 			return null;
 		}
-		Pattern pattern = Pattern.compile("\\('([^']+)', (\\d+), '([^']+)'\\)");
+		Pattern pattern = Pattern.compile("\\('([^']*)', (\\d+), '([^']*)'\\)");
 		Matcher matcher = pattern.matcher(value);
 		if ( ! matcher.matches()) {
 			return null;

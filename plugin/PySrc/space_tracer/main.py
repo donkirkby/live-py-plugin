@@ -429,6 +429,8 @@ class TraceRunner(object):
                                                   ex.lineno,
                                                   message)
             builder.add_message(message, line_number)
+            if args.canvas:
+                display_error_on_canvas()
         except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()

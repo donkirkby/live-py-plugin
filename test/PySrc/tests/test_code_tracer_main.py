@@ -746,6 +746,27 @@ def test_canvas_error(stdin, stdout, argv):
     assert report_lines[end-1] == "    text='ZeroDivisionError: division by zero'"
 
 
+def test_canvas_syntax_error(stdin, stdout, argv):
+    argv.extend([
+        'dummy.py',
+        '--source_width', '0',
+        '--traced_file', EXAMPLE_SOURCE_PATH,
+        '--canvas'])
+    source = """\
+x = 1
+    y = 2
+"""
+    stdin.read.return_value = source
+
+    with pytest.raises(SystemExit):
+        main()
+
+    report = stdout.getvalue()
+    report_lines = report.splitlines()
+    end = report_lines.index('end_canvas')
+    assert report_lines[end-1] == "    text='IndentationError: unexpected indent'"
+
+
 def test_exception_with_driver(stdin, stdout, argv):
     argv.extend([
         'dummy.py',

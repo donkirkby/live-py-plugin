@@ -171,7 +171,8 @@ class MockTurtle(TNavigator, TPen):
                               "    fill={!r}".format(bgcolorstr),
                               "    outline=''"]
             return report
-        raise AttributeError(name)
+        raise AttributeError(
+            "'MockTurtle' object has no attribute {!r}".format(name))
 
     def _draw_stamps(self):
         if not self.stamps:
@@ -205,6 +206,9 @@ class MockTurtle(TNavigator, TPen):
         self.pensize(start_pensize)
         if start_isdown:
             self.down()
+
+    def getscreen(self):
+        return self.screen
 
     def window_width(self):
         return self.screen.cv.cget('width')

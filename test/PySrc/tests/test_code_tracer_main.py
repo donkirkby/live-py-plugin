@@ -264,6 +264,7 @@ return 42
         report = stdout.write.call_args_list[0][0][0]
         self.assertReportEqual(expected_report, report)
 
+    # noinspection DuplicatedCode
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '--source_width', '0',
@@ -295,6 +296,7 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
         expected_report = self.trim_exception(expected_report)
         self.assertReportEqual(expected_report, report)
 
+    # noinspection DuplicatedCode
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '--source_width', '0',
@@ -325,6 +327,7 @@ foo = 'Hello, World!' | ------------------------- |
         expected_report = self.trim_exception(expected_report)
         self.assertReportEqual(expected_report, report)
 
+    # noinspection DuplicatedCode
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
         '--traced_file', 'foo.py',
@@ -721,6 +724,26 @@ end_canvas
     main()
 
     assert expected_report == stdout.getvalue()
+
+
+def test_canvas_error(stdin, stdout, argv):
+    argv.extend([
+        'dummy.py',
+        '--source_width', '0',
+        '--traced_file', EXAMPLE_SOURCE_PATH,
+        '--canvas'])
+    source = """\
+1/0
+"""
+    stdin.read.return_value = source
+
+    with pytest.raises(SystemExit):
+        main()
+
+    report = stdout.getvalue()
+    report_lines = report.splitlines()
+    end = report_lines.index('end_canvas')
+    assert report_lines[end-1] == "    text='ZeroDivisionError: division by zero'"
 
 
 def test_exception_with_driver(stdin, stdout, argv):

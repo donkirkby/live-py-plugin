@@ -47,6 +47,7 @@ def parse_args(command_args=None):
                 terminal_width, _ = get_terminal_size()
         except OSError:
             pass
+    # noinspection PyTypeChecker
     parser = argparse.ArgumentParser(
         launcher,
         description='Trace Python code.',
@@ -286,6 +287,45 @@ def replace_input(stdin_text=None):
         sys.stdin = old_stdin
 
 
+def display_error_on_canvas():
+    tb = traceback.TracebackException(*sys.exc_info())
+    stack = tb.stack
+    library_path = os.path.dirname(__file__)
+    while stack and stack[0].filename.startswith(library_path):
+        stack.pop(0)
+    del stack[10:]
+    message = ''.join(tb.format(chain=False))
+    message_lines = message.splitlines(keepends=False)
+    split_lines = []
+    for line in message_lines:
+        while line:
+            split_lines.append(line[:80])
+            line = line[80:]
+    max_length = max(len(line) for line in split_lines)
+    t = MockTurtle()
+    t.up()
+    screen = t.getscreen()
+    window_width = screen.window_width()
+    window_height = screen.window_height()
+    line_height = min(window_height / len(split_lines),
+                      window_width * 2 / max_length)
+    font_size = round(line_height * 0.75)
+    font = ('Arial', font_size, 'normal')
+    t.goto(-window_width // 2, window_height // 2)
+    t.setheading(-90)
+    t.fillcolor('white')
+    t.begin_fill()
+    for _ in range(2):
+        t.forward(line_height * len(split_lines))
+        t.left(90)
+        t.forward(window_width)
+        t.left(90)
+    t.end_fill()
+    for line in split_lines:
+        t.forward(line_height)
+        t.write(line, font=font)
+
+
 class TraceRunner(object):
     def __init__(self):
         self.canvas = None
@@ -377,9 +417,8 @@ class TraceRunner(object):
                 sys.argv = old_argv
                 sys.meta_path.remove(traced_importer)
                 sys.meta_path.remove(patched_finder)
-        except SyntaxError:
+        except SyntaxError as ex:
             self.return_code = 1
-            ex = sys.exc_info()[1]
             messages = traceback.format_exception_only(type(ex), ex)
             message = messages[-1].strip()
             if ex.filename == PSEUDO_FILENAME:
@@ -411,6 +450,8 @@ class TraceRunner(object):
                 else:
                     messages = traceback.format_exception_only(etype, value)
                 traced_importer.report_driver_result(messages)
+            if args.canvas:
+                display_error_on_canvas()
 
         used_finder = (traced_importer.source_finder or
                        traced_importer.driver_finder)
@@ -508,6 +549,7 @@ class TraceRunner(object):
         for module_name in ('random', 'numpy.random'):
             random_module = sys.modules.get(module_name)
             if random_module is not None:
+                # noinspection PyUnresolvedReferences
                 random_module.seed(0)
 
         builder = traced_importer.report_builder
@@ -516,6 +558,7 @@ class TraceRunner(object):
             with output_context:
                 try:
                     traced_importer.run_main()
+                    # noinspection PyUnresolvedReferences
                     if sys.stdout.saw_failures:
                         traced_importer.report_driver_result(
                             ['Pytest reported failures.'])

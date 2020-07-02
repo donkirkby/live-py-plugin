@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class CanvasReader {
 	private static final boolean DEBUG = false;
-	private BufferedReader inputReader;
+	private final BufferedReader inputReader;
 	private String nextLine;
 
 	public CanvasReader(BufferedReader inputReader) {
@@ -48,7 +48,8 @@ public class CanvasReader {
 	}
 
 	private String unescapeString(String value) {
-		if (value.startsWith("'") && value.endsWith("'")) {
+		if (value.startsWith("'") && value.endsWith("'") ||
+			value.startsWith("\"") && value.endsWith("\"")) {
 			value = value.substring(1, value.length() - 1);
 			StringWriter writer = new StringWriter();
 			for (int i = 0; i < value.length(); i++) {
@@ -61,6 +62,9 @@ public class CanvasReader {
 					switch (c2) {
 					case '\\':
 						writer.write('\\');
+						break;
+					case '\'':
+						writer.write('\'');
 						break;
 					case 'n':
 						writer.write('\n');

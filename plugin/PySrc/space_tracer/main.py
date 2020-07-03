@@ -129,6 +129,10 @@ def parse_args(command_args=None):
     parser.add_argument('--end_line',
                         type=int,
                         help='last line number to trace')
+    parser.add_argument('--line_numbers',
+                        '-l',
+                        action='store_true',
+                        help='include line numbers with source code')
     parser.add_argument('--live',
                         action='store_true',
                         help='load main module as %s instead of %s.' %
@@ -480,6 +484,8 @@ class TraceRunner(object):
                 indent = 0
                 start_char = -args.source_indent
             reported_source_lines = []
+            last_line = max(last for first, last in builder.reported_blocks)
+            number_width = len(str(last_line))
             for first_line, last_line in builder.reported_blocks:
                 if first_line is None:
                     first_line = 1
@@ -489,8 +495,12 @@ class TraceRunner(object):
                     if line_number > len(source_lines):
                         reported_source_lines.append('')
                     else:
-                        reported_source_lines.append(
-                            source_lines[line_number-1][start_char:])
+                        line = source_lines[line_number - 1][start_char:]
+                        if args.line_numbers:
+                            line = '{:{}}) {}'.format(line_number,
+                                                      number_width,
+                                                      line)
+                        reported_source_lines.append(line)
             max_source_width = max(map(len, reported_source_lines))
             if source_width is None:
                 source_width = max_source_width + indent

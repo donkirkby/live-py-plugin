@@ -1,5 +1,7 @@
 package io.github.donkirkby.livecanvas;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -94,19 +96,26 @@ public class CanvasCommand {
 		}
 		return copy;
 	}
+	@NotNull
 	public FontOptions getFontOptions(String name) {
 		String value = options.get(name);
 		if (value == null) {
-			return null;
+			value = "";
 		}
 		Pattern pattern = Pattern.compile("\\('([^']*)', (\\d+), '([^']*)'\\)");
 		Matcher matcher = pattern.matcher(value);
+		String fontName;
+		int size;
+		String[] styleNames;
 		if ( ! matcher.matches()) {
-			return null;
+			fontName = "Arial";
+			size = 8;
+			styleNames = new String[] {"normal"};
+		} else {
+			fontName = matcher.group(1);
+			size = Integer.parseInt(matcher.group(2));
+			styleNames = matcher.group(3).split(" ");
 		}
-		String fontName = matcher.group(1);
-		int size = Integer.parseInt(matcher.group(2));
-		String[] styleNames = matcher.group(3).split(" ");
 		return new FontOptions(fontName, size, styleNames);
 	}
 }

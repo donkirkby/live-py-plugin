@@ -694,3 +694,53 @@ def foo(n):            | n = 3
             'example.py'])
 
     assert report == expected_report
+
+
+def test_show_line_numbers():
+    code = """\
+a = 1
+b = 2
+print(a + b)
+"""
+    expected_report = """\
+2) b = 2        | b = 2
+3) print(a + b) | print('3')"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--start_line', '2',
+            '--end_line', '3',
+            '--line_numbers',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
+def test_show_line_numbers_pad_right():
+    code = """\
+a = 1
+b = 2
+c = 3
+d = 4
+e = 5
+f = 6
+g = 7
+h = 8
+i = 9
+print(f*g)"""
+    expected_report = """\
+ 9) i = 9      | i = 9
+10) print(f*g) | print('42')"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--start_line', '9',
+            '--end_line', '10',
+            '--line_numbers',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report

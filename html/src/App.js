@@ -43,6 +43,7 @@ class Editor extends Component {
             this.setState({selectedLine: this.props.selectedLine});
             this.content.current.editor.gotoLine(this.props.selectedLine+1);
         }
+        this.content.current.editor.resize();
     }
 
     render() {
@@ -177,7 +178,8 @@ class CodeSample extends Component {
             progressBar = null,
             outputHeaders = null,
             outputSection = null,
-            resetButton = null;
+            resetButton = null,
+            lineCount = 1 + this.state.source.split(/\r\n|\r|\n/).length;
         if (this.state.isLive) {
             displayEditor = <div className="editor-pane">
                 <Editor
@@ -224,7 +226,8 @@ class CodeSample extends Component {
         return (
             <div className="codeSample">
                 <div className="editor-wrapper">
-                    <div className="editor-pane">
+                    <div className="editor-pane"
+                        style={{height: lineCount*18 + "px"}}>
                         <Editor
                             value={this.state.source}
                             scrollTop={this.state.scrollTop}

@@ -287,10 +287,48 @@ the average.
 ## Other Features
 There are a couple of other features that might be helpful, run
 `space_tracer -h` for a complete list. If a script reads standard input, you can
-redirect it from a file with the `--stdin` option. If you want to control how
+redirect it from a file with the `--stdin` option, and there are also options
+for redirecting `--stdout`, `--stderr`, and `--report`. If you want to control how
 the source code on the left appears, you can trim it with `--source_width` and
-pad it with `--source_indent`. You can also run modules like `unittest` by using
-the `-m` option.
+pad it with `--source_indent`. To control how the display on the right appears,
+you can trim it with `--trace_width` and `--trace_offset`. You can also run
+modules like `unittest` by using the `-m` option.
+
+There are a few options for controlling what gets displayed. If there's a
+variable that gets changed a lot, but you don't care about the values, you can
+`--hide` it. You can also focus in on part of a function using line numbers.
+First, display line numbers with `--line_numbers`, then choose which lines to
+display with `--start_line` and `--end_line`.
+
+    $ space_tracer --traced=urllib.parse.quote_from_bytes --line_numbers url_client.py
+    858) def quote_from_bytes(bs, safe='/'):                                            | bs = b'a ?' | safe = ' ' | bs = b'Yes!' | safe = '' | bs
+    859)     """Like quote(), but accepts a bytes object rather than a str, and does    |                          |                          |   
+    860)     not perform string-to-bytes encoding.  It always returns an ASCII string.  |                          |                          |   
+    861)     quote_from_bytes(b'abc def\x3f') -> 'abc%20def%3f'                         |                          |                          |   
+    862)     """                                                                        |                          |                          |   
+    863)     if not isinstance(bs, (bytes, bytearray)):                                 |                          |                          |   
+    864)         raise TypeError("quote_from_bytes() expected bytes")                   |                          |                          |   
+    865)     if not bs:                                                                 |                          |                          |   
+    866)         return ''                                                              |                          |                          |   
+    867)     if isinstance(safe, str):                                                  |                          |                          |   
+    868)         # Normalize 'safe' by converting to bytes and removing non-ASCII chars |                          |                          |   
+    869)         safe = safe.encode('ascii', 'ignore')                                  | safe = b' '              | safe = b''               | sa
+    870)     else:                                                                      |                          |                          |   
+    871)         safe = bytes([c for c in safe if c < 128])                             |                          |                          |   
+    872)     if not bs.rstrip(_ALWAYS_SAFE_BYTES + safe):                               |                          |                          |   
+    873)         return bs.decode()                                                     |                          |                          |   
+    874)     try:                                                                       |                          |                          |   
+    875)         quoter = _safe_quoters[safe]                                           | KeyError: b' '           | KeyError: b''            |   
+    876)     except KeyError:                                                           |                          |                          |   
+    877)         _safe_quoters[safe] = quoter = Quoter(safe).__getitem__                |                          |                          |   
+    878)     return ''.join([quoter(char) for char in bs])                              | return 'a %3F'           | return 'Yes%21'          | re
+    $ space_tracer --traced=urllib.parse --start_line 874 --end_line 878 --line_numbers url_client.py
+    874)     try:                                                        |                          |                          |                  
+    875)         quoter = _safe_quoters[safe]                            | KeyError: b' '           | KeyError: b''            |                  
+    876)     except KeyError:                                            |                          |                          |                  
+    877)         _safe_quoters[safe] = quoter = Quoter(safe).__getitem__ |                          |                          |                  
+    878)     return ''.join([quoter(char) for char in bs])               | return 'a %3F'           | return 'Yes%21'          | return 'b%2Fc'   
+    $
 
 Remember, you can find installation instructions and descriptions of all the
 other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test

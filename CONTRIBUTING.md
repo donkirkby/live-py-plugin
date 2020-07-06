@@ -203,7 +203,7 @@ GitHub, and install Docker. After that, follow these steps for each release.
    Sometimes, I've had to remove all build products and rebuild. Either
    `make clean` or `git clean -f -Xd`.
 4. After the lengthy build process, run the
-   `live-py-plugin/test/PySrc/tools/serve_demo.py` script. It will copy all of
+   `live-py-plugin/test/PySrc/tools/serve_demo.py` script. It will copy all
    the Pyodide files into the demo directory.
 
 To update the ReactJS files, change to the `html` folder, and run

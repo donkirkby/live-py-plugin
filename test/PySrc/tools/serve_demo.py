@@ -18,6 +18,7 @@ import os
 
 
 def parse_args():
+    # noinspection PyTypeChecker
     parser = ArgumentParser(description='Run the demo web site.',
                             formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('--no_update',

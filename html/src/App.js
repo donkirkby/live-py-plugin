@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import AceEditor from 'react-ace';
 import ReactMarkdown from 'react-markdown';
 import SampleAnalyst from './SampleAnalyst.js';
@@ -169,6 +169,10 @@ class CodeSample extends Component {
         }
     }
 
+    countLines(text) {
+        return text.split(/\r\n|\r|\n/).length;
+    }
+
     render() {
         let displayValue = this.context;
         if (displayValue === null) {
@@ -179,7 +183,7 @@ class CodeSample extends Component {
             outputHeaders = null,
             outputSection = null,
             resetButton = null,
-            lineCount = 1 + this.state.source.split(/\r\n|\r|\n/).length;
+            sourceLineCount = 1 + this.countLines(this.state.source);
         if (this.state.isLive) {
             displayEditor = <div className="editor-pane">
                 <Editor
@@ -199,13 +203,18 @@ class CodeSample extends Component {
             </div>;
         }
         if (this.state.goalOutput !== undefined) {
+            let outputLineCount = this.countLines(this.state.output),
+                goalLineCount = this.countLines(this.state.goalOutput),
+                outputSize = Math.min(
+                    50, 1 + Math.max(outputLineCount, goalLineCount));
             progressBar = <ProgressBar percentage={this.state.matchPercentage}/>;
             outputHeaders = <div className="editor-wrapper">
                 <h4 className="editor-header">Goal output</h4>
                 <h4 className="editor-header">Your output</h4>
             </div>;
             outputSection = <div className="editor-wrapper">
-                <div className="editor-pane">
+                <div className="editor-pane"
+                     style={{height: outputSize*18 + "px"}}>
                     <Editor
                         value={this.state.goalOutput}
                         markers={this.state.goalMarkers}
@@ -227,7 +236,7 @@ class CodeSample extends Component {
             <div className="codeSample">
                 <div className="editor-wrapper">
                     <div className="editor-pane"
-                        style={{height: lineCount*18 + "px"}}>
+                        style={{height: sourceLineCount*18 + "px"}}>
                         <Editor
                             value={this.state.source}
                             scrollTop={this.state.scrollTop}

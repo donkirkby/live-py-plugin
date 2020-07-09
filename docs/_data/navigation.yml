@@ -16,3 +16,5 @@
       link: /starting_space_tracer.html
 - name: How it Works
   link: /howitworks.html
+- name: GitHub
+  link: https://github.com/donkirkby/live-py-plugin

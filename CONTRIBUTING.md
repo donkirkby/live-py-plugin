@@ -139,7 +139,7 @@ The details are at [packaging.python.org], but the main steps are:
 
 3. Install the build tools.
 
-        pip install --upgrade setuptools wheel twine
+        python -m pip install --upgrade setuptools wheel twine
 
 4. Build the release files.
 
@@ -147,6 +147,7 @@ The details are at [packaging.python.org], but the main steps are:
 
 5. Upload the release to PyPI. You'll need a user name and password.
 
+        ls dist/*
         twine upload dist/*
 
 6. Check that the new version is on the [package page], and try installing it.

@@ -29,16 +29,16 @@ IDEA licenses.
 
 If you like this project, check out some of my [other projects][projects].
 
-[how]: http://donkirkby.github.io/live-py-plugin/howitworks
+[how]: http://donkirkby.github.io/live-py-plugin/howitworks.html
 [screenshot]: https://donkirkby.github.io/live-py-plugin/images/demo_star.png
 [akaihola]: https://github.com/akaihola
 [cpaulik]: https://github.com/cpaulik
 [JetBrains]: https://www.jetbrains.com/?from=live-py-plugin
 [browser version]: https://donkirkby.github.io/live-py-plugin/demo/
-[PyCharm]: https://donkirkby.github.io/live-py-plugin/starting_pycharm
-[Emacs]: https://donkirkby.github.io/live-py-plugin/starting_emacs
-[Sublime Text]: https://donkirkby.github.io/live-py-plugin/starting_sublime_text
-[Space Tracer]: http://donkirkby.github.io/live-py-plugin/space_tracer
+[PyCharm]: https://donkirkby.github.io/live-py-plugin/starting_pycharm.html
+[Emacs]: https://donkirkby.github.io/live-py-plugin/starting_emacs.html
+[Sublime Text]: https://donkirkby.github.io/live-py-plugin/starting_sublime_text.html
+[Space Tracer]: https://donkirkby.github.io/live-py-plugin/space_tracer.html
 [James Davies]: https://github.com/Derfies
 
 Feature Comparison

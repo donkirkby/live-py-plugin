@@ -96,8 +96,12 @@ modify it.
 
 
 That's easy to step through in your head and see that `s` is now
-`'Hello, World!'` Remember, though, that I want to let your brain focus on
-writing code instead of stepping through it.
+`'Hello, World!'`, but most code you work on is more complicated. Still, you
+either predict the result by running through the code in your head, or you run
+it to see the result. One of this project’s main goals for live coding is to let
+programmers’ brains focus on writing code instead of running code. If you can
+see the code’s results laid out in front of you, you don’t have to hold it all
+in your head.
 
 I turn on live coding mode with `M-x live-py-mode`, and it opens the live coding
 display like the one on the right (below). The display shows me what's in the
@@ -566,10 +570,6 @@ Once the test passes, I can add another test method with another
 scenario. This one includes two copies of 'melon', so the number of unique
 words is still two.
 
-    File Edit Options Buffers Tools Python Help                                     
-    from unittest import TestCase
-    from anagrams import count_anagrams
-    
     File Edit Options Buffers Tools Python Help                                     
     from unittest import TestCase
     from anagrams import count_anagrams

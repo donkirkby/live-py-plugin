@@ -14,6 +14,13 @@
   dropdown:
     - name: Getting Started
       link: /starting_space_tracer.html
+- name: Videos
+  link: https://www.youtube.com/watch?v=aRmUiTPVnNg
+  dropdown:
+    - name: v4.2 in Emacs
+      link: https://www.youtube.com/watch?v=aRmUiTPVnNg
+    - name: v2.16 in Eclipse
+      link: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 - name: How it Works
   link: /howitworks.html
 - name: GitHub

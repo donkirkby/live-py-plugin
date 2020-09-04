@@ -39,7 +39,11 @@ def trace_code(input_view):
     default_space_tracer = os.path.join(__file__, '../space_tracer')
     tracer_path = settings.get('space_tracer', default_space_tracer)
     tracer_path = os.path.abspath(os.path.dirname(tracer_path))
-    driver = shlex.split(settings.get('driver', input_view.file_name()))
+    raw_driver = settings.get('driver')
+    if raw_driver is None:
+        driver = [input_view.file_name()]
+    else:
+        driver = shlex.split(raw_driver)
     working_path = settings.get('working_path',
                                 os.path.dirname(input_view.file_name()))
 

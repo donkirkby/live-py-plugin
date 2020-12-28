@@ -44,5 +44,5 @@ Then copy the script above into a file called `hello.py`, and run it with the
     $
 
 [Live Coding in Python]: https://donkirkby.github.io/live-py-plugin/
-[Getting Started]: https://donkirkby.github.io/live-py-plugin/starting_space_tracer
+[Getting Started]: https://donkirkby.github.io/live-py-plugin/starting_space_tracer.html
 [quick-and-dirty guide]: https://snarky.ca/a-quick-and-dirty-guide-on-how-to-install-packages-for-python/

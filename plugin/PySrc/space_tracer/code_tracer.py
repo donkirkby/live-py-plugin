@@ -7,10 +7,10 @@ from ast import (arg, fix_missing_locations, iter_fields, Add, Assign,
 from copy import deepcopy
 
 try:
-    from ast import FormattedValue
+    from ast import FormattedValue, Constant
 except ImportError:
     # Not available in Python 3.5
-    FormattedValue = None
+    FormattedValue = Constant = None
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
@@ -104,8 +104,7 @@ class Tracer(NodeTransformer):
             otherwise, wrap in get_assignment_index(index_to_get).
         @return: string, or None if no assignment can be reported.
         """
-        slice_text, next_index = self._wrap_slice(subscript.slice,
-                                                  index_to_get)
+        slice_text, next_index = self._wrap_slice(subscript, index_to_get)
         value = subscript.value
         if isinstance(value, Name):
             value_text = value.id
@@ -138,55 +137,75 @@ class Tracer(NodeTransformer):
             'get_assignment_index',
             [Num(n=index_to_get)])
 
-    def _wrap_slice(self, sliceNode, index_to_get=None):
+    def _wrap_slice(self, subscript_node, index_to_get=None):
         """ Wrap a slice in calls to assignment index methods.
 
         Also build a format string for the slice.
+        @param subscript_node: the subscript that owns the slice
         @param index_to_get: if this is None, wrap in add_assignment_index(),
             otherwise, wrap in get_assignment_index(index_to_get).
         @return: format_text, next_index_to_get
         """
-        if isinstance(sliceNode, (Index, Ellipsis)):
-            if (isinstance(sliceNode, Ellipsis) or
-                    isinstance(sliceNode.value, Ellipsis)):
+        slice_node = subscript_node.slice
+        if isinstance(slice_node, (Index, Ellipsis)):
+            if (isinstance(slice_node, Ellipsis) or
+                    isinstance(slice_node.value, Ellipsis)):
                 index_to_get = None
                 format_text = '...'
             else:
-                sliceNode.value = self._wrap_assignment_index(
-                    sliceNode.value,
+                slice_node.value = self._wrap_assignment_index(
+                    slice_node.value,
                     index_to_get)
                 format_text = '{!r}'
                 if index_to_get is not None:
                     index_to_get -= 1
-        elif isinstance(sliceNode, Slice):
+        elif Constant is not None and isinstance(slice_node, (Constant, Name)):
+            # Python 3.9 stopped wrapping the constant in an Index object.
+            subscript_node.slice = self._wrap_assignment_index(
+                slice_node,
+                index_to_get)
+            format_text = '{!r}'
+            if index_to_get is not None:
+                index_to_get -= 1
+        elif isinstance(slice_node, Slice):
             index_to_get = None
-            if sliceNode.step is None:
+            if slice_node.step is None:
                 step_text = ''
             else:
                 step_text = ':{!r}'
-                sliceNode.step = self._wrap_assignment_index(
-                    sliceNode.step,
+                slice_node.step = self._wrap_assignment_index(
+                    slice_node.step,
                     index_to_get)
-            if sliceNode.upper is None:
+            if slice_node.upper is None:
                 upper_text = ''
             else:
                 upper_text = '{!r}'
-                sliceNode.upper = self._wrap_assignment_index(
-                    sliceNode.upper,
+                slice_node.upper = self._wrap_assignment_index(
+                    slice_node.upper,
                     index_to_get)
-            if sliceNode.lower is None:
+            if slice_node.lower is None:
                 lower_text = ''
             else:
                 lower_text = '{!r}'
-                sliceNode.lower = self._wrap_assignment_index(
-                    sliceNode.lower,
+                slice_node.lower = self._wrap_assignment_index(
+                    slice_node.lower,
                     index_to_get)
             format_text = '{}:{}{}'.format(lower_text, upper_text, step_text)
-        else:
-            assert isinstance(sliceNode, ExtSlice)
+        elif isinstance(slice_node, ExtSlice):
             index_to_get = None
-            format_text = ', '.join(self._wrap_slice(subslice)[0]
-                                    for subslice in sliceNode.dims)
+            subscripts = [Subscript(slice=element)
+                          for element in slice_node.dims]
+            format_text = ', '.join(self._wrap_slice(subscript)[0]
+                                    for subscript in subscripts)
+        else:
+            assert isinstance(slice_node, Tuple), slice_node
+            # Python 3.9 replaced ExtSlice with a Tuple.
+            index_to_get = None
+            subscripts = [Subscript(slice=element)
+                          for element in slice_node.elts]
+            format_text = ', '.join(self._wrap_slice(subscript)[0]
+                                    for subscript in subscripts)
+            slice_node.elts = [subscript.slice for subscript in subscripts]
         return format_text, index_to_get
 
     def visit_Call(self, node):
@@ -570,7 +589,10 @@ class Tracer(NodeTransformer):
         existing_node = self.generic_visit(node)
         value = existing_node.value
         if value is None:
-            value = Name(id='None', ctx=Load())
+            if Constant is None:
+                value = Name(id='None', ctx=Load())
+            else:
+                value = Constant(value=None)
 
         return Yield(value=self._create_bare_context_call(
                     'yield_value',

@@ -801,8 +801,13 @@ def test_syntax_error(stdin, stdout, argv):
     source = """\
 def missing_body():
 """
-    expected_report = """\
+    if sys.version_info < (3, 9, 0):
+        expected_report = """\
 SyntaxError: unexpected EOF while parsing
+"""
+    else:
+        expected_report = """\
+IndentationError: expected an indented block
 """
     stdin.read.return_value = source
 

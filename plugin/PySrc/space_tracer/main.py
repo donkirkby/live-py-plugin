@@ -21,7 +21,10 @@ except ImportError:
     IS_PYODIDE = False
     document = window = None
     from os import get_terminal_size
-    from .mock_turtle import MockTurtle
+    try:
+        from .mock_turtle import MockTurtle
+    except ImportError:
+        MockTurtle = None
 
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers

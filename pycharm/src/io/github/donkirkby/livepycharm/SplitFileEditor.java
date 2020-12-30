@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
@@ -196,10 +195,13 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         public void paint(Graphics graphics)
         {
             Graphics2D gc = (Graphics2D) graphics;
-            Editor[] editors = EditorFactory.getInstance().getEditors(
-                    myAnalyst.getDisplayDocument());
-            if (editors.length >= 1) {
-                EditorImpl editor = (EditorImpl) editors[0];
+            EditorImpl editor;
+            try {
+                editor = myAnalyst.getEditor();
+            } catch (RuntimeException ex) {
+                editor = null;
+            }
+            if (editor != null) {
                 graphics.setFont(editor.getColorsScheme().getFont(
                         EditorFontType.PLAIN));
             }
@@ -421,7 +423,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     @NotNull
     @Override
     public String getName() {
-        return "Live coding in Python split editor";
+        return "Live Coding in Python Split Editor";
     }
 
     boolean isDisplayUpdating() {

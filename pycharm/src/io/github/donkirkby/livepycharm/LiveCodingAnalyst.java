@@ -17,8 +17,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -53,19 +57,19 @@ public class LiveCodingAnalyst implements DocumentListener {
         Rectangle getBounds();
     }
 
-    private static Logger log = Logger.getInstance(LiveCodingAnalyst.class);
+    private static final Logger log = Logger.getInstance(LiveCodingAnalyst.class);
     private static final Pattern GOAL_PATTERN =
             Pattern.compile(":lesson goal file:\\s*(\\S*)");
     private static final String CANVAS_START = "start_canvas";
     private final VirtualFile mainFile;
     private final Document displayDocument;
     private boolean isRunning;
-    private static ExecutorService pool = Executors.newCachedThreadPool();
+    private static final ExecutorService pool = Executors.newCachedThreadPool();
     private PythonCommandLineState commandLineState;
     private CommandLinePatcher commandLinePatcher;
-    private Alarm alarm = new Alarm();
-    private ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
-    private CanvasPainter canvasPainter;
+    private final Alarm alarm = new Alarm();
+    private final ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
+    private final CanvasPainter canvasPainter;
     private String goalFile;
     private Rectangle goalBounds;
     private CanvasCommand goalImageCommand;
@@ -427,7 +431,21 @@ public class LiveCodingAnalyst implements DocumentListener {
         isDisplayUpdating = true;
         ApplicationManager.getApplication().runWriteAction(
                 () -> displayDocument.setText(finalDisplay));
+        EditorImpl editor = getEditor();
+        AbstractToggleUseSoftWrapsAction.toggleSoftWraps(
+                editor,
+                null,
+                false);
         alarm.addRequest(() -> isDisplayUpdating = false, 300);
+    }
+
+    EditorImpl getEditor() {
+        Editor[] editors = EditorFactory.getInstance().getEditors(
+                getDisplayDocument());
+        if (editors.length >= 1) {
+            return (EditorImpl) editors[0];
+        }
+        throw new RuntimeException("No editor available.");
     }
 
     private CapturingProcessHandler startProcess(String sourceCode) throws ExecutionException, IOException {
@@ -440,7 +458,6 @@ public class LiveCodingAnalyst implements DocumentListener {
         try {
             byte[] stdin = sourceCode.getBytes(StandardCharsets.UTF_8);
             final OutputStream processInput = processHandler.getProcessInput();
-            assert processInput != null;
             processInput.write(stdin);
             processInput.close();
             return processHandler;

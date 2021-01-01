@@ -299,6 +299,51 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
     # noinspection DuplicatedCode
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--traced_file', EXAMPLE_SOURCE_PATH,
+        '--traced', 'example_source.foo',
+        EXAMPLE_DRIVER_PATH,
+        'fail',
+        'badly'])
+    def test_traced_does_not_hide_error(self, stdin, stdout):
+        source = """\
+def bar():
+    # This would normally
+    # be hidden because of
+    # --traced, but the start
+    # is shown so you can see
+    # the error.
+    return 42
+
+def foo(x):
+    # This is shown, as normal.
+    return x
+
+foo(1)
+"""
+        expected_report = """\
+def bar():                      | ---------------------------------------------------- |
+    # This would normally       | Traceback (most recent call last):                   |
+    # be hidden because of      |   File "path/example_driver.py", line 6, in <module> |
+    # --traced, but the start   |     assert 'fail' not in sys.argv, sys.argv[1:]      |
+    # is shown so you can see   | AssertionError: ['fail', 'badly']                    |
+    # the error.                | ---------------------------------------------------- |
+def foo(x):                     | x = 1
+    # This is shown, as normal. |
+    return x                    | return 1"""
+
+        stdin.read.return_value = source
+
+        with self.assertRaises(SystemExit):
+            main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        report = self.trim_exception(report)
+        expected_report = self.trim_exception(expected_report)
+        assert report == expected_report
+
+    # noinspection DuplicatedCode
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
         '--source_width', '0',
         '--traced_file', EXAMPLE_SOURCE_PATH,
         '--traced', 'example_source',
@@ -538,7 +583,7 @@ AssertionError: 510
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
         expected_report = self.trim_exception(expected_report)
-        self.assertReportEqual(expected_report, report)
+        self.assertReportEqual(report, expected_report)
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
@@ -775,21 +820,46 @@ def test_exception_with_driver(stdin, stdout, argv):
         '--traced', 'example_source',
         EXAMPLE_DRIVER_PATH])
     source = """\
-import sys
 def foo(x):
-    sys.exit('Bad stuff.')
+    exit('Bad stuff.')
 """
     expected_report = """\
+---------------------- | x = 42
+SystemExit: Bad stuff. | SystemExit: Bad stuff.
 ---------------------- |
-SystemExit: Bad stuff. | x = 42
----------------------- | SystemExit: Bad stuff.
 """
     stdin.read.return_value = source
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as ctx:
         main()
 
     assert expected_report == stdout.getvalue()
+    assert ctx.value.code == 1
+
+
+def test_exit_return_code(stdin, stdout, argv):
+    argv.extend([
+        'dummy.py',
+        '--source_width', '0',
+        '--traced_file', EXAMPLE_SOURCE_PATH,
+        '--traced', 'example_source',
+        EXAMPLE_DRIVER_PATH])
+    source = """\
+def foo(x):
+    exit(x)
+"""
+    expected_report = """\
+-------------- | x = 42
+SystemExit: 42 | SystemExit: 42
+-------------- |
+"""
+    stdin.read.return_value = source
+
+    with pytest.raises(SystemExit) as ctx:
+        main()
+
+    assert expected_report == stdout.getvalue()
+    assert ctx.value.code == 42
 
 
 def test_syntax_error(stdin, stdout, argv):

@@ -15,8 +15,8 @@ class ReportTestCase(unittest.TestCase):
         self.addTypeEqualityFunc(str, self.assertMultiLineEqual)
 
     @staticmethod
-    def assertReportEqual(expected_report, report):
-        assert trim_report(expected_report) == trim_report(report)
+    def assertReportEqual(report1, report2):
+        assert trim_report(report1) == trim_report(report2)
 
 
 class ReportBuilderTest(ReportTestCase):

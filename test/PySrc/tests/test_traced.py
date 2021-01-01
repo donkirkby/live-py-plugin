@@ -181,7 +181,7 @@ def custom_print(text, suffix): | text = 'Hello, example' | suffix = '!'
         '--traced=__main__.custom_print',
         EXAMPLE_PRINTING_PATH])
 
-    assert expected_report == report
+    assert report == expected_report
 
 
 def test_traced_function():

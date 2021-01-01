@@ -174,7 +174,11 @@ def main():
     if code_report:
         print(code_report)
     if tracer.return_code:
-        exit(tracer.return_code)
+        try:
+            return_code = int(tracer.return_code)
+        except ValueError:
+            return_code = 1
+        exit(return_code)
 
 
 def analyze(source_code):
@@ -588,9 +592,8 @@ class TraceRunner(object):
                 for value in traced_importer.environment.values():
                     if isinstance(value, types.GeneratorType):
                         value.close()
-            traced_target = traced_importer.traced
-            if ((not traced_importer.is_traced_module_imported) and
-                    traced_target not in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME)):
+            if not traced_importer.is_traced_module_imported:
+                traced_target = traced_importer.traced
                 driver_name = os.path.basename(traced_importer.driver[0])
                 if bad_driver:
                     message = bad_driver

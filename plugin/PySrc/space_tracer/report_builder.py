@@ -4,6 +4,7 @@ import sys
 import traceback
 from unittest.mock import Mock
 from enum import Enum
+from itertools import groupby
 
 
 class ReportBuilder(object):
@@ -28,6 +29,7 @@ class ReportBuilder(object):
         self.current_exception = None
         self.is_decorated = False
         self.minimum_blocks = set()  # {(first_line, last_line)}
+        self.extra_blocks = set()  # {(first_line, last_line)}
 
         # Updated after calling report().
         self.reported_blocks = set()  # {(first_line, last_line)}
@@ -44,6 +46,14 @@ class ReportBuilder(object):
             self.minimum_blocks.add((first_line, last_line))
         else:
             self.reported_blocks.add((first_line, last_line))
+
+    def trace_extra_block(self, first_line, last_line):
+        """ Mark a block for tracing, in addition to main reported blocks.
+
+        :param int first_line: start the block on this line (1-based)
+        :param int last_line: end the block on this line (1-based, included)
+        """
+        self.extra_blocks.add((first_line, last_line))
 
     def start_block(self, first_line, last_line):
         """ Cap all the lines from first_line to last_line inclusive with
@@ -346,20 +356,37 @@ class ReportBuilder(object):
                     line_number = i+1
                     self.add_message(message, line_number)
         self.history = []
-        if not traced_blocks:
+        if traced_blocks:
+            traced_blocks |= self.extra_blocks
+        else:
             end = len(self.messages)
             if self.minimum_blocks:
                 end = max(end,
                           *(block_end
                             for block_start, block_end in self.minimum_blocks))
             traced_blocks = [(1, end)]
-        reported_messages = []
-        self.reported_blocks = sorted(traced_blocks)
-        for first_line, last_line in self.reported_blocks:
+
+        # Remove overlaps from blocks
+        traced_lines = set()
+        for first_line, last_line in traced_blocks:
             if first_line is None:
                 first_line = 1
             if last_line is None:
                 last_line = len(self.messages)
+            traced_lines.update(range(first_line, last_line+1))
+        sorted_blocks = []
+        # noinspection PyTypeChecker
+        for diff, grouped_lines in groupby(enumerate(sorted(traced_lines)),
+                                           lambda item: item[1]-item[0]):
+            index, first_line = next(grouped_lines)
+            last_line = first_line
+            for index, last_line in grouped_lines:
+                pass
+            sorted_blocks.append((first_line, last_line))
+
+        reported_messages = []
+        self.reported_blocks = sorted_blocks
+        for first_line, last_line in self.reported_blocks:
             if total_lines:
                 reported_messages.extend([''] * (first_line -
                                                  len(reported_messages) - 1))

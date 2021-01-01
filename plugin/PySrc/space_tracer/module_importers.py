@@ -209,11 +209,12 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                 driver_path = self.driver and str(Path(self.driver[0]).resolve())
             except FileNotFoundError:
                 driver_path = self.driver and self.driver[0] or ''
+            self.is_traced_module_imported = (not self.driver or
+                                              self.traced_file == driver_path)
             self.run_python_file(
                 self.driver and self.driver[0],
                 source_code=(self.source_code
-                             if (not self.driver or
-                                 self.traced_file == driver_path)
+                             if self.is_traced_module_imported
                              else None))
         else:
             self.run_python_module(self.driver_module)
@@ -316,8 +317,10 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         if traced:
             if traced.startswith(DEFAULT_MODULE_NAME):
                 traced = traced[len(DEFAULT_MODULE_NAME)+1:]
+                self.is_traced_module_imported = True
             elif traced.startswith(LIVE_MODULE_NAME):
                 traced = traced[len(LIVE_MODULE_NAME)+1:]
+                self.is_traced_module_imported = True
             parsed_file = PSEUDO_FILENAME if traced == '' else filename
             self.driver_finder = TracedFinder(source,
                                               traced,
@@ -350,6 +353,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         self.report_builder.add_message(header, 1)
         self.report_builder.add_message(header, block_size)
         self.report_builder.start_block(1, block_size)
+        self.report_builder.trace_extra_block(1, block_size)
 
 
 def split_lines(messages):

@@ -159,7 +159,7 @@ The details are at [packaging.python.org], but the main steps are:
 
         rm dist/*
         deactivate
-        tox -r -epy38
+        tox -r -epy39
 
 8. Commit the version number changes, push, and create a release on GitHub.
     (Finish the other releases before marking the release on GitHub, if you're

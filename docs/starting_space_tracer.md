@@ -322,6 +322,7 @@ display with `--start_line` and `--end_line`.
     876)     except KeyError:                                                           |                          |                          |   
     877)         _safe_quoters[safe] = quoter = Quoter(safe).__getitem__                |                          |                          |   
     878)     return ''.join([quoter(char) for char in bs])                              | return 'a %3F'           | return 'Yes%21'          | re
+    $
     $ space_tracer --traced=urllib.parse --start_line 874 --end_line 878 --line_numbers url_client.py
     874)     try:                                                        |                          |                          |                  
     875)         quoter = _safe_quoters[safe]                            | KeyError: b' '           | KeyError: b''            |                  

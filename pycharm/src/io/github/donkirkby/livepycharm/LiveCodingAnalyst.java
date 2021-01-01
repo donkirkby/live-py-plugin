@@ -432,10 +432,13 @@ public class LiveCodingAnalyst implements DocumentListener {
         ApplicationManager.getApplication().runWriteAction(
                 () -> displayDocument.setText(finalDisplay));
         EditorImpl editor = getEditor();
-        AbstractToggleUseSoftWrapsAction.toggleSoftWraps(
-                editor,
-                null,
-                false);
+        if (editor.getSettings().isUseSoftWraps()) {
+            AbstractToggleUseSoftWrapsAction.toggleSoftWraps(
+                    editor,
+                    null,
+                    false);
+        }
+
         alarm.addRequest(() -> isDisplayUpdating = false, 300);
     }
 

@@ -744,3 +744,34 @@ print(f*g)"""
             'example.py'])
 
     assert report == expected_report
+
+
+def test_line_numbers_live():
+    code = """\
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+def foo(n):            |
+    s = 'x'            |
+    for i in range(n): | i = 0    | i = 1     | i = 2
+        s += 'y'       | s = 'xy' | s = 'xyy' | s = 'xyyy'
+    return s           | return 'xyyy'
+                       |
+print(foo(3))          |"""
+
+    with replace_input(code):
+        report = TraceRunner().trace_command([
+            'space_tracer',
+            '--start_line', '3',
+            '--end_line', '5',
+            '--live',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report

@@ -491,9 +491,13 @@ class TraceRunner(object):
                 indent = 0
                 start_char = -args.source_indent
             reported_source_lines = []
-            last_line = max(last for first, last in builder.reported_blocks)
+            if args.live:
+                source_blocks = [(1, len(source_lines))]
+            else:
+                source_blocks = builder.reported_blocks
+            last_line = max(last for first, last in source_blocks)
             number_width = len(str(last_line))
-            for first_line, last_line in builder.reported_blocks:
+            for first_line, last_line in source_blocks:
                 if first_line is None:
                     first_line = 1
                 if last_line is None:

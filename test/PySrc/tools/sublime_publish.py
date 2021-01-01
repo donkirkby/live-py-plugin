@@ -32,7 +32,7 @@ def parse_args():
 def existing_folder(folder_name: str) -> Path:
     path = Path(folder_name)
     if not path.is_dir():
-        raise ArgumentError(f'Folder does not exist: {folder_name!r}.')
+        raise ArgumentError(None, f'Folder does not exist: {folder_name!r}.')
     return path
 
 

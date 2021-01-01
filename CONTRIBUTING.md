@@ -48,7 +48,7 @@ through the code after the breakpoint.
 10. Configure a Python SDK in the new project. It's in the File menu under Project Structure.
 
 ### Publish a new release for the PyCharm plugin
-1. Check that all of the Python unit tests pass, by running tox.
+1. Check that all the Python unit tests pass, by running tox.
 2. Update the version number and change notes in `about.py` and
     `pycharm/resources/META-INF/plugin.xml`
 3. Right-click the plugin module in the Project view and select Prepare Plugin

@@ -42,7 +42,7 @@ install:
   - git clone https://github.com/cask/cask ~/.cask
   - git clone https://github.com/rejeep/evm.git /home/travis/.evm
   - evm config path /tmp
-  - evm install emacs-24.3-travis --use --skip
+  - evm install emacs-24.4-travis --use --skip
   - emacs --version
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then python test/PySrc/tests/validate_legacy_python.py && exit || exit 1 ; fi

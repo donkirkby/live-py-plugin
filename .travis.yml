@@ -37,7 +37,12 @@ install:
   - cd ..
 
   # Emacs Version Manager
-  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw | sed 's/24\.3/24\.4/g' > x.sh && source ./x.sh
+  - export PATH="/home/travis/.evm/bin:$PATH"
+  - export PATH="/home/travis/.cask/bin:$PATH"
+  - git clone https://github.com/cask/cask ~/.cask
+  - git clone https://github.com/rejeep/evm.git /home/travis/.evm
+  - evm config path /tmp
+  - evm install emacs-24.3-travis --use --skip
   - emacs --version
 script:
   - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then python test/PySrc/tests/validate_legacy_python.py && exit || exit 1 ; fi

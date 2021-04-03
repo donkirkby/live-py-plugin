@@ -6,6 +6,8 @@ import sys
 from space_tracer.main import TraceRunner
 from test_report_builder import trim_report
 
+MATPLOTLIB_UNSUPPORTED_VERSION = (3, 10)
+
 
 @pytest.fixture(name='is_matplotlib_cleared')
 def clear_matplotlib():
@@ -25,6 +27,8 @@ def replace_image(report):
     return report
 
 
+@pytest.mark.skipif(sys.version_info >= MATPLOTLIB_UNSUPPORTED_VERSION,
+                    reason='matplotlib not yet supported.')
 def test_show(is_matplotlib_cleared):
     assert is_matplotlib_cleared
     code = """\

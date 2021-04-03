@@ -25,6 +25,10 @@ matrix:
       dist: xenial
       env:
       - TOX_ENV=py39
+    - python: 3.10
+      dist: xenial
+      env:
+      - TOX_ENV=py310
 
 install:
   - pip install --upgrade pip

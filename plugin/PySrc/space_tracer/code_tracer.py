@@ -293,8 +293,7 @@ class Tracer(NodeTransformer):
                  Num(n=first_line_number)])
             return existing_node
         new_nodes = []
-        format_string = self._wrap_assignment_targets(
-            targets)
+        format_string = self._wrap_assignment_targets(targets)
         if (len(targets) == 1 and
                 isinstance(targets[0], Tuple)):
             existing_node.value = Call(func=Name(id='tuple', ctx=Load()),
@@ -311,22 +310,19 @@ class Tracer(NodeTransformer):
             try_body.append(self._create_context_call(
                 'report_assignment',
                 [Str(s=format_string), Num(n=existing_node.lineno)]))
-        end_assignment = self._create_context_call('end_assignment')
-        finally_body = [end_assignment]
-        new_nodes.append(Try(body=try_body,
-                             finalbody=finally_body,
-                             handlers=[],
-                             orelse=[],
-                             lineno=first_line_number))
-        self._set_statement_line_numbers(try_body, first_line_number)
-        self._set_statement_line_numbers(finally_body, last_line_number)
+        self._create_end_assignment(new_nodes,
+                                    try_body,
+                                    first_line_number,
+                                    last_line_number)
 
         return new_nodes
 
     def visit_AnnAssign(self, node):
+        # noinspection PyTypeChecker
         return self.visit_Assign(node)
 
     def visit_NamedExpr(self, node):
+        # noinspection PyTypeChecker
         return self.visit_Assign(node)
 
     def visit_AugAssign(self, node):
@@ -358,6 +354,18 @@ class Tracer(NodeTransformer):
             try_body.append(self._create_context_call(
                 'report_assignment',
                 [Str(s=format_string), Num(n=existing_node.lineno)]))
+        self._create_end_assignment(new_nodes,
+                                    try_body,
+                                    first_line_number,
+                                    last_line_number)
+
+        return new_nodes
+
+    def _create_end_assignment(self,
+                               new_nodes,
+                               try_body,
+                               first_line_number,
+                               last_line_number):
         end_assignment = self._create_context_call('end_assignment')
         finally_body = [end_assignment]
         new_nodes.append(Try(body=try_body,
@@ -368,6 +376,34 @@ class Tracer(NodeTransformer):
         self._set_statement_line_numbers(try_body, first_line_number)
         self._set_statement_line_numbers(finally_body, last_line_number)
 
+    def visit_Match(self, node):
+        match_node = self.generic_visit(node)
+        line_numbers = set()
+        find_line_numbers(match_node, line_numbers)
+        first_line_number = min(line_numbers)
+        new_nodes = [self._create_context_call('start_assignment')]
+        try_body = [match_node]
+        finally_body = [self._create_context_call('end_assignment')]
+        new_nodes.append(Try(body=try_body,
+                             finalbody=finally_body,
+                             handlers=[],
+                             orelse=[],
+                             lineno=first_line_number))
+        match_node.subject = self._create_bare_context_call(
+            'set_assignment_value',
+            [match_node.subject])
+        for case in match_node.cases:
+            try:
+                format_string = self._wrap_assignment_targets((case.pattern,))
+            except ValueError:
+                # Not a capture pattern, nothing to report.
+                format_string = None
+            if format_string is not None:
+                case.body.insert(0,
+                                 self._create_context_call(
+                                     'report_assignment',
+                                     [Str(s=format_string),
+                                      Num(n=case.pattern.lineno)]))
         return new_nodes
 
     def visit_For(self, node):
@@ -679,8 +715,9 @@ class Tracer(NodeTransformer):
             return wrapped
         if Starred is not None and isinstance(target, Starred):
             return '*{}'.format(target.value.id)
-        assert_message = 'Assignment target had type {}.'.format(type(target))
-        assert isinstance(target, Attribute), assert_message
+        if not isinstance(target, Attribute):
+            raise ValueError('Assignment target had type {}.'.format(
+                type(target)))
         names = self._get_attribute_names(target)
         return '.'.join(names)
 

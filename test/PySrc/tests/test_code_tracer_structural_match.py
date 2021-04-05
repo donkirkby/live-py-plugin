@@ -5,7 +5,7 @@ import pytest
 from space_tracer.main import TraceRunner
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10),
+@pytest.mark.skipif(sys.version_info < (3, 10, 0, 'alpha', 6),
                     reason='Structural pattern matching added in 3.10.')
 def test_structural_pattern_match():
     code = """\

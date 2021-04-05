@@ -473,8 +473,18 @@ public class LiveCodingAnalyst implements DocumentListener {
     private String getModuleName(
             File file,
             String pythonPath) {
-        String[] paths = pythonPath.split(File.pathSeparator);
         Path absolutePath = file.toPath();
+        Path packagePath = absolutePath.getParent();
+        Path initPath = packagePath.resolve("__init__.py");
+        if (!initPath.toFile().exists()) {
+            // Traced file isn't in a package, so just use the file name.
+            String fileName = absolutePath.getFileName().toString();
+            if (fileName.endsWith(".py")) {
+                fileName = fileName.substring(0, fileName.length() - 3);
+            }
+            return fileName;
+        }
+        String[] paths = pythonPath.split(File.pathSeparator);
         Path shortestPath = absolutePath;
         for (String path : paths) {
             Path filePath = Paths.get(path).relativize(absolutePath);

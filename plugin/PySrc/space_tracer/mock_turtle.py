@@ -140,6 +140,12 @@ class MockTurtle(TNavigator, TPen):
             self._path.append(yend)
         self._position = end
 
+    def reset(self):
+        TNavigator.reset(self)
+        # noinspection PyUnresolvedReferences,PyProtectedMember
+        TPen._reset(self)
+        self.screen.cv.report.clear()
+
     def dot(self, size=None, *color):
         x, y = self._position
         if size is not None:

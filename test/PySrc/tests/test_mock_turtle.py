@@ -49,6 +49,28 @@ create_line
     assert report == expected_report.splitlines()
 
 
+def test_reset(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    0
+    100
+    fill='black'
+    pensize=1
+"""
+
+    t = MockTurtle()
+    t.color('blue')
+    t.fd(100)
+    t.reset()
+    t.right(90)
+    t.fd(100)
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
 def test_penup(patched_turtle):
     expected_report = """\
 create_line

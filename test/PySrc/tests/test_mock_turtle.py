@@ -100,11 +100,13 @@ def test_bounds():
     expected_height = 600
 
     t = MockTurtle(canvas=Canvas(expected_width, expected_height))
-    width = t.window_width()
-    height = t.window_height()
+    width = t.getscreen().window_width()
+    height = t.getscreen().window_height()
+    size = t.getscreen().screensize()
 
     assert width == expected_width
     assert height == expected_height
+    assert size == (expected_width, expected_height)
 
 
 def test_bounds_after_monkey_patch():
@@ -115,11 +117,13 @@ def test_bounds_after_monkey_patch():
     try:
         width = turtle.window_width()
         height = turtle.window_height()
+        size = turtle.screensize()
     finally:
         MockTurtle.remove_monkey_patch()
 
     assert width == expected_width
     assert height == expected_height
+    assert size == (expected_width, expected_height)
 
 
 def test_offset():

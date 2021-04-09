@@ -37,6 +37,10 @@ class MockTurtle(TNavigator, TPen):
 
         def window_height(self):
             return self.cv.cget('height')
+
+        def screensize(self, canvwidth=None, canvheight=None, bg=None):
+            if canvwidth is canvheight is bg is None:
+                return self.window_width(), self.window_height()
         
         def bgcolor(self, color=None):
             if color is None:
@@ -211,12 +215,6 @@ class MockTurtle(TNavigator, TPen):
 
     def getscreen(self):
         return self.screen
-
-    def window_width(self):
-        return self.screen.cv.cget('width')
-
-    def window_height(self):
-        return self.screen.cv.cget('height')
 
     def begin_fill(self):
         self.fill(True)

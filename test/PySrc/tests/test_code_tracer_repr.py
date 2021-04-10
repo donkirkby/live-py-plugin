@@ -254,17 +254,21 @@ from enum import Enum
 Animal = Enum('Animal', 'ANT BEE CAT DOG')
 eric = Animal.BEE
 """
-    expected_report = """\
+    expected_report1 = """\
 
 
 
-eric = <Animal.BEE: 2>
-"""
+eric = <Animal.BEE: 2>"""
+    expected_report2 = """\
+
+
+
+eric = Animal.BEE"""
     tracer = TraceRunner()
 
     report = tracer.trace_code(code)
 
-    assert trim_report(expected_report) == trim_report(report)
+    assert report in (expected_report1, expected_report2)
 
 
 def test_error():

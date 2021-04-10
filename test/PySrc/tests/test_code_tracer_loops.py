@@ -219,14 +219,13 @@ while True:
     pass
 """
     expected_report = """\
-RuntimeError: live coding message limit exceeded
-"""
+RuntimeError: live coding message limit exceeded"""
     tracer = TraceRunner()
     tracer.message_limit = 3
 
     report = tracer.trace_code(code)
 
-    assert report == expected_report
+    assert report in (expected_report + '\n', '\n' + expected_report)
 
 
 def test_infinite_loop_pass_in_function():
@@ -237,10 +236,16 @@ def foo():
 
 foo()
 """
-    expected_report = """\
+    expected_report1 = """\
 
 RuntimeError: live coding message limit exceeded
 
+
+RuntimeError: live coding message limit exceeded"""
+    expected_report2 = """\
+
+
+RuntimeError: live coding message limit exceeded
 
 RuntimeError: live coding message limit exceeded"""
     tracer = TraceRunner()
@@ -248,4 +253,4 @@ RuntimeError: live coding message limit exceeded"""
 
     report = tracer.trace_code(code)
 
-    assert report == expected_report
+    assert report in (expected_report1, expected_report2)

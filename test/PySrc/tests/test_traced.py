@@ -775,3 +775,119 @@ print(foo(3))          |"""
             'example.py'])
 
     assert report == expected_report
+
+
+def test_traced_decorator_avoids_message_limit():
+    code = """\
+from space_tracer import traced
+
+
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+
+@traced
+def bar(n):
+    s = 'a'
+    for i in range(n):
+        s += 'b'
+    return s
+
+print(foo(3000))
+print(bar(3))
+"""
+    expected_report = """\
+@traced                |
+def bar(n):            | n = 3
+    s = 'a'            | s = 'a'
+    for i in range(n): | i = 0    | i = 1     | i = 2
+        s += 'b'       | s = 'ab' | s = 'abb' | s = 'abbb'
+    return s           | return 'abbb'"""
+
+    tracer = TraceRunner()
+    tracer.message_limit = 20
+
+    with replace_input(code):
+        report = tracer.trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
+def test_infinite_loop_before_traced_block():
+    code = """\
+from space_tracer import traced
+
+
+def foo():
+    while True:
+        pass
+
+
+@traced
+def bar(n):
+    s = 'a'
+    for i in range(n):
+        s += 'b'
+    return s
+
+foo()
+print(bar(3))
+"""
+    expected_report = """\
+from space_tracer import traced | -------------------------------- |
+                                | Traced blocks were never called. |
+                                | -------------------------------- |"""
+
+    tracer = TraceRunner()
+    tracer.message_limit = 20
+
+    with replace_input(code):
+        report = tracer.trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report
+
+
+def test_traced_function_not_called():
+    code = """\
+from space_tracer import traced
+
+
+def foo(n):
+    s = 'x'
+    for i in range(n):
+        s += 'y'
+    return s
+
+
+@traced
+def bar(n):
+    s = 'a'
+    for i in range(n):
+        s += 'b'
+    return s
+
+print(foo(3))
+"""
+    expected_report = """\
+from space_tracer import traced | -------------------------------- |
+                                | Traced blocks were never called. |
+                                | -------------------------------- |"""
+
+    tracer = TraceRunner()
+
+    with replace_input(code):
+        report = tracer.trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report

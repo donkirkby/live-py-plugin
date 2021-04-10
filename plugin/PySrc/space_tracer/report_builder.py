@@ -9,25 +9,27 @@ from itertools import groupby
 
 class ReportBuilder(object):
     is_tracing_next_block = False
+    is_using_traced_blocks = False
     hide = None
 
     def __init__(self, message_limit=None):
         self.messages = []
         self.assignments = []
-        self.message_count = 0
+        self.message_count = self.event_count = 0
         self.message_limit = message_limit
         self.stack_block = None  # (first_line, last_line) numbers, not indexes
         self.history = []  # all stack frames that need to be combined
         self.line_widths = {}
         self.max_width = None
         self.frame_width = 0
-        self.is_muted = False
+        self.is_muted = False  # Used to mute messages during some repr() calls.
         self.current_output = ''
         self.current_output_line = None
         self.current_output_target_name = None
         self.has_print_function = True
         self.current_exception = None
         self.is_decorated = False
+        self.root_frame = None
         self.minimum_blocks = set()  # {(first_line, last_line)}
         self.extra_blocks = set()  # {(first_line, last_line)}
 
@@ -79,13 +81,14 @@ class ReportBuilder(object):
                 self.messages[line_index] = message.ljust(max_width) + '| '
                 self._update_frame_width(max_width + 2, line_index+1)
         else:
-            self._increment_message_count()
+            self._increment_message_count(first_line)
         return max_width
 
     def check_tracing(self, first_line, last_line):
         if ReportBuilder.is_tracing_next_block:
             ReportBuilder.is_tracing_next_block = False
-            self.trace_block(first_line, last_line)
+            root_frame = self.root_frame or self
+            root_frame.trace_block(first_line, last_line)
 
     def _update_frame_width(self, new_width, line_number):
         if not self.max_width:
@@ -127,22 +130,40 @@ class ReportBuilder(object):
             if frame.is_muted:
                 return frame
         new_frame = ReportBuilder(self.message_limit)
+        new_frame.root_frame = self
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths
         new_frame.max_width = self.max_width
         self.history.append(new_frame)
         return new_frame
 
-    def _increment_message_count(self):
+    def _increment_message_count(self, line_number):
+        """ Keep track of how many traced messages and other events occur.
+
+        :param line_number: the line number where a message could be added.
+        :return: True if the message should be added because everything is
+            being traced, or that line number is one of the lines being traced.
+        :raise: RuntimeError if the message limit or event limit has been
+            exceeded.
+        """
+        if (self.message_limit is not None and
+                self.event_count >= self.message_limit * 1000):
+            raise RuntimeError('live coding event limit exceeded')
+        self.event_count += 1
+        if not self.is_line_traced(line_number):
+            return False
         if (self.message_limit is not None and
                 self.message_count >= self.message_limit):
 
             raise RuntimeError('live coding message limit exceeded')
         self.message_count += 1
+        return True
 
     def add_message(self, message, line_number):
         """ Add a message to the report on line line_number (1-based). """
-        self._increment_message_count()
+        is_traced = self._increment_message_count(line_number)
+        if not is_traced:
+            return
         if self.is_muted:
             return
         if '\n' in message:
@@ -153,6 +174,16 @@ class ReportBuilder(object):
         new_width = len(self.messages[line_number - 1]) + len(message)
         self._update_frame_width(new_width, line_number)
         self.messages[line_number - 1] += message
+
+    def is_line_traced(self, line_number):
+        if not ReportBuilder.is_using_traced_blocks:
+            return True
+        if self.root_frame is not None:
+            return self.root_frame.is_line_traced(line_number)
+        for first_line, last_line in self.reported_blocks:
+            if first_line <= line_number <= last_line:
+                return True
+        return False
 
     def check_output(self):
         if self.current_output:
@@ -344,6 +375,16 @@ class ReportBuilder(object):
         self.check_output()
         self.max_width = None
         self.message_limit = None
+        if self.is_using_traced_blocks and not self.reported_blocks:
+            self.trace_block(1, 3)
+            old_limit = self.message_limit
+            self.message_limit = None
+            message = 'Traced blocks were never called.'
+            border = '-' * len(message) + ' |'
+            self.add_message(border, 1)
+            self.add_message(message + ' |', 2)
+            self.add_message(border, 3)
+            self.message_limit = old_limit
         traced_blocks = set(self.reported_blocks)
         for frame in self.history:
             frame.check_output()

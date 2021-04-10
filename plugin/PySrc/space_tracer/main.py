@@ -245,6 +245,7 @@ class StandardFiles(dict):
 
 def traced(target=None, hide=None):
     """ A decorator for a function or with block that should be traced. """
+    ReportBuilder.is_using_traced_blocks = True
 
     @contextmanager
     def traced_options():
@@ -253,6 +254,7 @@ def traced(target=None, hide=None):
         ReportBuilder.hide = hide
         yield
         ReportBuilder.hide = old_hide
+        ReportBuilder.is_tracing_next_block = False
 
     if target is None:
         # Not decorating a function, must be a with block.
@@ -386,6 +388,7 @@ class TraceRunner(object):
         self.standard_files['report'] = args.report
 
         ReportBuilder.hide = args.hide
+        ReportBuilder.is_using_traced_blocks = False
         builder = ReportBuilder(self.message_limit)
         builder.max_width = self.max_width
         if args.start_line or args.end_line:

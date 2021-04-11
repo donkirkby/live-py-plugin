@@ -891,3 +891,25 @@ from space_tracer import traced | -------------------------------- |
             'example.py'])
 
     assert report == expected_report
+
+
+def test_traced_decorator_in_another_file():
+    code = """\
+import example_traced
+
+print('Done.')
+"""
+    expected_report = """\
+import example_traced |
+                      |
+print('Done.')        | print('Done.')"""
+
+    tracer = TraceRunner()
+
+    with replace_input(code):
+        report = tracer.trace_command([
+            'space_tracer',
+            '--traced_file', 'example.py',
+            'example.py'])
+
+    assert report == expected_report

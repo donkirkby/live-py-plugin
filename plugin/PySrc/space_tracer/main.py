@@ -1,9 +1,11 @@
 import argparse
 from contextlib import contextmanager
 from functools import wraps
-from inspect import currentframe
+from inspect import currentframe, stack
 import io
 from io import StringIO
+from pathlib import Path
+
 from itertools import zip_longest as izip_longest
 import os
 import os.path
@@ -245,12 +247,26 @@ class StandardFiles(dict):
 
 def traced(target=None, hide=None):
     """ A decorator for a function or with block that should be traced. """
-    ReportBuilder.is_using_traced_blocks = True
+    def is_in_traced_module():
+        """ Check if this was called directly by the traced module. """
+        call_stack = stack()
+        # expected frames in call stack:
+        # 0. This function.
+        # 1. traced() decorator
+        # 2. Module that's being traced
+        # 3. module_importers.py that executed the traced module.
+        this_filepath = Path(__file__)
+        module_importers_filepath = this_filepath.parent / "module_importers.py"
+        expected_frame = call_stack[3]
+        return expected_frame.filename == str(module_importers_filepath)
+
+    if is_in_traced_module():
+        ReportBuilder.is_using_traced_blocks = True
 
     @contextmanager
     def traced_options():
-        old_hide = hide
         ReportBuilder.is_tracing_next_block = True
+        old_hide = ReportBuilder.hide
         ReportBuilder.hide = hide
         yield
         ReportBuilder.hide = old_hide
@@ -302,11 +318,11 @@ def replace_input(stdin_text=None):
 
 def display_error_on_canvas():
     tb = traceback.TracebackException(*sys.exc_info())
-    stack = tb.stack
+    tb_stack = tb.stack
     library_path = os.path.dirname(__file__)
-    while stack and stack[0].filename.startswith(library_path):
-        stack.pop(0)
-    del stack[10:]
+    while tb_stack and tb_stack[0].filename.startswith(library_path):
+        tb_stack.pop(0)
+    del tb_stack[10:]
     message = ''.join(tb.format(chain=False))
     message_lines = message.splitlines(keepends=False)
     split_lines = []

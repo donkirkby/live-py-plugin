@@ -381,6 +381,9 @@ public class LiveCodingAnalyst implements DocumentListener {
         BufferedReader reader = new BufferedReader(new StringReader(display));
         try {
             String line = reader.readLine();  // Skip first line.
+            if (line == null) {
+                line = "";
+            }
             if ( ! CANVAS_START.equals(line)) {
                 canvasPainter.setCommands(null);
                 writer.write(line);
@@ -457,7 +460,19 @@ public class LiveCodingAnalyst implements DocumentListener {
                         (Computable<GeneralCommandLine>) () ->
                                 commandLineState.generateCommandLine(
                                         new CommandLinePatcher[]{commandLinePatcher}));
-        final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
+
+        /* For some reason, the original command line doesn't work when this
+         * plugin gets installed in IDEs other than PyCharm. Copying all the
+         * parameters and other settings to a new command line works, though.
+         */
+        final GeneralCommandLine commandLine2 = new GeneralCommandLine();
+        commandLine2.addParameters(commandLine.getParametersList().getList());
+        commandLine2.setExePath(commandLine.getExePath());
+        commandLine2.setCharset(commandLine.getCharset());
+        commandLine2.setWorkDirectory(commandLine.getWorkDirectory());
+        commandLine2.getEnvironment().putAll(commandLine.getEnvironment());
+
+        final CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine2);
         try {
             byte[] stdin = sourceCode.getBytes(StandardCharsets.UTF_8);
             final OutputStream processInput = processHandler.getProcessInput();

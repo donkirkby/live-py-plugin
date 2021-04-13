@@ -141,7 +141,8 @@ public class LiveCodingAnalyst implements DocumentListener {
         else {
             pythonRunConfiguration = null;
         }
-        String inputFilePath = pythonRunConfiguration == null
+        String inputFilePath =
+                (pythonRunConfiguration == null || ! pythonRunConfiguration.isRedirectInput())
                 ? null
                 : pythonRunConfiguration.getInputFile();
         DefaultRunExecutor executor = new DefaultRunExecutor();
@@ -360,9 +361,10 @@ public class LiveCodingAnalyst implements DocumentListener {
             String stderr = processOutput.getStderr();
             isPassing = processOutput.getExitCode() == 0;
             if (stderr.length() > 0) {
-                log.warn(stderr);
+                display += "\nLive coding plugin error:\n" + stderr;
             }
         } catch (ExecutionException | IOException ex) {
+            display += "\nLive coding plugin exception:\n" + ex.toString();
             log.error("Report failed.", ex);
         }
         return display;

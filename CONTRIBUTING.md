@@ -135,7 +135,7 @@ The details are at [packaging.python.org], but the main steps are:
 1. Update the version number in `about.py` and development status in `setup.py`.
 2. Activate the latest Python's virtual environment.
 
-        source .tox/py38/bin/activate
+        source .tox/py39/bin/activate
 
 3. Install the build tools.
 

@@ -9,3 +9,6 @@ defaults:
     values:
       hero_image: images/index_hero.jpg
       hero_darken: True
+      twitter:
+        card: summary_large_image
+      image: images/index_hero.jpg

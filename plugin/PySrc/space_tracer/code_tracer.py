@@ -13,10 +13,10 @@ except ImportError:
     FormattedValue = Constant = None
 
 try:
-    from ast import MatchAs
+    from ast import MatchAs, MatchSequence, MatchStar
 except ImportError:
     # Not available before Python 3.10
-    MatchAs = None
+    MatchAs = MatchSequence = MatchStar = None
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
@@ -713,21 +713,28 @@ class Tracer(NodeTransformer):
             return target.id
         if MatchAs is not None and isinstance(target, MatchAs):
             return target.name
+        if MatchSequence is not None and isinstance(target, MatchSequence):
+            return self._wrap_assignment_sequence(target.patterns)
         if isinstance(target, Subscript):
             return self._wrap_subscript_target(target, index_to_get)
         if isinstance(target, Tuple) or isinstance(target, List):
-            target_names = map(self._wrap_assignment_target, target.elts)
-            wrapped = '({})'.format(', '.join(target_names))
-            if len(target.elts) == 1:
-                wrapped = wrapped[:-1] + ',)'
-            return wrapped
+            return self._wrap_assignment_sequence(target.elts)
         if Starred is not None and isinstance(target, Starred):
             return '*{}'.format(target.value.id)
+        if MatchStar is not None and isinstance(target, MatchStar):
+            return '*{}'.format(target.name)
         if not isinstance(target, Attribute):
             raise ValueError('Assignment target had type {}.'.format(
                 type(target)))
         names = self._get_attribute_names(target)
         return '.'.join(names)
+
+    def _wrap_assignment_sequence(self, targets):
+        target_names = map(self._wrap_assignment_target, targets)
+        wrapped = '({})'.format(', '.join(target_names))
+        if len(targets) == 1:
+            wrapped = wrapped[:-1] + ',)'
+        return wrapped
 
     def _wrap_assignment_targets(self, targets):
         """ Build string describing assignment targets and wrap indexes.

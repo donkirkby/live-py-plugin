@@ -504,7 +504,7 @@ See the [Pyglet documentation] for details on how to build an interface.
 ## Learn More
 Remember, you can find installation instructions and descriptions of all the
 other Live Coding in Python plugins and tools by visiting
-[donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
+[donkirkby.github.io][livepy]. Help me test it, and report your bugs. I'd also
 love to hear about any other projects working on the same kind of tools.
 
 [square50]: images/demo_square50.png

@@ -127,6 +127,8 @@ n -= 1
 
 
 IndentationError: expected an indented block """
+        if sys.version_info >= (3, 10):
+            expected_report += "after 'if' statement on line 3"
         tracer = TraceRunner()
 
         # EXEC

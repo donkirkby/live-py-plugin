@@ -12,6 +12,12 @@ except ImportError:
     # Not available in Python 3.5
     FormattedValue = Constant = None
 
+try:
+    from ast import MatchAs
+except ImportError:
+    # Not available before Python 3.10
+    MatchAs = None
+
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
 
@@ -705,6 +711,8 @@ class Tracer(NodeTransformer):
         """
         if isinstance(target, Name):
             return target.id
+        if MatchAs is not None and isinstance(target, MatchAs):
+            return target.name
         if isinstance(target, Subscript):
             return self._wrap_subscript_target(target, index_to_get)
         if isinstance(target, Tuple) or isinstance(target, List):

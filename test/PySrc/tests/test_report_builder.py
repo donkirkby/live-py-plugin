@@ -16,6 +16,7 @@ class ReportTestCase(unittest.TestCase):
 
     @staticmethod
     def assertReportEqual(report1, report2):
+        __tracebackhide__ = True
         assert trim_report(report1) == trim_report(report2)
 
 

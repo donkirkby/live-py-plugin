@@ -875,9 +875,13 @@ def missing_body():
         expected_report = """\
 SyntaxError: unexpected EOF while parsing
 """
-    else:
+    elif sys.version_info < (3, 10, 0):
         expected_report = """\
 IndentationError: expected an indented block
+"""
+    else:
+        expected_report = """\
+IndentationError: expected an indented block after function definition on line 1
 """
     stdin.read.return_value = source
 

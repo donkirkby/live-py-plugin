@@ -25,14 +25,28 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install tox coverage
+      - name: Set up Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+      - name: Install Node dependencies
+        run: |
+          cd html
+          npm install
+          cd ..
       - name: Test with tox and pytest
         run: |
-          if [[ '${{ matrix.python-version }}' == '2.7' ]]; then python test/PySrc/tests/validate_legacy_python.py && exit || exit 1 ; fi
+          if [[ $PYTHON == '2.7' ]]; then python test/PySrc/tests/validate_legacy_python.py && exit || exit 1 ; fi
           python -m tox -e py
+      - name: Test JavaScript
+        run: |
+          cd html
+          npm test -- --watchAll=false
+          cd ..
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

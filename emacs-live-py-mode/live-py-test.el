@@ -24,6 +24,7 @@
 ;;
 ;; To run all ERT interactively:
 ;; (progn (ert-delete-all-tests) (eval-buffer) (ert t))
+
 ;; In the ERT buffer type R to rerun all these tests, r to rerun one test.
 ;; When a test fails move there and type l to get a list of all `should',
 ;; including those hidden in `live-py-test-with-temp-text-in-file' and
@@ -102,7 +103,7 @@ Within BODY the variable value FILE can be passed to
 
 (defun live-py-test-buf (file)
   "Return a list with some buffer properties for all windows.
-FILE is the source buffer name.  The buffer propierties are a tag
+FILE is the source buffer name.  The buffer properties are a tag
 and the line numbers of window start and point.  The tag is :s for
 the source buffer, :t for the trace buffer and :- for unknown."
   (cl-mapcan

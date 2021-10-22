@@ -257,6 +257,9 @@ def traced(target=None, hide=None):
         # 3. module_importers.py that executed the traced module.
         this_filepath = Path(__file__)
         module_importers_filepath = this_filepath.parent / "module_importers.py"
+
+        if len(call_stack) < 4:
+            return False
         expected_frame = call_stack[3]
         return expected_frame.filename == str(module_importers_filepath)
 

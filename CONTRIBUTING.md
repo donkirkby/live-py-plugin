@@ -83,8 +83,8 @@ When adding temporary debugging messages with the `message` function, it is
 recommended to open a second Emacs frame for the Messages buffer by typing
 `C-x 5 2` in the Messages buffer.
 
-Run the commands listed in `.travis.yml` in the section "script:" manually
-to check for compiler warnings and test regressions.
+Run the commands listed in `.github/workflows/python-package.yml` in the section
+"Test with Emacs" manually to check for compiler warnings and test regressions.
 
 
 ## Sublime Text Development

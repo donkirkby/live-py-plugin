@@ -215,6 +215,23 @@ foo[1:10] |= 3 """
     assert trim_report(expected_report) == trim_report(report)
 
 
+def test_index_expression():
+    code = """\
+a = [1, 2]
+i = 0
+a[i+1] = 3
+"""
+    expected_report = """\
+a = [1, 2]
+i = 0
+a[1] = 3
+"""
+
+    report = TraceRunner().trace_code(code)
+
+    assert trim_report(expected_report) == trim_report(report)
+
+
 @pytest.mark.skipif(sys.version_info < (3, 8),
                     reason='Walrus operator added in 3.8.')
 def test_walrus():

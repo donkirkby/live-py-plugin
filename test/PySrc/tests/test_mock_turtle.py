@@ -795,6 +795,99 @@ create_line
     assert report == expected_report.splitlines()
 
 
+def test_stamp_while_filling(patched_turtle):
+    expected_report = """\
+create_polygon
+    0
+    0
+    40
+    0
+    40
+    40
+    0
+    40
+    fill='#00ff00'
+    outline=''
+create_line
+    0
+    0
+    40
+    0
+    fill='#000000'
+    pensize=4
+create_line
+    40
+    0
+    40
+    40
+    fill='#000000'
+    pensize=4
+create_line
+    40
+    40
+    0
+    40
+    fill='#000000'
+    pensize=4
+create_polygon
+    40
+    0
+    45
+    -9
+    40
+    -7
+    35
+    -9
+    40
+    0
+    fill='#00ff00'
+    outline=''
+create_line
+    40
+    0
+    45
+    -9
+    fill='#000000'
+    pensize=1
+create_line
+    45
+    -9
+    40
+    -7
+    fill='#000000'
+    pensize=1
+create_line
+    40
+    -7
+    35
+    -9
+    fill='#000000'
+    pensize=1
+create_line
+    35
+    -9
+    40
+    0
+    fill='#000000'
+    pensize=1
+"""
+
+    t = MockTurtle()
+    t.pensize(4)
+    t.fillcolor('green')
+    t.begin_fill()
+    t.forward(40)
+    t.right(90)
+    t.stamp()
+    t.forward(40)
+    t.right(90)
+    t.forward(40)
+    t.end_fill()
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
 def test_monkey_patch_anonymous_turtle(patched_turtle):
     expected_report = """\
 create_line

@@ -9,6 +9,7 @@ ANCHOR_NAMES = dict(left='start',
                     right='end')
 
 
+# noinspection PyUnresolvedReferences,DuplicatedCode
 class SvgTurtle(TNavigator, TPen):
     """ Helper class to include turtle graphics within a PDF document. """
 
@@ -53,7 +54,7 @@ class SvgTurtle(TNavigator, TPen):
         clip_path = drawing.defs.add(drawing.clipPath(id='border_clip'))
         clip_path.add(drawing.rect(size=(width, height)))
         self._path = None
-        self._lines_to_draw = None
+        self._lines_to_draw = []
         self.screen = None
         TNavigator.__init__(self)
         TPen.__init__(self)
@@ -74,19 +75,17 @@ class SvgTurtle(TNavigator, TPen):
             if self._drawing:
                 pencolor = self._pencolor or 0
                 pensize = self._pensize or 0
-                # May draw line twice when filling, but it makes sure that we
-                # still draw line when caller doesn't call end_fill().
-                self._draw_line(x1, y1, x2, y2, pencolor, pensize)
-            else:
-                pencolor = None
-                pensize = None
-            if self._lines_to_draw is not None:
-                self._lines_to_draw.append((x1,
-                                            y1,
-                                            x2,
-                                            y2,
-                                            pencolor,
-                                            pensize))
+                if self._path:
+                    self._lines_to_draw.append((x1,
+                                                y1,
+                                                x2,
+                                                y2,
+                                                pencolor,
+                                                pensize))
+                else:
+                    self._draw_line(x1, y1, x2, y2, pencolor, pensize)
+            if self._path:
+                self._path.append((x2, y2))
         self._position = end
 
     def _draw_line(self, x1, y1, x2, y2, pencolor, pensize):
@@ -148,11 +147,12 @@ class SvgTurtle(TNavigator, TPen):
             self.fd(5.385)
             self.setpos(stamp.pos)
             self.end_fill()
+        self.up()
         self.goto(start_pos)
         self.setheading(start_heading)
         self.pensize(start_pensize)
-        if not start_isdown:
-            self.up()
+        if start_isdown:
+            self.down()
 
     def begin_fill(self):
         self.fill(True)
@@ -165,24 +165,22 @@ class SvgTurtle(TNavigator, TPen):
             for x1, y1, x2, y2, pencolor, pensize in self._lines_to_draw:
                 if pencolor is not None:
                     self._draw_line(x1, y1, x2, y2, pencolor, pensize)
+        self._lines_to_draw = []
         self._draw_stamps()
 
     def fill(self, flag=None):
         if flag is None:
             return self._path is not None
-        if self._lines_to_draw:  # TODO: and len(self._path) > 2:
-            points = [line[:2] for line in self._lines_to_draw]
-            points.append(self._lines_to_draw[-1][2:4])
-            self.screen.cv.add(self.screen.cv.polygon(points=points,
+        if self._path and len(self._path) > 2:
+            self.screen.cv.add(self.screen.cv.polygon(points=self._path,
                                                       fill=self._fillcolor,
                                                       fill_rule='evenodd',
                                                       clip_path='url(#border_clip)'))
+        self._path = None  # Clear to avoid interfering with stamps.
         self._flush_lines()
-        if not flag:
-            self._path = None
-            self._lines_to_draw = None
-        else:
-            self._lines_to_draw = []
+        if flag:
+            x, y = self._position
+            self._path = [(x + self.__xoff, -y - self.__yoff)]
 
     def window_width(self):
         return self.screen.window_width()
@@ -219,6 +217,7 @@ class SvgTurtle(TNavigator, TPen):
                                                fill=self._pencolor,
                                                clip_path='url(#border_clip)'))
 
+    # noinspection PyMethodMayBeStatic
     def _colorstr(self, color):
         """Return color string corresponding to args.
 
@@ -267,6 +266,7 @@ def _parse_int(s):
 
 # Normally, Tkinter will look up these colour names for you, but we don't
 # actually launch Tkinter when we're analysing code.
+# noinspection DuplicatedCode
 color_map = {
     'alice blue': '#f0f8ff',
     'aliceblue': '#f0f8ff',

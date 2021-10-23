@@ -23,6 +23,9 @@ from turtle import TNavigator, TPen
 DEFAULT_FONT = ("Arial", 8, "normal")
 
 
+# noinspection DuplicatedCode
+# noinspection PyProtectedMember
+# noinspection PyUnresolvedReferences
 class MockTurtle(TNavigator, TPen):
     class _Screen(object):
         def __init__(self, canvas):
@@ -242,10 +245,10 @@ class MockTurtle(TNavigator, TPen):
             self.screen.cv.create_polygon(*self._path,
                                           fill=self._fillcolor,
                                           outline='')
+
+        self._path = None  # Clear to avoid interfering with stamps.
         self._flush_lines()
-        if not flag:
-            self._path = None
-        else:
+        if flag:
             x, y = self._position
             self._path = [x + self.__xoff, -y + self.__yoff]
 
@@ -297,6 +300,7 @@ class MockTurtle(TNavigator, TPen):
             self._fillcolor = self._colorstr(self._fillcolor)
         return super(MockTurtle, self)._update(*args, **kwargs)
 
+    # noinspection PyMethodMayBeStatic
     def _colorstr(self, color):
         """Return color string corresponding to args.
 
@@ -337,6 +341,7 @@ class MockTurtle(TNavigator, TPen):
 
 # Normally, Tkinter will look up these colour names for you, but we don't
 # actually launch Tkinter when we're analysing code.
+# noinspection DuplicatedCode
 color_map = {
     'alice blue': '#f0f8ff',
     'aliceblue': '#f0f8ff',
@@ -1093,10 +1098,12 @@ color_map = {
 }
 
 
+# noinspection PyUnresolvedReferences
 def monkey_patch_pyglet(canvas):
 
     pyglet = sys.modules['pyglet']
 
+    # noinspection PyUnresolvedReferences
     class MockPygletWindow(pyglet.window.Window):
 
         # noinspection PyUnusedLocal
@@ -1124,6 +1131,7 @@ def monkey_patch_pyglet(canvas):
             img_str = str(encoded.decode('UTF-8'))
             MockTurtle.display_image(0, 0, image=img_str)
 
+    # noinspection PyUnresolvedReferences
     def run():
         for window in list(pyglet.app.windows):
             for i in range(2):

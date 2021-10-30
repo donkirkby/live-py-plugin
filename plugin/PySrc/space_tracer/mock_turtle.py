@@ -1,8 +1,12 @@
-import types
+from base64 import standard_b64encode, standard_b64decode
+import binascii
 from collections import namedtuple
 import io
-from base64 import standard_b64encode
+import re
+import struct
 import sys
+import types
+import typing
 
 from .canvas import Canvas
 
@@ -17,6 +21,11 @@ except ImportError:
 
     dialog_name = tkinter_name + '.simpledialog'
     tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 from turtle import TNavigator, TPen
 
@@ -89,8 +98,54 @@ class MockTurtle(TNavigator, TPen):
         return MockTurtle._pen.report
 
     @classmethod
-    def display_image(cls, x, y, image):
-        MockTurtle._screen.cv.create_image(x, y, image=image)
+    def display_image(cls,
+                      image,
+                      position: typing.Tuple[int, int] = None,
+                      align: str = 'topleft'):
+        screen = cls._screen
+        t = cls._pen
+        if screen is None:
+            # Turtle is not patched, do nothing.
+            return
+        if position is None or t is None:
+            x = y = 0
+        else:
+            x, y = t._convert_position(position)
+
+        if Image is not None and isinstance(image, Image.Image):
+            data = io.BytesIO()
+            image.save(data, 'PNG')
+
+            encoded = standard_b64encode(data.getvalue())
+            image = encoded.decode('UTF-8')
+
+        if align != 'topleft':
+            error_message = 'Invalid image: {0}...'.format(image[:10])
+            try:
+                decoded = standard_b64decode(image.encode('UTF-8'))
+            except binascii.Error as ex:
+                raise ValueError(error_message) from ex
+            if len(decoded) < 24:
+                raise ValueError(error_message)
+            header = struct.unpack('>xcccxxxxxxxxxxxxii', decoded[:24])
+            if header[:3] != (b'P', b'N', b'G'):
+                raise ValueError(error_message)
+            width, height = header[3:5]
+            align_match = re.match(r'^(top|bottom|center)?(left|right|center)?$',
+                                   align)
+            if align_match is None:
+                raise ValueError('Invalid align: {0!r}.'.format(align))
+
+            if align_match.group(1) == 'bottom':
+                y -= height
+            elif align_match.group(1) in ('center', None):
+                y -= height // 2
+            if align_match.group(2) == 'right':
+                x -= width
+            elif align_match.group(2) in ('center', None):
+                x -= width // 2
+
+        screen.cv.create_image(x, y, image=image)
 
     def __init__(self, x=0, y=0, heading=0, canvas=None):
         self._path = None
@@ -249,8 +304,8 @@ class MockTurtle(TNavigator, TPen):
         self._path = None  # Clear to avoid interfering with stamps.
         self._flush_lines()
         if flag:
-            x, y = self._position
-            self._path = [x + self.__xoff, -y + self.__yoff]
+            x, y = self._convert_position(self._position)
+            self._path = [x, y]
 
     def stamp(self):
         self.stamps.append(
@@ -526,7 +581,7 @@ color_map = {
     'goldenrod2': '#eeb422',
     'goldenrod3': '#cd9b1d',
     'goldenrod4': '#8b6914',
-    'gray': '#bebebe',
+    'gray': '#808080',
     'gray0': '#000000',
     'gray1': '#030303',
     'gray2': '#050505',
@@ -628,14 +683,14 @@ color_map = {
     'gray98': '#fafafa',
     'gray99': '#fcfcfc',
     'gray100': '#ffffff',
-    'green': '#00ff00',
+    'green': '#008000',
     'green yellow': '#adff2f',
     'green1': '#00ff00',
     'green2': '#00ee00',
     'green3': '#00cd00',
     'green4': '#008b00',
     'greenyellow': '#adff2f',
-    'grey': '#bebebe',
+    'grey': '#808080',
     'grey0': '#000000',
     'grey1': '#030303',
     'grey2': '#050505',
@@ -853,7 +908,7 @@ color_map = {
     'magenta2': '#ee00ee',
     'magenta3': '#cd00cd',
     'magenta4': '#8b008b',
-    'maroon': '#b03060',
+    'maroon': '#800000',
     'maroon1': '#ff34b3',
     'maroon2': '#ee30a7',
     'maroon3': '#cd2990',
@@ -969,7 +1024,7 @@ color_map = {
     'plum4': '#8b668b',
     'powder blue': '#b0e0e6',
     'powderblue': '#b0e0e6',
-    'purple': '#a020f0',
+    'purple': '#800080',
     'purple1': '#9b30ff',
     'purple2': '#912cee',
     'purple3': '#7d26cd',
@@ -1129,7 +1184,7 @@ def monkey_patch_pyglet(canvas):
             image = b.getvalue()
             encoded = standard_b64encode(image)
             img_str = str(encoded.decode('UTF-8'))
-            MockTurtle.display_image(0, 0, image=img_str)
+            MockTurtle.display_image(img_str)
 
     # noinspection PyUnresolvedReferences
     def run():

@@ -1,8 +1,15 @@
+import re
+import typing
+
 import pytest
+from PIL import Image
 
 from space_tracer.canvas import Canvas
 from space_tracer.mock_turtle import MockTurtle
+from space_tracer import display_image
 import turtle
+
+from test_report_builder import trim_report
 
 
 @pytest.fixture
@@ -10,6 +17,12 @@ def patched_turtle():
     MockTurtle.monkey_patch()
     yield
     MockTurtle.remove_monkey_patch()
+
+
+def replace_image(report):
+    report = trim_report(report)
+    report = re.sub(r"image='[a-zA-Z0-9+/=]*'", "image='...'", report)
+    return report
 
 
 def test_forward(patched_turtle):
@@ -115,6 +128,163 @@ def test_dot(patched_turtle):
     report = t.report
 
     assert report == expected_report
+
+
+def test_display_image(patched_turtle):
+    expected_report = """\
+create_image
+    0
+    0
+    image='PNG_IMAGE_DATA'
+"""
+
+    t = MockTurtle()
+    image_data = 'PNG_IMAGE_DATA'
+
+    display_image(image_data)
+
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_display_image_position(patched_turtle):
+    expected_report = """\
+create_image
+    100
+    200
+    image='PNG_IMAGE_DATA'
+"""
+
+    t = MockTurtle()
+    image_data = 'PNG_IMAGE_DATA'
+
+    display_image(image_data, (100, -200))
+
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_display_image_with_size():
+    expected_report = """\
+create_image
+    0
+    0
+    image='PNG_IMAGE_DATA'
+"""
+
+    MockTurtle.monkey_patch(Canvas(width=200, height=400))
+    try:
+        t = MockTurtle()
+        image_data = 'PNG_IMAGE_DATA'
+
+        display_image(image_data)
+
+        report = t.report
+    finally:
+        MockTurtle.remove_monkey_patch()
+
+    assert report == expected_report.splitlines()
+
+
+def test_display_image_position_with_size():
+    expected_report = """\
+create_image
+    110
+    180
+    image='PNG_IMAGE_DATA'
+"""
+
+    MockTurtle.monkey_patch(Canvas(width=200, height=400))
+    try:
+        t = MockTurtle()
+        image_data = 'PNG_IMAGE_DATA'
+
+        display_image(image_data, (10, 20))
+
+        report = t.report
+    finally:
+        MockTurtle.remove_monkey_patch()
+
+    assert report == expected_report.splitlines()
+
+
+def test_display_image_not_patched():
+    expected_report = ""
+
+    t = MockTurtle()
+    image_data = 'PNG_IMAGE_DATA'
+
+    display_image(image_data)
+
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_display_image_pillow(patched_turtle):
+    image = Image.new('RGB', (2, 2))
+    expected_report = """\
+create_image
+    0
+    0
+    image='...'
+"""
+
+    t = MockTurtle()
+
+    display_image(image)
+
+    report = t.report
+
+    assert replace_image(report) == expected_report
+
+
+@pytest.mark.parametrize('align,position',
+                         [('topleft', (100, -200)),
+                          ('bottomleft', (100, -220)),
+                          ('topright', (110, -200)),
+                          ('centerleft', (100, -210)),
+                          ('topcenter', (105, -200)),
+                          ('top', (105, -200)),
+                          ('left', (100, -210))])
+def test_display_image_bottom_left(patched_turtle,
+                                   align: str,
+                                   position: typing.Tuple[int, int]):
+    image = Image.new('RGB', (10, 20))
+    expected_report = """\
+create_image
+    100
+    200
+    image='...'
+"""
+
+    t = MockTurtle()
+
+    display_image(image, position, align)
+
+    report = t.report
+
+    assert replace_image(report) == expected_report
+
+
+def test_display_image_bad_align(patched_turtle):
+    image = Image.new('RGB', (10, 20))
+
+    with pytest.raises(ValueError, match="Invalid align: 'topfloop'."):
+        display_image(image, align='topfloop')
+
+
+@pytest.mark.parametrize('image',
+                         ['NotAMultipleOf4',
+                          'NowAMultipleOf4=',
+                          'ABufferThatIsLongEnoughButHasNoPNGHeader'])
+def test_display_image_bad_image(patched_turtle, image):
+    image_start = image[:10] + '...'
+
+    with pytest.raises(ValueError, match="Invalid image: " + image_start):
+        display_image(image, align='top')
 
 
 def test_bounds():
@@ -570,7 +740,7 @@ def test_get_default_color():
 def test_bgcolor(patched_turtle):
     expected_report = """\
 bgcolor
-    fill='#00ff00'
+    fill='#008000'
     outline=''
 create_line
     0
@@ -806,7 +976,7 @@ create_polygon
     40
     0
     40
-    fill='#00ff00'
+    fill='#008000'
     outline=''
 create_line
     0
@@ -840,7 +1010,7 @@ create_polygon
     -9
     40
     0
-    fill='#00ff00'
+    fill='#008000'
     outline=''
 create_line
     40

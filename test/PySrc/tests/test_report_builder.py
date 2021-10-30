@@ -4,6 +4,11 @@ from space_tracer.report_builder import ReportBuilder
 
 
 def trim_report(report):
+    if isinstance(report, list):
+        if report and report[0].endswith('\n'):
+            report = ''.join(report)
+        else:
+            report = '\n'.join(report)
     lines = report.splitlines()
     trimmed_lines = [line.rstrip() for line in lines]
     return '\n'.join(trimmed_lines) + '\n'

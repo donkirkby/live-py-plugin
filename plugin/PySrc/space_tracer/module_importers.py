@@ -429,14 +429,18 @@ class PatchedModuleLoader(Loader):
             y = (screen_height - figure_height) // 2
         else:
             y = 0
-        # noinspection PyUnresolvedReferences
+
+        # Adjust to turtle coordinates.
+        x -= screen_width // 2
+        y = screen_height // 2 - y
+
         data = io.BytesIO()
         self.plt.savefig(data, format='PNG')
 
         image = data.getvalue()
         encoded = standard_b64encode(image)
         image_text = str(encoded.decode('UTF-8'))
-        MockTurtle.display_image(x, y, image=image_text)
+        MockTurtle.display_image(image_text, (x, y))
 
     def live_coding_zoom(self):
         screen_width, screen_height = self.plt.live_coding_size

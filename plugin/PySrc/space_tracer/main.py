@@ -367,13 +367,13 @@ class TraceRunner(object):
         self.return_code = None
         self.standard_files = StandardFiles()
 
-    def trace_turtle(self, source):
+    def trace_turtle(self, source, width: int = 0, height: int = 0):
         with replace_input(source):
             self.trace_command(['space_tracer',
                                 '--traced_file', PSEUDO_FILENAME,
                                 '--source_width', '0',
-                                '--width', '0',
-                                '--height', '0',
+                                '--width', str(width),
+                                '--height', str(height),
                                 '--live',
                                 PSEUDO_FILENAME])
 

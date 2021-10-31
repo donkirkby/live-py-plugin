@@ -2,14 +2,17 @@ import re
 import typing
 
 import pytest
-from PIL import Image
-
 from space_tracer.canvas import Canvas
 from space_tracer.mock_turtle import MockTurtle
 from space_tracer import display_image
 import turtle
 
 from test_report_builder import trim_report
+
+try:
+    from PIL import Image
+except ImportError:
+    Image = None
 
 
 @pytest.fixture
@@ -223,6 +226,7 @@ def test_display_image_not_patched():
     assert report == expected_report.splitlines()
 
 
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_display_image_pillow(patched_turtle):
     image = Image.new('RGB', (2, 2))
     expected_report = """\
@@ -241,6 +245,7 @@ create_image
     assert replace_image(report) == expected_report
 
 
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 @pytest.mark.parametrize('align,position',
                          [('topleft', (100, -200)),
                           ('bottomleft', (100, -220)),
@@ -269,6 +274,7 @@ create_image
     assert replace_image(report) == expected_report
 
 
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_display_image_bad_align(patched_turtle):
     image = Image.new('RGB', (10, 20))
 

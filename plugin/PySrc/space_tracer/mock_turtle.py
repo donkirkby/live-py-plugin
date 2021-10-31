@@ -26,7 +26,10 @@ except ImportError:
 try:
     from PIL import Image
 except ImportError:
-    Image = None
+    # Dummy version to avoid errors.
+    class Image:
+        class Image:
+            pass
 
 from turtle import TNavigator, TPen
 

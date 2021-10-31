@@ -4,9 +4,16 @@ import sys
 from space_tracer.main import TraceRunner
 from test_mock_turtle import replace_image
 
+try:
+    import matplotlib
+except ImportError:
+    matplotlib = None
+
 
 @pytest.fixture(name='is_matplotlib_cleared')
 def clear_matplotlib():
+    if matplotlib is None:
+        pytest.skip('Matplotlib is not installed.')
     for should_yield in (True, False):
         to_delete = [module_name
                      for module_name in sys.modules

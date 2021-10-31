@@ -7,6 +7,7 @@ import struct
 import sys
 import types
 import typing
+from functools import singledispatch
 
 from .canvas import Canvas
 
@@ -99,9 +100,18 @@ class MockTurtle(TNavigator, TPen):
 
     @classmethod
     def display_image(cls,
-                      image,
+                      image: str,
                       position: typing.Tuple[int, int] = None,
                       align: str = 'topleft'):
+        """ Display an image on the mock turtle's canvas.
+
+        :param image: b64 encoded text of a PNG image's bytes
+        :param position: (x, y) coordinates on the canvas, or None for the top-left
+            corner
+        :param align: which point in the image to line up with (x, y) - a
+            combination of 'top', 'center', or 'bottom' plus 'left', 'center', or
+            'right'. If one of the words is missing, it defaults to 'center'.
+        """
         screen = cls._screen
         t = cls._pen
         if screen is None:
@@ -111,13 +121,6 @@ class MockTurtle(TNavigator, TPen):
             x = y = 0
         else:
             x, y = t._convert_position(position)
-
-        if Image is not None and isinstance(image, Image.Image):
-            data = io.BytesIO()
-            image.save(data, 'PNG')
-
-            encoded = standard_b64encode(data.getvalue())
-            image = encoded.decode('UTF-8')
 
         if align != 'topleft':
             error_message = 'Invalid image: {0}...'.format(image[:10])
@@ -392,6 +395,40 @@ class MockTurtle(TNavigator, TPen):
             if code == colorstr:
                 return name
         return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
+
+
+@singledispatch
+def display_image(image: bytes,
+                  position: typing.Tuple[int, int] = None,
+                  align: str = 'topleft'):
+    """ Display an image on the mock turtle's canvas.
+
+    This supports images as bytes in PNG format. To display any other image
+    format, register an overloaded implementation of this method and convert
+    your format to PNG bytes. See the PIL Image version just below as an example.
+
+    :param image: PNG image bytes
+    :param position: (x, y) coordinates on the canvas, or None for the top-left
+        corner
+    :param align: which point in the image to line up with (x, y) - a
+        combination of 'top', 'center', or 'bottom' plus 'left', 'center', or
+        'right'. If one of the words is missing, it defaults to 'center'.
+    """
+
+    b64_bytes = standard_b64encode(image)
+    b64_string = b64_bytes.decode('UTF-8')
+    MockTurtle.display_image(b64_string, position, align)
+
+
+@display_image.register(Image.Image)
+def _(image: Image.Image,
+      position: typing.Tuple[int, int] = None,
+      align: str = 'topleft'):
+    """ Convert a PIL image to PNG bytes, and pass to main display method. """
+    data = io.BytesIO()
+    image.save(data, 'PNG')
+
+    display_image(data.getvalue(), position, align)
 
 
 # Normally, Tkinter will look up these colour names for you, but we don't

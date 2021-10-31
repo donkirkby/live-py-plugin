@@ -1,5 +1,4 @@
 from ast import parse
-from base64 import standard_b64encode
 import builtins
 from importlib.abc import MetaPathFinder, Loader
 from importlib.machinery import ModuleSpec
@@ -12,6 +11,7 @@ import types
 from pathlib import Path
 
 from .code_tracer import trace_source_tree, CONTEXT_NAME
+from .mock_turtle import display_image
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME, TracedFinder
 try:
@@ -21,6 +21,7 @@ except ImportError:
 
 
 class DelegatingModuleFinder(MetaPathFinder):
+    # noinspection PyMethodOverriding
     def find_spec(self, fullname, path, target):
         for finder in self.following_finders:
             finder_find_spec = getattr(finder, 'find_spec', None)
@@ -395,8 +396,10 @@ class PatchedModuleLoader(Loader):
         if self.main_loader is not None:
             self.main_loader.exec_module(module)
         if self.fullname in ('numpy.random', 'random'):
+            # noinspection PyUnresolvedReferences
             module.seed(0)
         elif self.fullname == 'matplotlib':
+            # noinspection PyUnresolvedReferences
             module.use('Agg')
         elif self.fullname == 'matplotlib.pyplot':
             self.plt = module
@@ -438,9 +441,7 @@ class PatchedModuleLoader(Loader):
         self.plt.savefig(data, format='PNG')
 
         image = data.getvalue()
-        encoded = standard_b64encode(image)
-        image_text = str(encoded.decode('UTF-8'))
-        MockTurtle.display_image(image_text, (x, y))
+        display_image(image, (x, y))
 
     def live_coding_zoom(self):
         screen_width, screen_height = self.plt.live_coding_size

@@ -135,11 +135,11 @@ def test_display_image(patched_turtle):
 create_image
     0
     0
-    image='PNG_IMAGE_DATA'
+    image='UE5HX0lNQUdFX0RBVEE='
 """
 
     t = MockTurtle()
-    image_data = 'PNG_IMAGE_DATA'
+    image_data = b'PNG_IMAGE_DATA'
 
     display_image(image_data)
 
@@ -153,11 +153,11 @@ def test_display_image_position(patched_turtle):
 create_image
     100
     200
-    image='PNG_IMAGE_DATA'
+    image='UE5HX0lNQUdFX0RBVEE='
 """
 
     t = MockTurtle()
-    image_data = 'PNG_IMAGE_DATA'
+    image_data = b'PNG_IMAGE_DATA'
 
     display_image(image_data, (100, -200))
 
@@ -171,13 +171,13 @@ def test_display_image_with_size():
 create_image
     0
     0
-    image='PNG_IMAGE_DATA'
+    image='UE5HX0lNQUdFX0RBVEE='
 """
 
     MockTurtle.monkey_patch(Canvas(width=200, height=400))
     try:
         t = MockTurtle()
-        image_data = 'PNG_IMAGE_DATA'
+        image_data = b'PNG_IMAGE_DATA'
 
         display_image(image_data)
 
@@ -193,13 +193,13 @@ def test_display_image_position_with_size():
 create_image
     110
     180
-    image='PNG_IMAGE_DATA'
+    image='UE5HX0lNQUdFX0RBVEE='
 """
 
     MockTurtle.monkey_patch(Canvas(width=200, height=400))
     try:
         t = MockTurtle()
-        image_data = 'PNG_IMAGE_DATA'
+        image_data = b'PNG_IMAGE_DATA'
 
         display_image(image_data, (10, 20))
 
@@ -214,7 +214,7 @@ def test_display_image_not_patched():
     expected_report = ""
 
     t = MockTurtle()
-    image_data = 'PNG_IMAGE_DATA'
+    image_data = b'PNG_IMAGE_DATA'
 
     display_image(image_data)
 
@@ -284,7 +284,7 @@ def test_display_image_bad_image(patched_turtle, image):
     image_start = image[:10] + '...'
 
     with pytest.raises(ValueError, match="Invalid image: " + image_start):
-        display_image(image, align='top')
+        MockTurtle.display_image(image, align='top')
 
 
 def test_bounds():

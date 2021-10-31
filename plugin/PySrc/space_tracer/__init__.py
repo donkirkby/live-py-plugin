@@ -1,5 +1,3 @@
-import typing
-
 import sys
 
 try:
@@ -11,9 +9,7 @@ except (ImportError, SyntaxError):
         exit(1)
 
 
-def display_image(image,
-                  position: typing.Tuple[int, int] = None,
-                  align: str = 'topleft'):
+def display_image(image, position=None, align='topleft'):
     """ Display an image on the mock turtle's canvas.
 
     :param image: either a b64 encoded string of PNG image bytes or a PIL Image

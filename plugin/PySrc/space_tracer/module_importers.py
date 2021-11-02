@@ -4,20 +4,20 @@ from importlib.abc import MetaPathFinder, Loader
 from importlib.machinery import ModuleSpec
 from importlib.util import find_spec
 import inspect
-import io
 import os
 import sys
 import types
 from pathlib import Path
 
 from .code_tracer import trace_source_tree, CONTEXT_NAME
-from .mock_turtle import display_image
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME, TracedFinder
+
 try:
-    from .mock_turtle import MockTurtle, monkey_patch_pyglet
+    from .mock_turtle import MockTurtle
+    from .live_image import LiveFigure, monkey_patch_pyglet
 except ImportError:
-    MockTurtle = monkey_patch_pyglet = None
+    MockTurtle = monkey_patch_pyglet = LiveFigure = None
 
 
 class DelegatingModuleFinder(MetaPathFinder):
@@ -437,11 +437,7 @@ class PatchedModuleLoader(Loader):
         x -= screen_width // 2
         y = screen_height // 2 - y
 
-        data = io.BytesIO()
-        self.plt.savefig(data, format='PNG')
-
-        image = data.getvalue()
-        display_image(image, (x, y))
+        LiveFigure(figure).display((x, y))
 
     def live_coding_zoom(self):
         screen_width, screen_height = self.plt.live_coding_size

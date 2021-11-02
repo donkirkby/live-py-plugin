@@ -2,7 +2,7 @@ import pytest
 import sys
 
 from space_tracer.main import TraceRunner
-from test_mock_turtle import replace_image
+from test_live_image import replace_image
 
 try:
     import matplotlib

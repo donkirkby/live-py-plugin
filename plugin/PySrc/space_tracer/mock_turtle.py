@@ -1,13 +1,11 @@
-from base64 import standard_b64encode, standard_b64decode
+from base64 import standard_b64decode
 import binascii
 from collections import namedtuple
-import io
 import re
 import struct
 import sys
 import types
 import typing
-from functools import singledispatch
 
 from .canvas import Canvas
 
@@ -22,14 +20,6 @@ except ImportError:
 
     dialog_name = tkinter_name + '.simpledialog'
     tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
-
-try:
-    from PIL import Image
-except ImportError:
-    # Dummy version to avoid errors.
-    class Image:
-        class Image:
-            pass
 
 from turtle import TNavigator, TPen
 
@@ -398,40 +388,6 @@ class MockTurtle(TNavigator, TPen):
             if code == colorstr:
                 return name
         return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
-
-
-@singledispatch
-def display_image(image: bytes,
-                  position: typing.Tuple[int, int] = None,
-                  align: str = 'topleft'):
-    """ Display an image on the mock turtle's canvas.
-
-    This supports images as bytes in PNG format. To display any other image
-    format, register an overloaded implementation of this method and convert
-    your format to PNG bytes. See the PIL Image version just below as an example.
-
-    :param image: PNG image bytes
-    :param position: (x, y) coordinates on the canvas, or None for the top-left
-        corner
-    :param align: which point in the image to line up with (x, y) - a
-        combination of 'top', 'center', or 'bottom' plus 'left', 'center', or
-        'right'. If one of the words is missing, it defaults to 'center'.
-    """
-
-    b64_bytes = standard_b64encode(image)
-    b64_string = b64_bytes.decode('UTF-8')
-    MockTurtle.display_image(b64_string, position, align)
-
-
-@display_image.register(Image.Image)
-def _(image: Image.Image,
-      position: typing.Tuple[int, int] = None,
-      align: str = 'topleft'):
-    """ Convert a PIL image to PNG bytes, and pass to main display method. """
-    data = io.BytesIO()
-    image.save(data, 'PNG')
-
-    display_image(data.getvalue(), position, align)
 
 
 # Normally, Tkinter will look up these colour names for you, but we don't
@@ -1191,51 +1147,3 @@ color_map = {
     'yellow4': '#8b8b00',
     'yellowgreen': '#9acd32',
 }
-
-
-# noinspection PyUnresolvedReferences
-def monkey_patch_pyglet(canvas):
-
-    pyglet = sys.modules['pyglet']
-
-    # noinspection PyUnresolvedReferences
-    class MockPygletWindow(pyglet.window.Window):
-
-        # noinspection PyUnusedLocal
-        def __init__(self, **kwargs):
-            conf = pyglet.gl.Config(double_buffer=True)
-            super(MockPygletWindow, self).__init__(
-                config=conf,
-                resizable=True,
-                visible=False,
-
-                # Let the canvas size dictate the program's window size.
-                width=canvas.cget('width'),
-                height=canvas.cget('height')
-            )
-            self.on_resize(self.width, self.height)
-
-        @staticmethod
-        def on_draw():
-            # Get the colour buffer, write it to a bytearray in png format.
-            buf = pyglet.image.get_buffer_manager().get_color_buffer()
-            b = io.BytesIO()
-            buf.save('buffer.png', b)
-            image = b.getvalue()
-            encoded = standard_b64encode(image)
-            img_str = str(encoded.decode('UTF-8'))
-            MockTurtle.display_image(img_str)
-
-    # noinspection PyUnresolvedReferences
-    def run():
-        for window in list(pyglet.app.windows):
-            for i in range(2):
-                pyglet.clock.tick()
-                window.switch_to()
-                window.dispatch_events()
-                window.dispatch_event('on_draw')
-                window.flip()
-            window.close()
-
-    pyglet.app.run = run
-    pyglet.window.Window = MockPygletWindow

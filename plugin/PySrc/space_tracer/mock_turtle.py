@@ -68,6 +68,8 @@ class MockTurtle(TNavigator, TPen):
 
     @classmethod
     def monkey_patch(cls, canvas=None):
+        if cls.is_patched():
+            raise RuntimeError('MockTurtle is already monkey patched.')
         turtle_module = sys.modules['turtle']
         cls.OriginalTurtle = turtle_module.Turtle
         turtle_module.Turtle = MockTurtle
@@ -79,6 +81,8 @@ class MockTurtle(TNavigator, TPen):
 
     @classmethod
     def remove_monkey_patch(cls):
+        if not cls.is_patched():
+            raise RuntimeError('MockTurtle is not monkey patched.')
         MockTurtle.instances = []
         if cls.OriginalTurtle is not None:
             turtle_module = sys.modules['turtle']
@@ -86,6 +90,10 @@ class MockTurtle(TNavigator, TPen):
             turtle_module.mainloop = turtle_module.done = cls.original_mainloop
             MockTurtle._pen = cls.OriginalTurtle = cls.original_mainloop = None
             MockTurtle._screen = None
+
+    @classmethod
+    def is_patched(cls):
+        return cls._pen is not None
 
     @classmethod
     def get_all_reports(cls):
@@ -105,11 +113,10 @@ class MockTurtle(TNavigator, TPen):
             combination of 'top', 'center', or 'bottom' plus 'left', 'center', or
             'right'. If one of the words is missing, it defaults to 'center'.
         """
+        if not cls.is_patched():
+            return
         screen = cls._screen
         t = cls._pen
-        if screen is None:
-            # Turtle is not patched, do nothing.
-            return
         if position is None or t is None:
             x = y = 0
         else:

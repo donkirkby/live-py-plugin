@@ -15,6 +15,34 @@ def patched_turtle():
     MockTurtle.remove_monkey_patch()
 
 
+def test_is_patched():
+    assert not MockTurtle.is_patched()
+
+    MockTurtle.monkey_patch()
+    try:
+        assert MockTurtle.is_patched()
+    finally:
+        MockTurtle.remove_monkey_patch()
+
+    assert not MockTurtle.is_patched()
+
+
+def test_patch_twice():
+    MockTurtle.monkey_patch()
+    try:
+        with pytest.raises(RuntimeError,
+                           match=r'MockTurtle is already monkey patched\.'):
+            MockTurtle.monkey_patch()
+    finally:
+        MockTurtle.remove_monkey_patch()
+
+
+def test_remove_patch_too_soon():
+    with pytest.raises(RuntimeError,
+                       match=r'MockTurtle is not monkey patched\.'):
+        MockTurtle.remove_monkey_patch()
+
+
 def test_forward(patched_turtle):
     expected_report = """\
 create_line
@@ -163,7 +191,7 @@ def test_bounds_after_monkey_patch():
 
 
 def test_offset():
-    MockTurtle.remove_monkey_patch()
+    assert not MockTurtle.is_patched()
     expected_report = """\
 create_line
     400
@@ -213,7 +241,7 @@ create_line
 def test_offset_with_scale():
     """ The offset is applied BEFORE the scale. """
 
-    MockTurtle.remove_monkey_patch()
+    assert not MockTurtle.is_patched()
     expected_report = """\
 create_line
     400

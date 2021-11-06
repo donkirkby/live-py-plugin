@@ -3,8 +3,9 @@ import typing
 
 import pytest
 
-from space_tracer import LiveImage, LivePillowImage
+from space_tracer import LivePng, LivePillowImage
 from space_tracer.canvas import Canvas
+from space_tracer.live_image import LiveImageDiffer
 from space_tracer.mock_turtle import MockTurtle
 
 # noinspection PyUnresolvedReferences
@@ -13,8 +14,9 @@ from test_report_builder import trim_report
 
 try:
     from PIL import Image
+    from PIL import ImageDraw
 except ImportError:
-    Image = None
+    Image = ImageDraw = None
 
 
 def replace_image(report):
@@ -34,16 +36,11 @@ create_image
     t = MockTurtle()
     image_data = b'PNG_IMAGE_DATA'
 
-    LiveImage(image_data).display()
+    LivePng(image_data).display()
 
     report = t.report
 
     assert report == expected_report.splitlines()
-
-
-def test_display_none():
-    with pytest.raises(ValueError, match=r'png_bytes is None\.'):
-        LiveImage().display()
 
 
 def test_display_position(patched_turtle):
@@ -57,7 +54,7 @@ create_image
     t = MockTurtle()
     image_data = b'PNG_IMAGE_DATA'
 
-    LiveImage(image_data).display((100, -200))
+    LivePng(image_data).display((100, -200))
 
     report = t.report
 
@@ -77,7 +74,7 @@ create_image
         t = MockTurtle()
         image_data = b'PNG_IMAGE_DATA'
 
-        LiveImage(image_data).display()
+        LivePng(image_data).display()
 
         report = t.report
     finally:
@@ -99,7 +96,7 @@ create_image
         t = MockTurtle()
         image_data = b'PNG_IMAGE_DATA'
 
-        LiveImage(image_data).display((10, 20))
+        LivePng(image_data).display((10, 20))
 
         report = t.report
     finally:
@@ -114,7 +111,7 @@ def test_display_not_patched():
     t = MockTurtle()
     image_data = b'PNG_IMAGE_DATA'
 
-    LiveImage(image_data).display()
+    LivePng(image_data).display()
 
     report = t.report
 
@@ -123,7 +120,6 @@ def test_display_not_patched():
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_display_pillow_image(patched_turtle):
-    # noinspection PyUnresolvedReferences
     image = Image.new('RGB', (2, 2))
     expected_report = """\
 create_image
@@ -176,3 +172,119 @@ def test_display_image_bad_align(patched_turtle):
 
     with pytest.raises(ValueError, match="Invalid align: 'topfloop'."):
         LivePillowImage(image).display(align='topfloop')
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_live_pillow_pixels():
+    default = (0, 0, 0, 0)
+    blue = (0, 0, 255, 255)
+
+    image = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image.set_pixel((5, 10), blue)
+    p1 = image.get_pixel((5, 10))
+    p2 = image.get_pixel((6, 10))
+
+    assert p1 == blue
+    assert p2 == default
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare():
+    blue = (0, 0, 255, 255)
+    white = (255, 255, 255, 255)
+    expected_match = (0, 0, 255, 255//3)
+    expected_diff = (255, 255//5, 255*2//5, 255)
+
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), blue)
+    image1.set_pixel((6, 10), blue)
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image2.set_pixel((5, 10), blue)
+    image2.set_pixel((6, 10), white)
+
+    differ = LiveImageDiffer()
+
+    diff = differ.compare(image1, image2).convert_to_painter()
+
+    diff_pixel1 = diff.get_pixel((5, 10))
+    diff_pixel2 = diff.get_pixel((6, 10))
+
+    assert diff_pixel1 == expected_match
+    assert diff_pixel2 == expected_diff
+    assert differ.diff_count == 1
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_display(patched_turtle):
+    expected_report = """\
+create_text
+    0
+    20
+    anchor='sw'
+    fill='#000000'
+    font=('Arial', 10, 'normal')
+    text='Actual'
+create_image
+    0
+    20
+    image='...'
+create_text
+    0
+    60
+    anchor='sw'
+    fill='#000000'
+    font=('Arial', 10, 'normal')
+    text='Diff (0 pixels)'
+create_image
+    0
+    60
+    image='...'
+create_text
+    0
+    100
+    anchor='sw'
+    fill='#000000'
+    font=('Arial', 10, 'normal')
+    text='Expected'
+create_image
+    0
+    100
+    image='...'
+"""
+
+    t = MockTurtle()
+
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    differ = LiveImageDiffer()
+
+    differ.compare(image1, image2)
+
+    report = t.report
+
+    assert replace_image(report) == expected_report
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_assert_passes():
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    differ = LiveImageDiffer()
+
+    differ.assert_equal(image1, image2)
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_assert_fails():
+    blue = (0, 0, 255, 255)
+
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), blue)
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    differ = LiveImageDiffer()
+
+    with pytest.raises(AssertionError):
+        differ.assert_equal(image1, image2)

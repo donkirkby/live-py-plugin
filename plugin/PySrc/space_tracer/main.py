@@ -368,16 +368,20 @@ class TraceRunner(object):
         self.standard_files = StandardFiles()
 
     def trace_turtle(self, source, width: int = 0, height: int = 0):
-        with replace_input(source):
-            self.trace_command(['space_tracer',
-                                '--traced_file', PSEUDO_FILENAME,
-                                '--source_width', '0',
-                                '--width', str(width),
-                                '--height', str(height),
-                                '--live',
-                                PSEUDO_FILENAME])
+        MockTurtle.monkey_patch()
+        try:
+            with replace_input(source):
+                self.trace_command(['space_tracer',
+                                    '--traced_file', PSEUDO_FILENAME,
+                                    '--source_width', '0',
+                                    '--width', str(width),
+                                    '--height', str(height),
+                                    '--live',
+                                    PSEUDO_FILENAME])
 
-        return '\n'.join(MockTurtle.get_all_reports())
+            return '\n'.join(MockTurtle.get_all_reports())
+        finally:
+            MockTurtle.remove_monkey_patch()
 
     def trace_code(self, source):
         """ Trace a module of source code.
@@ -399,8 +403,12 @@ class TraceRunner(object):
         args = parse_args(command_args)
         if self.canvas is None:
             self.canvas = Canvas(args.width, args.height)
+        was_patched = False
         if MockTurtle is not None:
-            MockTurtle.monkey_patch(self.canvas)
+            if MockTurtle.is_patched():
+                was_patched = True
+            else:
+                MockTurtle.monkey_patch(self.canvas)
         self.standard_files['stdin'] = args.stdin
         self.standard_files['stdout'] = args.stdout
         self.standard_files['stderr'] = args.stderr
@@ -570,6 +578,8 @@ class TraceRunner(object):
             turtle_report = None
         else:
             turtle_report = MockTurtle.get_all_reports()
+            if not was_patched:
+                MockTurtle.remove_monkey_patch()
         if turtle_report and args.canvas:
             report = ('start_canvas\n' +
                       '\n'.join(turtle_report) +

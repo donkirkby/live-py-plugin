@@ -17,9 +17,6 @@ class CodeTracerTest(ReportTestCase):
         super(CodeTracerTest, self).setUp()
         self.maxDiff = None
 
-    def tearDown(self):
-        MockTurtle.remove_monkey_patch()
-
     def test_empty(self):
         # EXEC
         report = TraceRunner().trace_code("")

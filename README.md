@@ -1,14 +1,17 @@
 Live Coding in Python
 =====================
 
-[![Build Status]][travis]
+[![Package Version]][pypi]
+[![Build Status]][actions]
 [![Code Coverage]][codecov]
 
 Visualize your Python code while you type it in PyCharm, Emacs, Sublime Text, or
 even your browser.
 
-[Build Status]: https://travis-ci.org/donkirkby/live-py-plugin.svg?branch=master
-[travis]: https://travis-ci.org/live-py-plugin
+[Package Version]: https://badge.fury.io/py/space-tracer.svg
+[pypi]: https://pypi.org/project/space-tracer/
+[Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/build.yml/badge.svg?branch=master
+[actions]: https://github.com/donkirkby/live-py-plugin/actions
 [Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
 [codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
 
@@ -185,6 +188,6 @@ Uninstalling the Sublime Text plugin
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [Install GNU Emacs]: http://www.gnu.org/software/emacs/
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
-[projects]: http://donkirkby.github.io/
+[projects]: https://donkirkby.github.io/
 [contributing]: https://github.com/donkirkby/live-py-plugin/blob/master/CONTRIBUTING.md
 [hatrack]: https://labhr.github.io/hatrack/#repo=donkirkby/live-py-plugin

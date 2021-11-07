@@ -15,17 +15,18 @@ except ImportError:
     class Image:
         Image = None
 
-Position = typing.Tuple[float, float]  # (x, y)
-Size = typing.Tuple[int, int]  # (width, height)
-Fill = typing.Tuple[int, int, int, int]  # (r, g, b, alpha)
-
 
 class LiveImage(ABC):
     """ Display an image with live updates on the turtle canvas.
 
     To display any image format, create a subclass that converts your format to
-    PNG bytes. See the Pillow Image version below as an example.
+    PNG bytes. See the Pillow Image version below as an example. If you want to
+    be able to edit the image and display diffs, derive from LivePainter.
     """
+    Position = typing.Tuple[float, float]  # (x, y)
+    Size = typing.Tuple[int, int]  # (width, height)
+    Fill = typing.Tuple[int, int, int, int]  # (r, g, b, alpha)
+
     @abstractmethod
     def convert_to_png(self) -> bytes:
         """ Convert this image to bytes in PNG format.
@@ -72,7 +73,7 @@ class LiveImage(ABC):
 
 class LivePainter(LiveImage):
     @abstractmethod
-    def set_pixel(self, position: Position, fill: Fill):
+    def set_pixel(self, position: LiveImage.Position, fill: LiveImage.Fill):
         """ Set the colour of a pixel.
 
         :param position: the x and y coordinates of the pixel
@@ -81,7 +82,7 @@ class LivePainter(LiveImage):
         """
 
     @abstractmethod
-    def get_pixel(self, position: Position) -> Fill:
+    def get_pixel(self, position: LiveImage.Position) -> LiveImage.Fill:
         """ Get the colour of a pixel.
 
         :param position: the x and y coordinates of the pixel
@@ -90,7 +91,7 @@ class LivePainter(LiveImage):
         """
 
     @abstractmethod
-    def get_size(self) -> Size:
+    def get_size(self) -> LiveImage.Size:
         """ Get the size of the image.
 
         :return: (width, height) as a tuple
@@ -129,13 +130,13 @@ class LivePillowImage(LivePainter):
 
         return data.getvalue()
 
-    def get_pixel(self, position: Position) -> Fill:
+    def get_pixel(self, position: LiveImage.Position) -> LiveImage.Fill:
         return self.image.getpixel(position)
 
-    def set_pixel(self, position: Position, fill: Fill):
+    def set_pixel(self, position: LiveImage.Position, fill: LiveImage.Fill):
         self.image.putpixel(position, fill)
 
-    def get_size(self) -> Size:
+    def get_size(self) -> LiveImage.Size:
         return self.image.size
 
 
@@ -181,10 +182,19 @@ class LiveImageDiffer:
 
         self.clean_diffs()
 
-    def start_diff(self, size: Size):
+    def start_diff(self, size: LiveImage.Size):
+        """ Start the comparison by creating a diff painter.
+
+        Overrides must set self.diff to a LivePainter object.
+        :param size: the size of painter to put in self.diff.
+        """
         self.diff = LivePillowImage(Image.new('RGBA', size))
 
     def end_diff(self) -> LiveImage:
+        """ End the comparison by cleaning up.
+
+        :return: the final version of the diff image
+        """
         diff = self.diff
         self.diff = None
         return diff
@@ -217,22 +227,38 @@ class LiveImageDiffer:
                 self.file_prefixes.add(file_prefix)
         painter1 = actual.convert_to_painter()
         painter2 = expected.convert_to_painter()
-        width, height = painter1.get_size()
+        width1, height1 = painter1.get_size()
+        width2, height2 = painter2.get_size()
+        width = max(width1, width2)
+        height = max(height1, height2)
         self.diff_count = 0
         self.start_diff((width, height))
-        for x in range(width):
-            for y in range(height):
-                position = (x, y)
-                fill1 = painter1.get_pixel(position)
-                fill2 = painter2.get_pixel(position)
-                diff_fill = self.compare_pixel(fill1, fill2)
-                self.diff.set_pixel(position, diff_fill)
-        self.display_diff(painter1, painter2)
-        if self.diff_count:
-            self.write_image(painter1, file_prefix, 'actual')
-            self.write_image(self.diff, file_prefix, 'diff')
-            self.write_image(painter2, file_prefix, 'expected')
-        return self.end_diff()
+        try:
+            default_colour = (0, 0, 0, 0)
+            for x in range(width):
+                for y in range(height):
+                    position = (x, y)
+                    is_missing = False
+                    if x < width1 and y < height1:
+                        fill1 = painter1.get_pixel(position)
+                    else:
+                        is_missing = True
+                        fill1 = default_colour
+                    if x < width2 and y < height2:
+                        fill2 = painter2.get_pixel(position)
+                    else:
+                        is_missing = True
+                        fill2 = default_colour
+                    diff_fill = self.compare_pixel(fill1, fill2, is_missing)
+                    self.diff.set_pixel(position, diff_fill)
+            self.display_diff(painter1, painter2)
+            if self.diff_count:
+                self.write_image(painter1, file_prefix, 'actual')
+                self.write_image(self.diff, file_prefix, 'diff')
+                self.write_image(painter2, file_prefix, 'expected')
+        finally:
+            final_diff = self.end_diff()
+        return final_diff
 
     def assert_equal(self,
                      actual: LiveImage,
@@ -284,11 +310,14 @@ class LiveImageDiffer:
                     file.unlink()
                     break
 
-    def compare_pixel(self, actual_pixel: Fill, expected_pixel: Fill) -> Fill:
+    def compare_pixel(self,
+                      actual_pixel: LiveImage.Fill,
+                      expected_pixel: LiveImage.Fill,
+                      is_missing: bool = False) -> LiveImage.Fill:
         ar, ag, ab, aa = actual_pixel
         er, eg, eb, ea = expected_pixel
         max_diff = max(abs(a - b) for a, b in zip(actual_pixel, expected_pixel))
-        if max_diff > self.tolerance:
+        if max_diff > self.tolerance or is_missing:
             self.diff_count += 1
             # Colour
             dr = 0xff

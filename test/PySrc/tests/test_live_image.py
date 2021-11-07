@@ -344,6 +344,29 @@ def test_differ_compare_two_sets(tmp_path):
 
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_two_sizes():
+    blue = (0, 0, 255, 255)
+    green = (0, 255, 0, 255)
+    missing_blue = (255, 0, 51, 255)
+    missing_green = (255, 51, 0, 255)
+    image1 = LivePillowImage(Image.new('RGBA', (2, 3)))
+    image1.set_pixel((0, 2), blue)
+    image2 = LivePillowImage(Image.new('RGBA', (3, 2)))
+    image2.set_pixel((2, 0), green)
+
+    differ = LiveImageDiffer()
+
+    diff = differ.compare(image1, image2).convert_to_painter()
+
+    diff_pixel1 = diff.get_pixel((0, 2))
+    diff_pixel2 = diff.get_pixel((2, 0))
+
+    assert diff_pixel1 == missing_blue
+    assert diff_pixel2 == missing_green
+    assert differ.diff_count == 5
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_remove_common_prefix(tmp_path):
     image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
     image1.set_pixel((5, 10), (0, 0, 101, 255))

@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         # Keep synchronized with setup.py and tox.ini
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10-dev]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10]
     env:
       PYTHON: ${{ matrix.python-version }}
 
@@ -46,6 +46,12 @@ jobs:
         run: |
           if [[ $PYTHON == '2.7' ]]; then python test/PySrc/tests/validate_legacy_python.py && exit || exit 1 ; fi
           python -m tox -e py
+      - name: Test with tox and pytest, plus Pillow
+        run: |
+          python -m tox -e py-pil
+      - name: Test with tox and pytest, plus matplotlib
+        run: |
+          python -m tox -e py-mpl
 #      - name: Test with Emacs
 #        id: emacs-tests
 #        continue-on-error: true

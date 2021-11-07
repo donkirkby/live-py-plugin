@@ -267,6 +267,129 @@ create_image
 
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_writes_file(tmp_path):
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), (0, 0, 255, 255))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    diffs_path = tmp_path / 'image_diffs'
+    actual_path = diffs_path / 'test_name-actual.png'
+    diff_path = diffs_path / 'test_name-diff.png'
+    expected_path = diffs_path / 'test_name-expected.png'
+    differ = LiveImageDiffer(diffs_path)
+
+    differ.compare(image1, image2, 'test_name')
+
+    assert actual_path.exists()
+    assert diff_path.exists()
+    assert expected_path.exists()
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_uses_test_name(tmp_path, request):
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), (0, 0, 123, 255))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    diffs_path = tmp_path / 'image_diffs'
+    actual_path = (diffs_path / 'test-PySrc-tests-test_live_image-py--'
+                                'test_differ_compare_uses_test_name-actual.png')
+    differ = LiveImageDiffer(diffs_path, request)
+
+    differ.compare(image1, image2)
+
+    assert actual_path.exists()
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_test_name_without_path():
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    differ = LiveImageDiffer()
+
+    with pytest.raises(ValueError, match=r'Used file_prefix without diffs_path\.'):
+        differ.compare(image1, image1, 'test_name')
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_writes_no_files_without_file_prefix(tmp_path):
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), (0, 255, 0, 255))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    diffs_path = tmp_path / 'image_diffs'
+    differ = LiveImageDiffer(diffs_path)
+
+    differ.compare(image1, image2)
+
+    assert list(diffs_path.iterdir()) == []
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_two_sets(tmp_path):
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), (0, 0, 100, 255))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    diffs_path = tmp_path / 'image_diffs'
+    actual_path1 = diffs_path / 'test_name-actual.png'
+    actual_path2 = diffs_path / 'other_name-actual.png'
+    differ = LiveImageDiffer(diffs_path)
+
+    differ.compare(image1, image2, 'test_name')
+    differ.compare(image1, image2, 'other_name')
+
+    assert actual_path1.exists()
+    assert actual_path2.exists()
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_remove_common_prefix(tmp_path):
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), (0, 0, 101, 255))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    diffs_path = tmp_path / 'image_diffs'
+    actual_path1 = diffs_path / 'apple-actual.png'
+    actual_path2 = diffs_path / 'banana-actual.png'
+    differ = LiveImageDiffer(diffs_path)
+
+    differ.compare(image1, image2, 'test_apple')
+    differ.compare(image1, image2, 'test_banana')
+    differ.remove_common_prefix()
+
+    assert actual_path1.exists()
+    assert actual_path2.exists()
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_cleans_diffs_path(tmp_path):
+    diffs_path = tmp_path / 'image_diffs'
+    diffs_path.mkdir()
+    leftover_path = diffs_path / 'leftover-actual.png'
+    leftover_path.write_text('garbage')
+    unrelated_path = diffs_path / 'leftover-unrelated.png'
+    unrelated_path.write_text('garbage')
+
+    LiveImageDiffer(diffs_path)
+
+    assert unrelated_path.exists()
+    assert not leftover_path.exists()
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_duplicate_file_prefix(tmp_path):
+    image = LivePillowImage(Image.new('RGBA', (10, 20)))
+    differ = LiveImageDiffer(tmp_path)
+
+    differ.compare(image, image, 'first_test')
+    differ.compare(image, image, 'other_test')
+    with pytest.raises(ValueError,
+                       match=r"Duplicate file_prefix: 'first_test'\."):
+        differ.compare(image, image, 'first_test')
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_assert_passes():
     image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
     image2 = LivePillowImage(Image.new('RGBA', (10, 20)))

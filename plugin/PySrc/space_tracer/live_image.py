@@ -1,4 +1,6 @@
 import io
+import os
+import re
 import sys
 import typing
 from abc import ABC, abstractmethod
@@ -41,6 +43,16 @@ class LiveImage(ABC):
         image = Image.open(png_file)
         image.load()
         return LivePillowImage(image)
+
+    def save(self, file_path: Path) -> Path:
+        """ Save the image to a file.
+
+        :param file_path: The path to save the file to, without an extension.
+        :return: The path of the saved file, with an extension.
+        """
+        extended_path = file_path.with_suffix('.png')
+        extended_path.write_bytes(self.convert_to_png())
+        return extended_path
 
     def display(self, position: Position = None, align: str = 'topleft'):
         """ Display this image on the mock turtle's canvas.
@@ -160,8 +172,14 @@ class LiveImageDiffer:
         self.diff_files = set()  # type: typing.Set[Path]
         self.tolerance = 3
         self.diff_count = 0  # number of mismatched pixels
-        if self.diffs_path is not None:
-            self.diffs_path.mkdir(exist_ok=True, parents=True)
+
+        # for all calls to compare
+        self.file_prefixes = set()  # type: typing.Set[str]
+
+        # only for files that were written
+        self.file_names = []  # type: typing.List[str]
+
+        self.clean_diffs()
 
     def start_diff(self, size: Size):
         self.diff = LivePillowImage(Image.new('RGBA', size))
@@ -186,6 +204,17 @@ class LiveImageDiffer:
             __init__() and either request fixture is passed to init or
             file_prefix is passed to this method.
         """
+        if self.diffs_path is None:
+            if file_prefix is not None:
+                raise ValueError('Used file_prefix without diffs_path.')
+        else:
+            if file_prefix is None and self.request is not None:
+                file_prefix = re.sub(r'\W', '-', self.request.node.nodeid)
+            if file_prefix in self.file_prefixes:
+                raise ValueError('Duplicate file_prefix: {!r}.'.format(
+                    file_prefix))
+            if file_prefix is not None:
+                self.file_prefixes.add(file_prefix)
         painter1 = actual.convert_to_painter()
         painter2 = expected.convert_to_painter()
         width, height = painter1.get_size()
@@ -199,6 +228,10 @@ class LiveImageDiffer:
                 diff_fill = self.compare_pixel(fill1, fill2)
                 self.diff.set_pixel(position, diff_fill)
         self.display_diff(painter1, painter2)
+        if self.diff_count:
+            self.write_image(painter1, file_prefix, 'actual')
+            self.write_image(self.diff, file_prefix, 'diff')
+            self.write_image(painter2, file_prefix, 'expected')
         return self.end_diff()
 
     def assert_equal(self,
@@ -218,6 +251,38 @@ class LiveImageDiffer:
         """
         self.compare(actual, expected, file_prefix)
         assert self.diff_count == 0
+
+    def remove_common_prefix(self):
+        common_prefix = os.path.commonprefix(self.file_names)
+        if not common_prefix:
+            return
+        prefix_length = len(common_prefix)
+        new_file_names = []
+        for old_file_name in self.file_names:
+            new_file_name = old_file_name[prefix_length:]
+            new_file_names.append(new_file_name)
+            old_path = self.diffs_path / old_file_name
+            new_path = self.diffs_path / new_file_name
+            old_path.rename(new_path)
+        self.file_names = new_file_names
+
+    def write_image(self, image: LiveImage, file_prefix: str, suffix: str):
+        if file_prefix is None:
+            return
+        name = file_prefix + '-' + suffix
+        path = self.diffs_path / name
+        file_path = image.save(path)
+        self.file_names.append(str(file_path.relative_to(self.diffs_path)))
+
+    def clean_diffs(self):
+        if self.diffs_path is None:
+            return
+        self.diffs_path.mkdir(exist_ok=True, parents=True)
+        for file in self.diffs_path.iterdir():
+            for suffix in ('actual', 'diff', 'expected'):
+                if file.stem.endswith(suffix):
+                    file.unlink()
+                    break
 
     def compare_pixel(self, actual_pixel: Fill, expected_pixel: Fill) -> Fill:
         ar, ag, ab, aa = actual_pixel

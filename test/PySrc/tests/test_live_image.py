@@ -432,5 +432,5 @@ def test_differ_assert_fails():
 
     differ = LiveImageDiffer()
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel.'):
         differ.assert_equal(image1, image2)

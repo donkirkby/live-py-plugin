@@ -285,8 +285,15 @@ class LiveImageDiffer:
             __init__() and either request fixture is passed to init or
             file_prefix is passed to this method.
         """
+        __tracebackhide__ = True
         self.compare(actual, expected, file_prefix)
-        assert self.diff_count == 0
+        if self.diff_count == 0:
+            return
+        if self.diff_count == 1:
+            suffix = ''
+        else:
+            suffix = 's'
+        raise AssertionError('Images differ by {} pixel{}.'.format(self.diff_count, suffix))
 
     def remove_common_prefix(self):
         common_prefix = os.path.commonprefix(self.file_names)

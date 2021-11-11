@@ -159,6 +159,16 @@ class LiveImageDiffer:
         This class requires Pillow to be installed, but you can remove that
         dependency with a subclass that overrides the start_diff() and
         end_diff() methods.
+
+        A good way to use this class is to create a session fixture like this:
+
+        @pytest.fixture(scope='session')
+        def image_differ(request):
+            diffs_path = Path(__file__).parent / 'image_diffs'
+            differ = LiveImageDiffer(diffs_path, request)
+            yield differ
+            differ.remove_common_prefix()
+
         :param diffs_path: The folder to write comparison images in, or None
             if you don't want to write any. Will be created if it doesn't exist.
         :param request: The Pytest request fixture, if you want to generate
@@ -253,9 +263,9 @@ class LiveImageDiffer:
                     self.diff.set_pixel(position, diff_fill)
             self.display_diff(painter1, painter2)
             if self.diff_count:
-                self.write_image(painter1, file_prefix, 'actual')
+                self.write_image(actual, file_prefix, 'actual')
                 self.write_image(self.diff, file_prefix, 'diff')
-                self.write_image(painter2, file_prefix, 'expected')
+                self.write_image(expected, file_prefix, 'expected')
         finally:
             final_diff = self.end_diff()
         return final_diff

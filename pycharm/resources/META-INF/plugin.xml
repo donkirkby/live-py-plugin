@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>4.4.0</version>
+    <version>4.5.rc1</version>
     <vendor url="https://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
@@ -10,7 +10,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Support Python 3.10 and improve @traced decorator.
+        Add features to display other images beyond turtle graphics and
+        Matplotlib, as well as visual unit tests.
     ]]>
     </change-notes>
 

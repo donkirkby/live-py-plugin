@@ -1,9 +1,11 @@
 Live Coding in Python
 =====================
 
-[![Package Version]][pypi]
 [![Build Status]][actions]
 [![Code Coverage]][codecov]
+[![PyCharm downloads]][pycharm plugin]
+[![Sublime downloads]][sublime plugin]
+[![Package Version]][pypi]
 
 Visualize your Python code while you type it in PyCharm, Emacs, Sublime Text, or
 even your browser.
@@ -14,6 +16,10 @@ even your browser.
 [actions]: https://github.com/donkirkby/live-py-plugin/actions
 [Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
 [codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
+[PyCharm downloads]: https://img.shields.io/jetbrains/plugin/d/9742?label=PyCharm%20%E2%86%93
+[pycharm plugin]: https://plugins.jetbrains.com/plugin/9742
+[Sublime downloads]: https://img.shields.io/packagecontrol/dt/Live%20Coding%20in%20Python?label=Sublime%20%E2%86%93
+[sublime plugin]: https://packagecontrol.io/packages/Live%20Coding%20in%20Python
 
 To see how to use one of the Live Coding in Python plugins, watch the
 [demo video][video] or read the getting started pages for [PyCharm], [Emacs],

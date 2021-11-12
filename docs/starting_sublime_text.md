@@ -507,14 +507,16 @@ interface in the Live Canvas view.
 See the [Pyglet documentation] for details on how to build an interface.
 
 ## Learn More
+There are some extra features available if you install the [space tracer library].
 Remember, you can find installation instructions and descriptions of all the
 other Live Coding in Python plugins and tools by visiting
-[donkirkby.github.com][livepy]. Help me test it, and report your bugs. I'd also
+[donkirkby.github.io][livepy]. Help me test it, and report your bugs. I'd also
 love to hear about any other projects working on the same kind of tools.
 
 [Hello Alice]: images/sublime_alice.png
 [Hello Bob]: images/sublime_bob.png
 [installation instructions]: index.md#installing-the-sublime-text-plugin
+[space tracer library]: starting_space_tracer.md#importing-space-tracer
 [livepy]: index.md
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [tdd]: https://donkirkby.github.io/testing/

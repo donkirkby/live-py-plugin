@@ -944,12 +944,14 @@ I didn't break any of the other tests. The easiest way to run it is with
 
 It looks good, so I can publish my new library.
 
+There are some extra features available if you install the [space tracer library].
 Remember, you can find installation instructions and descriptions of all the
-other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test
+other plugins and tools by visiting [donkirkby.github.io][livepy]. Help me test
 it, and report your bugs. I'd also love to hear about any other projects working
 on the same kind of tools.
 
 [installation instructions]: index.md#installing-the-emacs-mode
+[space tracer library]: starting_space_tracer.md#importing-space-tracer
 [livepy]: index.md
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [tdd]: https://donkirkby.github.io/testing/

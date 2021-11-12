@@ -502,6 +502,7 @@ interface in the Live Turtle view.
 See the [Pyglet documentation] for details on how to build an interface.
 
 ## Learn More
+There are some extra features available if you install the [space tracer library].
 Remember, you can find installation instructions and descriptions of all the
 other Live Coding in Python plugins and tools by visiting
 [donkirkby.github.io][livepy]. Help me test it, and report your bugs. I'd also
@@ -510,6 +511,7 @@ love to hear about any other projects working on the same kind of tools.
 [square50]: images/demo_square50.png
 [square75]: images/demo_square75.png
 [installation instructions]: index.md#installing-the-pycharm-plugin
+[space tracer library]: starting_space_tracer.md#importing-space-tracer
 [livepy]: index.md
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [turtle_window]: images/demo_turtle_window.png

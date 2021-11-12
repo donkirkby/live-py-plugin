@@ -11,6 +11,7 @@ has never happened to me, but I hear other people sometimes have this problem.)
 Before you start pasting print statements all through the production code, see
 what Space Tracer can show you about your code.
 
+### The Problem
 In this example, I'm going to pretend that the `urlencode()` function is a part
 of my large enterprise code base, and my users have told me it needs to stop
 encoding spaces as plus signs. They want to see the standard encoding of `%20`.
@@ -36,6 +37,7 @@ a hexadecimal number, but the space in `'a ?'` is converted to `+`. I've been
 asked to switch that to `%20`, but I'm not sure exactly why the `urlencode()`
 function is treating spaces specially, and if I can change that.
 
+### Running Space Tracer
 How can Space Tracer help? I start by installing it with pip.
 
     pip install space_tracer
@@ -53,6 +55,7 @@ happening inside. Just replace the `python` part of the command line with
     print(encoded)                                    | print('a+%3F=Yes%21&b%2Fc=No')
     $
 
+### Digging Deeper
 It shows the result of calling `urlencode()`, and the print statement. Now
 let's dig deeper: what's happening inside `urlencode()`? The `--traced` option
 tells Space Tracer which part of the code to trace. It can be a module, a class,
@@ -154,6 +157,7 @@ go next.
         return ''.join([quoter(char) for char in bs])                              | return 'a %3F'           | return 'Yes%21'          | return
     $
 
+### Finding Your Target
 I can see the function being called the first couple of times: for the key and
 then the value. The try/except block at the end is a little odd, but it looks
 like the encoding is being done by the `Quoter` class.
@@ -216,6 +220,7 @@ I wonder why "No" doesn't get passed in, when "Yes!" does. Then I look back up
 at the `quote_from_bytes()` function, and see that "No" gets returned without
 encoding, because all its characters are safe.
 
+### Using What I Learned
 Finally, to make my script encode spaces with `%20`, I can change the default of
 `quote_plus` to just `quote`.
 
@@ -294,6 +299,7 @@ pad it with `--source_indent`. To control how the display on the right appears,
 you can trim it with `--trace_width` and `--trace_offset`. You can also run
 modules like `unittest` by using the `-m` option.
 
+### Hiding Noisy Code
 There are a few options for controlling what gets displayed. If there's a
 variable that gets changed a lot, but you don't care about the values, you can
 `--hide` it. You can also focus in on part of a function using line numbers.
@@ -331,6 +337,56 @@ display with `--start_line` and `--end_line`.
     878)     return ''.join([quoter(char) for char in bs])               | return 'a %3F'           | return 'Yes%21'          | return 'b%2Fc'   
     $
 
+### Importing Space Tracer
+There are some extra features available when you import `space_tracer` into your
+code. For example, instead of using `--start_line` and `--end_line` on the
+command line, you can use `traced` in your code. It works as either a function
+decorator or as a context manager in a `with` block.
+
+    import string
+    
+    from space_tracer import traced
+    
+    uppers = {}
+    for c in string.ascii_letters:
+        uppers[c] = c.upper()
+    
+    
+    @traced()
+    def lookup(letter):
+        return uppers[letter]
+    
+    
+    with traced():
+        print(lookup('r'))
+        print(lookup('R'))
+
+Now, the `for` loop isn't displayed, making it easier to see what's happening
+in the `lookup()` function.
+
+    $ space_tracer demo.py
+    @traced()                 |              |
+    def lookup(letter):       | letter = 'r' | letter = 'R'
+        return uppers[letter] | return 'R'   | return 'R'
+    with traced():            |
+        print(lookup('r'))    | print('R')
+        print(lookup('R'))    | print('R')
+    $
+
+### Live Images and Image Differ
+The `LiveImageDiffer` is helpful for writing unit tests of your graphics code:
+either user interface or data visualization. Your unit test can call a graphics
+library directly to create the expected image, then call the code under test
+to create the actual image. The image differ will compare the two images, create
+a diff image with the mismatched pixels highlighted in red, and fail the test if
+there are any differences.
+
+The image differ can be useful in any Python editor, but there are extra
+features when you use it in PyCharm or Sublime Text. The expected, actual, and
+diff images all update live as you edit your code. You can also use the
+`LiveImage` class directly to display images as you edit the drawing code.
+
+### On Your Own
 Remember, you can find installation instructions and descriptions of all the
 other plugins and tools by visiting [donkirkby.github.com][livepy]. Help me test
 it, and report your bugs. I'd also love to hear about any other projects working

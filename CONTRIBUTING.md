@@ -52,7 +52,9 @@ through the code after the breakpoint.
 2. Update the version number and change notes in `about.py` and
     `pycharm/resources/META-INF/plugin.xml`
 3. Right-click the plugin module in the Project view and select Prepare Plugin
-    Module 'livepy' For Deployment in the context menu.
+    Module 'livepy' For Deployment in the context menu. It should produce a
+   `livepy.jar` file. If it produces `livepy.zip`, look inside to see what extra
+   jar file it included.
 4. Install the new plugin jar into your IntelliJ or PyCharm. Sometimes it
     behaves differently as a jar. From the File menu, choose Settings....
 5. Navigate down to the plugins section, click on the gear icon at the top,

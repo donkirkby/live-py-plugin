@@ -115,11 +115,12 @@ Installing the Emacs mode without MELPA
    which is in your Emacs `load-path`. For example:
 
         cd live-py-plugin
-        cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/*.py ~/.emacs.d/
+        mkdir -p ~/.emacs.d/packages
+        cp emacs-live-py-mode/live-py-mode.el plugin/PySrc/space_tracer ~/.emacs.d/packages
 
    Add ~/.emacs.d/ to your `load-path` in `~/.emacs.d/init.el` or `~/.emacs`:
 
-        (add-to-list 'load-path "~/.emacs.d")
+        (add-to-list 'load-path "~/.emacs.d/packages")
 4. Load the Lisp library in your `~/.emacs.d/init.el` or `~/.emacs`:
 
         (require 'live-py-mode)
@@ -177,6 +178,6 @@ Uninstalling the Sublime Text plugin
 [video]: https://www.youtube.com/watch?v=Vdr2l3yNFH4
 [Install GNU Emacs]: http://www.gnu.org/software/emacs/
 [tools]: https://github.com/donkirkby/live-py-plugin/tree/master/test/PySrc/tools
-[projects]: http://donkirkby.github.io/
+[projects]: https://donkirkby.github.io/
 [contributing]: https://github.com/donkirkby/live-py-plugin/blob/master/CONTRIBUTING.md
 [hatrack]: https://labhr.github.io/hatrack/#repo=donkirkby/live-py-plugin

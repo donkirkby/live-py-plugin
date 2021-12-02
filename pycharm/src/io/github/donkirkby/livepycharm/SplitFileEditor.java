@@ -426,6 +426,13 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         return "Live Coding in Python Split Editor";
     }
 
+    @Override
+    public @Nullable VirtualFile getFile() {
+        Editor editor = this.getEditor();
+        Document document = editor.getDocument();
+        return FileDocumentManager.getInstance().getFile(document);
+    }
+
     boolean isDisplayUpdating() {
         return myAnalyst.isDisplayUpdating();
     }

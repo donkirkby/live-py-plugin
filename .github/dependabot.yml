@@ -3,10 +3,14 @@ updates:
 - package-ecosystem: bundler
   directory: "/docs"
   schedule:
-    interval: daily
-    time: "13:00"
+    interval: weekly
+    day: saturday
+    time: "08:00"
   open-pull-requests-limit: 10
-  ignore:
-  - dependency-name: nokogiri
-    versions:
-    - 1.11.2
+- package-ecosystem: npm
+  directory: "/html"
+  schedule:
+    interval: weekly
+    day: saturday
+    time: "08:00"
+  open-pull-requests-limit: 10

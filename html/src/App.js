@@ -5,9 +5,9 @@ import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
 import tutorials from './tutorials.json';
 
-import 'brace/mode/python';
-import 'brace/mode/markdown';
-import 'brace/theme/github';
+import 'ace-builds/src-noconflict/mode-python';
+import 'ace-builds/src-noconflict/mode-markdown';
+import 'ace-builds/src-noconflict/theme-github';
 
 const PythonContext = React.createContext('Python is loading...');
 

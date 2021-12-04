@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>4.5.0</version>
+    <version>4.5.1</version>
     <vendor url="https://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
@@ -10,8 +10,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Add features to display other images beyond turtle graphics and
-        Matplotlib, as well as visual unit tests.
+        Patch a deprecated method in PyCharm that was causing errors.
     ]]>
     </change-notes>
 

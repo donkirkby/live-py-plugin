@@ -2,33 +2,43 @@ import { diffChars } from 'diff';
 
 export default class SampleAnalyst {
 
-    constructor(sourceCode, run, goalOutput, goalSourceCode, isLive) {
+    constructor(sourceCode, run, goalOutput, goalSourceCode, isLive, isTurtle) {
         if (goalSourceCode !== undefined) {
             this.sourceCode = sourceCode;
             this.goalSourceCode = goalSourceCode;
             this.isLive = true;
+            this.isTurtle = isTurtle;
         } else if (isLive === false) {
             this.sourceCode = sourceCode;
             this.isLive = isLive;
+            this.isTurtle = false;
+        } else if (isTurtle !== undefined) {
+            this.sourceCode = sourceCode;
+            this.isLive = isLive;
+            this.isTurtle = isTurtle;
         } else {
             let sourcePieces =
-                /^(.*\n)?( *##+ *((static)|(live))[ #]*\n)(.*)$/is.exec(
+                /^(.*\n)?( *##+ *((static)|(live)|(turtle))[ #]*\n)(.*)$/is.exec(
                     sourceCode);
             if (sourcePieces !== null) {
-                this.sourceCode = (sourcePieces[1] || "") + sourcePieces[6];
-                this.isLive = sourcePieces[3].toLowerCase() === "live";
+                this.sourceCode = (sourcePieces[1] || "") + sourcePieces[7];
+                this.isLive = sourcePieces[3].toLowerCase() !== "static";
+                this.isTurtle = sourcePieces[3].toLowerCase() === "turtle";
             } else if (/>>>/.test(sourceCode)) {
                 this.sourceCode = sourceCode;
                 this.isLive = false;
+                this.isTurtle = false;
             } else {
                 this.isLive = true;
+                this.isTurtle = false;
                 let splitSource = sourceCode.split(/ *##+ *Goal[ #]*\n/i);
                 this.sourceCode = splitSource[0];
                 this.goalSourceCode = splitSource[1];
             }
         }
         if (run !== undefined && this.isLive) {
-            let result = run(this.sourceCode);
+            let canvasSize = this.isTurtle ? [200, 200] : undefined,
+                result = run(this.sourceCode, canvasSize);
             this.display = result[0];
             this.output = result[1];
 

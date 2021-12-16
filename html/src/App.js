@@ -113,7 +113,8 @@ class CodeSample extends Component {
             goalMarkers: analyst.goalMarkers,
             outputMarkers: analyst.outputMarkers,
             matchPercentage: analyst.matchPercentage,
-            isLive: analyst.isLive
+            isLive: analyst.isLive,
+            isTurtle: analyst.isTurtle
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -132,7 +133,8 @@ class CodeSample extends Component {
                 codeRunner,
                 this.state.goalOutput,
                 this.state.goalSourceCode,
-                this.state.isLive
+                this.state.isLive,
+                this.state.isTurtle
             );
         this.setState({
             source: newSource,
@@ -154,7 +156,7 @@ class CodeSample extends Component {
     }
 
     handleCursorChange(selection) {
-        this.setState({selectedLine: selection.selectionLead.row});
+        this.setState({selectedLine: selection.getSelectionLead().row});
     }
 
     componentDidUpdate(prevProps, prevState) {

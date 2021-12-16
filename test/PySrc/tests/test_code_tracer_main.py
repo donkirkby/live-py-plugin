@@ -7,7 +7,7 @@ import pytest
 from unittest.mock import DEFAULT, patch
 
 from space_tracer import main
-from space_tracer.main import replace_input, TraceRunner
+from space_tracer.main import replace_input, TraceRunner, analyze
 from test_report_builder import ReportTestCase
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
@@ -1098,3 +1098,52 @@ def add_message(s):        | s = 'from driver'
         EXAMPLE_DRIVER_PATH])
 
     assert report == expected_report
+
+
+def test_analyse():
+    code = """\
+import turtle as t
+
+x = 100
+t.forward(x)
+"""
+    expected_report = """\
+
+
+x = 100
+"""
+
+    report, stdout = analyze(code)
+
+    assert report == expected_report
+    assert stdout == ''
+
+
+def test_analyse_canvas():
+    code = """\
+import turtle as t
+
+x = 100
+t.forward(x)
+"""
+    canvas_size = (100, 100)
+    expected_report = """\
+start_canvas
+create_line
+    50
+    50
+    150
+    50
+    fill='black'
+    pensize=1
+end_canvas
+.
+
+
+x = 100
+"""
+
+    report, stdout = analyze(code, canvas_size)
+
+    assert report == expected_report
+    assert stdout == ''

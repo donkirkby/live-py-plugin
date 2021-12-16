@@ -24,6 +24,21 @@ Change the code, and see the changes inside. Try to find the bug in the example
 code. (Hint: try searching for different numbers.) Paste your own code to see
 how it works.
 
+# Graphics
+Instead of showing what happens inside your code, there's also an option to show
+turtle graphics, matplotlib graphs, and other types of graphics that update as
+the reader changes your code.
+
+    ### Turtle ###
+    import turtle as t
+    
+    t.fillcolor('blue')
+    t.begin_fill()
+    for _ in range(4):
+        t.forward(100)
+        t.right(90)
+    t.end_fill()
+
 # Tutorials
 This is a prototype for a new kind of Python tutorial where all of the code
 examples include a live coding display beside them. When you make changes to

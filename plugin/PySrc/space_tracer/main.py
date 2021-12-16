@@ -18,15 +18,16 @@ try:
     # noinspection PyUnresolvedReferences
     from js import document, window
     IS_PYODIDE = True
-    MockTurtle = get_terminal_size = None
+    get_terminal_size = None
 except ImportError:
     IS_PYODIDE = False
     document = window = None
     from os import get_terminal_size
-    try:
-        from .mock_turtle import MockTurtle
-    except ImportError:
-        MockTurtle = None
+
+try:
+    from .mock_turtle import MockTurtle
+except ImportError:
+    MockTurtle = None
 
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers
@@ -183,23 +184,31 @@ def main():
         exit(return_code)
 
 
-def analyze(source_code):
+def analyze(source_code, canvas_size=None):
     """ Trace the source code for display in the browser.
 
     :param source_code: Source code to trace.
+    :param canvas_size: (width, height), set if the report should include turtle
+        commands.
     :return: (tracing_report, output)
     """
     tracer = TraceRunner()
     tracer.standard_files.old_files['stderr'] = StringIO()
     tracer.max_width = 200000
     with replace_input(source_code):
-        code_report = tracer.trace_command(['space_tracer',
-                                            '--traced_file', PSEUDO_FILENAME,
-                                            '--source_width', '0',
-                                            '--live',
-                                            '--stdout', '!',
-                                            '--stderr', '!',
-                                            PSEUDO_FILENAME])
+        tracer_args = ['space_tracer',
+                       '--traced_file', PSEUDO_FILENAME,
+                       '--source_width', '0',
+                       '--live',
+                       '--stdout', '!',
+                       '--stderr', '!']
+        if canvas_size is not None:
+            canvas_width, canvas_height = canvas_size
+            tracer_args.append('--canvas')
+            tracer_args.append('-x{}'.format(canvas_width))
+            tracer_args.append('-y{}'.format(canvas_height))
+        tracer_args.append(PSEUDO_FILENAME)
+        code_report = tracer.trace_command(tracer_args)
     stdout = tracer.standard_files.old_files['stderr'].getvalue()
     return code_report, stdout
 
@@ -320,6 +329,8 @@ def replace_input(stdin_text=None):
 
 
 def display_error_on_canvas():
+    if MockTurtle is None:
+        return
     tb = traceback.TracebackException(*sys.exc_info())
     tb_stack = tb.stack
     library_path = os.path.dirname(__file__)

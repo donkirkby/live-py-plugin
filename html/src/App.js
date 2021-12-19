@@ -123,6 +123,7 @@ class CodeSample extends Component {
         this.handleScroll = this.handleScroll.bind(this);
         this.handleCursorChange = this.handleCursorChange.bind(this);
 
+        this.editorRef = React.createRef();
         this.canvasRef = React.createRef();
     }
 
@@ -173,15 +174,28 @@ class CodeSample extends Component {
         if ((canvas === null) || (commands === undefined)) {
             return;
         }
+        canvas.width = this.editorRef.current.clientWidth;
+        canvas.height = this.editorRef.current.clientHeight;
         const ctx = canvas.getContext('2d');
+        ctx.lineCap = 'round';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (const command of commands) {
             if (command.name === 'create_line') {
                 ctx.beginPath();
                 ctx.moveTo(command.coords[0], command.coords[1]);
                 ctx.lineTo(command.coords[2], command.coords[3]);
-                ctx.closePath();
+                ctx.lineWidth = command.pensize;
+                ctx.strokeStyle = command.fill;
                 ctx.stroke();
+            }
+            else if (command.name === 'create_polygon') {
+                ctx.beginPath();
+                ctx.moveTo(command.coords[0], command.coords[1]);
+                for (let i = 2; i < command.coords.length; i += 2) {
+                    ctx.lineTo(command.coords[i], command.coords[i+1]);
+                }
+                ctx.fillStyle = command.fill;
+                ctx.fill('evenodd');
             }
         }
     }
@@ -215,7 +229,9 @@ class CodeSample extends Component {
             sourceLineCount = 1 + this.countLines(this.state.source);
         if (this.state.isLive) {
             if (this.state.isCanvas) {
-                displayDiv = <canvas ref={this.canvasRef}/>;
+                displayDiv = <canvas
+                    ref={this.canvasRef}
+                    height={sourceLineCount*18}/>;
             } else {
                 displayDiv = <div className="editor-pane">
                     <Editor
@@ -269,6 +285,7 @@ class CodeSample extends Component {
             <div className="codeSample">
                 <div className="editor-wrapper">
                     <div className="editor-pane"
+                        ref={this.editorRef}
                         style={{height: sourceLineCount*18 + "px"}}>
                         <Editor
                             value={this.state.source}

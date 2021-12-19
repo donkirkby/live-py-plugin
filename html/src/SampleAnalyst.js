@@ -79,7 +79,7 @@ export default class SampleAnalyst {
                 this.goalOutput = goalOutput;
             } else if (this.goalSourceCode !== undefined) {
                 let goalResult = run(this.goalSourceCode);
-                this.goalOutput = goalResult[1];
+                this.goalOutput = goalResult.get(1);
             }
             if (this.goalOutput !== undefined) {
                 let diffs = diffChars(this.goalOutput, this.output),

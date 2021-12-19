@@ -9,7 +9,7 @@ function prefixLines(sourceCode) {
         line => line === "" ? line : "out " + line);
     let display = displayLines.join("\n");
     let output = outputLines.join("\n");
-    return [display, output];
+    return {get(i) { return [display, output][i]; }};
 }
 
 describe('SampleAnalyst', () => {
@@ -348,7 +348,7 @@ end_canvas
 .
 x = 1
 `;
-            return [display, ''];
+            return {get(i) { return [display, ''][i]; }};
         },
             source = `\
 ### Canvas ###

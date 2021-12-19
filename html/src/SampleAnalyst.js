@@ -1,47 +1,80 @@
 import { diffChars } from 'diff';
 
+function unescapeString(s) {
+    return Function('"use strict";return (' + s + ')')();
+}
+
 export default class SampleAnalyst {
 
-    constructor(sourceCode, run, goalOutput, goalSourceCode, isLive, isTurtle) {
+    constructor(sourceCode, run, goalOutput, goalSourceCode, isLive, isCanvas) {
         if (goalSourceCode !== undefined) {
             this.sourceCode = sourceCode;
             this.goalSourceCode = goalSourceCode;
             this.isLive = true;
-            this.isTurtle = isTurtle;
+            this.isCanvas = isCanvas;
         } else if (isLive === false) {
             this.sourceCode = sourceCode;
             this.isLive = isLive;
-            this.isTurtle = false;
-        } else if (isTurtle !== undefined) {
+            this.isCanvas = false;
+        } else if (isCanvas !== undefined) {
             this.sourceCode = sourceCode;
             this.isLive = isLive;
-            this.isTurtle = isTurtle;
+            this.isCanvas = isCanvas;
         } else {
             let sourcePieces =
-                /^(.*\n)?( *##+ *((static)|(live)|(turtle))[ #]*\n)(.*)$/is.exec(
+                /^(.*\n)?( *##+ *((static)|(live)|(canvas))[ #]*\n)(.*)$/is.exec(
                     sourceCode);
             if (sourcePieces !== null) {
                 this.sourceCode = (sourcePieces[1] || "") + sourcePieces[7];
                 this.isLive = sourcePieces[3].toLowerCase() !== "static";
-                this.isTurtle = sourcePieces[3].toLowerCase() === "turtle";
+                this.isCanvas = sourcePieces[3].toLowerCase() === "canvas";
             } else if (/>>>/.test(sourceCode)) {
                 this.sourceCode = sourceCode;
                 this.isLive = false;
-                this.isTurtle = false;
+                this.isCanvas = false;
             } else {
                 this.isLive = true;
-                this.isTurtle = false;
+                this.isCanvas = false;
                 let splitSource = sourceCode.split(/ *##+ *Goal[ #]*\n/i);
                 this.sourceCode = splitSource[0];
                 this.goalSourceCode = splitSource[1];
             }
         }
         if (run !== undefined && this.isLive) {
-            let canvasSize = this.isTurtle ? [200, 200] : undefined,
+            let canvasSize = this.isCanvas ? [200, 200] : undefined,
                 result = run(this.sourceCode, canvasSize);
-            this.display = result[0];
-            this.output = result[1];
+            this.display = result.get(0);
+            this.output = result.get(1);
 
+            if (this.isCanvas) {
+                const displayLines = this.display.split(
+                    /\r\n|(?!\r\n)[\n-\r\x85\u2028\u2029]/);
+                displayLines.shift();  // start_canvas
+                this.canvasCommands = [];
+                let currentCommand = undefined;
+                while (displayLines.length) {
+                    const nextLine = displayLines.shift();
+                    if (nextLine === '.') {
+                        break;
+                    }
+                    if ( ! nextLine.startsWith('    ')) {
+                        if (currentCommand !== undefined) {
+                            this.canvasCommands.push(currentCommand);
+                        }
+                        currentCommand = {name: nextLine, coords: []};
+                    } else {
+                        const position = nextLine.indexOf('=');
+                        if (position === -1) {
+                            currentCommand.coords.push(parseInt(nextLine));
+                        } else {
+                            const fieldName = nextLine.substring(4, position);
+                            currentCommand[fieldName] = unescapeString(
+                                nextLine.substring(position+1));
+                        }
+                    }
+                }
+                this.display = displayLines.join('\n');
+            }
             if (goalOutput !== undefined) {
                 this.goalOutput = goalOutput;
             } else if (this.goalSourceCode !== undefined) {

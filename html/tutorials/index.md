@@ -29,7 +29,7 @@ Instead of showing what happens inside your code, there's also an option to show
 turtle graphics, matplotlib graphs, and other types of graphics that update as
 the reader changes your code.
 
-    ### Turtle ###
+    ### Canvas ###
     import turtle as t
     
     t.fillcolor('blue')

@@ -114,13 +114,16 @@ class CodeSample extends Component {
             outputMarkers: analyst.outputMarkers,
             matchPercentage: analyst.matchPercentage,
             isLive: analyst.isLive,
-            isTurtle: analyst.isTurtle
+            isCanvas: analyst.isCanvas,
+            canvasCommands: analyst.canvasCommands
         };
 
         this.handleChange = this.handleChange.bind(this);
         this.handleReset = this.handleReset.bind(this);
         this.handleScroll = this.handleScroll.bind(this);
         this.handleCursorChange = this.handleCursorChange.bind(this);
+
+        this.canvasRef = React.createRef();
     }
 
     handleChange(newSource) {
@@ -134,7 +137,7 @@ class CodeSample extends Component {
                 this.state.goalOutput,
                 this.state.goalSourceCode,
                 this.state.isLive,
-                this.state.isTurtle
+                this.state.isCanvas
             );
         this.setState({
             source: newSource,
@@ -143,8 +146,10 @@ class CodeSample extends Component {
             goalOutput: analyst.goalOutput,
             goalMarkers: analyst.goalMarkers,
             outputMarkers: analyst.outputMarkers,
-            matchPercentage: analyst.matchPercentage
+            matchPercentage: analyst.matchPercentage,
+            canvasCommands: analyst.canvasCommands
         });
+        this.drawCanvas(analyst.canvasCommands);
     }
 
     handleReset() {
@@ -157,6 +162,28 @@ class CodeSample extends Component {
 
     handleCursorChange(selection) {
         this.setState({selectedLine: selection.getSelectionLead().row});
+    }
+
+    componentDidMount() {
+        this.drawCanvas(this.state.canvasCommands);
+    }
+
+    drawCanvas(commands) {
+        const canvas = this.canvasRef.current;
+        if ((canvas === null) || (commands === undefined)) {
+            return;
+        }
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const command of commands) {
+            if (command.name === 'create_line') {
+                ctx.beginPath();
+                ctx.moveTo(command.coords[0], command.coords[1]);
+                ctx.lineTo(command.coords[2], command.coords[3]);
+                ctx.closePath();
+                ctx.stroke();
+            }
+        }
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -180,24 +207,28 @@ class CodeSample extends Component {
         if (displayValue === null) {
             displayValue = this.state.display;
         }
-        let displayEditor = null,
+        let displayDiv = null,
             progressBar = null,
             outputHeaders = null,
             outputSection = null,
             resetButton = null,
             sourceLineCount = 1 + this.countLines(this.state.source);
         if (this.state.isLive) {
-            displayEditor = <div className="editor-pane">
-                <Editor
-                    value={displayValue}
-                    scrollTop={this.state.scrollTop}
-                    readOnly={true}
-                    selectedLine={this.state.selectedLine}
-                    onChange={this.handleChange}
-                    onScroll={this.handleScroll}
-                    highlightActiveLine={true}
-                    mode="text"/>
-            </div>;
+            if (this.state.isCanvas) {
+                displayDiv = <canvas ref={this.canvasRef}/>;
+            } else {
+                displayDiv = <div className="editor-pane">
+                    <Editor
+                        value={displayValue}
+                        scrollTop={this.state.scrollTop}
+                        readOnly={true}
+                        selectedLine={this.state.selectedLine}
+                        onChange={this.handleChange}
+                        onScroll={this.handleScroll}
+                        highlightActiveLine={true}
+                        mode="text"/>
+                </div>;
+            }
         }
         if (this.state.source !== this.state.originalSource) {
             resetButton = <div className="reset-wrapper">
@@ -248,7 +279,7 @@ class CodeSample extends Component {
                             highlightActiveLine={true}
                             mode="python"/>
                     </div>
-                    {displayEditor}
+                    {displayDiv}
                 </div>
                 {resetButton}
                 {progressBar}

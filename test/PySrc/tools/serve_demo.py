@@ -67,10 +67,12 @@ def copy_pyodide(pyodide_dir, demo_dir):
         print(f'Pyodide directory {pyodide_dir!r} not found.')
         return
 
-    for file_name in ('pyodide.js',
+    for file_name in ('distutils.js',
+                      'distutils.data',
+                      'pyodide.js',
+                      'pyodide.js.map',
                       'pyodide.asm.wasm',
                       'pyodide.asm.js',
-                      'pyodide.asm.data.js',
                       'pyodide.asm.data',
                       'packages.json',
                       'space-tracer.data',

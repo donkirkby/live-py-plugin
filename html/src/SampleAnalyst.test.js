@@ -332,4 +332,47 @@ line B
 
         expect(analyst.matchPercentage).toBeCloseTo(expectedPercentage, 4);
     });
+
+    it('detects canvas mode', () => {
+        let run = () => {
+            let display = `\
+start_canvas
+create_line
+    50
+    50
+    150
+    50
+    fill='black'
+    pensize=1
+end_canvas
+.
+x = 1
+`;
+            return [display, ''];
+        },
+            source = `\
+### Canvas ###
+line 1
+`,
+            expectedSource = `\
+line 1
+`,
+            expectedDisplay = `\
+x = 1
+`,
+            expectedCanvasCommands = [
+                {
+                    name: 'create_line',
+                    fill: 'black',
+                    pensize: 1,
+                    coords: [50, 50, 150, 50]
+                }];
+        let analyst = new SampleAnalyst(source, run);
+
+        expect(analyst.sourceCode).toBe(expectedSource);
+        expect(analyst.display).toBe(expectedDisplay);
+        expect(analyst.isLive).toBe(true);
+        expect(analyst.isCanvas).toBe(true);
+        expect(analyst.canvasCommands).toEqual(expectedCanvasCommands);
+    });
 });

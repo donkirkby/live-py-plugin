@@ -40,7 +40,8 @@ jobs:
       - name: Install Node dependencies
         run: |
           cd html
-          npm install
+          npm ci
+          npm run build --if-present
           cd ..
       - name: Test with tox and pytest
         run: |
@@ -69,7 +70,7 @@ jobs:
       - name: Test JavaScript
         run: |
           cd html
-          npm test -- --watchAll=false
+          npm test
           cd ..
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

@@ -12,9 +12,9 @@ However, there are extra features you can include.
       ### Goal ###
       print('This code is invisible and the output is compared.')
 
-* **Turtle code samples** - If you want to display a turtle canvas instead of
-    the live coding display, mark the code block with the `### Turtle ###`
-    header.
+* **Canvas code samples** - If you want to display a turtle canvas instead of
+    the live coding display, mark the code block with the `### Canvas ###`
+    header. Goal code isn't yet supported for canvas code samples.
 * **Static code samples** - If you don't want a code sample to be a live sample,
     you can mark it with the `### Static ###` header.
 * **REPL code samples** - If a code sample contains ">>>", it will be treated as

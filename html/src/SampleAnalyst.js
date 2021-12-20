@@ -6,7 +6,13 @@ function unescapeString(s) {
 
 export default class SampleAnalyst {
 
-    constructor(sourceCode, run, goalOutput, goalSourceCode, isLive, isCanvas) {
+    constructor(sourceCode,
+                run,
+                goalOutput,
+                goalSourceCode,
+                isLive,
+                isCanvas,
+                canvasSize) {
         if (goalSourceCode !== undefined) {
             this.sourceCode = sourceCode;
             this.goalSourceCode = goalSourceCode;
@@ -41,8 +47,12 @@ export default class SampleAnalyst {
             }
         }
         if (run !== undefined && this.isLive) {
-            let canvasSize = this.isCanvas ? [200, 200] : undefined,
-                result = run(this.sourceCode, canvasSize);
+            if ( ! this.isCanvas) {
+                canvasSize = undefined;
+            } else if (canvasSize === undefined) {
+                canvasSize = [300, 150];
+            }
+            let result = run(this.sourceCode, canvasSize);
             this.display = result.get(0);
             this.output = result.get(1);
 
@@ -67,9 +77,25 @@ export default class SampleAnalyst {
                         if (position === -1) {
                             currentCommand.coords.push(parseInt(nextLine));
                         } else {
-                            const fieldName = nextLine.substring(4, position);
-                            currentCommand[fieldName] = unescapeString(
-                                nextLine.substring(position+1));
+                            const fieldName = nextLine.substring(4, position),
+                                fieldValue = nextLine.substring(position+1);
+                            if (fieldName !== 'font') {
+                                currentCommand[fieldName] = unescapeString(
+                                    fieldValue);
+                            } else {
+                                const fontMatch = fieldValue.match(
+                                    /\('([^']*)', (\d+), '([^']*)'\)/);
+                                let fontName = 'Arial',
+                                    fontSize = 8,
+                                    styleNames = 'normal';
+                                if (fontMatch !== undefined) {
+                                    fontName = fontMatch[1];
+                                    fontSize = fontMatch[2];
+                                    styleNames = fontMatch[3];
+                                }
+                                currentCommand[fieldName] = (
+                                    `${styleNames} ${fontSize}px ${fontName}`);
+                            }
                         }
                     }
                 }

@@ -375,4 +375,39 @@ x = 1
         expect(analyst.isCanvas).toBe(true);
         expect(analyst.canvasCommands).toEqual(expectedCanvasCommands);
     });
+
+    it('parses font options', () => {
+        let run = () => {
+            let display = `\
+start_canvas
+create_text
+    100
+    0
+    anchor='sw'
+    fill='black'
+    font=('Courier', 14, 'bold')
+    text='Bob'
+end_canvas
+.
+x = 1
+`;
+            return {get(i) { return [display, ''][i]; }};
+        },
+            source = `\
+### Canvas ###
+line 1
+`,
+            expectedCanvasCommands = [
+                {
+                    name: 'create_text',
+                    fill: 'black',
+                    anchor: 'sw',
+                    font: 'bold 14px Courier',
+                    text: 'Bob',
+                    coords: [100, 0]
+                }];
+        let analyst = new SampleAnalyst(source, run);
+
+        expect(analyst.canvasCommands).toEqual(expectedCanvasCommands);
+    });
 });

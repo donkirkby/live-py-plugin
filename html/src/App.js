@@ -132,13 +132,18 @@ class CodeSample extends Component {
             newSource = this.state.source;
         }
         let codeRunner = this.context === null ? window.analyze : undefined,
+            canvas = this.canvasRef.current,
+            canvasSize = canvas === null
+                ? undefined
+                : [canvas.width, canvas.height],
             analyst = new SampleAnalyst(
                 newSource,
                 codeRunner,
                 this.state.goalOutput,
                 this.state.goalSourceCode,
                 this.state.isLive,
-                this.state.isCanvas
+                this.state.isCanvas,
+                canvasSize
             );
         this.setState({
             source: newSource,
@@ -165,8 +170,19 @@ class CodeSample extends Component {
         this.setState({selectedLine: selection.getSelectionLead().row});
     }
 
+    handleResize = () => {
+        if (this.state.isCanvas) {
+            this.handleChange();
+        }
+    };
+
     componentDidMount() {
+        window.addEventListener('resize', this.handleResize);
         this.drawCanvas(this.state.canvasCommands);
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('resize', this.handleResize);
     }
 
     drawCanvas(commands) {
@@ -180,7 +196,10 @@ class CodeSample extends Component {
         ctx.lineCap = 'round';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (const command of commands) {
-            if (command.name === 'create_line') {
+            if (command.name === 'bgcolor') {
+                ctx.fillStyle = command.fill;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } if (command.name === 'create_line') {
                 ctx.beginPath();
                 ctx.moveTo(command.coords[0], command.coords[1]);
                 ctx.lineTo(command.coords[2], command.coords[3]);
@@ -196,6 +215,16 @@ class CodeSample extends Component {
                 }
                 ctx.fillStyle = command.fill;
                 ctx.fill('evenodd');
+            }
+            else if (command.name === 'create_text') {
+                ctx.font = command.font;
+                ctx.fillStyle = command.fill;
+                ctx.textAlign = command.anchor === 'sw'
+                    ? 'left'
+                    : command.anchor === 'se'
+                    ? 'right'
+                    : 'center';
+                ctx.fillText(command.text, command.coords[0], command.coords[1]);
             }
         }
     }

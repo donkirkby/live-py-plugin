@@ -13,9 +13,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "prebuild": "../.tox/py38/bin/python ../test/PySrc/tools/collect_tutorials.py",
+    "prebuild": "python3 ../test/PySrc/tools/collect_tutorials.py",
     "build": "react-scripts build",
-    "postbuild": "../.tox/py38/bin/python ../test/PySrc/tools/serve_demo.py --update_only",
+    "postbuild": "python3 ../test/PySrc/tools/serve_demo.py --update_only",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

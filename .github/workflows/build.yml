@@ -41,7 +41,6 @@ jobs:
         run: |
           cd html
           npm ci
-          npm run build --if-present
           cd ..
       - name: Test with tox and pytest
         run: |
@@ -67,6 +66,11 @@ jobs:
 #        run: |
 #          scriptreplay emacs-timing
 #          exit 1
+      - name: Build Javascript
+        run: |
+          cd html
+          if [[ $PYTHON == '3.8' ]]; then npm run build ; fi
+          cd ..
       - name: Test JavaScript
         run: |
           cd html

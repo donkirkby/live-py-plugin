@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         # Keep synchronized with setup.py and tox.ini
-        python-version: ["2.7", "3.5", "3.6", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.5", "3.6", "3.7", "3.8", "3.9", "3.10"]
     env:
       PYTHON: ${{ matrix.python-version }}
 
@@ -33,27 +33,12 @@ jobs:
 #        uses: purcell/setup-emacs@v3.0
 #        with:
 #          version: 24.4
-      - name: Set up Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: '12'
-      - name: Install Node dependencies
-        run: |
-          cd html
-          npm ci
-          cd ..
       - name: Test with tox and pytest
-        run: |
-          if [[ $PYTHON == '2.7' ]]; then python test/PySrc/tests/validate_legacy_python.py && exit || exit 1 ; fi
-          python -m tox -e py
+        run: python -m tox -e py
       - name: Test with tox and pytest, plus Pillow
-        run: |
-          if [[ $PYTHON == '2.7' ]]; then exit ; fi
-          python -m tox -e py-pil
+        run: python -m tox -e py-pil
       - name: Test with tox and pytest, plus matplotlib
-        run: |
-          if [[ $PYTHON == '2.7' ]]; then exit ; fi
-          python -m tox -e py-mpl
+        run: python -m tox -e py-mpl
 #      - name: Test with Emacs
 #        id: emacs-tests
 #        continue-on-error: true
@@ -66,17 +51,42 @@ jobs:
 #        run: |
 #          scriptreplay emacs-timing
 #          exit 1
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          env_vars: PYTHON
+
+  build-python2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 2.7
+      - name: Test Python2 warning
+        run: |
+          python test/PySrc/tests/validate_legacy_python.py
+
+  build-node:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+      - name: Install Node dependencies
+        run: |
+          cd html
+          npm ci
+          cd ..
       - name: Build Javascript
         run: |
           cd html
-          if [[ $PYTHON == '3.8' ]]; then npm run build ; fi
+          npm run build
           cd ..
       - name: Test JavaScript
         run: |
           cd html
           npm test
           cd ..
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
-        with:
-          env_vars: PYTHON

@@ -199,20 +199,18 @@ GitHub, and install Docker. After that, follow these steps for each release.
    Replace the version number with whatever you just built.
 3. Find the `remove_modules.txt` file in the pyodide project, and remove
    `turtle.py` from the list.
-3. After the package files are in place, run Pyodide's `run_docker` script with
+4. After the package files are in place, run Pyodide's `run_docker` script with
    the `--pre-built` option, and then run `make` inside the container. See the
    Pyodide project for full instructions. Sometimes, I've had to remove all
    build products and rebuild. Either `make clean` or `git clean -f -Xd`.
-4. After the lengthy build process, run the
-   `live-py-plugin/test/PySrc/tools/serve_demo.py` script. It will copy all
-   the Pyodide files into the demo directory.
 
 To update the ReactJS files, change to the `html` folder, and run
 `npm run build`. You can also use `npm start` to test the ReactJS files without
-Pyodide. After building the ReactJS files, use `serve_demo.py` to copy them
-into the web site.
+Pyodide.
 
-After updating the files, test them out on `http://localhost:8000/`. 
+After updating the files, test them locally with GitHub pages (next section).
+Then commit the file changes, push, and create a release on GitHub. (Finish the
+other releases before marking the release on GitHub, if you're releasing more.) 
 
 [Pyodide]: https://github.com/iodide-project/pyodide
 [PR #506]: https://github.com/iodide-project/pyodide/pull/506

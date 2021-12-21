@@ -344,6 +344,13 @@ create_line
     50
     fill='black'
     pensize=1
+create_line
+    50
+    150
+    150
+    150
+    fill='black'
+    pensize=1.5
 end_canvas
 .
 x = 1
@@ -366,6 +373,12 @@ x = 1
                     fill: 'black',
                     pensize: 1,
                     coords: [50, 50, 150, 50]
+                },
+                {
+                    name: 'create_line',
+                    fill: 'black',
+                    pensize: 1.5,
+                    coords: [50, 150, 150, 150]
                 }];
         let analyst = new SampleAnalyst(source, run);
 
@@ -378,15 +391,21 @@ x = 1
 
     it('parses font options', () => {
         let run = () => {
-            let display = `\
-start_canvas
+            let display = String.raw`start_canvas
 create_text
     100
     0
     anchor='sw'
     fill='black'
     font=('Courier', 14, 'bold')
-    text='Bob'
+    text='Bob with quotes "\' and\r\n\t\x03whitespace.'
+create_text
+    100
+    20
+    anchor='sw'
+    fill='black'
+    font=('Courier', 14, 'bold')
+    text="Bob's secret message with a \\backslash."
 end_canvas
 .
 x = 1
@@ -403,8 +422,16 @@ line 1
                     fill: 'black',
                     anchor: 'sw',
                     font: 'bold 14px Courier',
-                    text: 'Bob',
+                    text: 'Bob with quotes "\' and\r\n\t\x03whitespace.',
                     coords: [100, 0]
+                },
+                {
+                    name: 'create_text',
+                    fill: 'black',
+                    anchor: 'sw',
+                    font: 'bold 14px Courier',
+                    text: "Bob's secret message with a \\backslash.",
+                    coords: [100, 20]
                 }];
         let analyst = new SampleAnalyst(source, run);
 

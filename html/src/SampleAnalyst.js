@@ -1,7 +1,57 @@
 import { diffChars } from 'diff';
 
-function unescapeString(s) {
-    return Function('"use strict";return (' + s + ')')();
+function unescapeString(value) {
+    if ((value.startsWith("'") && value.endsWith("'")) ||
+        (value.startsWith('"') && value.endsWith('"'))) {
+        value = value.substring(1, value.length - 1);
+        let newValue = '';
+        for (let i = 0; i < value.length; i++) {
+            const c = value[i];
+            if (c !== '\\' || i === value.length - 1) {
+                newValue += c;
+            } else {
+                const c2 = value[++i];
+                switch (c2) {
+                    case '\\':
+                        newValue += '\\';
+                        break;
+                    case '\'':
+                        newValue += '\'';
+                        break;
+                    case 'n':
+                        newValue += '\n';
+                        break;
+                    case 'r':
+                        newValue += '\r';
+                        break;
+                    case 't':
+                        newValue += '\t';
+                        break;
+                    case 'x':
+                        if (i+2 < value.length)
+                        {
+                            const charCode = parseInt(
+                                value.substring(i+1, i+3),
+                                16);
+                            newValue += String.fromCharCode(charCode);
+                            i += 2;
+                            break;
+                        }
+                        newValue += c;
+                        newValue += c2;
+                        break;
+                    default:
+                        newValue += c;
+                        newValue += c2;
+                        break;
+                }
+            }
+        }
+        value = newValue;
+    } else if (value.match(/^[0-9.]+$/)) {
+        value = parseFloat(value);
+    }
+    return value;
 }
 
 export default class SampleAnalyst {

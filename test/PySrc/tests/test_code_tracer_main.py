@@ -768,7 +768,7 @@ end_canvas
 
     main()
 
-    assert expected_report == stdout.getvalue()
+    assert stdout.getvalue() == expected_report
 
 
 def test_canvas_error(stdin, stdout, argv):

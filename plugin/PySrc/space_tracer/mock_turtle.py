@@ -15,13 +15,13 @@ except ImportError:
     tkinter_name = 'tkinter'
     tk = sys.modules[tkinter_name] = types.ModuleType(tkinter_name)
 
-    tk.Frame = tk.Canvas = tk.Tk = object
+    tk.Frame = tk.Canvas = tk.Tk = tk.ROUND = object
     tk.mainloop = lambda *args, **kwargs: None
 
     dialog_name = tkinter_name + '.simpledialog'
     tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
 
-from turtle import TNavigator, TPen
+from turtle import TNavigator, TPen, RawTurtle, TurtleScreen
 
 DEFAULT_FONT = ("Arial", 8, "normal")
 
@@ -29,38 +29,67 @@ DEFAULT_FONT = ("Arial", 8, "normal")
 # noinspection DuplicatedCode
 # noinspection PyProtectedMember
 # noinspection PyUnresolvedReferences
-class MockTurtle(TNavigator, TPen):
-    class _Screen(object):
+class MockTurtle(RawTurtle):
+    class _Screen(TurtleScreen):
         def __init__(self, canvas):
             if canvas is None:
                 canvas = Canvas()
-            self.cv = canvas
-            self.xscale = self.yscale = 1
+                canvas.is_recording = False
+            super().__init__(canvas)
             self._config = {'bgcolor': None}
 
-        def window_width(self):
-            return self.cv.cget('width')
-
-        def window_height(self):
-            return self.cv.cget('height')
-
-        def screensize(self, canvwidth=None, canvheight=None, bg=None):
-            if canvwidth is canvheight is bg is None:
-                return self.window_width(), self.window_height()
-        
-        def bgcolor(self, color=None):
-            if color is None:
-                bgcolor = self._config['bgcolor']
-                if bgcolor is None:
-                    return 'white'
-                return bgcolor
-            self._config['bgcolor'] = color
-
-        def tracer(self, a=None, b=None):
+        def _blankimage(self):
             pass
+
+        @staticmethod
+        def _rgb_value(rgbstr):
+            return round(int(rgbstr, 16)/2.55)/100.0
+
+        def _color(self, colorstr):
+            """ Reverse lookup of _colorstr. """
+            if not colorstr.startswith('#'):
+                return colorstr
+            if colorstr == '#ffffff':
+                return 'white'
+            itercolors = getattr(color_map, 'iteritems', color_map.items)
+            for name, code in itercolors():
+                if code == colorstr:
+                    return name
+            return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
+
+        # noinspection PyMethodMayBeStatic
+        def _colorstr(self, color):
+            """Return color string corresponding to args.
+
+            Argument may be a string or a tuple of three
+            numbers corresponding to actual colormode,
+            i.e. in the range 0<=n<=colormode.
+
+            If the argument doesn't represent a color,
+            just uses black.
+            """
+            if len(color) == 1:
+                color = color[0]
+            if color == 'black':
+                return color
+            if isinstance(color, str):
+                return color_map.get(color.lower(), color)
+            try:
+                r, g, b = color
+            except ValueError:
+                return '#000000'
+            r, g, b = [round(255.0*x) for x in (r, g, b)]
+            if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
+                return '#000000'
+            return "#%02x%02x%02x" % (r, g, b)
 
         def update(self):
             pass
+
+        def clear(self):
+            patched_pen = MockTurtle._pen
+            super().clear()
+            MockTurtle._pen = patched_pen
 
     _Stamp = namedtuple('Stamp', 'pos heading color')
     _screen = _pen = OriginalTurtle = original_mainloop = None
@@ -75,6 +104,8 @@ class MockTurtle(TNavigator, TPen):
         turtle_module.Turtle = MockTurtle
         cls.original_mainloop = turtle_module.mainloop
         turtle_module.mainloop = turtle_module.done = lambda: None
+        if canvas is not None:
+            canvas.is_recording = False
         # noinspection PyProtectedMember
         MockTurtle._screen = MockTurtle._Screen(canvas)
         MockTurtle._pen = MockTurtle()
@@ -153,13 +184,16 @@ class MockTurtle(TNavigator, TPen):
     def __init__(self, x=0, y=0, heading=0, canvas=None):
         self._path = None
         self._lines_to_draw = []
-        TNavigator.__init__(self)
-        TPen.__init__(self)
         if MockTurtle._screen is not None:
-            self.screen = MockTurtle._screen
+            screen = MockTurtle._screen
         else:
+            if canvas is not None:
+                canvas.is_recording = False
             # noinspection PyProtectedMember
-            self.screen = MockTurtle._Screen(canvas)
+            screen = MockTurtle._Screen(canvas)
+        screen.cv.is_recording = False
+        super().__init__(screen)
+        screen.cv.is_recording = True
         self.stamps = []
         self.__xoff = self.screen.cv.cget('width')/2
         self.__yoff = self.screen.cv.cget('height')/2
@@ -236,8 +270,8 @@ class MockTurtle(TNavigator, TPen):
                 instance._flush_lines()
                 instance._draw_stamps()
             report = self.screen.cv.report[:]
-            bgcolor = self.screen._config['bgcolor']
-            if bgcolor is not None:
+            bgcolor = self.screen.bgcolor()
+            if bgcolor is not None and bgcolor != 'white':
                 # noinspection PyTypeChecker
                 bgcolorstr = self._colorstr(bgcolor)
                 report[:0] = ["bgcolor",
@@ -300,7 +334,7 @@ class MockTurtle(TNavigator, TPen):
         if flag is None:
             return self._path is not None
         if self._path and len(self._path) > 2:
-            self.screen.cv.create_polygon(*self._path,
+            self.screen.cv.create_polygon(self._path,
                                           fill=self._fillcolor,
                                           outline='')
 
@@ -358,43 +392,8 @@ class MockTurtle(TNavigator, TPen):
             self._fillcolor = self._colorstr(self._fillcolor)
         return super(MockTurtle, self)._update(*args, **kwargs)
 
-    # noinspection PyMethodMayBeStatic
-    def _colorstr(self, color):
-        """Return color string corresponding to args.
-
-        Argument may be a string or a tuple of three
-        numbers corresponding to actual colormode,
-        i.e. in the range 0<=n<=colormode.
-
-        If the argument doesn't represent a color,
-        just uses black.
-        """
-        if len(color) == 1:
-            color = color[0]
-        if isinstance(color, str):
-            return color_map.get(color.lower(), color)
-        try:
-            r, g, b = color
-        except ValueError:
-            return '#000000'
-        r, g, b = [round(255.0*x) for x in (r, g, b)]
-        if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
-            return '#000000'
-        return "#%02x%02x%02x" % (r, g, b)
-
-    @staticmethod
-    def _rgb_value(rgbstr):
-        return round(int(rgbstr, 16)/2.55)/100.0
-
-    def _color(self, colorstr):
-        """ Reverse lookup of _colorstr. """
-        if not colorstr.startswith('#'):
-            return colorstr
-        itercolors = getattr(color_map, 'iteritems', color_map.items)
-        for name, code in itercolors():
-            if code == colorstr:
-                return name
-        return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
+    def _drawturtle(self):
+        pass
 
 
 # Normally, Tkinter will look up these colour names for you, but we don't

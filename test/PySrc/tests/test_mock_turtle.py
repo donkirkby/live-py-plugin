@@ -1,11 +1,7 @@
-import re
-
 import pytest
 from space_tracer.canvas import Canvas
 from space_tracer.mock_turtle import MockTurtle
 import turtle
-
-from test_report_builder import trim_report
 
 
 @pytest.fixture
@@ -116,7 +112,7 @@ create_line
     0
     350
     0
-    fill='#000000'
+    fill='black'
     pensize=1
 """
 
@@ -126,6 +122,26 @@ create_line
     t.fd(50)
     t.pendown()
     t.fd(200)
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_mode(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    0
+    -100
+    fill='black'
+    pensize=1
+"""
+
+    t = MockTurtle()
+    t.getscreen().mode('logo')
+    t.forward(100)
+
     report = t.report
 
     assert report == expected_report.splitlines()
@@ -727,35 +743,35 @@ create_polygon
     5
     0
     0
-    fill='#000000'
+    fill='black'
     outline=''
 create_line
     0
     0
     -9
     -5
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     -9
     -5
     -7
     0
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     -7
     0
     -9
     5
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     -9
     5
     0
     0
-    fill='#000000'
+    fill='black'
     pensize=1
 """
 
@@ -779,35 +795,35 @@ create_polygon
     5
     0
     0
-    fill='#000000'
+    fill='black'
     outline=''
 create_line
     0
     0
     -9
     -5
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     -9
     -5
     -7
     0
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     -7
     0
     -9
     5
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     -9
     5
     0
     0
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     0
@@ -855,21 +871,21 @@ create_line
     0
     40
     0
-    fill='#000000'
+    fill='black'
     pensize=4
 create_line
     40
     0
     40
     40
-    fill='#000000'
+    fill='black'
     pensize=4
 create_line
     40
     40
     0
     40
-    fill='#000000'
+    fill='black'
     pensize=4
 create_polygon
     40
@@ -889,28 +905,28 @@ create_line
     0
     45
     -9
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     45
     -9
     40
     -7
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     40
     -7
     35
     -9
-    fill='#000000'
+    fill='black'
     pensize=1
 create_line
     35
     -9
     40
     0
-    fill='#000000'
+    fill='black'
     pensize=1
 """
 

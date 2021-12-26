@@ -414,6 +414,7 @@ class TraceRunner(object):
         args = parse_args(command_args)
         if self.canvas is None:
             self.canvas = Canvas(args.width, args.height)
+            self.canvas.is_recording = False
         was_patched = False
         if MockTurtle is not None:
             if MockTurtle.is_patched():

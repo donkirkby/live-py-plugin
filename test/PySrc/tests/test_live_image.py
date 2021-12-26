@@ -221,7 +221,7 @@ create_text
     0
     20
     anchor='sw'
-    fill='#000000'
+    fill='black'
     font=('Arial', 10, 'normal')
     text='Actual'
 create_image
@@ -232,7 +232,7 @@ create_text
     0
     60
     anchor='sw'
-    fill='#000000'
+    fill='black'
     font=('Arial', 10, 'normal')
     text='Diff (0 pixels)'
 create_image
@@ -243,7 +243,7 @@ create_text
     0
     100
     anchor='sw'
-    fill='#000000'
+    fill='black'
     font=('Arial', 10, 'normal')
     text='Expected'
 create_image

@@ -21,7 +21,7 @@ except ImportError:
     dialog_name = tkinter_name + '.simpledialog'
     tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
 
-from turtle import TNavigator, TPen, RawTurtle, TurtleScreen
+from turtle import RawTurtle, TurtleScreen
 
 DEFAULT_FONT = ("Arial", 8, "normal")
 
@@ -45,6 +45,7 @@ class MockTurtle(RawTurtle):
         def _rgb_value(rgbstr):
             return round(int(rgbstr, 16)/2.55)/100.0
 
+        # noinspection DuplicatedCode
         def _color(self, colorstr):
             """ Reverse lookup of _colorstr. """
             if not colorstr.startswith('#'):
@@ -57,7 +58,7 @@ class MockTurtle(RawTurtle):
                     return name
             return tuple(self._rgb_value(colorstr[2*i+1:2*i+3]) for i in range(3))
 
-        # noinspection PyMethodMayBeStatic
+        # noinspection PyMethodMayBeStatic,DuplicatedCode
         def _colorstr(self, color):
             """Return color string corresponding to args.
 
@@ -236,30 +237,8 @@ class MockTurtle(RawTurtle):
         self._position = end
 
     def reset(self):
-        TNavigator.reset(self)
-        # noinspection PyUnresolvedReferences,PyProtectedMember
-        TPen._reset(self)
+        super().reset()
         self.screen.cv.report.clear()
-
-    def dot(self, size=None, *color):
-        x, y = self._position
-        if size is not None:
-            diameter = size
-        else:
-            pensize = self._pensize or 0
-            diameter = max(pensize+4, 2*pensize)
-        if len(color):
-            pencolor = self._colorstr(color)
-        else:
-            pencolor = self._pencolor or 0
-        r = diameter / 2
-        t2 = self.__class__(canvas=self.screen.cv)
-        t2.up()
-        t2.goto(x, y - r)
-        t2.fillcolor(pencolor)
-        t2.begin_fill()
-        t2.circle(r)
-        t2.end_fill()
 
     # noinspection PyProtectedMember
     def __getattr__(self, name):
@@ -313,9 +292,6 @@ class MockTurtle(RawTurtle):
         self.pensize(start_pensize)
         if start_isdown:
             self.down()
-
-    def getscreen(self):
-        return self.screen
 
     def begin_fill(self):
         self.fill(True)

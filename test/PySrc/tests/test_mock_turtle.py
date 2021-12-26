@@ -148,20 +148,21 @@ create_line
 
 
 def test_dot(patched_turtle):
-    t2 = MockTurtle()
-    t2.up()
-    t2.goto(0, -2.5)
-    t2.begin_fill()
-    t2.circle(2.5)
-    t2.end_fill()
-    expected_report = t2.report
-    MockTurtle._screen = None
+    """ Draw dot with the rounded ends of a zero-length line. """
+    expected_report = """\
+create_line
+    0
+    0
+    0
+    0
+    fill='black'
+    pensize=5"""
 
     t = MockTurtle()
     t.dot()
     report = t.report
 
-    assert report == expected_report
+    assert report == expected_report.splitlines()
 
 
 @pytest.mark.parametrize('image',
@@ -412,6 +413,7 @@ create_text
 
     t = MockTurtle()
     t.fd(100)
+    # noinspection PyTypeChecker
     t.write('Bob', font=('Courier',))
     report = t.report
 
@@ -438,6 +440,7 @@ create_text
 
     t = MockTurtle()
     t.fd(100)
+    # noinspection PyTypeChecker
     t.write('Bob', font='Courier')
     report = t.report
 
@@ -464,6 +467,7 @@ create_text
 
     t = MockTurtle()
     t.fd(100)
+    # noinspection PyTypeChecker
     t.write('Bob', font=['Courier', 14, 'italic'])
     report = t.report
 
@@ -490,6 +494,7 @@ create_text
 
     t = MockTurtle()
     t.fd(100)
+    # noinspection PyTypeChecker
     t.write('Bob', font=None)
     report = t.report
 
@@ -506,6 +511,7 @@ def test_write_move():
 def test_write_bad_size():
     t = MockTurtle()
     with pytest.raises(ValueError):
+        # noinspection PyTypeChecker
         t.write('Bob', font=('Arial', 'eight', 'normal'))
 
 

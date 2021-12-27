@@ -696,11 +696,11 @@ create_line
 
 def test_is_filling():
     t = MockTurtle()
-    is_filling1 = t.fill()
+    is_filling1 = t.filling()
     t.begin_fill()
-    is_filling2 = t.fill()
+    is_filling2 = t.filling()
     t.end_fill()
-    is_filling3 = t.fill()
+    is_filling3 = t.filling()
 
     assert not is_filling1
     assert is_filling2

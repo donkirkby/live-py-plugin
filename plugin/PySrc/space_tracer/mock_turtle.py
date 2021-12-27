@@ -37,6 +37,7 @@ class MockTurtle(RawTurtle):
                 canvas.is_recording = False
             super().__init__(canvas)
             self._config = {'bgcolor': None}
+            super().tracer(0)
 
         def _blankimage(self):
             pass
@@ -110,6 +111,7 @@ class MockTurtle(RawTurtle):
         # noinspection PyProtectedMember
         MockTurtle._screen = MockTurtle._Screen(canvas)
         MockTurtle._pen = MockTurtle()
+        MockTurtle.instances.append(MockTurtle._pen)
 
     @classmethod
     def remove_monkey_patch(cls):
@@ -152,7 +154,7 @@ class MockTurtle(RawTurtle):
         if position is None or t is None:
             x = y = 0
         else:
-            x, y = t._convert_position(position)
+            x, y = position
 
         if align != 'topleft':
             error_message = 'Invalid image: {0}...'.format(image[:10])
@@ -196,45 +198,20 @@ class MockTurtle(RawTurtle):
         super().__init__(screen)
         screen.cv.is_recording = True
         self.stamps = []
-        self.__xoff = self.screen.cv.cget('width')/2
-        self.__yoff = self.screen.cv.cget('height')/2
         if x or y:
             self.up()
             self.setx(x)
             self.sety(y)
             self.down()
         self.setheading(heading)
-        MockTurtle.instances.append(self)
+        if MockTurtle.is_patched():
+            MockTurtle.instances.append(self)
 
     def __repr__(self):
         x = round(self.xcor())
         y = round(self.ycor())
         h = round(self.heading())
         return 'MockTurtle(%d, %d, %d)' % (x, y, h)
-
-    def _convert_position(self, position):
-        x, y = position
-        return (x*self.screen.xscale + self.__xoff,
-                -y*self.screen.yscale + self.__yoff)
-
-    def _goto(self, end):
-        xstart, ystart = self._convert_position(self._position)
-        xend, yend = self._convert_position(end)
-        kwargs = {}
-        if self._pencolor:
-            kwargs['fill'] = self._pencolor
-        if self._pensize:
-            kwargs['pensize'] = self._pensize
-        if self._drawing:
-            args = [xstart, ystart, xend, yend]
-            if self._path:
-                self._lines_to_draw.append((args, kwargs))
-            else:
-                self.screen.cv.create_line(*args, **kwargs)
-        if self._path:
-            self._path.append(xend)
-            self._path.append(yend)
-        self._position = end
 
     def reset(self):
         super().reset()
@@ -243,12 +220,16 @@ class MockTurtle(RawTurtle):
     # noinspection PyProtectedMember
     def __getattr__(self, name):
         if name == 'report':
-            for instance in MockTurtle.instances:
+            if MockTurtle.is_patched():
+                instances = MockTurtle.instances
+            else:
+                instances = [self]
+            for instance in instances:
                 instance._path = None  # Cancel incomplete fill.
+                instance.screen.tracer(1)
                 instance._newLine()
-                instance._flush_lines()
                 instance._draw_stamps()
-            report = self.screen.cv.report[:]
+            report = self.screen.cv.build_report()
             bgcolor = self.screen.bgcolor()
             if bgcolor is not None and bgcolor != 'white':
                 # noinspection PyTypeChecker
@@ -293,37 +274,10 @@ class MockTurtle(RawTurtle):
         if start_isdown:
             self.down()
 
-    def begin_fill(self):
-        self.fill(True)
-
-    def end_fill(self):
-        self.fill(False)
-
-    def _flush_lines(self):
-        for args, kwargs in self._lines_to_draw:
-            self.screen.cv.create_line(*args, **kwargs)
-
-        self._lines_to_draw = []
-        self._draw_stamps()
-
-    def fill(self, flag=None):
-        if flag is None:
-            return self._path is not None
-        if self._path and len(self._path) > 2:
-            self.screen.cv.create_polygon(self._path,
-                                          fill=self._fillcolor,
-                                          outline='')
-
-        self._path = None  # Clear to avoid interfering with stamps.
-        self._flush_lines()
-        if flag:
-            x, y = self._convert_position(self._position)
-            self._path = [x, y]
-
     def stamp(self):
         self.stamps.append(
             MockTurtle._Stamp(self.pos(), self.heading(), self.color()))
-        if not self.fill():
+        if not self.filling():
             self._draw_stamps()
 
     def write(self,
@@ -358,13 +312,13 @@ class MockTurtle(RawTurtle):
                       font=font)
         if self._pencolor:
             kwargs['fill'] = self._pencolor
-        x, y = self._convert_position(self._position)
+        x, y = self._position
         self.screen.cv.create_text(x, y, **kwargs)
 
     def _update(self, *args, **kwargs):
-        if not self._pencolor.startswith('#'):
+        if not self._pencolor.startswith('#') and self._pencolor != 'black':
             self._pencolor = self._colorstr(self._pencolor)
-        if not self._fillcolor.startswith('#'):
+        if not self._fillcolor.startswith('#') and self._fillcolor != 'black':
             self._fillcolor = self._colorstr(self._fillcolor)
         return super(MockTurtle, self)._update(*args, **kwargs)
 

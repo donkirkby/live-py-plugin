@@ -18,8 +18,9 @@ create_line
         
         # EXEC
         canvas = Canvas()
+        # noinspection PyUnresolvedReferences
         canvas.create_line(1, 2, 100, 200)
-        report = canvas.report
+        report = canvas.build_report()
         
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
@@ -40,9 +41,11 @@ create_rectangle
         
         # EXEC
         canvas = Canvas()
+        # noinspection PyUnresolvedReferences
         canvas.create_line(1, 2, 100, 200)
+        # noinspection PyUnresolvedReferences
         canvas.create_rectangle(5, 10, 500, 1000)
-        report = canvas.report
+        report = canvas.build_report()
         
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
@@ -53,6 +56,7 @@ create_rectangle
         with self.assertRaisesRegex(
                 AttributeError, 
                 "(Canvas instance|'Canvas' object) has no attribute 'create_wirple'"):
+            # noinspection PyUnresolvedReferences
             canvas.create_wirple(1, 'floop')
 
     def test_bounds(self):
@@ -80,15 +84,17 @@ create_text
         
         # EXEC
         canvas = Canvas()
-        canvas.create_text(100, 
+        # noinspection PyUnresolvedReferences
+        canvas.create_text(100,
                            200, 
                            text='foo', 
                            font=('Arial', 8, 'normal'),
                            anchor='s')
-        report = canvas.report
+        report = canvas.build_report()
         
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
+
 
 if __name__ == '__main__':
     unittest.main()

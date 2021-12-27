@@ -54,7 +54,7 @@ create_image
     t = MockTurtle()
     image_data = b'PNG_IMAGE_DATA'
 
-    LivePng(image_data).display((100, -200))
+    LivePng(image_data).display((100, 200))
 
     report = t.report
 
@@ -64,8 +64,8 @@ create_image
 def test_display_with_size():
     expected_report = """\
 create_image
-    0
-    0
+    100
+    200
     image='UE5HX0lNQUdFX0RBVEE='
 """
 
@@ -87,7 +87,7 @@ def test_display_image_position_with_size():
     expected_report = """\
 create_image
     110
-    180
+    220
     image='UE5HX0lNQUdFX0RBVEE='
 """
 
@@ -139,13 +139,13 @@ create_image
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 @pytest.mark.parametrize('align,position',
-                         [('topleft', (100, -200)),
-                          ('bottomleft', (100, -220)),
-                          ('topright', (110, -200)),
-                          ('centerleft', (100, -210)),
-                          ('topcenter', (105, -200)),
-                          ('top', (105, -200)),
-                          ('left', (100, -210))])
+                         [('topleft', (100, 200)),
+                          ('bottomleft', (100, 220)),
+                          ('topright', (110, 200)),
+                          ('centerleft', (100, 210)),
+                          ('topcenter', (105, 200)),
+                          ('top', (105, 200)),
+                          ('left', (100, 210))])
 def test_display_image_bottom_left(patched_turtle,
                                    align: str,
                                    position: typing.Tuple[int, int]):
@@ -219,36 +219,36 @@ def test_differ_compare_display(patched_turtle):
     expected_report = """\
 create_text
     0
-    20
+    -20
     anchor='sw'
     fill='black'
     font=('Arial', 10, 'normal')
     text='Actual'
 create_image
     0
-    20
+    -20
     image='...'
 create_text
     0
-    60
+    -60
     anchor='sw'
     fill='black'
     font=('Arial', 10, 'normal')
     text='Diff (0 pixels)'
 create_image
     0
-    60
+    -60
     image='...'
 create_text
     0
-    100
+    -100
     anchor='sw'
     fill='black'
     font=('Arial', 10, 'normal')
     text='Expected'
 create_image
     0
-    100
+    -100
     image='...'
 """
 

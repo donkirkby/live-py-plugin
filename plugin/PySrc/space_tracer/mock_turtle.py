@@ -84,13 +84,11 @@ class MockTurtle(RawTurtle):
                 return '#000000'
             return "#%02x%02x%02x" % (r, g, b)
 
-        def update(self):
-            pass
-
         def clear(self):
-            patched_pen = MockTurtle._pen
+            is_patched = MockTurtle.is_patched()
             super().clear()
-            MockTurtle._pen = patched_pen
+            if is_patched:
+                MockTurtle._pen = MockTurtle()
 
         def tracer(self, n=None):
             if n is None:
@@ -257,9 +255,6 @@ class MockTurtle(RawTurtle):
         if not self._fillcolor.startswith('#') and self._fillcolor != 'black':
             self._fillcolor = self._colorstr(self._fillcolor)
         return super(MockTurtle, self)._update(*args, **kwargs)
-
-    def _drawturtle(self):
-        pass
 
 
 # Normally, Tkinter will look up these colour names for you, but we don't

@@ -656,6 +656,28 @@ create_line
     assert color2 == 'green'
 
 
+def test_clearscreen(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1"""
+
+    t = MockTurtle()
+    t.fd(100)
+    t.left(90)
+    t.getscreen().clear()
+
+    t2 = MockTurtle()
+    t2.fd(20)
+    report = t2.report
+
+    # assert report == expected_report.splitlines()
+
+
 def test_fill(patched_turtle):
     expected_report = """\
 create_polygon

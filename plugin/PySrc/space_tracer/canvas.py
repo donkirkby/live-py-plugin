@@ -6,10 +6,8 @@ class Canvas(object):
         self.options = {'width': width,
                         'height': height,
                         'bg': 'white'}
-        self.report = []
         self.items = []
         self.max_zorder = 0
-        self.is_recording = True
 
         def make_call(method_name):
             return lambda *args, **kwargs: self.call(method_name,
@@ -31,6 +29,7 @@ class Canvas(object):
         item['coords'] = args
         item['method_name'] = method_name
         item['zorder'] = self.max_zorder
+        item['deleted'] = False
         item_id = len(self.items)
         self.items.append(item)
         return item_id
@@ -39,22 +38,37 @@ class Canvas(object):
         report = []
         xoff = self.winfo_width() / 2
         yoff = self.winfo_height() / 2
-        self.items.sort(key=itemgetter('zorder'))
-        for item_details in self.items:
+        for item_details in sorted(self.items, key=itemgetter('zorder')):
+            copy_details = item_details.copy()
+            method_name = item_details['method_name']
             coords = list(item_details['coords'])
+            if method_name == 'create_polygon':
+                copy_details['outline'] = ''
+                try:
+                    del copy_details['width']
+                except KeyError:
+                    pass
             for i in range(0, len(coords), 2):
                 x, y = coords[i:i+2]
                 x = x + xoff
                 y = y + yoff
                 coords[i] = x
                 coords[i+1] = y
-            if item_details['method_name'] != 'create_line':
-                copy_details = item_details.copy()
+            if method_name != 'create_line':
                 copy_details['coords'] = coords
                 build_item_report(copy_details, report)
-            else:
+            if method_name in ('create_line', 'create_polygon'):
+                copy_details = item_details.copy()
+                if method_name == 'create_polygon':
+                    copy_details['method_name'] = 'create_line'
+                    coords.extend(coords[:2])
+                try:
+                    outline = copy_details.pop('outline')
+                    copy_details['fill'] = outline
+                except KeyError:
+                    pass
                 for i in range(0, len(coords)-3, 2):
-                    section_details = item_details.copy()
+                    section_details = copy_details.copy()
                     section_details['coords'] = coords[i:i+4]
                     build_item_report(section_details, report)
         return report
@@ -85,7 +99,11 @@ class Canvas(object):
         item_details.update(kwargs)
 
     def delete(self, item):
-        pass
+        if item == 'all':
+            self.items.clear()
+        else:
+            item_details = self.items[item]
+            item_details['deleted'] = True
 
     def update(self):
         pass
@@ -101,8 +119,15 @@ class Canvas(object):
         self.max_zorder += 1
         item_details['zorder'] = self.max_zorder
 
+    def bbox(self, item):
+        item_details = self.items[item]  # type: dict
+        x, y = item_details['coords']
+        return x, y, x, y
+
 
 def build_item_report(item_details: dict, report: list):
+    if item_details['deleted']:
+        return
     if item_details.get('fill') == '':
         return
     if item_details.get('image') == '':
@@ -117,6 +142,7 @@ def build_item_report(item_details: dict, report: list):
     except KeyError:
         pass
     del item_details['zorder']
+    del item_details['deleted']
     report.append(item_details.pop('method_name'))
     for arg in item_details.pop('coords'):
         report.append("    %r" % int(round(arg)))

@@ -47,7 +47,7 @@ def test_display_position(patched_turtle):
     expected_report = """\
 create_image
     100
-    200
+    -200
     image='UE5HX0lNQUdFX0RBVEE='
 """
 
@@ -87,7 +87,7 @@ def test_display_image_position_with_size():
     expected_report = """\
 create_image
     110
-    220
+    180
     image='UE5HX0lNQUdFX0RBVEE='
 """
 
@@ -153,7 +153,7 @@ def test_display_image_bottom_left(patched_turtle,
     expected_report = """\
 create_image
     100
-    200
+    -200
     image='...'
 """
 
@@ -218,37 +218,37 @@ def test_differ_compare():
 def test_differ_compare_display(patched_turtle):
     expected_report = """\
 create_text
-    0
-    -20
+    -1
+    20
     anchor='sw'
     fill='black'
     font=('Arial', 10, 'normal')
     text='Actual'
 create_image
     0
-    -20
+    20
     image='...'
 create_text
-    0
-    -60
+    -1
+    60
     anchor='sw'
     fill='black'
     font=('Arial', 10, 'normal')
     text='Diff (0 pixels)'
 create_image
     0
-    -60
+    60
     image='...'
 create_text
-    0
-    -100
+    -1
+    100
     anchor='sw'
     fill='black'
     font=('Arial', 10, 'normal')
     text='Expected'
 create_image
     0
-    -100
+    100
     image='...'
 """
 

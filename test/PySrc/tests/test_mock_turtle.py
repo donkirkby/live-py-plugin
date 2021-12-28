@@ -299,7 +299,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='sw'
     fill='black'
@@ -325,7 +325,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='s'
     fill='black'
@@ -351,7 +351,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='se'
     fill='black'
@@ -377,7 +377,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='sw'
     fill='black'
@@ -403,7 +403,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='sw'
     fill='black'
@@ -430,7 +430,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='sw'
     fill='black'
@@ -457,7 +457,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='sw'
     fill='black'
@@ -484,7 +484,7 @@ create_line
     fill='black'
     pensize=1
 create_text
-    100
+    99
     0
     anchor='sw'
     fill='black'
@@ -747,8 +747,6 @@ create_polygon
     0
     -9
     5
-    0
-    0
     fill='black'
     outline=''
 create_line
@@ -788,6 +786,61 @@ create_line
     assert report == expected_report.splitlines()
 
 
+def test_clearstamp(patched_turtle):
+    expected_report = """\
+create_polygon
+    0
+    0
+    -9
+    -5
+    -7
+    0
+    -9
+    5
+    fill='black'
+    outline=''
+create_line
+    0
+    0
+    -9
+    -5
+    fill='black'
+    pensize=1
+create_line
+    -9
+    -5
+    -7
+    0
+    fill='black'
+    pensize=1
+create_line
+    -7
+    0
+    -9
+    5
+    fill='black'
+    pensize=1
+create_line
+    -9
+    5
+    0
+    0
+    fill='black'
+    pensize=1
+"""
+
+    t = MockTurtle()
+    stamp1 = t.stamp()
+    t.up()
+    t.forward(100)
+    stamp2 = t.stamp()
+    t.clearstamp(stamp2)
+    report = t.report
+
+    assert report == expected_report.splitlines()
+    assert stamp1 != stamp2
+
+
 def test_forgotten_end_fill_with_stamp(patched_turtle):
     expected_report = """\
 create_polygon
@@ -799,8 +852,6 @@ create_polygon
     0
     -9
     5
-    0
-    0
     fill='black'
     outline=''
 create_line
@@ -902,8 +953,6 @@ create_polygon
     -7
     35
     -9
-    40
-    0
     fill='#008000'
     outline=''
 create_line
@@ -947,6 +996,27 @@ create_line
     t.right(90)
     t.forward(40)
     t.end_fill()
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
+def test_undo(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+"""
+
+    t = MockTurtle()
+    t.forward(100)
+    t.right(90)
+    t.forward(100)
+    t.undo()
     report = t.report
 
     assert report == expected_report.splitlines()

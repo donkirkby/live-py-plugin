@@ -34,7 +34,6 @@ class MockTurtle(RawTurtle):
         def __init__(self, canvas):
             if canvas is None:
                 canvas = Canvas()
-                canvas.is_recording = False
             super().__init__(canvas)
             self._config = {'bgcolor': None}
             super().tracer(0)
@@ -93,6 +92,11 @@ class MockTurtle(RawTurtle):
             super().clear()
             MockTurtle._pen = patched_pen
 
+        def tracer(self, n=None):
+            if n is None:
+                return super().tracer(n)
+            # Leave tracing disabled.
+
     _Stamp = namedtuple('Stamp', 'pos heading color')
     _screen = _pen = OriginalTurtle = original_mainloop = None
     instances = []
@@ -106,8 +110,6 @@ class MockTurtle(RawTurtle):
         turtle_module.Turtle = MockTurtle
         cls.original_mainloop = turtle_module.mainloop
         turtle_module.mainloop = turtle_module.done = lambda: None
-        if canvas is not None:
-            canvas.is_recording = False
         # noinspection PyProtectedMember
         MockTurtle._screen = MockTurtle._Screen(canvas)
         MockTurtle._pen = MockTurtle()
@@ -182,22 +184,15 @@ class MockTurtle(RawTurtle):
             elif align_match.group(2) in ('center', None):
                 x -= width // 2
 
-        screen.cv.create_image(x, y, image=image)
+        screen.cv.create_image(x, -y, image=image)
 
     def __init__(self, x=0, y=0, heading=0, canvas=None):
-        self._path = None
-        self._lines_to_draw = []
         if MockTurtle._screen is not None:
             screen = MockTurtle._screen
         else:
-            if canvas is not None:
-                canvas.is_recording = False
             # noinspection PyProtectedMember
             screen = MockTurtle._Screen(canvas)
-        screen.cv.is_recording = False
         super().__init__(screen)
-        screen.cv.is_recording = True
-        self.stamps = []
         if x or y:
             self.up()
             self.setx(x)
@@ -213,10 +208,6 @@ class MockTurtle(RawTurtle):
         h = round(self.heading())
         return 'MockTurtle(%d, %d, %d)' % (x, y, h)
 
-    def reset(self):
-        super().reset()
-        self.screen.cv.report.clear()
-
     # noinspection PyProtectedMember
     def __getattr__(self, name):
         if name == 'report':
@@ -225,10 +216,7 @@ class MockTurtle(RawTurtle):
             else:
                 instances = [self]
             for instance in instances:
-                instance._path = None  # Cancel incomplete fill.
-                instance.screen.tracer(1)
                 instance._newLine()
-                instance._draw_stamps()
             report = self.screen.cv.build_report()
             bgcolor = self.screen.bgcolor()
             if bgcolor is not None and bgcolor != 'white':
@@ -241,45 +229,6 @@ class MockTurtle(RawTurtle):
         raise AttributeError(
             "'MockTurtle' object has no attribute {!r}".format(name))
 
-    def _draw_stamps(self):
-        if not self.stamps:
-            return
-
-        start_pos = self.pos()
-        start_heading = self.heading()
-        start_pensize = self.pensize()
-        start_isdown = self.isdown()
-        self.pensize(1)
-        stamps = self.stamps[:]
-        self.stamps.clear()
-        for stamp in stamps:
-            self.up()
-            self.goto(stamp.pos)
-            self.setheading(stamp.heading)
-            self.color(*stamp.color)
-            self.down()
-            self.begin_fill()
-            self.left(151)
-            self.fd(10.296)
-            self.left(140.8)
-            self.fd(5.385)
-            self.right(43.6)
-            self.fd(5.385)
-            self.setpos(stamp.pos)
-            self.end_fill()
-        self.up()
-        self.goto(start_pos)
-        self.setheading(start_heading)
-        self.pensize(start_pensize)
-        if start_isdown:
-            self.down()
-
-    def stamp(self):
-        self.stamps.append(
-            MockTurtle._Stamp(self.pos(), self.heading(), self.color()))
-        if not self.filling():
-            self._draw_stamps()
-
     def write(self,
               arg,
               move=False,
@@ -287,13 +236,6 @@ class MockTurtle(RawTurtle):
               font=DEFAULT_FONT):
         if move:
             raise NotImplementedError('move parameter is not supported.')
-        if align == 'left':
-            anchor = 'sw'
-        elif align == 'center':
-            anchor = 's'
-        else:
-            assert align == 'right'
-            anchor = 'se'
 
         # noinspection PyBroadException
         try:
@@ -307,13 +249,7 @@ class MockTurtle(RawTurtle):
         font[1] = int(font[1])
         font = tuple(font)
 
-        kwargs = dict(text=str(arg),
-                      anchor=anchor,
-                      font=font)
-        if self._pencolor:
-            kwargs['fill'] = self._pencolor
-        x, y = self._position
-        self.screen.cv.create_text(x, y, **kwargs)
+        super().write(arg, move, align, font)
 
     def _update(self, *args, **kwargs):
         if not self._pencolor.startswith('#') and self._pencolor != 'black':

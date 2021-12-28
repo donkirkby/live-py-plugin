@@ -86,6 +86,7 @@ class MockTurtle(RawTurtle):
 
         def clear(self):
             is_patched = MockTurtle.is_patched()
+            MockTurtle.instances.clear()
             super().clear()
             if is_patched:
                 MockTurtle._pen = MockTurtle()
@@ -255,6 +256,9 @@ class MockTurtle(RawTurtle):
         if not self._fillcolor.startswith('#') and self._fillcolor != 'black':
             self._fillcolor = self._colorstr(self._fillcolor)
         return super(MockTurtle, self)._update(*args, **kwargs)
+
+    def _drawturtle(self):
+        pass
 
 
 # Normally, Tkinter will look up these colour names for you, but we don't

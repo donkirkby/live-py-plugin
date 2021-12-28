@@ -661,21 +661,25 @@ def test_clearscreen(patched_turtle):
 create_line
     0
     0
-    100
+    20
     0
     fill='black'
     pensize=1"""
 
     t = MockTurtle()
-    t.fd(100)
-    t.left(90)
+    for i in range(4):
+        t.pensize(i+1)  # force new line
+        t.fd(100)
+        t.left(90)
     t.getscreen().clear()
 
     t2 = MockTurtle()
     t2.fd(20)
     report = t2.report
 
-    # assert report == expected_report.splitlines()
+    assert report == expected_report.splitlines()
+    assert not any(item['deleted']
+                   for item in t.getscreen().cv.items)
 
 
 def test_fill(patched_turtle):

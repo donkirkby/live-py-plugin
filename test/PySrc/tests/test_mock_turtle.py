@@ -1,5 +1,6 @@
 import pytest
 from space_tracer.canvas import Canvas
+from space_tracer.main import TraceRunner
 from space_tracer.mock_turtle import MockTurtle
 import turtle
 
@@ -680,6 +681,32 @@ create_line
     assert report == expected_report.splitlines()
     assert not any(item['deleted']
                    for item in t.getscreen().cv.items)
+
+
+def test_anonymous_turtle_after_clearscreen():
+    source = """\
+import turtle as t
+
+for i in range(5):
+    t.pensize(i+1)
+    t.forward(20)
+
+t.clearscreen()
+t.forward(30)
+"""
+    expected_report = """\
+create_line
+    0
+    0
+    30
+    0
+    fill='black'
+    pensize=1"""
+
+    runner = TraceRunner()
+    report = runner.trace_turtle(source)
+
+    assert report == expected_report
 
 
 def test_fill(patched_turtle):

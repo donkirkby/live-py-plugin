@@ -91,6 +91,9 @@ class MockTurtle(RawTurtle):
             if is_patched:
                 MockTurtle._pen = MockTurtle()
 
+        def clearscreen(self):
+            self.clear()
+
         def tracer(self, n=None):
             if n is None:
                 return super().tracer(n)

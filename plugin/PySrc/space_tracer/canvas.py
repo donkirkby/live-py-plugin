@@ -108,10 +108,22 @@ class Canvas(object):
     def update(self):
         pass
 
+    def bind(self, *args, **kwargs):
+        pass
+
     def unbind(self, *args, **kwargs):
         pass
 
-    def after(self, delay):
+    def tag_bind(self, *args, **kwargs):
+        pass
+
+    def tag_unbind(self, *args, **kwargs):
+        pass
+
+    def focus_force(self):
+        pass
+
+    def after(self, *args, **kwargs):
         pass
 
     def tag_raise(self, item):

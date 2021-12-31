@@ -191,7 +191,7 @@ class CodeSample extends Component {
             return;
         }
         canvas.width = this.editorRef.current.clientWidth;
-        canvas.height = this.editorRef.current.clientHeight;
+        canvas.height = this.editorRef.current.clientWidth * 0.75;
         const ctx = canvas.getContext('2d');
         ctx.lineCap = 'round';
         ctx.clearRect(0, 0, canvas.width, canvas.height);

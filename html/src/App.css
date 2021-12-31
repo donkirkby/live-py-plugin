@@ -24,6 +24,7 @@
 
 .editor-wrapper {
   display: flex;
+  align-items: flex-start;
 }
 .change-marker {
   position: absolute;

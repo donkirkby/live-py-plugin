@@ -99,8 +99,32 @@ class MockTurtle(RawTurtle):
                 return super().tracer(n)
             # Leave tracing disabled.
 
+        def title(self, title):
+            pass
+
+        def setup(self, width=None, height=None, startx=None, starty=None):
+            pass
+
+        def textinput(self, title, prompt):
+            pass
+
+        def numinput(self, title, prompt, default=None, minval=None, maxval=None):
+            pass
+
+        def mainloop(self):
+            pass
+
+        def done(self):
+            pass
+
+        def bye(self):
+            pass
+
+        def exitonclick(self):
+            pass
+
     _Stamp = namedtuple('Stamp', 'pos heading color')
-    _screen = _pen = OriginalTurtle = original_mainloop = None
+    _screen = _pen = OriginalTurtle = None
     instances = []
 
     @classmethod
@@ -110,8 +134,6 @@ class MockTurtle(RawTurtle):
         turtle_module = sys.modules['turtle']
         cls.OriginalTurtle = turtle_module.Turtle
         turtle_module.Turtle = MockTurtle
-        cls.original_mainloop = turtle_module.mainloop
-        turtle_module.mainloop = turtle_module.done = lambda: None
         # noinspection PyProtectedMember
         MockTurtle._screen = MockTurtle._Screen(canvas)
         MockTurtle._pen = MockTurtle()
@@ -125,8 +147,7 @@ class MockTurtle(RawTurtle):
         if cls.OriginalTurtle is not None:
             turtle_module = sys.modules['turtle']
             turtle_module.Turtle = cls.OriginalTurtle
-            turtle_module.mainloop = turtle_module.done = cls.original_mainloop
-            MockTurtle._pen = cls.OriginalTurtle = cls.original_mainloop = None
+            MockTurtle._pen = cls.OriginalTurtle = None
             MockTurtle._screen = None
 
     @classmethod

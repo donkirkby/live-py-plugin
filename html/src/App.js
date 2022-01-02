@@ -11,6 +11,84 @@ import 'ace-builds/src-noconflict/theme-github';
 
 const PythonContext = React.createContext('Python is loading...');
 
+function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
+    const width = liveCanvas.width,
+        height = liveCanvas.height,
+        backgroundPixel = [
+            parseInt(backgroundColour.substring(1, 3), 16),
+            parseInt(backgroundColour.substring(3, 5), 16),
+            parseInt(backgroundColour.substring(5, 7), 16),
+            255
+        ],
+        liveContext = liveCanvas.getContext('2d'),
+        goalContext = goalCanvas.getContext('2d'),
+        diffContext = diffCanvas.getContext('2d'),
+        liveData = liveContext.getImageData(0, 0, width, height),
+        goalData = goalContext.getImageData(0, 0, width, height),
+        diffData = diffContext.createImageData(width, height);
+    let diffCount = 0,
+        foregroundCount = 0;
+    for (let x=0; x < width; x++) {
+        for (let y=0; y < height; y++) {
+            const livePixel = slicePixel(liveData, x, y),
+                goalPixel = slicePixel(goalData, x, y),
+                [isMatch, diffPixel] = comparePixel(livePixel, goalPixel),
+                isLiveBackground = comparePixel(livePixel, backgroundPixel)[0],
+                isGoalBackground = comparePixel(goalPixel, backgroundPixel)[0],
+                start = pixelStart(diffData, x, y);
+            if ( ! (isLiveBackground && isGoalBackground)) {
+                foregroundCount += 1;
+            }
+            if ( ! isMatch) {
+                diffCount += 1
+            }
+            diffData.data.set(diffPixel, start);
+        }
+    }
+    diffContext.putImageData(diffData, 0, 0);
+    return 100*(1 - (diffCount / foregroundCount));
+}
+
+/** Compare two pixels
+ *
+ * If the two colours are within the tolerance, choose a faded version of the
+ * colour, otherwise add red to highlight the difference.
+ * @param colour1 first colour to compare
+ * @param colour2 other colour to compare to
+ * @param tolerance maximum difference between r, g, b, or alpha components
+ *  of the two colours.
+ * @return Array [isMatch, [r, g, b, alpha]]
+ */
+function comparePixel(colour1, colour2, tolerance) {
+    if (tolerance === undefined) {
+        tolerance = 0;
+    }
+    const [r1, g1, b1, a1] = colour1,
+        [r2, g2, b2, a2] = colour2,
+        maxDiff = Math.max(
+            Math.abs(r1-r2),
+            Math.abs(g1-g2),
+            Math.abs(b1-b2),
+            Math.abs(a1-a2));
+    if (tolerance < maxDiff) {
+        // Highlight difference
+        return [
+            false,
+            [255, Math.floor((g1+g2) / 5), Math.floor((b1+b2) / 5), 255]
+        ];
+    }
+    return [true, [r1, g1, b1, Math.floor(a1/3)]];
+}
+
+function pixelStart(imageData, x, y) {
+    return 4*(y*imageData.width + x);
+}
+
+function slicePixel(imageData, x, y) {
+    const start = pixelStart(imageData, x, y);
+    return imageData.data.slice(start, start+4);
+}
+
 class ProgressBar extends Component {
     render() {
         let stateClass = (this.props.percentage < 50) ?
@@ -109,13 +187,16 @@ class CodeSample extends Component {
             goalSourceCode: analyst.goalSourceCode,
             display: analyst.display,
             goalOutput: analyst.goalOutput,
+            goalCanvasCommands: analyst.goalCanvasCommands,
             output: analyst.output,
             goalMarkers: analyst.goalMarkers,
             outputMarkers: analyst.outputMarkers,
             matchPercentage: analyst.matchPercentage,
             isLive: analyst.isLive,
             isCanvas: analyst.isCanvas,
-            canvasCommands: analyst.canvasCommands
+            canvasCommands: analyst.canvasCommands,
+            canvasWidth: undefined,
+            canvasHeight: undefined
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -125,6 +206,8 @@ class CodeSample extends Component {
 
         this.editorRef = React.createRef();
         this.canvasRef = React.createRef();
+        this.goalCanvasRef = React.createRef();
+        this.diffCanvasRef = React.createRef();
     }
 
     handleChange(newSource) {
@@ -133,18 +216,33 @@ class CodeSample extends Component {
         }
         let codeRunner = this.context === null ? window.analyze : undefined,
             canvas = this.canvasRef.current,
-            canvasSize = canvas === null
+            canvasSize,
+            isResized = false;
+        if (canvas !== null) {
+            canvasSize = [canvas.width, canvas.height];
+            isResized = (canvas.width !== this.state.canvasWidth ||
+                canvas.height !== this.state.canvasHeight);
+        }
+        let goalOutput = isResized ? undefined : this.state.goalOutput,
+            goalCanvasCommands = isResized
                 ? undefined
-                : [canvas.width, canvas.height],
+                : this.state.goalCanvasCommands,
             analyst = new SampleAnalyst(
                 newSource,
                 codeRunner,
-                this.state.goalOutput,
+                goalOutput,
+                goalCanvasCommands,
                 this.state.goalSourceCode,
                 this.state.isLive,
                 this.state.isCanvas,
                 canvasSize
             );
+        this.drawCanvas(analyst.canvasCommands, this.canvasRef);
+        this.drawCanvas(analyst.goalCanvasCommands, this.goalCanvasRef);
+        let matchPercentage = this.compareCanvases(analyst.goalCanvasCommands);
+        if (matchPercentage === undefined) {
+            matchPercentage = analyst.matchPercentage;
+        }
         this.setState({
             source: newSource,
             display: analyst.display,
@@ -152,10 +250,39 @@ class CodeSample extends Component {
             goalOutput: analyst.goalOutput,
             goalMarkers: analyst.goalMarkers,
             outputMarkers: analyst.outputMarkers,
-            matchPercentage: analyst.matchPercentage,
-            canvasCommands: analyst.canvasCommands
+            matchPercentage: matchPercentage,
+            canvasCommands: analyst.canvasCommands,
+            goalCanvasCommands: analyst.goalCanvasCommands
         });
-        this.drawCanvas(analyst.canvasCommands);
+        if (isResized) {
+            this.setState({
+                canvasWidth: canvasSize[0],
+                canvasHeight: canvasSize[1]
+            });
+        }
+    }
+
+    compareCanvases(goalCanvasCommands) {
+        const liveCanvas = this.canvasRef.current,
+            goalCanvas = this.goalCanvasRef.current,
+            diffCanvas = this.diffCanvasRef.current;
+        let matchPercentage = undefined;
+        if (diffCanvas !== null) {
+            diffCanvas.width = this.editorRef.current.clientWidth;
+            diffCanvas.height = this.editorRef.current.clientWidth * 0.75;
+            let backgroundColor = '#ffffff';
+            for (let command of goalCanvasCommands) {
+                if (command.name === 'bgcolor') {
+                    backgroundColor = command.fill;
+                }
+            }
+            matchPercentage = compareCanvases(
+                liveCanvas,
+                goalCanvas,
+                diffCanvas,
+                backgroundColor);
+        }
+        return matchPercentage;
     }
 
     handleReset() {
@@ -178,15 +305,20 @@ class CodeSample extends Component {
 
     componentDidMount() {
         window.addEventListener('resize', this.handleResize);
-        this.drawCanvas(this.state.canvasCommands);
+        this.drawCanvas(this.state.canvasCommands, this.canvasRef);
+        this.drawCanvas(this.state.goalCanvasCommands, this.goalCanvasRef);
+        let matchPercentage = this.compareCanvases(this.state.goalCanvasCommands);
+        if (matchPercentage !== undefined) {
+            this.setState({matchPercentage: matchPercentage})
+        }
     }
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.handleResize);
     }
 
-    drawCanvas(commands) {
-        const canvas = this.canvasRef.current;
+    drawCanvas(commands, canvasRef) {
+        const canvas = canvasRef.current;
         if ((canvas === null) || (commands === undefined)) {
             return;
         }
@@ -239,6 +371,9 @@ class CodeSample extends Component {
             this.handleChange();
             this.setState({isPythonLoaded: true});
         }
+        this.drawCanvas(this.state.canvasCommands, this.canvasRef);
+        this.drawCanvas(this.state.goalCanvasCommands, this.goalCanvasRef);
+        this.compareCanvases(this.state.goalCanvasCommands);
     }
 
     countLines(text) {
@@ -286,29 +421,43 @@ class CodeSample extends Component {
                 outputSize = Math.min(
                     50, 1 + Math.max(outputLineCount, goalLineCount));
             progressBar = <ProgressBar percentage={this.state.matchPercentage}/>;
-            outputHeaders = <div className="editor-wrapper">
-                <h4 className="editor-header">Goal output</h4>
-                <h4 className="editor-header">Your output</h4>
-            </div>;
-            outputSection = <div className="editor-wrapper">
-                <div className="editor-pane"
-                     style={{height: outputSize*18 + "px"}}>
-                    <Editor
-                        value={this.state.goalOutput}
-                        markers={this.state.goalMarkers}
-                        readOnly={true}
-                        highlightActiveLine={false}
-                        mode="text"/>
-                </div>
-                <div className="editor-pane">
-                    <Editor
-                        value={this.state.output}
-                        markers={this.state.outputMarkers}
-                        readOnly={true}
-                        highlightActiveLine={false}
-                        mode="text"/>
-                </div>
-            </div>;
+            if (this.state.isCanvas) {
+                outputHeaders = <div className="editor-wrapper">
+                    <h4 className="editor-header">Goal Canvas</h4>
+                    <h4 className="editor-header">Canvas Differences</h4>
+                </div>;
+                displayDiv = <canvas
+                    ref={this.canvasRef}
+                    height={sourceLineCount*18}/>;
+                outputSection = <div className="editor-wrapper">
+                    <canvas ref={this.goalCanvasRef}/>
+                    <canvas ref={this.diffCanvasRef}/>
+                </div>;
+            } else {
+                outputHeaders = <div className="editor-wrapper">
+                    <h4 className="editor-header">Goal output</h4>
+                    <h4 className="editor-header">Your output</h4>
+                </div>;
+                outputSection = <div className="editor-wrapper">
+                    <div className="editor-pane"
+                         style={{height: outputSize*18 + "px"}}>
+                        <Editor
+                            value={this.state.goalOutput}
+                            markers={this.state.goalMarkers}
+                            readOnly={true}
+                            highlightActiveLine={false}
+                            mode="text"/>
+                    </div>
+                    <div className="editor-pane">
+                        <Editor
+                            value={this.state.output}
+                            markers={this.state.outputMarkers}
+                            readOnly={true}
+                            highlightActiveLine={false}
+                            mode="text"/>
+                    </div>
+                </div>;
+            }
         }
         return (
             <div className="codeSample">
@@ -388,3 +537,4 @@ class App extends Component {
 }
 
 export default App;
+export {compareCanvases, slicePixel};

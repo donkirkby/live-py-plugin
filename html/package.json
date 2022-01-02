@@ -17,6 +17,7 @@
     "build": "react-scripts build",
     "postbuild": "node deploy.js",
     "test": "react-scripts test",
+    "test:debug": "react-scripts --inspect-brk test --runInBand --no-cache",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -29,6 +30,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "canvas": "^2.8.0",
     "react-scripts": "^4.0.3"
   }
 }

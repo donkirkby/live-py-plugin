@@ -54,11 +54,58 @@ function unescapeString(value) {
     return value;
 }
 
+function parseCanvasCommands(display) {
+    const displayLines = display.split(/\r\n|(?!\r\n)[\n-\r\x85\u2028\u2029]/),
+        canvasCommands = [];
+    displayLines.shift();  // start_canvas
+    let currentCommand = undefined;
+    while (displayLines.length) {
+        const nextLine = displayLines.shift();
+        if (nextLine === '.') {
+            break;
+        }
+        if ( ! nextLine.startsWith('    ')) {
+            if (currentCommand !== undefined) {
+                canvasCommands.push(currentCommand);
+            }
+            currentCommand = {name: nextLine, coords: []};
+        } else {
+            const position = nextLine.indexOf('=');
+            if (position === -1) {
+                currentCommand.coords.push(parseInt(nextLine));
+            } else {
+                const fieldName = nextLine.substring(4, position),
+                    fieldValue = nextLine.substring(position+1);
+                if (fieldName !== 'font') {
+                    currentCommand[fieldName] = unescapeString(
+                        fieldValue);
+                } else {
+                    const fontMatch = fieldValue.match(
+                        /\('([^']*)', (\d+), '([^']*)'\)/);
+                    let fontName = 'Arial',
+                        fontSize = 8,
+                        styleNames = 'normal';
+                    if (fontMatch !== undefined) {
+                        fontName = fontMatch[1];
+                        fontSize = fontMatch[2];
+                        styleNames = fontMatch[3];
+                    }
+                    currentCommand[fieldName] = (
+                        `${styleNames} ${fontSize}px ${fontName}`);
+                }
+            }
+        }
+    }
+    const remainingDisplay = displayLines.join('\n');
+    return [canvasCommands, remainingDisplay];
+}
+
 export default class SampleAnalyst {
 
     constructor(sourceCode,
                 run,
                 goalOutput,
+                goalCanvasCommands,
                 goalSourceCode,
                 isLive,
                 isCanvas,
@@ -91,7 +138,10 @@ export default class SampleAnalyst {
             } else {
                 this.isLive = true;
                 this.isCanvas = false;
-                let splitSource = sourceCode.split(/ *##+ *Goal[ #]*\n/i);
+                this.sourceCode = sourceCode;
+            }
+            if (this.isLive) {
+                let splitSource = this.sourceCode.split(/ *##+ *Goal[ #]*\n/i);
                 this.sourceCode = splitSource[0];
                 this.goalSourceCode = splitSource[1];
             }
@@ -107,55 +157,22 @@ export default class SampleAnalyst {
             this.output = result.get(1);
 
             if (this.isCanvas) {
-                const displayLines = this.display.split(
-                    /\r\n|(?!\r\n)[\n-\r\x85\u2028\u2029]/);
-                displayLines.shift();  // start_canvas
-                this.canvasCommands = [];
-                let currentCommand = undefined;
-                while (displayLines.length) {
-                    const nextLine = displayLines.shift();
-                    if (nextLine === '.') {
-                        break;
-                    }
-                    if ( ! nextLine.startsWith('    ')) {
-                        if (currentCommand !== undefined) {
-                            this.canvasCommands.push(currentCommand);
-                        }
-                        currentCommand = {name: nextLine, coords: []};
-                    } else {
-                        const position = nextLine.indexOf('=');
-                        if (position === -1) {
-                            currentCommand.coords.push(parseInt(nextLine));
-                        } else {
-                            const fieldName = nextLine.substring(4, position),
-                                fieldValue = nextLine.substring(position+1);
-                            if (fieldName !== 'font') {
-                                currentCommand[fieldName] = unescapeString(
-                                    fieldValue);
-                            } else {
-                                const fontMatch = fieldValue.match(
-                                    /\('([^']*)', (\d+), '([^']*)'\)/);
-                                let fontName = 'Arial',
-                                    fontSize = 8,
-                                    styleNames = 'normal';
-                                if (fontMatch !== undefined) {
-                                    fontName = fontMatch[1];
-                                    fontSize = fontMatch[2];
-                                    styleNames = fontMatch[3];
-                                }
-                                currentCommand[fieldName] = (
-                                    `${styleNames} ${fontSize}px ${fontName}`);
-                            }
-                        }
-                    }
-                }
-                this.display = displayLines.join('\n');
+                const [canvasCommands, remainingDisplay] = parseCanvasCommands(
+                    this.display);
+                this.canvasCommands = canvasCommands;
+                this.display = remainingDisplay;
             }
             if (goalOutput !== undefined) {
                 this.goalOutput = goalOutput;
+                this.goalCanvasCommands = goalCanvasCommands;
             } else if (this.goalSourceCode !== undefined) {
-                let goalResult = run(this.goalSourceCode);
+                let goalResult = run(this.goalSourceCode, canvasSize);
                 this.goalOutput = goalResult.get(1);
+                if (this.isCanvas) {
+                    const goalDisplay = goalResult.get(0),
+                        displayParts = parseCanvasCommands(goalDisplay);
+                    this.goalCanvasCommands = displayParts[0];
+                }
             }
             if (this.goalOutput !== undefined) {
                 let diffs = diffChars(this.goalOutput, this.output),

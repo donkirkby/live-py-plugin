@@ -67,6 +67,7 @@ line 2
     it('hides analysis if known to be static', () => {
         let goalSourceCode = undefined,
             goalOutput = undefined,
+            goalCanvasCommands = undefined,
             isLive = false,
             expectedSource = `\
 line 1
@@ -76,6 +77,7 @@ line 2
             expectedSource,
             prefixLines,
             goalOutput,
+            goalCanvasCommands,
             goalSourceCode,
             isLive);
 
@@ -226,6 +228,7 @@ line 1
 line 2
 `,
             oldGoal = undefined,
+            oldGoalCommands = undefined,
             expectedGoal = `\
 out line 1
 out line 2
@@ -234,6 +237,7 @@ out line 2
             source,
             prefixLines,
             oldGoal,
+            oldGoalCommands,
             oldGoalSource);
 
         expect(analyst.sourceCode).toBe(source);
@@ -436,5 +440,69 @@ line 1
         let analyst = new SampleAnalyst(source, run);
 
         expect(analyst.canvasCommands).toEqual(expectedCanvasCommands);
+    });
+
+    it('displays canvas goal', () => {
+        let run = (sourceCode) => {
+            let sourceLines = sourceCode.split("\n");
+            let display = `\
+start_canvas
+create_text
+    100
+    0
+    anchor='sw'
+    fill='black'
+    font=('Courier', 14, 'bold')
+    text='${sourceLines[0]}'
+end_canvas
+.
+${sourceCode}`;
+                return {get(i) { return [display, ''][i]; }};
+            };
+        let originalSource = `\
+### Canvas ###
+line A
+line 2
+### Goal ###
+line 1
+line 2
+`;
+        let expectedSource = `\
+line A
+line 2
+`;
+        let expectedDisplay = `\
+line A
+line 2
+`;
+        let expectedCanvasCommands = [
+                {
+                    name: 'create_text',
+                    fill: 'black',
+                    anchor: 'sw',
+                    font: 'bold 14px Courier',
+                    text: 'line A',
+                    coords: [100, 0]
+                }];
+        let expectedGoalCanvasCommands = [
+                {
+                    name: 'create_text',
+                    fill: 'black',
+                    anchor: 'sw',
+                    font: 'bold 14px Courier',
+                    text: 'line 1',
+                    coords: [100, 0]
+                }];
+        let expectedOutput = '';
+        let expectedGoalOutput = `\
+`;
+        let analyst = new SampleAnalyst(originalSource, run);
+
+        expect(analyst.sourceCode).toBe(expectedSource);
+        expect(analyst.display).toBe(expectedDisplay);
+        expect(analyst.output).toBe(expectedOutput);
+        expect(analyst.goalOutput).toBe(expectedGoalOutput);
+        expect(analyst.canvasCommands).toEqual(expectedCanvasCommands);
+        expect(analyst.goalCanvasCommands).toEqual(expectedGoalCanvasCommands);
     });
 });

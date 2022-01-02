@@ -122,6 +122,36 @@ coding display on the upper right shows you what's happening as your code runs.
     for i in range(7):
         print(i)
 
+## Turtle Tutorial
+How about a goal for a canvas code sample? Can you change the blue square into
+a red triangle?
+
+
+    ### Canvas ###
+    import turtle as t
+    
+    t.bgcolor('ivory')
+    t.fillcolor('blue')
+    t.begin_fill()
+    for _ in range(4):
+        t.forward(100)
+        t.right(90)
+    t.end_fill()
+    
+    t.mainloop()
+    
+    ### Goal ###
+    import turtle as t
+    
+    t.bgcolor('ivory')
+    t.fillcolor('red')
+    t.begin_fill()
+    for _ in range(3):
+        t.forward(100)
+        t.right(120)
+    t.end_fill()
+
+
 # Feedback
 Thanks for trying out this prototype of the live coding tutorial. I'd love to
 hear how it worked for you. If you're new to Python, did you learn something?

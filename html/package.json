@@ -31,6 +31,6 @@
   ],
   "devDependencies": {
     "canvas": "^2.8.0",
-    "react-scripts": "^4.0.3"
+    "react-scripts": "^5.0.0"
   }
 }

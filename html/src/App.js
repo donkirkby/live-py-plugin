@@ -393,11 +393,11 @@ class CodeSample extends Component {
             sourceLineCount = 1 + this.countLines(this.state.source);
         if (this.state.isLive) {
             if (this.state.isCanvas) {
-                displayDiv = <canvas
-                    ref={this.canvasRef}
-                    height={sourceLineCount*18}/>;
+                displayDiv = <canvas ref={this.canvasRef}/>;
             } else {
-                displayDiv = <div className="editor-pane">
+                displayDiv = <div
+                    className="editor-pane"
+                    style={{height: sourceLineCount*18 + "px"}}>
                     <Editor
                         value={displayValue}
                         scrollTop={this.state.scrollTop}
@@ -426,9 +426,7 @@ class CodeSample extends Component {
                     <h4 className="editor-header">Goal Canvas</h4>
                     <h4 className="editor-header">Canvas Differences</h4>
                 </div>;
-                displayDiv = <canvas
-                    ref={this.canvasRef}
-                    height={sourceLineCount*18}/>;
+                displayDiv = <canvas ref={this.canvasRef}/>;
                 outputSection = <div className="editor-wrapper">
                     <canvas ref={this.goalCanvasRef}/>
                     <canvas ref={this.diffCanvasRef}/>
@@ -448,7 +446,8 @@ class CodeSample extends Component {
                             highlightActiveLine={false}
                             mode="text"/>
                     </div>
-                    <div className="editor-pane">
+                    <div className="editor-pane"
+                         style={{height: outputSize*18 + "px"}}>
                         <Editor
                             value={this.state.output}
                             markers={this.state.outputMarkers}

@@ -1163,9 +1163,70 @@ def test_bad_attribute():
     assert not hasattr(t, 'bogus')
 
 
-def test_screen_methods_exist():
-    """ Test that a couple of methods exist, but don't do anything. """
+def test_tracer(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+"""
+    t = turtle
+
+    default_tracer = t.tracer()
+    t.forward(100)
+    t.tracer(10)
+    t.right(90)
+    t.forward(200)
+
+    assert default_tracer == 1
+    assert MockTurtle.get_all_reports() == expected_report.splitlines()
+
+
+def test_update(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1
+create_line
+    100
+    0
+    100
+    200
+    fill='black'
+    pensize=1
+"""
+    t = turtle
+
+    t.forward(100)
+    t.tracer(10)
+    t.right(90)
+    t.forward(200)
+    t.update()
+
+    assert MockTurtle.get_all_reports() == expected_report.splitlines()
+
+
+def test_speed():
+    all_speeds = set()
     t = MockTurtle()
 
-    t.screen.tracer()
-    t.screen.update()
+    all_speeds.add(t.speed())
+    t.speed(4)
+    all_speeds.add(t.speed())
+    t.speed('normal')
+    all_speeds.add(t.speed())
+    t.speed(2000)
+    all_speeds.add(t.speed())
+    t.pen(speed=5)
+    all_speeds.add(t.speed())
+    t.pen(dict(speed=7))
+    all_speeds.add(t.speed())
+
+    assert all_speeds == {0}

@@ -36,7 +36,6 @@ class MockTurtle(RawTurtle):
                 canvas = Canvas()
             super().__init__(canvas)
             self._config = {'bgcolor': None}
-            super().tracer(0)
 
         def _blankimage(self):
             pass
@@ -93,11 +92,6 @@ class MockTurtle(RawTurtle):
 
         def clearscreen(self):
             self.clear()
-
-        def tracer(self, n=None):
-            if n is None:
-                return super().tracer(n)
-            # Leave tracing disabled.
 
         def title(self, title):
             pass
@@ -222,6 +216,7 @@ class MockTurtle(RawTurtle):
             self.sety(y)
             self.down()
         self.setheading(heading)
+        super().speed(0)
         if MockTurtle.is_patched():
             MockTurtle.instances.append(self)
 
@@ -234,12 +229,6 @@ class MockTurtle(RawTurtle):
     # noinspection PyProtectedMember
     def __getattr__(self, name):
         if name == 'report':
-            if MockTurtle.is_patched():
-                instances = MockTurtle.instances
-            else:
-                instances = [self]
-            for instance in instances:
-                instance._newLine()
             report = self.screen.cv.build_report()
             bgcolor = self.screen.bgcolor()
             if bgcolor is not None and bgcolor != 'white':
@@ -251,6 +240,10 @@ class MockTurtle(RawTurtle):
             return report
         raise AttributeError(
             "'MockTurtle' object has no attribute {!r}".format(name))
+
+    def pen(self, pen=None, **pendict):
+        pendict['speed'] = 0
+        return super().pen(pen, **pendict)
 
     def write(self,
               arg,

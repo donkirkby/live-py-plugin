@@ -124,7 +124,7 @@ coding display on the upper right shows you what's happening as your code runs.
 
 ## Turtle Tutorial
 How about a goal for a canvas code sample? Can you change the blue square into
-a red triangle?
+a yellow triangle?
 
 
     ### Canvas ###
@@ -144,7 +144,7 @@ a red triangle?
     import turtle as t
     
     t.bgcolor('ivory')
-    t.fillcolor('red')
+    t.fillcolor('yellow')
     t.begin_fill()
     for _ in range(3):
         t.forward(100)

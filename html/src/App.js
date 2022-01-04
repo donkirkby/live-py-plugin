@@ -196,10 +196,13 @@ class CodeSample extends Component {
             isCanvas: analyst.isCanvas,
             canvasCommands: analyst.canvasCommands,
             canvasWidth: undefined,
-            canvasHeight: undefined
+            canvasHeight: undefined,
+            updateTimer: undefined
         };
 
         this.handleChange = this.handleChange.bind(this);
+        this.scheduleUpdate = this.scheduleUpdate.bind(this);
+        this.updateDisplay = this.updateDisplay.bind(this);
         this.handleReset = this.handleReset.bind(this);
         this.handleScroll = this.handleScroll.bind(this);
         this.handleCursorChange = this.handleCursorChange.bind(this);
@@ -211,13 +214,28 @@ class CodeSample extends Component {
     }
 
     handleChange(newSource) {
-        if (newSource === undefined) {
-            newSource = this.state.source;
+        if (newSource !== undefined) {
+            this.setState({source: newSource});
         }
+        this.scheduleUpdate();
+    }
+
+    scheduleUpdate() {
+        if (this.state.updateTimer !== undefined) {
+            clearInterval(this.state.updateTimer);
+        }
+        this.setState({
+            updateTimer: setInterval(this.updateDisplay, 300)
+        });
+    }
+
+    updateDisplay() {
+        clearInterval(this.state.updateTimer);
         let codeRunner = this.context === null ? window.analyze : undefined,
             canvas = this.canvasRef.current,
             canvasSize,
-            isResized = false;
+            isResized = false,
+            newSource = this.state.source;
         if (canvas !== null) {
             canvasSize = [canvas.width, canvas.height];
             isResized = (canvas.width !== this.state.canvasWidth ||
@@ -252,7 +270,8 @@ class CodeSample extends Component {
             outputMarkers: analyst.outputMarkers,
             matchPercentage: matchPercentage,
             canvasCommands: analyst.canvasCommands,
-            goalCanvasCommands: analyst.goalCanvasCommands
+            goalCanvasCommands: analyst.goalCanvasCommands,
+            updateTimer: undefined
         });
         if (isResized) {
             this.setState({
@@ -307,10 +326,7 @@ class CodeSample extends Component {
         window.addEventListener('resize', this.handleResize);
         this.drawCanvas(this.state.canvasCommands, this.canvasRef);
         this.drawCanvas(this.state.goalCanvasCommands, this.goalCanvasRef);
-        let matchPercentage = this.compareCanvases(this.state.goalCanvasCommands);
-        if (matchPercentage !== undefined) {
-            this.setState({matchPercentage: matchPercentage})
-        }
+        this.scheduleUpdate();
     }
 
     componentWillUnmount() {
@@ -368,12 +384,15 @@ class CodeSample extends Component {
             }
         }
         else if ( ! this.state.isPythonLoaded) {
-            this.handleChange();
             this.setState({isPythonLoaded: true});
+            this.scheduleUpdate();
         }
-        this.drawCanvas(this.state.canvasCommands, this.canvasRef);
-        this.drawCanvas(this.state.goalCanvasCommands, this.goalCanvasRef);
-        this.compareCanvases(this.state.goalCanvasCommands);
+        else if ((5 < Math.abs(prevState.canvasWidth - this.state.canvasWidth)) ||
+                (prevState.source !== this.state.source) ||
+                (prevState.goalCanvasCommands === undefined &&
+                    this.state.goalCanvasCommands !== undefined)) {
+            this.scheduleUpdate();
+        }
     }
 
     countLines(text) {

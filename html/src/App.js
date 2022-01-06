@@ -61,7 +61,7 @@ function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
  */
 function comparePixel(colour1, colour2, tolerance) {
     if (tolerance === undefined) {
-        tolerance = 0;
+        tolerance = 2;
     }
     const [r1, g1, b1, a1] = colour1,
         [r2, g2, b2, a2] = colour2,
@@ -341,6 +341,7 @@ class CodeSample extends Component {
         canvas.width = this.editorRef.current.clientWidth;
         canvas.height = this.editorRef.current.clientWidth * 0.75;
         const ctx = canvas.getContext('2d');
+        ctx.translate(0.5, 0.5); // Centre lines on pixels.
         ctx.lineCap = 'round';
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (const command of commands) {

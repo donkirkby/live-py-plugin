@@ -154,20 +154,32 @@ class LiveFigure(LiveImage):
 
 class LiveImageDiffer:
     def __init__(self, diffs_path: Path = None, request=None, is_displayed=True):
-        """ Initialize the object and clean out the diffs path.
+        ''' Initialize the object and clean out the diffs path.
 
         This class requires Pillow to be installed, but you can remove that
         dependency with a subclass that overrides the start_diff() and
         end_diff() methods.
 
-        A good way to use this class is to create a session fixture like this:
+        A good way to use this class is to create a session fixture and regular
+        fixture like this:
 
         @pytest.fixture(scope='session')
-        def image_differ(request):
+        def session_image_differ():
+            """ Track all images compared in a session. """
             diffs_path = Path(__file__).parent / 'image_diffs'
-            differ = LiveImageDiffer(diffs_path, request)
+            differ = LiveImageDiffer(diffs_path)
             yield differ
             differ.remove_common_prefix()
+
+
+        @pytest.fixture
+        def image_differ(request, session_image_differ):
+            """ Pass the current request to the session image differ. """
+            session_image_differ.request = request
+            yield session_image_differ
+
+        Then each test that needs to compare images can require the image_differ
+        fixture.
 
         :param diffs_path: The folder to write comparison images in, or None
             if you don't want to write any. Will be created if it doesn't exist.
@@ -175,7 +187,7 @@ class LiveImageDiffer:
             default file names based on the current test name.
         :param is_displayed: True if the comparison should be displayed on the
             live canvas.
-        """
+        '''
         self.diffs_path = diffs_path
         self.request = request
         self.is_displayed = is_displayed

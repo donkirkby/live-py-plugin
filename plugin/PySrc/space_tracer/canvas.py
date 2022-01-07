@@ -102,7 +102,7 @@ class Canvas(object):
         if item == 'all':
             self.items.clear()
         else:
-            item_details = self.items[item]
+            item_details = self.items[item]  # type: dict
             item_details['deleted'] = True
 
     def update(self):
@@ -135,6 +135,10 @@ class Canvas(object):
         item_details = self.items[item]  # type: dict
         x, y = item_details['coords']
         return x, y, x, y
+
+    def type(self, item):
+        item_details = self.items[item]  # type: dict
+        return item_details['method_name'][7:]
 
 
 def build_item_report(item_details: dict, report: list):

@@ -1075,6 +1075,29 @@ create_line
     assert report == expected_report.splitlines()
 
 
+def test_undo_pen_change(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    50
+    0
+    fill='black'
+    pensize=1
+"""
+
+    t = MockTurtle()
+    t.forward(50)
+    t.right(90)
+    t.forward(20)
+    t.pensize(5)
+    t.undo()
+    t.undo()
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
 def test_monkey_patch_anonymous_turtle(patched_turtle):
     expected_report = """\
 create_line
@@ -1230,3 +1253,14 @@ def test_speed():
     all_speeds.add(t.speed())
 
     assert all_speeds == {0}
+
+
+def test_cleared_screen(patched_turtle):
+    """ Subclassing TurtleScreen can clear MockTurtle._pen object. """
+    original = turtle.Turtle._pen
+    turtle.Turtle._pen = None
+
+    report = MockTurtle.get_all_reports()
+
+    turtle.Turtle._pen = original
+    assert report == []

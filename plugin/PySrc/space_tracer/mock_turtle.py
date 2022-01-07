@@ -1,6 +1,5 @@
 from base64 import standard_b64decode
 import binascii
-from collections import namedtuple
 import re
 import struct
 import sys
@@ -85,7 +84,6 @@ class MockTurtle(RawTurtle):
 
         def clear(self):
             is_patched = MockTurtle.is_patched()
-            MockTurtle.instances.clear()
             super().clear()
             if is_patched:
                 MockTurtle._pen = MockTurtle()
@@ -117,9 +115,7 @@ class MockTurtle(RawTurtle):
         def exitonclick(self):
             pass
 
-    _Stamp = namedtuple('Stamp', 'pos heading color')
     _screen = _pen = OriginalTurtle = None
-    instances = []
 
     @classmethod
     def monkey_patch(cls, canvas=None):
@@ -131,13 +127,11 @@ class MockTurtle(RawTurtle):
         # noinspection PyProtectedMember
         MockTurtle._screen = MockTurtle._Screen(canvas)
         MockTurtle._pen = MockTurtle()
-        MockTurtle.instances.append(MockTurtle._pen)
 
     @classmethod
     def remove_monkey_patch(cls):
         if not cls.is_patched():
             raise RuntimeError('MockTurtle is not monkey patched.')
-        MockTurtle.instances = []
         if cls.OriginalTurtle is not None:
             turtle_module = sys.modules['turtle']
             turtle_module.Turtle = cls.OriginalTurtle
@@ -150,7 +144,9 @@ class MockTurtle(RawTurtle):
 
     @classmethod
     def get_all_reports(cls):
-        return MockTurtle._pen.report
+        if cls._pen is None:
+            return []
+        return cls._pen.report
 
     @classmethod
     def display_image(cls,
@@ -217,8 +213,6 @@ class MockTurtle(RawTurtle):
             self.down()
         self.setheading(heading)
         super().speed(0)
-        if MockTurtle.is_patched():
-            MockTurtle.instances.append(self)
 
     def __repr__(self):
         x = round(self.xcor())
@@ -272,7 +266,7 @@ class MockTurtle(RawTurtle):
             self._pencolor = self._colorstr(self._pencolor)
         if not self._fillcolor.startswith('#') and self._fillcolor != 'black':
             self._fillcolor = self._colorstr(self._fillcolor)
-        return super(MockTurtle, self)._update(*args, **kwargs)
+        return super()._update(*args, **kwargs)
 
     def _drawturtle(self):
         pass

@@ -2,7 +2,8 @@
 seems to be a bug in Python.
 """
 
-from ast import (dump, parse, AST, Call, Expr, Load, Name)
+from ast import (dump, parse, AST, Call, Expr, Load, Name, Constant)
+
 
 def iter_fields(node):
     """
@@ -29,6 +30,7 @@ def iter_child_nodes(node):
                 if isinstance(item, AST):
                     yield item
 
+
 def fix_missing_locations2(node):
     """
     When you compile a node tree with compile(), the compiler expects lineno and
@@ -41,10 +43,10 @@ def fix_missing_locations2(node):
         if 'lineno' in node._attributes:
             if not hasattr(node, 'lineno'):
                 node.lineno = lineno
-                print '%r.lineno = %d' % (node, lineno)
+                print('%r.lineno = %d' % (node, lineno))
             else:
                 lineno = node.lineno
-                print '%r.lineno is %d' % (node, lineno)
+                print('%r.lineno is %d' % (node, lineno))
         if 'col_offset' in node._attributes:
             if not hasattr(node, 'col_offset'):
                 node.col_offset = col_offset
@@ -55,10 +57,12 @@ def fix_missing_locations2(node):
     _fix(node, 1, 0)
     return node
 
+
 def raise_error(is_error):
     if is_error:
         raise RuntimeError('an error')
-    
+
+
 code = """\
 while True:
 
@@ -68,18 +72,18 @@ while True:
 
 tree = parse(code)
 old_node, old_call = tree.body[0].body
-new_call = Expr(value=Call(func=Name(id='raise_error', ctx=Load()),
-                              args=[Name(id='False', ctx=Load())],
-                              keywords=[],
-                              starargs=None,
-                              kwargs=None), lineno=5, col_offset=100)
+new_call = Expr(Call(func=Name('raise_error', Load()),
+                     args=[Constant(False)],
+                     keywords=[]),
+                lineno=5,
+                col_offset=100)
 
 tree.body[0].body = [old_node, new_call, old_call]
-print dump(tree)
+print(dump(tree))
 fix_missing_locations2(tree)
 
 code = compile(tree, '<source string>', 'exec')
 
 env = {'raise_error': raise_error}
 
-exec code in env
+exec(code, env)

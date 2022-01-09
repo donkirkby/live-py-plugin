@@ -55,7 +55,7 @@ function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
  * colour, otherwise add red to highlight the difference.
  * @param colour1 first colour to compare
  * @param colour2 other colour to compare to
- * @param tolerance maximum difference between r, g, b, or alpha components
+ * @param tolerance maximum difference between r, g, b components
  *  of the two colours.
  * @return Array [isMatch, [r, g, b, alpha]]
  */
@@ -68,8 +68,7 @@ function comparePixel(colour1, colour2, tolerance) {
         maxDiff = Math.max(
             Math.abs(r1-r2),
             Math.abs(g1-g2),
-            Math.abs(b1-b2),
-            Math.abs(a1-a2));
+            Math.abs(b1-b2));  // ignore alpha differences
     if (tolerance < maxDiff) {
         // Highlight difference
         return [
@@ -77,7 +76,7 @@ function comparePixel(colour1, colour2, tolerance) {
             [255, Math.floor((g1+g2) / 5), Math.floor((b1+b2) / 5), 255]
         ];
     }
-    return [true, [r1, g1, b1, Math.floor(a1/3)]];
+    return [true, [r1, g1, b1, Math.floor((a1 + a2)/6)]];
 }
 
 function pixelStart(imageData, x, y) {
@@ -343,7 +342,8 @@ class CodeSample extends Component {
         const ctx = canvas.getContext('2d');
         ctx.translate(0.5, 0.5); // Centre lines on pixels.
         ctx.lineCap = 'round';
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         for (const command of commands) {
             if (command.name === 'bgcolor') {
                 ctx.fillStyle = command.fill;

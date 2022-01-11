@@ -5,11 +5,15 @@ Python using the visual tools in the turtle module. All the code runs in your
 browser, so you don't have to install anything.
 
 The challenge in this tutorial is to learn how this turtle script draws the
-Romanian flag on the right, and then change it to draw the Colombian flag shown
-as the goal below. You can experiment on your own, or read the rest of the
-tutorial to learn the concepts you need. The progress bar shows how close you
-are to the goal, and the canvas differences, below right, highlight the
-differences in red.
+Romanian flag on the right, 300 pixels wide and 200 high with colours in
+vertical bars. Then change it to draw the Colombian flag shown in the goal
+canvas below, with the same colours in a different order and in horizontal bars.
+You can experiment on your own, or read the rest of the tutorial to learn the
+concepts you need. The progress bar shows how close you are to the goal, and the
+canvas differences, below right, highlight the differences in red.
+
+If you really mess up the script, you can click the reset button to go back to
+the start.
 
 [Moving the Turtle]: #moving-the-turtle
 
@@ -24,9 +28,6 @@ differences in red.
 [Changing Colour]: #changing-colour
 
 ## The Challenge
-
-Change the script to draw the Colombian flag, which is 300 wide and 200 high.
-The colors from top to bottom are: `gold`, `firebrick3` are `dodgerblue4`.
 
     ### Canvas ###
     import turtle as t
@@ -207,9 +208,9 @@ difference.
 Computers are good at doing the same thing over and over. Drawing a square, for
 example, can be done by repeating two commands four times: move forward and turn
 90°. One way to repeat commands in Python is to put them in a `for` loop. The
-`range()` function produces a range of numbers, and `for i in range(4):` will 
-repeat the commands below it 4 times, putting a different number in `i` each 
-time. In this example, we don't care about the number in `i`, we just want to 
+`range()` function produces a range of numbers, and `for i in range(4):` will
+repeat the commands below it 4 times, putting a different number in `i` each
+time. In this example, we don't care about the number in `i`, we just want to
 repeat the movements 4 times. Which lines are inside the loop? Python uses
 indentation (a tab or four spaces) to group lines into a loop, so the loop ends
 when the indentation comes back to the left.
@@ -307,18 +308,20 @@ below the blue square?
     t.end_fill()
 
 Now that you have all the skills you need, can you solve the challenge at the
-start of the tutorial? Use this summary when necessary.
+start of the tutorial? Here's a summary of the skills you learned:
 
-| Command                           | Explanation                                                  |
-| --------------------------------- | ------------------------------------------------------------ |
-| `forward(distance)`               | Move forward by the specified `distance`, in the direction the turtle is headed. |
-| `backward(distance)`              | Move the turtle backward by `distance`, opposite to the direction the turtle is headed. |
-| `right(a) `                       | Turn to the right with the specified angle `a`.              |
-| `left(a)`                         | Turn to the left with the specified angle `a`.               |
-| `done()`                          | Don't close window immediatly in Python window.              |
-| `stamp()`                         | Make a stamp of the turtle shape on the canvas at the current position. |
-| `begin_fill()` <br />`end_fill()` | Start/stop coloring a shape.                                 |
-| `penup()`<br />`pendown()`        | The pen is lifted from the canvas and doesn't draw when moving.<br />The pen is pressed against the canvas and draws when moving. |
-| `color("c")`                      | Set pen color and fill color with color `c`.                 |
+| Command              | Explanation                                                  |
+| -------------------- | ------------------------------------------------------------ |
+| `forward(distance)`  | Move forward by the specified `distance`, in the direction the turtle is headed. |
+| `backward(distance)` | Move the turtle backward by `distance`, opposite to the direction the turtle is headed. |
+| `right(a) `          | Turn to the right with the specified angle `a`.              |
+| `left(a)`            | Turn to the left with the specified angle `a`.               |
+| `done()`             | Keep the turtle window open in regular Python.               |
+| `stamp()`            | Show where the turtle is.                                    |
+| `begin_fill()`       | Start colouring a shape.                                     |
+| `end_fill()`         | Stop colouring a shape.                                      |
+| `penup()`            | The pen is lifted from the canvas and doesn't draw when moving. |
+| `pendown()`          | The pen is pressed against the canvas and draws when moving. |
+| `color("c")`         | Choose the colour named `c`.                                 |
 
 [the challenge]: #the-challenge

@@ -51,7 +51,7 @@
     "prompts": "2.4.2",
     "react": "^16.14.0",
     "react-ace": "^9.5.0",
-    "react-app-polyfill": "^2.0.0",
+    "react-app-polyfill": "^3.0.0",
     "react-dev-utils": "^11.0.3",
     "react-dom": "^16.14.0",
     "react-markdown": "^4.3.1",

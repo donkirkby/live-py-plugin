@@ -21,7 +21,7 @@
     "diff": "^5.0.0",
     "dotenv": "11.0.0",
     "dotenv-expand": "5.1.0",
-    "eslint": "^7.11.0",
+    "eslint": "^8.6.0",
     "eslint-config-react-app": "^6.0.0",
     "eslint-plugin-flowtype": "^7.0.0",
     "eslint-plugin-import": "^2.25.4",

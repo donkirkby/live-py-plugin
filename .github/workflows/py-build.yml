@@ -1,16 +1,32 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: build
+name: py-build
 
 on:
-  - push
-  - pull_request
+  push:
+    paths:
+      - 'plugin/PySrc/**'
+      - 'test/PySrc/**'
+      - '**/*.py'
+      - '*.ini'
+      - '.github/**'
+  pull_request:
+    paths:
+      - 'plugin/PySrc/**'
+      - 'test/PySrc/**'
+      - '**/*.py'
+      - '*.ini'
+      - '.github/**'
 
 jobs:
-  build:
+  py-build:
 
     runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name !=
+      github.event.pull_request.base.repo.full_name
     strategy:
       fail-fast: false
       matrix:
@@ -58,6 +74,10 @@ jobs:
 
   build-python2:
     runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name !=
+      github.event.pull_request.base.repo.full_name
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -67,27 +87,3 @@ jobs:
       - name: Test Python2 warning
         run: |
           python test/PySrc/tests/validate_legacy_python.py
-
-  build-node:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - name: Install Node dependencies
-        run: |
-          cd html
-          npm ci
-          cd ..
-      - name: Build Javascript
-        run: |
-          cd html
-          npm run build
-          cd ..
-      - name: Test JavaScript
-        run: |
-          cd html
-          npm test
-          cd ..

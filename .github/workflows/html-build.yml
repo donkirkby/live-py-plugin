@@ -1,0 +1,40 @@
+# This workflow will install node dependencies, build, and run tests
+
+name: html-build
+
+on:
+  push:
+    paths:
+      - 'html/**'
+  pull_request:
+    paths:
+      - 'html/**'
+
+jobs:
+  html-build:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == "push" ||
+      github.event.pull_request.head.repo.full_name !=
+      github.event.pull_request.base.repo.full_name
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: Install Node dependencies
+        run: |
+          cd html
+          npm ci
+          cd ..
+      - name: Build Javascript
+        run: |
+          cd html
+          npm run build
+          cd ..
+      - name: Test JavaScript
+        run: |
+          cd html
+          npm test
+          cd ..

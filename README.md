@@ -1,7 +1,8 @@
 Live Coding in Python
 =====================
 
-[![Build Status]][actions]
+[![Python Build Status]][actions]
+[![HTML Build Status]][actions]
 [![Code Coverage]][codecov]
 [![PyCharm downloads]][pycharm plugin]
 [![Sublime downloads]][sublime plugin]
@@ -12,7 +13,8 @@ even your browser.
 
 [Package Version]: https://badge.fury.io/py/space-tracer.svg
 [pypi]: https://pypi.org/project/space-tracer/
-[Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/build.yml/badge.svg?branch=master
+[Python Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/py-build.yml/badge.svg?branch=master
+[HTML Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/html-build.yml/badge.svg?branch=master
 [actions]: https://github.com/donkirkby/live-py-plugin/actions
 [Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
 [codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master

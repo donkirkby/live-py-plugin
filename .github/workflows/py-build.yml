@@ -10,12 +10,14 @@ on:
       - 'test/PySrc/**'
       - '**/*.py'
       - '*.ini'
+      - '.github/**'
   pull_request:
     paths:
       - 'plugin/PySrc/**'
       - 'test/PySrc/**'
       - '**/*.py'
       - '*.ini'
+      - '.github/**'
 
 jobs:
   py-build:

@@ -6,9 +6,11 @@ on:
   push:
     paths:
       - 'html/**'
+      - '.github/**'
   pull_request:
     paths:
       - 'html/**'
+      - '.github/**'
 
 jobs:
   html-build:

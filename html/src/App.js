@@ -175,8 +175,9 @@ class CodeSample extends Component {
 
     constructor(props) {
         super(props);
-        let codeRunner = this.context === null ? window.analyze : undefined,
-            analyst = new SampleAnalyst(props.value, codeRunner);
+        const sourceCode = props.children[0].props.children[0],
+            codeRunner = this.context === null ? window.analyze : undefined,
+            analyst = new SampleAnalyst(sourceCode, codeRunner);
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
@@ -544,10 +545,10 @@ class App extends Component {
             <div className="app">
                 <PythonContext.Provider value={this.state.pythonMessage}>
                     <ReactMarkdown
-                        source={this.state.source}
-                        renderers={{
-                            code: CodeSample,
-                            link: FootnoteBuilder
+                        children={this.state.source}
+                        components={{
+                            pre: CodeSample,
+                            a: FootnoteBuilder
                         }}/>
                 </PythonContext.Provider>
             </div>

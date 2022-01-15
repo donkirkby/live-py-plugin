@@ -20,7 +20,7 @@ hero_image: ../images/index_hero.jpg
 
     fs.writeFileSync(destFilePath, indexMarkdown);
 
-    let match = indexSource.match(/<link href=".*" rel="stylesheet">/);
+    let match = indexSource.match(/<script defer="defer".*" rel="stylesheet">/);
     destFilePath = path.join(includesPath, 'head-scripts.html');
     fs.writeFileSync(destFilePath, wrapReact(match[0]));
 
@@ -62,7 +62,7 @@ function main() {
         if (entry === 'pyodide' && ! piodideExists) {
             // No new copy to replace it, so don't delete it.
         } else if (entry.isDirectory()) {
-            fs.rmdirSync(destFilePath, {recursive: true});
+            fs.rmSync(destFilePath, {recursive: true});
         } else {
             fs.unlinkSync(destFilePath);
         }

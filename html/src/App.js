@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import AceEditor from 'react-ace';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
 import tutorials from './tutorials.json';
@@ -114,11 +115,14 @@ class Editor extends Component {
         this.props.onScroll(this.content.current.editor.session.getScrollTop());
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps, prevState, snapshot) {
         this.content.current.editor.session.setScrollTop(this.props.scrollTop);
         if (this.props.selectedLine !== this.state.selectedLine) {
             this.setState({selectedLine: this.props.selectedLine});
-            this.content.current.editor.gotoLine(this.props.selectedLine+1);
+            this.content.current.editor.gotoLine(
+                this.props.selectedLine+1,
+                0,
+                false);
         }
         this.content.current.editor.resize();
     }
@@ -287,8 +291,8 @@ class CodeSample extends Component {
             diffCanvas = this.diffCanvasRef.current;
         let matchPercentage = undefined;
         if (diffCanvas !== null) {
-            diffCanvas.width = this.editorRef.current.clientWidth;
-            diffCanvas.height = this.editorRef.current.clientWidth * 0.75;
+            diffCanvas.width = liveCanvas.width;
+            diffCanvas.height = liveCanvas.height;
             let backgroundColor = '#ffffff';
             for (let command of goalCanvasCommands) {
                 if (command.name === 'bgcolor') {
@@ -313,6 +317,7 @@ class CodeSample extends Component {
     }
 
     handleCursorChange(selection) {
+        // noinspection JSUnresolvedFunction
         this.setState({selectedLine: selection.getSelectionLead().row});
     }
 
@@ -333,13 +338,43 @@ class CodeSample extends Component {
         window.removeEventListener('resize', this.handleResize);
     }
 
+    calculateEditorHeight() {
+        const textHeight = (1 + this.countLines(this.state.source))*18,
+            viewHeight = Math.round(window.innerHeight * 0.8);
+        if (this.state.goalSourceCode !== undefined) {
+            return Math.min(textHeight, Math.floor(viewHeight / 2));
+        }
+        return Math.min(textHeight, viewHeight);
+    }
+
+    calculateCanvasHeight() {
+        const aspectHeight = this.editorRef.current.clientWidth * 0.75,
+            viewHeight = Math.round(window.innerHeight * 0.8);
+        if (this.state.goalSourceCode !== undefined) {
+            return Math.min(aspectHeight, Math.floor(viewHeight / 2));
+        }
+        return Math.min(aspectHeight, viewHeight);
+    }
+
+    calculateGoalHeight() {
+        if (this.state.isCanvas) {
+            return this.calculateCanvasHeight();
+        }
+        const outputLines = Math.max(
+                this.countLines(this.state.goalOutput),
+                this.countLines(this.state.output)),
+            textHeight = outputLines*18,
+            viewHeight = Math.round(window.innerHeight * 0.8);
+        return Math.min(textHeight, Math.floor(viewHeight / 2));
+    }
+
     drawCanvas(commands, canvasRef) {
         const canvas = canvasRef.current;
         if ((canvas === null) || (commands === undefined)) {
             return;
         }
         canvas.width = this.editorRef.current.clientWidth;
-        canvas.height = this.editorRef.current.clientWidth * 0.75;
+        canvas.height = this.calculateCanvasHeight();
         const ctx = canvas.getContext('2d');
         ctx.translate(0.5, 0.5); // Centre lines on pixels.
         ctx.lineCap = 'round';
@@ -379,7 +414,7 @@ class CodeSample extends Component {
         }
     }
 
-    componentDidUpdate(prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState, snapshot) {
         if (this.context !== null) {
             if (this.context !== this.state.display) {
                 this.setState({display: this.context});
@@ -411,14 +446,14 @@ class CodeSample extends Component {
             outputHeaders = null,
             outputSection = null,
             resetButton = null,
-            sourceLineCount = 1 + this.countLines(this.state.source);
+            editorHeight = this.calculateEditorHeight();
         if (this.state.isLive) {
             if (this.state.isCanvas) {
                 displayDiv = <canvas ref={this.canvasRef}/>;
             } else {
                 displayDiv = <div
                     className="editor-pane"
-                    style={{height: sourceLineCount*18 + "px"}}>
+                    style={{height: editorHeight + "px"}}>
                     <Editor
                         value={displayValue}
                         scrollTop={this.state.scrollTop}
@@ -437,10 +472,7 @@ class CodeSample extends Component {
             </div>;
         }
         if (this.state.goalOutput !== undefined) {
-            let outputLineCount = this.countLines(this.state.output),
-                goalLineCount = this.countLines(this.state.goalOutput),
-                outputSize = Math.min(
-                    50, 1 + Math.max(outputLineCount, goalLineCount));
+            const goalHeight = this.calculateGoalHeight();
             progressBar = <ProgressBar percentage={this.state.matchPercentage}/>;
             if (this.state.isCanvas) {
                 outputHeaders = <div className="editor-wrapper">
@@ -459,7 +491,7 @@ class CodeSample extends Component {
                 </div>;
                 outputSection = <div className="editor-wrapper">
                     <div className="editor-pane"
-                         style={{height: outputSize*18 + "px"}}>
+                         style={{height: goalHeight + "px"}}>
                         <Editor
                             value={this.state.goalOutput}
                             markers={this.state.goalMarkers}
@@ -468,7 +500,7 @@ class CodeSample extends Component {
                             mode="text"/>
                     </div>
                     <div className="editor-pane"
-                         style={{height: outputSize*18 + "px"}}>
+                         style={{height: goalHeight + "px"}}>
                         <Editor
                             value={this.state.output}
                             markers={this.state.outputMarkers}
@@ -484,7 +516,7 @@ class CodeSample extends Component {
                 <div className="editor-wrapper">
                     <div className="editor-pane"
                         ref={this.editorRef}
-                        style={{height: sourceLineCount*18 + "px"}}>
+                        style={{height: editorHeight + "px"}}>
                         <Editor
                             value={this.state.source}
                             scrollTop={this.state.scrollTop}
@@ -549,7 +581,8 @@ class App extends Component {
                         components={{
                             pre: CodeSample,
                             a: FootnoteBuilder
-                        }}/>
+                        }}
+                        remarkPlugins={[remarkGfm]} />
                 </PythonContext.Provider>
             </div>
         );

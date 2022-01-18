@@ -14,9 +14,10 @@ in the [tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
 
-Special thanks to [James Davies] for contributing the Sublime Text support, and
+Special thanks to [James Davies] for contributing the Sublime Text support,
 to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for
-contributing the Emacs support. Thanks to [all the contributors][hatrack] for
+contributing the Emacs support, and to [Brecht Willems] for the idea of flag
+tutorials. Thanks to [all the contributors][hatrack] for
 helping in all kinds of ways, and thanks to [JetBrains] for the free PyCharm and
 IDEA licenses.
 
@@ -33,11 +34,14 @@ If you like this project, check out some of my [other projects][projects].
 [Sublime Text]: starting_sublime_text.md
 [Space Tracer]: space_tracer.md
 [James Davies]: https://github.com/Derfies
+[Brecht Willems]: https://github.com/BTWS2
 
 Feature Comparison
 ------------------
 So far, the Emacs mode seems to be the most popular way to use live coding in
-Python. The PyCharm plugin has the most features.
+Python, and the PyCharm plugin has the most features. The browser version might
+be the best for students, because it has tutorials and doesn't need to be
+installed.
 
 
 | Feature              | PyCharm |  Emacs  | Sublime | browser | space_tracer |
@@ -51,6 +55,7 @@ Python. The PyCharm plugin has the most features.
 | turtle graphics      |    Y    |         |         |    Y    |              |
 | matplotlib preview   |    Y    |         |    Y    |         |              |
 | pyglet preview       |    Y    |         |    Y    |         |              |
+| tutorials and goals  |         |         |         |    Y    |              |
 
 If you find the project useful, help us [make it better][contributing].
 
@@ -64,11 +69,11 @@ Python interpreter, and you can run a Python script normally.
 2. Click on the Plugins section.
 3. Click the Browse Repositories... button.
 4. Type live coding in the search box, and click on the "Live Coding in Python"
-    entry in the list below.
+   entry in the list below.
 5. Click the green Install button on the right.
 6. Click the Restart PyCharm button.
 7. Close all the dialog boxes by clicking OK, then let PyCharm restart when it
-    asks.
+   asks.
 8. Open a Python file.
 9. Run the Python file normally, as a script or a unit test.
 10. With the same run configuration selected in the drop down, choose Start
@@ -90,17 +95,17 @@ section, but the next section gives instructions for installing without MELPA.
 
 1. [Install GNU Emacs] if you don't already have it.
 2. [Install MELPA][melpa]. You probably want to follow the instructions
-    for the stable version, instead of the default bleeding-edge version.
+   for the stable version, instead of the default bleeding-edge version.
 3. Launch the package installer with `M-x package-list-packages`.
 4. Find the package with `C-s live-py-mode`.
 5. Mark the package to install with `i`, then execute the installation with
-    `x`.
+   `x`.
 6. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.
    You should see an extra window on the right that shows the results of running
    your code.
 7. Type `C-h m` and scroll down to the **Live-Py** section to see all the
-    advanced features that let you run other versions of Python or drive your
-    live coding from another script or a unit test.
+   advanced features that let you run other versions of Python or drive your
+   live coding from another script or a unit test.
 
 [melpa]: https://melpa.org/#/getting-started
 

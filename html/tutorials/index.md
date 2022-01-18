@@ -53,7 +53,7 @@ the code, the live coding display shows what happens as the code runs. It shows
 what's in each variable, and it adds a column each time a loop or a function
 runs.
 
-Some of the code samples are challenges that include a goal for you. You have to
+Some code samples are challenges that include a goal for you. You have to
 edit the code until your output matches the goal output. The bar above the goal
 will turn from red to green as you get closer to matching.
 
@@ -151,6 +151,9 @@ a yellow triangle?
         t.right(120)
     t.end_fill()
 
+For a longer turtle tutorial, see the [flag tutorial].
+
+[flag tutorial]:  ?tutorial=flags/romania-colombia
 
 # Feedback
 Thanks for trying out this prototype of the live coding tutorial. I'd love to

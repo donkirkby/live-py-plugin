@@ -32,9 +32,10 @@ in the [tools folder][tools]. To learn more, read about [how it works][how].
 
 ![Screenshot of a star diagram][screenshot]
 
-Special thanks to [James Davies] for contributing the Sublime Text support, and
+Special thanks to [James Davies] for contributing the Sublime Text support,
 to [Antti Kaihola][akaihola] and [Christoph Paulik][cpaulik] for
-contributing the Emacs support. Thanks to [all the contributors][hatrack] for
+contributing the Emacs support, and to [Brecht Willems] for the idea of flag
+tutorials. Thanks to [all the contributors][hatrack] for
 helping in all kinds of ways, and thanks to [JetBrains] for the free PyCharm and
 IDEA licenses.
 
@@ -51,11 +52,14 @@ If you like this project, check out some of my [other projects][projects].
 [Sublime Text]: https://donkirkby.github.io/live-py-plugin/starting_sublime_text.html
 [Space Tracer]: https://donkirkby.github.io/live-py-plugin/space_tracer.html
 [James Davies]: https://github.com/Derfies
+[Brecht Willems]: https://github.com/BTWS2
 
 Feature Comparison
 ------------------
 So far, the Emacs mode seems to be the most popular way to use live coding in
-Python. The PyCharm plugin has the most features.
+Python, and the PyCharm plugin has the most features. The browser version might
+be the best for students, because it has tutorials and doesn't need to be
+installed.
 
 
 | Feature              | PyCharm |  Emacs  | Sublime | browser | space_tracer |
@@ -69,6 +73,7 @@ Python. The PyCharm plugin has the most features.
 | turtle graphics      |    Y    |         |         |    Y    |              |
 | matplotlib preview   |    Y    |         |    Y    |         |              |
 | pyglet preview       |    Y    |         |    Y    |         |              |
+| tutorials and goals  |         |         |         |    Y    |              |
 
 If you find the project useful, help us [make it better][contributing].
 

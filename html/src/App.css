@@ -56,6 +56,8 @@ progress[value] {
   -moz-appearance: none;
   appearance: none;
   
+  height: 2em;
+  width: 100%;
 }
 
 progress[value]::-webkit-progress-bar {

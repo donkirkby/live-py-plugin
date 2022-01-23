@@ -40,26 +40,43 @@
 }
 
 .danger {
-  background: hsl(348, 100%, 61%);
+  color: hsl(348, 86%, 61%);
 }
 
 .warning {
-  background: hsl(48, 100%, 67%);
+  color: hsl(44,  100%, 77%);
 }
 
 .success {
-  background: hsl(141, 53%, 53%);
+  color: hsl(153, 53%,  53%);
 }
 
-.progressbar-wrapper {
-  height: 2em;
-  width: 100%;
-  border-radius: 5px;
-  border: 2px solid #212121;
+progress[value] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
 }
 
-.progressbar-filler {
-  height: 100%;
-  border-radius: inherit;
-  transition: width .2s ease-in;
+progress[value]::-webkit-progress-bar {
+  background-color: hsl(0, 0%, 93%);
+  border-radius: 9999px;
+}
+
+progress[value]::-webkit-progress-value {
+  border-radius: 9999px;
+  background-image:
+    -webkit-linear-gradient(left, 
+      hsl(348, 86%, 61%), 
+      hsl(44,  100%, 77%),
+      hsl(153, 53%,  53%));
+}
+
+progress[value]::-moz-progress-bar {
+  border-radius: 9999px;
+  background-image:
+	   -moz-linear-gradient(left, 
+      hsl(348, 86%, 61%), 
+      hsl(44,  100%, 77%),
+      hsl(153, 53%,  53%));
 }

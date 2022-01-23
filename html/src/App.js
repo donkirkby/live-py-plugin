@@ -96,10 +96,7 @@ class ProgressBar extends Component {
             (this.props.percentage < 100) ?
                 "warning" :
                 "success";
-        return <div className="progressbar-wrapper ">
-            <div className={"progressbar-filler " + stateClass}
-                 style={{width: `${this.props.percentage}%`}}/>
-        </div>;
+        return <progress className={stateClass} value={`${this.props.percentage}`} max="100"/>;
     }
 }
 

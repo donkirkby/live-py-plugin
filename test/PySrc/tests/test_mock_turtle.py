@@ -1,3 +1,6 @@
+import re
+from turtle import TurtleGraphicsError
+
 import pytest
 from space_tracer.canvas import Canvas
 from space_tracer.main import TraceRunner
@@ -552,6 +555,26 @@ create_line
     assert report == expected_report.splitlines()
 
 
+def test_bad_colour_name(patched_turtle):
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='black'
+    pensize=1"""
+
+    t = MockTurtle()
+    t.fd(100)
+    with pytest.raises(TurtleGraphicsError,
+                       match=r'bad color string: brightyellow'):
+        t.color('brightyellow')
+    report = t.report
+
+    assert report == expected_report.splitlines()
+
+
 def test_color_bad(patched_turtle):
     expected_report = """\
 create_line
@@ -559,34 +582,25 @@ create_line
     0
     100
     0
-    fill='#000000'
+    fill='black'
     pensize=1"""
 
     t = MockTurtle()
-    # noinspection PyTypeChecker
-    t.color((1.0, 0.0))  # Only two numbers, fails to black.
     t.fd(100)
+    with pytest.raises(TurtleGraphicsError,
+                       match=re.escape("bad color arguments: (1.0, 0.0)")):
+        # noinspection PyTypeChecker
+        t.color((1.0, 0.0))  # Only two numbers.
     report = t.report
 
     assert report == expected_report.splitlines()
 
 
 def test_color_bad_range(patched_turtle):
-    expected_report = """\
-create_line
-    0
-    0
-    100
-    0
-    fill='#000000'
-    pensize=1"""
-
     t = MockTurtle()
-    t.color(1.0, 0.0, 1.5)  # Over 1.0 not allowed, fails to black.
-    t.fd(100)
-    report = t.report
-
-    assert report == expected_report.splitlines()
+    with pytest.raises(TurtleGraphicsError,
+                       match=re.escape('bad color sequence: (1.0, 0.0, 1.5)')):
+        t.color(1.0, 0.0, 1.5)  # Over 1.0 not allowed, fails to black.
 
 
 def test_pen_dict(patched_turtle):

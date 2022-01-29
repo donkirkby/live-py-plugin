@@ -20,7 +20,7 @@ except ImportError:
     dialog_name = tkinter_name + '.simpledialog'
     tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
 
-from turtle import RawTurtle, TurtleScreen
+from turtle import RawTurtle, TurtleScreen, TurtleGraphicsError
 
 DEFAULT_FONT = ("Arial", 8, "normal")
 
@@ -72,14 +72,19 @@ class MockTurtle(RawTurtle):
             if color == 'black':
                 return color
             if isinstance(color, str):
-                return color_map.get(color.lower(), color)
+                rgb = color_map.get(color.lower())
+                if rgb is None:
+                    raise TurtleGraphicsError('bad color string: {}'.format(
+                        color))
+                return rgb
             try:
                 r, g, b = color
-            except ValueError:
-                return '#000000'
+            except (TypeError, ValueError):
+                raise TurtleGraphicsError("bad color arguments: %s" % str(color))
             r, g, b = [round(255.0*x) for x in (r, g, b)]
             if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
-                return '#000000'
+                raise TurtleGraphicsError('bad color sequence: {!r}'.format(
+                    color))
             return "#%02x%02x%02x" % (r, g, b)
 
         def clear(self):

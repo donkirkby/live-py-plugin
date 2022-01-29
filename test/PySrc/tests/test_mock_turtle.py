@@ -617,29 +617,30 @@ create_line
     assert pen['pencolor'] == '#0000ff'
 
 
-def test_get_color_names():
-    t = MockTurtle()
-    t.color('blue')
-    color = t.color()
-
-    # Before Python 3.6, dicts were not ordered, and either name was possible.
-    assert color in (('blue', 'blue'), ('blue1', 'blue1'))
-
-
-def test_get_color_rgb():
-    t = MockTurtle()
-    expected_color = (1.0, 0.0, 0.5)
-    t.color(expected_color)
-    color = t.color()
-
-    assert color == (expected_color, expected_color)
-
-
 def test_get_default_color():
     t = MockTurtle()
     color = t.color()
 
     assert color == ('black', 'black')
+
+
+def test_colormode():
+    expected_report = """\
+create_line
+    0
+    0
+    100
+    0
+    fill='#007fff'
+    pensize=1"""
+
+    t = MockTurtle()
+    t.getscreen().colormode(255)
+    t.color(0, 127, 255)
+    t.fd(100)
+    report = t.report
+
+    assert report == expected_report.splitlines()
 
 
 def test_bgcolor(patched_turtle):

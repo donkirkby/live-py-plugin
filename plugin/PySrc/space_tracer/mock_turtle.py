@@ -83,7 +83,9 @@ class MockTurtle(RawTurtle):
                 r, g, b = color
             except (TypeError, ValueError):
                 raise TurtleGraphicsError("bad color arguments: %s" % str(color))
-            r, g, b = [round(255.0*x) for x in (r, g, b)]
+            # noinspection PyUnresolvedReferences
+            colormode = self._colormode
+            r, g, b = [round(255.0*x/colormode) for x in (r, g, b)]
             if not ((0 <= r <= 255) and (0 <= g <= 255) and (0 <= b <= 255)):
                 raise TurtleGraphicsError('bad color sequence: {!r}'.format(
                     color))

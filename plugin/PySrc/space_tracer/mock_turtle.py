@@ -72,6 +72,8 @@ class MockTurtle(RawTurtle):
             if color == 'black':
                 return color
             if isinstance(color, str):
+                if re.match(r'#[0-9A-Fa-f]{6}', color):
+                    return color.lower()
                 rgb = color_map.get(color.lower())
                 if rgb is None:
                     raise TurtleGraphicsError('bad color string: {}'.format(

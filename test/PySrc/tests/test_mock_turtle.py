@@ -555,6 +555,22 @@ create_line
     assert report == expected_report.splitlines()
 
 
+@pytest.mark.parametrize(
+    'colour_in,colour_out',
+    [((0.1, 0.2, 0.3), (0.1, 0.2, 0.3)),
+     ('gray100', 'white'),
+     ('black', 'black'),
+     ('pink', 'pink'),
+     ('#00Ff00', 'green1')])
+def test_get_colour(colour_in, colour_out):
+    t = MockTurtle()
+    t.pencolor(colour_in)
+
+    c = t.pencolor()
+
+    assert c == colour_out
+
+
 def test_bad_colour_name(patched_turtle):
     expected_report = """\
 create_line

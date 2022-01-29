@@ -243,8 +243,16 @@ class MockTurtle(RawTurtle):
             "'MockTurtle' object has no attribute {!r}".format(name))
 
     def pen(self, pen=None, **pendict):
-        pendict['speed'] = 0
-        return super().pen(pen, **pendict)
+        if not (pen or pendict):
+            return super().pen()
+
+        if isinstance(pen, dict):
+            p = dict(pen)
+        else:
+            p = {}
+        p.update(pendict)
+        p['speed'] = 0
+        return super().pen(p)
 
     def write(self,
               arg,

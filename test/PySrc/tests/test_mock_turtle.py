@@ -609,10 +609,12 @@ create_line
 
     t = MockTurtle()
     t.pen(pencolor=(0, 0, 1.0))
+    pen = t.pen()
     t.fd(100)
     report = t.report
 
     assert report == expected_report.splitlines()
+    assert pen['pencolor'] == '#0000ff'
 
 
 def test_get_color_names():

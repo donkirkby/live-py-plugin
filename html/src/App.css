@@ -65,20 +65,32 @@ progress[value]::-webkit-progress-bar {
   border-radius: 9999px;
 }
 
-progress[value]::-webkit-progress-value {
+progress[type="danger"]::-webkit-progress-value {
   border-radius: 9999px;
-  background-image:
-    -webkit-linear-gradient(left, 
-      hsl(348, 86%, 61%), 
-      hsl(44,  100%, 77%),
-      hsl(153, 53%,  53%));
+  background: hsl(348, 86%, 61%);
 }
 
-progress[value]::-moz-progress-bar {
+progress[type="warning"]::-webkit-progress-value {
   border-radius: 9999px;
-  background-image:
-	   -moz-linear-gradient(left, 
-      hsl(348, 86%, 61%), 
-      hsl(44,  100%, 77%),
-      hsl(153, 53%,  53%));
+  background: hsl(44, 100%, 77%);
+}
+
+progress[type="success"]::-webkit-progress-value {
+  border-radius: 9999px;
+  background: hsl(153, 53%, 53%);
+}
+
+progress[type="danger"]::-moz-progress-bar {
+  border-radius: 9999px;
+  background: hsl(348, 86%, 61%);
+}
+
+progress[type="warning"]::-moz-progress-bar {
+  border-radius: 9999px;
+  background: hsl(44, 100%, 77%);
+}
+
+progress[type="success"]::-moz-progress-bar {
+  border-radius: 9999px;
+  background: hsl(153, 53%, 53%);
 }

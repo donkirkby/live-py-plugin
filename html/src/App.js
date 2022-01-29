@@ -96,7 +96,7 @@ class ProgressBar extends Component {
             (this.props.percentage < 100) ?
                 "warning" :
                 "success";
-        return <progress className={stateClass} value={`${this.props.percentage}`} max="100"/>;
+        return <progress className={stateClass} type={stateclass} value={`${this.props.percentage}`} max="100"/>;
     }
 }
 

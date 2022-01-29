@@ -571,7 +571,13 @@ def test_get_colour(colour_in, colour_out):
     assert c == colour_out
 
 
-def test_bad_colour_name(patched_turtle):
+@pytest.mark.parametrize(
+    'colour_in,expected_error',
+    [((1.0, 0.0), 'bad color arguments: (1.0, 0.0)'),  # only two numbers
+     ((1.0, 0.0, 1.5), 'bad color sequence: (1.0, 0.0, 1.5)'),  # over 1.0
+     ('brightyellow', 'bad color string: brightyellow'),
+     ('#1234567', 'bad color string: #1234567')])
+def test_bad_colour(patched_turtle, colour_in, expected_error):
     expected_report = """\
 create_line
     0
@@ -584,39 +590,11 @@ create_line
     t = MockTurtle()
     t.fd(100)
     with pytest.raises(TurtleGraphicsError,
-                       match=r'bad color string: brightyellow'):
-        t.color('brightyellow')
+                       match=re.escape(expected_error)):
+        t.color(colour_in)
     report = t.report
 
     assert report == expected_report.splitlines()
-
-
-def test_color_bad(patched_turtle):
-    expected_report = """\
-create_line
-    0
-    0
-    100
-    0
-    fill='black'
-    pensize=1"""
-
-    t = MockTurtle()
-    t.fd(100)
-    with pytest.raises(TurtleGraphicsError,
-                       match=re.escape("bad color arguments: (1.0, 0.0)")):
-        # noinspection PyTypeChecker
-        t.color((1.0, 0.0))  # Only two numbers.
-    report = t.report
-
-    assert report == expected_report.splitlines()
-
-
-def test_color_bad_range(patched_turtle):
-    t = MockTurtle()
-    with pytest.raises(TurtleGraphicsError,
-                       match=re.escape('bad color sequence: (1.0, 0.0, 1.5)')):
-        t.color(1.0, 0.0, 1.5)  # Over 1.0 not allowed, fails to black.
 
 
 def test_pen_dict(patched_turtle):

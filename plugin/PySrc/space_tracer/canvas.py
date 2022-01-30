@@ -1,6 +1,11 @@
 from operator import itemgetter
 
 
+class DummyWindow:
+    def call(self, *args, **kwargs):
+        pass
+
+
 class Canvas(object):
     def __init__(self, width=0, height=0):
         self.options = {'width': width,
@@ -104,6 +109,10 @@ class Canvas(object):
         else:
             item_details = self.items[item]  # type: dict
             item_details['deleted'] = True
+
+    @staticmethod
+    def winfo_toplevel():
+        return DummyWindow()
 
     def update(self):
         pass

@@ -40,26 +40,57 @@
 }
 
 .danger {
-  background: hsl(348, 100%, 61%);
+  color: hsl(348, 86%, 61%);
 }
 
 .warning {
-  background: hsl(48, 100%, 67%);
+  color: hsl(44,  100%, 77%);
 }
 
 .success {
-  background: hsl(141, 53%, 53%);
+  color: hsl(153, 53%,  53%);
 }
 
-.progressbar-wrapper {
+progress[value] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
   height: 2em;
   width: 100%;
-  border-radius: 5px;
-  border: 2px solid #212121;
 }
 
-.progressbar-filler {
-  height: 100%;
-  border-radius: inherit;
-  transition: width .2s ease-in;
+progress[value]::-webkit-progress-bar {
+  background-color: hsl(0, 0%, 93%);
+  border-radius: 9999px;
+}
+
+progress[type="danger"]::-webkit-progress-value {
+  border-radius: 9999px;
+  background: hsl(348, 86%, 61%);
+}
+
+progress[type="warning"]::-webkit-progress-value {
+  border-radius: 9999px;
+  background: hsl(44, 100%, 77%);
+}
+
+progress[type="success"]::-webkit-progress-value {
+  border-radius: 9999px;
+  background: hsl(153, 53%, 53%);
+}
+
+progress[type="danger"]::-moz-progress-bar {
+  border-radius: 9999px;
+  background: hsl(348, 86%, 61%);
+}
+
+progress[type="warning"]::-moz-progress-bar {
+  border-radius: 9999px;
+  background: hsl(44, 100%, 77%);
+}
+
+progress[type="success"]::-moz-progress-bar {
+  border-radius: 9999px;
+  background: hsl(153, 53%, 53%);
 }

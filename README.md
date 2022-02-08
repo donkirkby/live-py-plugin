@@ -6,13 +6,11 @@ Live Coding in Python
 [![Code Coverage]][codecov]
 [![PyCharm downloads]][pycharm plugin]
 [![Sublime downloads]][sublime plugin]
-[![Package Version]][pypi]
+[![space-tracer downloads]][space-tracer]
 
 Visualize your Python code while you type it in PyCharm, Emacs, Sublime Text, or
 even your browser.
 
-[Package Version]: https://badge.fury.io/py/space-tracer.svg
-[pypi]: https://pypi.org/project/space-tracer/
 [Python Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/py-build.yml/badge.svg?branch=master
 [HTML Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/html-build.yml/badge.svg?branch=master
 [actions]: https://github.com/donkirkby/live-py-plugin/actions
@@ -22,6 +20,8 @@ even your browser.
 [pycharm plugin]: https://plugins.jetbrains.com/plugin/9742
 [Sublime downloads]: https://img.shields.io/packagecontrol/dt/Live%20Coding%20in%20Python?label=Sublime%20%E2%86%93
 [sublime plugin]: https://packagecontrol.io/packages/Live%20Coding%20in%20Python
+[space-tracer downloads]: https://static.pepy.tech/personalized-badge/space-tracer?left_color=grey&right_color=brightgreen&left_text=space-tracer%20%E2%86%93
+[space-tracer]: https://pypi.org/project/space-tracer/
 
 To see how to use one of the Live Coding in Python plugins, watch the
 [demo video][video] or read the getting started pages for [PyCharm], [Emacs],

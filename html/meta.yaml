@@ -1,8 +1,8 @@
 package:
   name: space-tracer
-  version: 4.7.0
+  version: 4.8.0
 source:
-  path: space_tracer-4.7.0
+  path: space_tracer-4.8.0
 test:
   imports:
   - space-tracer

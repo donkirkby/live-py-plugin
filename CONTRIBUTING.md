@@ -226,6 +226,8 @@ for setting up [Jekyll], but the main command is this:
     cd docs
     bundle exec jekyll serve
 
+You can also run the `html/serve.sh` script to do the same thing.
+
 [Jekyll]: https://help.github.com/en/github/working-with-github-pages/testing-your-github-pages-site-locally-with-jekyll
 
 ## Adding Support For a New Editor ##

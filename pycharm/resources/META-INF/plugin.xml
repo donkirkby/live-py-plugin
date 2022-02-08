@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>4.7.0</version>
+    <version>4.8.0</version>
     <vendor url="https://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
@@ -10,7 +10,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Fill in several missing turtle methods.
+        Bug fixes in colour handling for turtle graphics.
     ]]>
     </change-notes>
 

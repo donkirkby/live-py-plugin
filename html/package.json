@@ -44,6 +44,6 @@
   },
   "devDependencies": {
     "canvas": "^2.9.0",
-    "mini-css-extract-plugin": "2.5.3"
+    "mini-css-extract-plugin": "2.6.0"
   }
 }

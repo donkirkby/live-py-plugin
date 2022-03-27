@@ -1,14 +1,18 @@
-This is a more challenging exercise: turn the Japanese flag into the flag of
-Burkina Faso. The tricky part is the star in the centre. This time, instead of
-using colour names, we use hexadecimal codes with two digits for red, two digits
-for green, and two digits for blue. Here are the details you need to draw the
-flag of Burkina Faso:
+This is more challenging than the [Romania to Colombia] exercise: turn the
+Japanese flag into the flag of Burkina Faso. The tricky part is the star in the
+centre. This time, instead of using colour names, we use hexadecimal codes with
+two digits for red, two digits for green, and two digits for blue. Here are the
+details you need to draw the flag of Burkina Faso:
 
 * Red is `#EF2B2D`
 * Green is `#009E49`
 * Yellow is `#FCD116`
 * The star is inscribed inside a circle of radius 33.
 
+Again, you can experiment on your own, or read the rest of the tutorial to learn
+the concepts you need.
+
+[Romania to Colombia]:  ?tutorial=flags/romania-colombia
 
     ### Canvas ###
     import turtle as t

@@ -1,16 +1,16 @@
-# Contributing to the Live Coding in Python Project #
+# Contributing to the Live Coding in Python Project
 If you like this project and want to make it better, help out. It could be as
 simple as sending [@donkirkby] a nice note on Twitter, you could report a bug,
 or pitch in with some development work. There are usually some issues labeled as
 [good first issues] or [help wanted].
 
-## Bug Reports and Enhancement Requests ##
+## Bug Reports and Enhancement Requests
 Please create issue descriptions [on GitHub][issues]. Be as specific as possible.
 Which version are you using? What did you do? What did you expect to happen? Are
 you planning to submit your own fix in a pull request? Please include a small
 code sample and what you would like the live code display to show for that code.
 
-## PyCharm Development ##
+## PyCharm Development
 You can work on the PyCharm version of the plugin with IntelliJ [IDEA], and
 follow the [plugin development guidelines][idea-dev].
 
@@ -18,7 +18,7 @@ If you're trying to find the code for some feature of PyCharm, put a breakpoint
 in `ActionUtil.performActionDumbAware()`, then use the feature and step
 through the code after the breakpoint.
 
-### Running from Source Code ###
+### Running from Source Code
 1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm` project.
 2. Install the [Python plugin][idea-py]. It will probably prompt you when you open the project.
 3. Use Git to clone the IDEA source code. (It takes a while.)
@@ -73,14 +73,14 @@ through the code after the breakpoint.
 [configure]: https://www.jetbrains.com/help/idea/2016.3/configuring-intellij-platform-plugin-sdk.html
 [plugin page]: https://plugins.jetbrains.com/plugin/9742
 
-## Emacs Development ##
+## Emacs Development
 Install the `live-py-mode` package as described in the README file, then replace all the files in
 `~/.emacs.d/elpa/live-py-mode-X.Y` with symbolic links to your git repository.
 
 Releases are built automatically on each commit, and published at [melpa.org].
 Stable releases are built from each tag, but do update the version number.
 
-### Debugging live-py-mode in Emacs ###
+### Debugging live-py-mode in Emacs
 When adding temporary debugging messages with the `message` function, it is
 recommended to open a second Emacs frame for the Messages buffer by typing
 `C-x 5 2` in the Messages buffer.
@@ -171,10 +171,20 @@ The details are at [packaging.python.org], but the main steps are:
 [package page]: https://pypi.org/project/space-tracer/
 
 ## Browser Development
-The browser version uses the [Pyodide] project to run Python code in the browser.
+The browser version uses the [Pyodide] project to run Python code in the
+browser. To start working on the Javascript code, [install nvm].
 
-The web site uses the [Bulma Clean theme], which is based on [Bulma]. The
-[Bulma colours] can be particularly helpful to learn about.
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+    nvm install 16
+    nvm use 16
+    cd /path/to/live-py-plugin/html
+    npm install
+    npm start
+
+This lets you test the basic Javascript without Pyodide or the theme. See the
+next section for how to run the full site. The web site uses the
+[Bulma Clean theme], which is based on [Bulma]. The [Bulma colours] can be
+particularly helpful to learn about.
 
 ### Updating and Testing
 To deploy the latest version to the web site, you'll need the `space-tracer`
@@ -199,10 +209,11 @@ GitHub, and install Docker. After that, follow these steps for each release.
    Replace the version number with whatever you just built.
 3. Find the `remove_modules.txt` file in the pyodide project, and remove
    `turtle.py` from the list.
-4. After the package files are in place, run Pyodide's `run_docker` script with
-   the `--pre-built` option, and then run `make` inside the container. See the
-   Pyodide project for full instructions. Sometimes, I've had to remove all
+4. After the package files are in place, run Pyodide's `run_docker` script. See
+   the Pyodide project for full instructions. Sometimes, I've had to remove all
    build products and rebuild. Either `make clean` or `git clean -f -Xd`.
+
+       sudo ./run_docker --pre-built PYODIDE_PACKAGES=core,space-tracer make
 
 To update the ReactJS files, change to the `html` folder, and run
 `npm run build`. You can also use `npm start` to test the ReactJS files without
@@ -213,7 +224,7 @@ Then commit the file changes, push, and create a release on GitHub. (Finish the
 other releases before marking the release on GitHub, if you're releasing more.) 
 
 [Pyodide]: https://github.com/iodide-project/pyodide
-[PR #506]: https://github.com/iodide-project/pyodide/pull/506
+[install nvm]: https://github.com/nvm-sh/nvm#installing-and-updating
 [Bulma Clean theme]: https://github.com/chrisrhymes/bulma-clean-theme
 [Bulma]: https://bulma.io/documentation/
 [Bulma colours]: https://bulma.io/documentation/overview/colors/
@@ -230,7 +241,7 @@ You can also run the `html/serve.sh` script to do the same thing.
 
 [Jekyll]: https://help.github.com/en/github/working-with-github-pages/testing-your-github-pages-site-locally-with-jekyll
 
-## Adding Support For a New Editor ##
+## Adding Support For a New Editor
 
 If you want to use live coding with a new editor, you can add basic support
 with two features:

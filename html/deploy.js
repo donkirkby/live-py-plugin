@@ -29,7 +29,7 @@ hero_image: ../images/index_hero.jpg
     fs.writeFileSync(destFilePath, wrapReact(match[1]));
 }
 
-function copyPiodide(srcPath, destPath) {
+function copyPyodide(srcPath, destPath) {
     const srcFiles = [
         'distutils.js',
         'distutils.data',
@@ -38,6 +38,7 @@ function copyPiodide(srcPath, destPath) {
         'pyodide.asm.wasm',
         'pyodide.asm.js',
         'pyodide.asm.data',
+        'pyodide_py.tar',
         'packages.json',
         'space-tracer.data',
         'space-tracer.js'];
@@ -52,14 +53,14 @@ function copyPiodide(srcPath, destPath) {
 function main() {
     const dest = path.resolve('../docs/demo'),
         src = path.resolve('build'),
-        piodideDest = path.resolve('../docs/demo/pyodide'),
-        piodideSrc = path.resolve('../../pyodide/build'),
-        piodideExists = fs.existsSync(piodideSrc),
+        pyodideDest = path.resolve('../docs/demo/pyodide'),
+        pyodideSrc = path.resolve('../../pyodide/build'),
+        pyodideExists = fs.existsSync(pyodideSrc),
         d = fs.opendirSync(dest);
     let entry;
     while ((entry = d.readSync()) !== null) {
         let destFilePath = path.join(dest, entry.name);
-        if (entry === 'pyodide' && ! piodideExists) {
+        if (entry === 'pyodide' && ! pyodideExists) {
             // No new copy to replace it, so don't delete it.
         } else if (entry.isDirectory()) {
             fs.rmSync(destFilePath, {recursive: true});
@@ -81,8 +82,8 @@ function main() {
         }
     }
 
-    if (piodideExists) {
-        copyPiodide(piodideSrc, piodideDest);
+    if (pyodideExists) {
+        copyPyodide(pyodideSrc, pyodideDest);
     }
 }
 

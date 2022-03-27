@@ -544,11 +544,11 @@ class App extends Component {
         };
 
         // noinspection JSUnresolvedVariable
-        if (window.languagePluginLoader === undefined) {
+        if (window.pyodidePromise === undefined) {
             this.state.pythonMessage = 'Python is not loaded!';
         } else {
             // noinspection JSUnresolvedVariable
-            window.languagePluginLoader.then(function() {
+            window.pyodidePromise.then(function() {
                 // noinspection JSUnresolvedVariable,JSUnresolvedFunction
                 window.pyodide.loadPackage('space-tracer').then(() => {
                     // noinspection JSUnresolvedVariable,JSUnresolvedFunction

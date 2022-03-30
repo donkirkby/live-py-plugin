@@ -1,3 +1,3 @@
 {% if page.is_react %}
-<script type="application/javascript">self.languagePluginUrl=self.location.protocol+"//"+self.location.host+self.location.pathname+"pyodide/",self.analyze=function(l){return[l,"output\n"+l]}</script><script type="application/javascript" src="pyodide/pyodide.js"></script>
+<script src="pyodide/pyodide.js"></script><script type="text/javascript">async function main(){self.analyze=function(o){return[o,"output\n"+o]},self.pyodidePromise=loadPyodide({indexURL:self.location.protocol+"//"+self.location.host+self.location.pathname+"pyodide/"}),self.pyodide=await self.pyodidePromise}main()</script>
 {% endif %}

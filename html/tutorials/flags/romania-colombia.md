@@ -13,7 +13,10 @@ concepts you need. The progress bar shows how close you are to the goal, and the
 canvas differences, below right, highlight the differences in red.
 
 If you really mess up the script, you can click the reset button to go back to
-the start.
+the start. If you want more challenge, try the next tutorial with the flags of
+[Japan and Burkina Faso].
+
+[Japan and Burkina Faso]: ?tutorial=flags/japan-burkina-faso
 
 [Moving the Turtle]: #moving-the-turtle
 

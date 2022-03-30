@@ -238,6 +238,7 @@ class CodeSample extends Component {
             isResized = false,
             newSource = this.state.source;
         if (canvas !== null) {
+            this.resizeCanvas(canvas);
             canvasSize = [canvas.width, canvas.height];
             isResized = (canvas.width !== this.state.canvasWidth ||
                 canvas.height !== this.state.canvasHeight);
@@ -365,13 +366,17 @@ class CodeSample extends Component {
         return Math.min(textHeight, Math.floor(viewHeight / 2));
     }
 
+    resizeCanvas(canvas) {
+        canvas.width = this.editorRef.current.clientWidth;
+        canvas.height = this.calculateCanvasHeight();
+    }
+
     drawCanvas(commands, canvasRef) {
         const canvas = canvasRef.current;
         if ((canvas === null) || (commands === undefined)) {
             return;
         }
-        canvas.width = this.editorRef.current.clientWidth;
-        canvas.height = this.calculateCanvasHeight();
+        this.resizeCanvas(canvas);
         const ctx = canvas.getContext('2d');
         ctx.translate(0.5, 0.5); // Centre lines on pixels.
         ctx.lineCap = 'round';

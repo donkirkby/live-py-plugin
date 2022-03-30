@@ -1,4 +1,4 @@
-# Flag Tutorial: Romania to Colombia
+# Flag Tutorial: Japan to Burkina Faso
 This is more challenging than the [Romania to Colombia] exercise: turn the
 Japanese flag into the flag of Burkina Faso. The tricky part is the star in the
 centre. This time, instead of using colour names, we use hexadecimal codes with

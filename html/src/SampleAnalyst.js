@@ -56,7 +56,8 @@ function unescapeString(value) {
 
 function parseCanvasCommands(display) {
     const displayLines = display.split(/\r\n|(?!\r\n)[\n-\r\x85\u2028\u2029]/),
-        canvasCommands = [];
+        canvasCommands = [],
+        imagePromises = [];
     displayLines.shift();  // start_canvas
     let currentCommand = undefined;
     while (displayLines.length) {
@@ -66,6 +67,12 @@ function parseCanvasCommands(display) {
         }
         if ( ! nextLine.startsWith('    ')) {
             if (currentCommand !== undefined) {
+                if (currentCommand.name === 'create_image') {
+                    const image = new Image();
+                    image.src = 'data:image/png;base64,' + currentCommand.image;
+                    currentCommand.image = image;
+                    imagePromises.push(image.decode());
+                }
                 canvasCommands.push(currentCommand);
             }
             currentCommand = {name: nextLine, coords: []};
@@ -97,7 +104,7 @@ function parseCanvasCommands(display) {
         }
     }
     const remainingDisplay = displayLines.join('\n');
-    return [canvasCommands, remainingDisplay];
+    return [canvasCommands, remainingDisplay, imagePromises];
 }
 
 export default class SampleAnalyst {
@@ -110,6 +117,8 @@ export default class SampleAnalyst {
                 isLive,
                 isCanvas,
                 canvasSize) {
+        this.imagePromises = [];
+
         if (goalSourceCode !== undefined) {
             this.sourceCode = sourceCode;
             this.goalSourceCode = goalSourceCode;
@@ -157,10 +166,13 @@ export default class SampleAnalyst {
             this.output = result.get(1);
 
             if (this.isCanvas) {
-                const [canvasCommands, remainingDisplay] = parseCanvasCommands(
-                    this.display);
+                const [
+                    canvasCommands,
+                    remainingDisplay,
+                    imagePromises] = parseCanvasCommands(this.display);
                 this.canvasCommands = canvasCommands;
                 this.display = remainingDisplay;
+                this.imagePromises.push(...imagePromises);
             }
             if (goalOutput !== undefined) {
                 this.goalOutput = goalOutput;
@@ -172,6 +184,7 @@ export default class SampleAnalyst {
                     const goalDisplay = goalResult.get(0),
                         displayParts = parseCanvasCommands(goalDisplay);
                     this.goalCanvasCommands = displayParts[0];
+                    this.imagePromises.push(...displayParts[2]);
                 }
             }
             if (this.goalOutput !== undefined) {

@@ -257,23 +257,25 @@ class CodeSample extends Component {
                 this.state.isCanvas,
                 canvasSize
             );
-        this.drawCanvas(analyst.canvasCommands, this.canvasRef);
-        this.drawCanvas(analyst.goalCanvasCommands, this.goalCanvasRef);
-        let matchPercentage = this.compareCanvases(analyst.goalCanvasCommands);
-        if (matchPercentage === undefined) {
-            matchPercentage = analyst.matchPercentage;
-        }
-        this.setState({
-            source: newSource,
-            display: analyst.display,
-            output: analyst.output,
-            goalOutput: analyst.goalOutput,
-            goalMarkers: analyst.goalMarkers,
-            outputMarkers: analyst.outputMarkers,
-            matchPercentage: matchPercentage,
-            canvasCommands: analyst.canvasCommands,
-            goalCanvasCommands: analyst.goalCanvasCommands,
-            updateTimer: undefined
+        Promise.all(analyst.imagePromises).then(() => {
+            this.drawCanvas(analyst.canvasCommands, this.canvasRef);
+            this.drawCanvas(analyst.goalCanvasCommands, this.goalCanvasRef);
+            let matchPercentage = this.compareCanvases(analyst.goalCanvasCommands);
+            if (matchPercentage === undefined) {
+                matchPercentage = analyst.matchPercentage;
+            }
+            this.setState({
+                source: newSource,
+                display: analyst.display,
+                output: analyst.output,
+                goalOutput: analyst.goalOutput,
+                goalMarkers: analyst.goalMarkers,
+                outputMarkers: analyst.outputMarkers,
+                matchPercentage: matchPercentage,
+                canvasCommands: analyst.canvasCommands,
+                goalCanvasCommands: analyst.goalCanvasCommands,
+                updateTimer: undefined
+            });
         });
         if (isResized) {
             this.setState({
@@ -412,6 +414,9 @@ class CodeSample extends Component {
                     ? 'right'
                     : 'center';
                 ctx.fillText(command.text, command.coords[0], command.coords[1]);
+            }
+            else if (command.name === 'create_image') {
+                ctx.drawImage(command.image, command.coords[0], command.coords[1]);
             }
         }
     }
@@ -554,7 +559,9 @@ class App extends Component {
         } else {
             // noinspection JSUnresolvedVariable
             window.pyodidePromise.then(function() {
-                // noinspection JSUnresolvedVariable,JSUnresolvedFunction
+                // noinspection JSUnresolvedFunction
+                window.pyodide.loadPackage('matplotlib');
+                // noinspection JSUnresolvedFunction
                 window.pyodide.loadPackage('space-tracer').then(() => {
                     // noinspection JSUnresolvedVariable,JSUnresolvedFunction
                     window.pyodide.runPython(

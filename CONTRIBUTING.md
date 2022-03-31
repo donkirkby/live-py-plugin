@@ -213,7 +213,7 @@ GitHub, and install Docker. After that, follow these steps for each release.
    the Pyodide project for full instructions. Sometimes, I've had to remove all
    build products and rebuild. Either `make clean` or `git clean -f -Xd`.
 
-       sudo ./run_docker --pre-built PYODIDE_PACKAGES=core,space-tracer make
+       sudo ./run_docker --pre-built PYODIDE_PACKAGES=core,space-tracer,matplotlib make
 
 To update the ReactJS files, change to the `html` folder, and run
 `npm run build`. You can also use `npm start` to test the ReactJS files without

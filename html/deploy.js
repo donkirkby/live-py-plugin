@@ -31,15 +31,33 @@ hero_image: ../images/index_hero.jpg
 
 function copyPyodide(srcPath, destPath) {
     const srcFiles = [
+        'cycler.js',
+        'cycler.data',
         'distutils.js',
         'distutils.data',
+        'kiwisolver.js',
+        'kiwisolver.data',
+        'matplotlib.js',
+        'matplotlib.data',
+        'numpy.js',
+        'numpy.data',
+        'pillow.js',
+        'pillow.data',
         'pyodide.js',
         'pyodide.js.map',
         'pyodide.asm.wasm',
         'pyodide.asm.js',
         'pyodide.asm.data',
         'pyodide_py.tar',
+        'pyparsing.js',
+        'pyparsing.data',
+        'python-dateutil.js',
+        'python-dateutil.data',
+        'pytz.js',
+        'pytz.data',
         'packages.json',
+        'six.js',
+        'six.data',
         'space-tracer.data',
         'space-tracer.js'];
     fs.mkdirSync(destPath);

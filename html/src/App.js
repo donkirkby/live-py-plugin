@@ -223,7 +223,7 @@ class CodeSample extends Component {
 
     scheduleUpdate() {
         if (this.state.updateTimer !== undefined) {
-            clearInterval(this.state.updateTimer);
+            return;
         }
         this.setState({
             updateTimer: setInterval(this.updateDisplay, 300)
@@ -231,7 +231,9 @@ class CodeSample extends Component {
     }
 
     updateDisplay() {
-        clearInterval(this.state.updateTimer);
+        if (this.state.updateTimer !== undefined) {
+            clearInterval(this.state.updateTimer);
+        }
         let codeRunner = this.context === null ? window.analyze : undefined,
             canvas = this.canvasRef.current,
             canvasSize,
@@ -257,25 +259,26 @@ class CodeSample extends Component {
                 this.state.isCanvas,
                 canvasSize
             );
+        this.setState({
+            source: newSource,
+            display: analyst.display,
+            output: analyst.output,
+            goalOutput: analyst.goalOutput,
+            goalMarkers: analyst.goalMarkers,
+            outputMarkers: analyst.outputMarkers,
+            canvasCommands: analyst.canvasCommands,
+            goalCanvasCommands: analyst.goalCanvasCommands,
+            updateTimer: undefined
+        });
         Promise.all(analyst.imagePromises).then(() => {
+            analyst.imagePromises.length = 0;
             this.drawCanvas(analyst.canvasCommands, this.canvasRef);
             this.drawCanvas(analyst.goalCanvasCommands, this.goalCanvasRef);
             let matchPercentage = this.compareCanvases(analyst.goalCanvasCommands);
             if (matchPercentage === undefined) {
                 matchPercentage = analyst.matchPercentage;
             }
-            this.setState({
-                source: newSource,
-                display: analyst.display,
-                output: analyst.output,
-                goalOutput: analyst.goalOutput,
-                goalMarkers: analyst.goalMarkers,
-                outputMarkers: analyst.outputMarkers,
-                matchPercentage: matchPercentage,
-                canvasCommands: analyst.canvasCommands,
-                goalCanvasCommands: analyst.goalCanvasCommands,
-                updateTimer: undefined
-            });
+            this.setState({matchPercentage: matchPercentage});
         });
         if (isResized) {
             this.setState({

@@ -19,7 +19,7 @@
       <excludeFolder url="file://$MODULE_DIR$/../feature" />
       <excludeFolder url="file://$MODULE_DIR$/../build" />
     </content>
-    <orderEntry type="jdk" jdkName="IntelliJ IDEA IU-201.7846.76" jdkType="IDEA JDK" />
+    <orderEntry type="jdk" jdkName="IntelliJ IDEA IU-213.7172.25" jdkType="IDEA JDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library>

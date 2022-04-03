@@ -15,7 +15,9 @@ except ImportError:
     tk = sys.modules[tkinter_name] = types.ModuleType(tkinter_name)
 
     tk.Frame = tk.Canvas = tk.Tk = tk.ROUND = object
-    tk.mainloop = lambda *args, **kwargs: None
+    class TkMisc: pass
+    tk.Misc = TkMisc()
+    tk.mainloop = tk.Misc.mainloop = lambda *args, **kwargs: None
 
     dialog_name = tkinter_name + '.simpledialog'
     tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)

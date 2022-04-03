@@ -207,6 +207,7 @@ def analyze(source_code, canvas_size=None):
             tracer_args.append('--canvas')
             tracer_args.append('-x{}'.format(canvas_width))
             tracer_args.append('-y{}'.format(canvas_height))
+            tracer_args.append('--zoomed')
         tracer_args.append(PSEUDO_FILENAME)
         code_report = tracer.trace_command(tracer_args)
     stdout = tracer.standard_files.old_files['stderr'].getvalue()
@@ -420,6 +421,14 @@ class TraceRunner(object):
                 was_patched = True
             else:
                 MockTurtle.monkey_patch(self.canvas)
+        plt = sys.modules.get('matplotlib.pyplot')
+        if plt is not None:
+            # Clear any plot state from previous runs.
+            plt.close()
+            plt.live_coding_size = (args.width, args.height)
+            if args.zoomed:
+                plt.live_coding_zoom()
+
         self.standard_files['stdin'] = args.stdin
         self.standard_files['stdout'] = args.stdout
         self.standard_files['stderr'] = args.stderr

@@ -9,6 +9,15 @@
     link: /starting_sublime_text.html
 - name: Browser
   link: /demo/
+  dropdown:
+    - name: Examples
+      link: /demo/
+    - name: Beginner Matplotlib Tutorial
+      link: /demo/?tutorial=matplotlib/intro
+    - name: Beginner Turtle Tutorial
+      link: /demo/?tutorial=flags/romania-colombia
+    - name: Intermediate Turtle Tutorial
+      link: /demo/?tutorial=flags/japan-burkina-faso
 - name: Space Tracer
   link: /space_tracer.html
   dropdown:

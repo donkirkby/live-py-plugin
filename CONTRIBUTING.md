@@ -19,33 +19,39 @@ in `ActionUtil.performActionDumbAware()`, then use the feature and step
 through the code after the breakpoint.
 
 ### Running from Source Code
-1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm` project.
-2. Install the [Python plugin][idea-py]. It will probably prompt you when you open the project.
+1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm`
+   project.
+2. Install the [Python plugin][idea-py]. It will probably prompt you when you
+   open the project.
 3. Use Git to clone the IDEA source code. (It takes a while.)
 
         git clone git://git.jetbrains.org/idea/community.git idea
 
-4. Check out the Git label that matches the version of IDEA you are using. Find the build number in the Help: About
-    dialog. List the available tags, then check out the one that matches.
+4. Check out the Git label that matches the version of IDEA you are using. Find
+   the build number in the Help: About dialog. List the available tags, then
+   check out the one that matches.
 
         cd idea
         git tag
         git checkout tags/x.y
 
-5. Back in IDEA, [configure] the IntelliJ platform plugin SDK. Don't forget to add a source path for the IDEA source
-    code that you downloaded.
-6. In that SDK's classpath, add an entry for the Python plugin. Look in the IDEA configuration folder, something like
-    this:
+5. Back in IDEA, [configure] the IntelliJ platform plugin SDK. Don't forget to
+   add a source path for the IDEA source code that you downloaded.
+6. In that SDK's classpath, add an entry for the Python plugin. Look in the IDEA
+   configuration folder, something like this:
 
         /home/user/.IdeaIC2016.3/config/plugins/python/lib/python.jar
 
-7. You might have to add a Python SDK as well. One good way to get a useful Python configuration is to run tox in the
-    `live-py-plugin` folder. Then configure a Python SDK using `live-py-plugin/.tox/py36/bin/python3.6`, for example.
-8. From the Run menu, choose Run..., and configure a Plugin launch. Then launch it. It will prompt you to set up a new
-    project.
-9. In the new project, create a `.py` file. Then install the Python plugin when it prompts you. That will make you
-    restart IDEA.
-10. Configure a Python SDK in the new project. It's in the File menu under Project Structure.
+7. You might have to add a Python SDK as well. One good way to get a useful
+   Python configuration is to run tox in the `live-py-plugin` folder. Then
+   configure a Python SDK using `live-py-plugin/.tox/py36/bin/python3.6`, for
+   example.
+8. From the Run menu, choose Run..., and configure a Plugin launch. Then launch
+   it. It will prompt you to set up a new project.
+9. In the new project, create a `.py` file. Then install the Python plugin when
+   it prompts you. That will make you restart IDEA.
+10. Configure a Python SDK in the new project. It's in the File menu under
+    Project Structure.
 
 ### Publish a new release for the PyCharm plugin
 1. Check that all the Python unit tests pass, by running tox.

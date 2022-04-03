@@ -1,7 +1,7 @@
 remote_theme: chrisrhymes/bulma-clean-theme
 title: Live Coding in Python
 google_analytics: UA-4644630-2
-favicon: https://github.com/donkirkby.png
+favicon: https://donkirkby.github.io/favicon.png
 
 defaults:
   - scope:

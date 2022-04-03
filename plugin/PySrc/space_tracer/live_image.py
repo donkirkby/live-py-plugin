@@ -147,7 +147,7 @@ class LiveFigure(LiveImage):
 
     def convert_to_png(self) -> bytes:
         data = io.BytesIO()
-        self.figure.savefig(data, format='PNG')
+        self.figure.savefig(data, format='PNG', dpi=self.figure.dpi)
 
         return data.getvalue()
 

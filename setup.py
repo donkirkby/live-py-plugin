@@ -23,7 +23,7 @@ setuptools.setup(
     classifiers=[  # from https://pypi.org/classifiers/
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Debuggers",
-        "Programming Language :: Python :: 3.5",
+        # Synchronize Python versions with py-build.yml workflow and tox.ini.
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

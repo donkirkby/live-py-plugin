@@ -33,7 +33,6 @@ class LiveImage(ABC):
 
         Override this method for any subclass to handle an image format.
         """
-        pass
 
     def convert_to_painter(self) -> 'LivePainter':
         """ Convert this image to one that can be edited.
@@ -154,6 +153,7 @@ class LiveFigure(LiveImage):
 
 class LiveImageDiffer:
     def __init__(self, diffs_path: Path = None, request=None, is_displayed=True):
+        # noinspection PySingleQuotedDocstring
         ''' Initialize the object and clean out the diffs path.
 
         This class requires Pillow to be installed, but you can remove that

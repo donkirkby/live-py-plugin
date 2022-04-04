@@ -188,6 +188,29 @@ def test_live_pillow_pixels():
     assert p2 == default
 
 
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_live_png_as_painter(tmp_path):
+    blue = (0, 0, 255, 255)
+    white = (255, 255, 255, 255)
+
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), blue)
+    image1.set_pixel((6, 10), white)
+
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image2.set_pixel((5, 10), blue)
+    bytes2 = image2.convert_to_png()
+    image3 = LivePng(bytes2)
+    painter3 = image3.convert_to_painter()
+    painter3.set_pixel((6, 10), white)
+
+    differ = LiveImageDiffer(tmp_path)
+
+    differ.assert_equal(image1, painter3, 'live_png_as_painter')
+
+
+# noinspection DuplicatedCode
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_compare():
     blue = (0, 0, 255, 255)
@@ -258,6 +281,24 @@ create_image
     image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
 
     differ = LiveImageDiffer()
+
+    differ.compare(image1, image2)
+
+    report = t.report
+
+    assert replace_image(report) == expected_report
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_display_disabled(patched_turtle):
+    expected_report = '\n'
+
+    t = MockTurtle()
+
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    differ = LiveImageDiffer(is_displayed=False)
 
     differ.compare(image1, image2)
 
@@ -366,6 +407,7 @@ def test_differ_compare_two_sizes():
     assert differ.diff_count == 5
 
 
+# noinspection DuplicatedCode
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_remove_common_prefix(tmp_path):
     image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
@@ -379,6 +421,26 @@ def test_differ_remove_common_prefix(tmp_path):
 
     differ.compare(image1, image2, 'test_apple')
     differ.compare(image1, image2, 'test_banana')
+    differ.remove_common_prefix()
+
+    assert actual_path1.exists()
+    assert actual_path2.exists()
+
+
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_remove_no_prefix(tmp_path):
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1.set_pixel((5, 10), (0, 0, 101, 255))
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+
+    diffs_path = tmp_path / 'image_diffs'
+    actual_path1 = diffs_path / 'apple-actual.png'
+    actual_path2 = diffs_path / 'banana-actual.png'
+    differ = LiveImageDiffer(diffs_path)
+
+    differ.compare(image1, image2, 'apple')
+    differ.compare(image1, image2, 'banana')
     differ.remove_common_prefix()
 
     assert actual_path1.exists()
@@ -433,4 +495,9 @@ def test_differ_assert_fails():
     differ = LiveImageDiffer()
 
     with pytest.raises(AssertionError, match=r'Images differ by 1 pixel.'):
+        differ.assert_equal(image1, image2)
+
+    image1.set_pixel((5, 11), blue)
+
+    with pytest.raises(AssertionError, match=r'Images differ by 2 pixels.'):
         differ.assert_equal(image1, image2)

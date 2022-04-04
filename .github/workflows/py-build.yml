@@ -53,9 +53,9 @@ jobs:
       - name: Test with tox and pytest
         run: python -m tox -e py
       - name: Test with tox and pytest, plus Pillow
-        run: python -m tox -e py-pil
+        run: python -m tox -e py-pil -- --cov-append
       - name: Test with tox and pytest, plus matplotlib
-        run: python -m tox -e py-mpl
+        run: python -m tox -e py-mpl -- --cov-append
 #      - name: Test with Emacs
 #        id: emacs-tests
 #        continue-on-error: true

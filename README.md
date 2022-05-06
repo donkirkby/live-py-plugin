@@ -7,6 +7,7 @@ Live Coding in Python
 [![PyCharm downloads]][pycharm plugin]
 [![Sublime downloads]][sublime plugin]
 [![space-tracer downloads]][space-tracer]
+[![DOI]][zenodo]
 
 Visualize your Python code while you type it in PyCharm, Emacs, Sublime Text, or
 even your browser.
@@ -22,7 +23,8 @@ even your browser.
 [sublime plugin]: https://packagecontrol.io/packages/Live%20Coding%20in%20Python
 [space-tracer downloads]: https://static.pepy.tech/personalized-badge/space-tracer?left_color=grey&right_color=brightgreen&left_text=space-tracer%20%E2%86%93
 [space-tracer]: https://pypi.org/project/space-tracer/
-
+[DOI]: https://zenodo.org/badge/4332096.svg
+[zenodo]: https://zenodo.org/badge/latestdoi/4332096
 To see how to use one of the Live Coding in Python plugins, watch the
 [demo video][video] or read the getting started pages for [PyCharm], [Emacs],
 or [Sublime Text]. Want to try it without installing anything? Try the

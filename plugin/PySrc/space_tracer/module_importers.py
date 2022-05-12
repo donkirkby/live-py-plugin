@@ -1,5 +1,6 @@
 from ast import parse
 import builtins
+from functools import partial
 from importlib.abc import MetaPathFinder, Loader
 from importlib.machinery import ModuleSpec
 from importlib.util import find_spec
@@ -407,7 +408,7 @@ class PatchedModuleLoader(Loader):
             turtle_screen = MockTurtle._screen
             screen_width = turtle_screen.cv.cget('width')
             screen_height = turtle_screen.cv.cget('height')
-            module.show = self.mock_show
+            module.show = partial(self.mock_show)  # Lets it accept a signature.
             module.live_coding_size = (screen_width, screen_height)
             module.live_coding_zoom = self.live_coding_zoom
             if self.is_zoomed:

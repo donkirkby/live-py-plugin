@@ -591,7 +591,7 @@ create_line
     t.fd(100)
     with pytest.raises(TurtleGraphicsError,
                        match=re.escape(expected_error)):
-        t.color(colour_in)
+        turtle.color(colour_in)
     report = t.report
 
     assert report == expected_report.splitlines()

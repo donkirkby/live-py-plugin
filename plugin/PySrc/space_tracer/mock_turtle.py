@@ -17,6 +17,8 @@ except ImportError:
     tk.Frame = tk.Canvas = tk.Tk = tk.ROUND = object
     class TkMisc: pass
     tk.Misc = TkMisc()
+    class TclError(Exception): pass
+    tk.TclError = TclError
     tk.mainloop = tk.Misc.mainloop = lambda *args, **kwargs: None
 
     dialog_name = tkinter_name + '.simpledialog'

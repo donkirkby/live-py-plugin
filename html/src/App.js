@@ -385,6 +385,7 @@ class CodeSample extends Component {
         const ctx = canvas.getContext('2d');
         ctx.translate(0.5, 0.5); // Centre lines on pixels.
         ctx.lineCap = 'round';
+        ctx.textBaseline = 'bottom';
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         for (const command of commands) {

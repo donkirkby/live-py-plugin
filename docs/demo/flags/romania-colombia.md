@@ -1,5 +1,9 @@
-# Flag Tutorial: Romania to Colombia
-
+---
+title: "Flag Tutorial: Romania to Colombia"
+layout: react
+is_react: True
+hero_image: ../../images/index_hero.jpg
+---
 Beginning Python programmers can use this tutorial to learn basic concepts in
 Python using the visual tools in the turtle module. All the code runs in your
 browser, so you don't have to install anything.
@@ -16,18 +20,22 @@ If you really mess up the script, you can click the reset button to go back to
 the start. If you want more challenge, try the next tutorial with the flags of
 [Japan and Burkina Faso].
 
-[Japan and Burkina Faso]: ?tutorial=flags/japan-burkina-faso
+## Table of Contents
+* [The Challenge]
+* [Moving the Turtle]
+* [Debugging with Stamps]
+* [Filling Shapes]
+* [Repeating with Loops]
+* [Lifting the Pen]
+* [Changing Colour]
 
+[Japan and Burkina Faso]: japan-burkina-faso.md
+[The Challenge]: #the-challenge
 [Moving the Turtle]: #moving-the-turtle
-
 [Debugging with Stamps]: #debugging-with-stamps
-
 [Filling Shapes]: #filling-shapes
-
 [Repeating with Loops]: #repeating-with-loops
-
 [Lifting the Pen]: #lifting-the-pen
-
 [Changing Colour]: #changing-colour
 
 ## The Challenge
@@ -310,7 +318,7 @@ below the blue square?
         t.right(90)
     t.end_fill()
 
-Now that you have all the skills you need, can you solve the challenge at the
+Now that you have all the skills you need, can you solve [the challenge] at the
 start of the tutorial? Here's a summary of the skills you learned:
 
 | Command              | Explanation                                                  |

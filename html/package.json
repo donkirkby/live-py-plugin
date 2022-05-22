@@ -7,17 +7,15 @@
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.2.0",
     "@testing-library/user-event": "^14.2.0",
+    "diff": "^5.0.0",
     "react": "^18.1.0",
     "react-ace": "^10.1.0",
     "react-dom": "^18.1.0",
-    "react-markdown": "^8.0.3",
     "react-scripts": "5.0.1",
-    "remark-gfm": "^3.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
-    "prebuild": "node collect_tutorials.js",
     "build": "react-scripts build",
     "postbuild": "node deploy.js",
     "test": "react-scripts test",

@@ -1,4 +1,9 @@
-# Matplotlib Tutorial
+---
+title: Matplotlib Tutorial
+layout: react
+is_react: True
+hero_image: ../../images/index_hero.jpg
+---
 There are a few plotting libraries to choose from in Python, but matplotlib
 seems the most common. Once you know the basics of Matplotlib, you might find
 Seaborn helpful, and it's built on top of Matplotlib, so it's helpful to know

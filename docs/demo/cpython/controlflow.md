@@ -1,6 +1,9 @@
-More Control Flow Tools
-=======================
-
+---
+title: More Control Flow Tools
+layout: react
+is_react: True
+hero_image: ../../images/index_hero.jpg
+---
 Besides the `while` statement just introduced, Python knows the usual
 control flow statements known from other languages, with some twists.
 

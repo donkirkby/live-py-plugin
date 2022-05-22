@@ -13,11 +13,11 @@
     - name: Examples
       link: /demo/
     - name: Beginner Matplotlib Tutorial
-      link: /demo/?tutorial=matplotlib/intro
+      link: /demo/matplotlib/intro
     - name: Beginner Turtle Tutorial
-      link: /demo/?tutorial=flags/romania-colombia
+      link: /demo/flags/romania-colombia
     - name: Intermediate Turtle Tutorial
-      link: /demo/?tutorial=flags/japan-burkina-faso
+      link: /demo/flags/japan-burkina-faso
 - name: Space Tracer
   link: /space_tracer.html
   dropdown:

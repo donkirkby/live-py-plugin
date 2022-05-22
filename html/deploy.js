@@ -2,26 +2,18 @@ const fs = require('fs');
 const path = require('path');
 
 function wrapReact(source) {
-    return "{% if page.is_react %}\n" + source + "\n{% endif %}\n";
+    const absoluteSource = source.replaceAll(
+        /"\.\/([^"]+)"/g,
+        `"{{ 'demo/$1' | absolute_url }}"`);
+    return "{% if page.is_react %}\n" + absoluteSource + "\n{% endif %}\n";
 }
 
 function copyIndex(indexSrcPath, destFolderPath) {
-    const indexMarkdown = `\
----
-title: Live Python in the Browser
-layout: react
-is_react: True
-hero_image: ../images/index_hero.jpg
----
-`;
     let indexSource = fs.readFileSync(indexSrcPath, 'utf8');
-    let destFilePath = path.join(destFolderPath, 'index.md');
     let includesPath = path.join(destFolderPath, '../_includes');
 
-    fs.writeFileSync(destFilePath, indexMarkdown);
-
     let match = indexSource.match(/<script defer="defer".*" rel="stylesheet">/);
-    destFilePath = path.join(includesPath, 'head-scripts.html');
+    let destFilePath = path.join(includesPath, 'head-scripts.html');
     fs.writeFileSync(destFilePath, wrapReact(match[0]));
 
     match = indexSource.match(/<div id="root"><\/div>(.*)<\/body>/ms);
@@ -78,10 +70,14 @@ function main() {
     let entry;
     while ((entry = d.readSync()) !== null) {
         let destFilePath = path.join(dest, entry.name);
-        if (entry === 'pyodide' && ! pyodideExists) {
+        if (entry.name === 'pyodide' && ! pyodideExists) {
             // No new copy to replace it, so don't delete it.
         } else if (entry.isDirectory()) {
-            fs.rmSync(destFilePath, {recursive: true});
+            if (entry.name === 'static' || entry.name === 'pyodide') {
+                fs.rmSync(destFilePath, {recursive: true});
+            }
+        } else if (entry.name.endsWith('.md')) {
+            // Leave markdown files alone.
         } else {
             fs.unlinkSync(destFilePath);
         }

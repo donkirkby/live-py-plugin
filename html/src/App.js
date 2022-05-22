@@ -1,16 +1,12 @@
 import React, {Component} from 'react';
+import { createRoot } from 'react-dom/client';
 import AceEditor from 'react-ace';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
-import tutorials from './tutorials.json';
 
 import 'ace-builds/src-noconflict/mode-python';
 import 'ace-builds/src-noconflict/mode-markdown';
 import 'ace-builds/src-noconflict/theme-github';
-
-const PythonContext = React.createContext('Python is loading...');
 
 function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
     const width = liveCanvas.width,
@@ -56,7 +52,7 @@ function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
  * colour, otherwise add red to highlight the difference.
  * @param colour1 first colour to compare
  * @param colour2 other colour to compare to
- * @param tolerance maximum difference between r, g, b components
+ * @param [tolerance] maximum difference between r, g, b components
  *  of the two colours.
  * @return Array [isMatch, [r, g, b, alpha]]
  */
@@ -96,6 +92,7 @@ class ProgressBar extends Component {
             (this.props.percentage < 100) ?
                 "warning" :
                 "success";
+        // noinspection HtmlUnknownAttribute
         return <progress className={stateClass} type={stateClass} value={`${this.props.percentage}`} max="100"/>;
     }
 }
@@ -125,6 +122,7 @@ class Editor extends Component {
     }
 
     render() {
+        // noinspection JSUnresolvedVariable
         return <AceEditor
             ref={this.content}
             value={this.props.value}
@@ -152,37 +150,16 @@ class Editor extends Component {
     }
 }
 
-class FootnoteBuilder extends Component {
-    render() {
-        let coreProps = {href: this.props.href};
-        if (this.props['data-sourcepos']) {
-            coreProps['data-sourcepos'] = this.props['data-sourcepos'];
-        }
-        let match = /^#(footnote\d+)$/i.exec(coreProps.href);
-        if (match !== null) {
-            coreProps.name = match[1] + "ref";
-        } else {
-            match = /^#(footnote\d+)ref$/i.exec(coreProps.href);
-            if (match !== null) {
-                coreProps.name = match[1];
-            }
-        }
-        return React.createElement('a', coreProps, this.props.children);
-    }
-}
-
 class CodeSample extends Component {
-    static contextType = PythonContext;
-
     constructor(props) {
         super(props);
-        const sourceCode = props.children[0].props.children[0],
-            codeRunner = this.context === null ? window.analyze : undefined,
-            analyst = new SampleAnalyst(sourceCode, codeRunner);
+        const sourceCode = props.source,
+            analyst = new SampleAnalyst(sourceCode);
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
             isPythonLoaded: false,
+            hasDisplayed: false,
             source: analyst.sourceCode,
             originalSource: analyst.sourceCode,
             goalSourceCode: analyst.goalSourceCode,
@@ -197,8 +174,7 @@ class CodeSample extends Component {
             isCanvas: analyst.isCanvas,
             canvasCommands: analyst.canvasCommands,
             canvasWidth: undefined,
-            canvasHeight: undefined,
-            updateTimer: undefined
+            canvasHeight: undefined
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -207,6 +183,10 @@ class CodeSample extends Component {
         this.handleReset = this.handleReset.bind(this);
         this.handleScroll = this.handleScroll.bind(this);
         this.handleCursorChange = this.handleCursorChange.bind(this);
+
+        props.spaceTracerPromise.then(() => {
+            this.setState({isPythonLoaded: true})
+        });
 
         this.editorRef = React.createRef();
         this.canvasRef = React.createRef();
@@ -222,19 +202,17 @@ class CodeSample extends Component {
     }
 
     scheduleUpdate() {
-        if (this.state.updateTimer !== undefined) {
+        if (this.updateTimer !== undefined) {
             return;
         }
-        this.setState({
-            updateTimer: setInterval(this.updateDisplay, 300)
-        });
+        this.updateTimer = setInterval(this.updateDisplay, 300);
     }
 
     updateDisplay() {
-        if (this.state.updateTimer !== undefined) {
-            clearInterval(this.state.updateTimer);
+        if (this.updateTimer !== undefined) {
+            clearInterval(this.updateTimer);
         }
-        let codeRunner = this.context === null ? window.analyze : undefined,
+        let codeRunner = this.state.isPythonLoaded ? window.analyze : undefined,
             canvas = this.canvasRef.current,
             canvasSize,
             isResized = false,
@@ -267,9 +245,9 @@ class CodeSample extends Component {
             goalMarkers: analyst.goalMarkers,
             outputMarkers: analyst.outputMarkers,
             canvasCommands: analyst.canvasCommands,
-            goalCanvasCommands: analyst.goalCanvasCommands,
-            updateTimer: undefined
+            goalCanvasCommands: analyst.goalCanvasCommands
         });
+        this.updateTimer = undefined;
         Promise.all(analyst.imagePromises).then(() => {
             analyst.imagePromises.length = 0;
             this.drawCanvas(analyst.canvasCommands, this.canvasRef);
@@ -426,13 +404,11 @@ class CodeSample extends Component {
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
-        if (this.context !== null) {
-            if (this.context !== this.state.display) {
-                this.setState({display: this.context});
-            }
+        if ( ! this.state.isPythonLoaded) {
+            // Continue waiting...
         }
-        else if ( ! this.state.isPythonLoaded) {
-            this.setState({isPythonLoaded: true});
+        else if ( ! this.state.hasDisplayed) {
+            this.setState({hasDisplayed: true});
             this.scheduleUpdate();
         }
         else if ((5 < Math.abs(prevState.canvasWidth - this.state.canvasWidth)) ||
@@ -448,8 +424,8 @@ class CodeSample extends Component {
     }
 
     render() {
-        let displayValue = this.context;
-        if (displayValue === null) {
+        let displayValue = 'Python is loading...';
+        if (this.state.isPythonLoaded) {
             displayValue = this.state.display;
         }
         let displayDiv = null,
@@ -549,38 +525,60 @@ class CodeSample extends Component {
 }
 
 class App extends Component {
-    constructor(props) {
-        super(props);
-        let app = this;
-        this.state = {
-            source: tutorials['index'],
-            pythonMessage: 'Loading Python...'
-        };
-
-        // noinspection JSUnresolvedVariable
-        if (window.pyodidePromise === undefined) {
-            this.state.pythonMessage = 'Python is not loaded!';
-        } else {
+    componentDidMount() {
+        const spaceTracerPromise = new Promise((resolve, reject) => {
             // noinspection JSUnresolvedVariable
-            window.pyodidePromise.then(function() {
-                // noinspection JSUnresolvedFunction
-                window.pyodide.loadPackage('matplotlib');
-                // noinspection JSUnresolvedFunction
-                window.pyodide.loadPackage('space-tracer').then(() => {
-                    // noinspection JSUnresolvedVariable,JSUnresolvedFunction
-                    window.pyodide.runPython(
-                        'from space_tracer.main import web_main; web_main()');
-                    app.setState({pythonMessage: null});
-                });
-            });
-        }
+            if (window.pyodidePromise === undefined) {
+                reject('Python is not loaded!');
+            } else {
+                // noinspection JSUnresolvedVariable
+                window.pyodidePromise.then(function() {
+                    // noinspection JSUnresolvedFunction
+                    window.pyodide.loadPackage('matplotlib');
+                    // noinspection JSUnresolvedFunction
+                    window.pyodide.loadPackage('space-tracer').then(() => {
+                        // noinspection JSUnresolvedVariable,JSUnresolvedFunction
+                        window.pyodide.runPython(
+                            'from space_tracer.main import web_main; web_main()');
+                        resolve();
+                    }).catch(() => reject('Space Tracer failed.'));
+                }).catch(() => reject('Pyodide failed.'));
+            }
+        });
+
         let search = window.location.search;
         let params = new URLSearchParams(search);
         let tutorialName = params.get('tutorial');
         if (tutorialName) {
-            this.state.source = tutorials[tutorialName];
-            if (this.state.source === undefined) {
-                this.state.source = 'Tutorial not found: ' + tutorialName;
+            window.location = new URL(tutorialName, window.location);
+        }
+
+        const codeBlocks = document.getElementsByTagName('pre');
+
+        for (const codeBlock of codeBlocks) {
+            const parent = codeBlock.parentNode;
+            // noinspection JSCheckFunctionSignatures
+            const root = createRoot(parent);
+            root.render(<CodeSample
+                source={codeBlock.innerText}
+                spaceTracerPromise={spaceTracerPromise}
+            />);
+        }
+
+        const pageURL = new URL(window.location);
+        pageURL.hash = '';
+        const pageLocation = pageURL.toString();
+        const anchors = document.getElementsByTagName('a');
+
+        for (const anchor of anchors) {
+            let match = /^(.*)#(footnote\d+)$/i.exec(anchor.href);
+            if (match !== null && match[1] === pageLocation) {
+                anchor.id = match[2] + "ref";
+            } else {
+                match = /^(.*)#(footnote\d+)ref$/i.exec(anchor.href);
+                if (match !== null && match[1] === pageLocation) {
+                    anchor.id = match[2];
+                }
             }
         }
     }
@@ -588,15 +586,6 @@ class App extends Component {
     render() {
         return (
             <div className="app">
-                <PythonContext.Provider value={this.state.pythonMessage}>
-                    <ReactMarkdown
-                        children={this.state.source}
-                        components={{
-                            pre: CodeSample,
-                            a: FootnoteBuilder
-                        }}
-                        remarkPlugins={[remarkGfm]} />
-                </PythonContext.Provider>
             </div>
         );
     }

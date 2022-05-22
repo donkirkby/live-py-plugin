@@ -1,4 +1,9 @@
-# Flag Tutorial: Japan to Burkina Faso
+---
+title: "Flag Tutorial: Japan to Burkina Faso"
+layout: react
+is_react: True
+hero_image: ../../images/index_hero.jpg
+---
 This is more challenging than the [Romania to Colombia] exercise: turn the
 Japanese flag into the flag of Burkina Faso. The tricky part is the star in the
 centre. This time, instead of using colour names, we use hexadecimal codes with
@@ -13,7 +18,7 @@ details you need to draw the flag of Burkina Faso:
 Again, you can experiment on your own, or read the rest of the tutorial to learn
 the concepts you need.
 
-[Romania to Colombia]:  ?tutorial=flags/romania-colombia
+[Romania to Colombia]: romania-colombia.md
 
     ### Canvas ###
     import turtle as t

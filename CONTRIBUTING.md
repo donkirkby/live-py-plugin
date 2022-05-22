@@ -247,6 +247,39 @@ You can also run the `html/serve.sh` script to do the same thing.
 
 [Jekyll]: https://help.github.com/en/github/working-with-github-pages/testing-your-github-pages-site-locally-with-jekyll
 
+### Browser Tutorials
+To write a tutorial page, just add a markdown file somewhere under the `docs`
+folder, and include `is_react: True` in the front matter. A plain code block
+will just be displayed with a live coding display next to it. However, there are
+extra features you can include.
+
+* **Goal code** - If you include a `### Goal ###` section in the code block,
+  it will be executed and compared to the user's code.
+
+      print('This code is visible.')
+      ### Goal ###
+      print('This code is invisible and the output is compared.')
+
+* **Canvas code samples** - If you want to display a turtle canvas instead of
+  the live coding display, mark the code block with the `### Canvas ###`
+  header. Goal code is also supported for canvas code samples.
+* **Static code samples** - If you don't want a code sample to be a live sample,
+  you can mark it with the `### Static ###` header.
+* **REPL code samples** - If a code sample contains ">>>", it will be treated as
+  a static code sample.
+* **Live code samples** - If you need to override the REPL detector, mark your
+  code sample with the `### Live ###` header.
+* **Footnotes** - If you link to `#footnoteX` where `X` is any number, then the
+  `<a>` tag will be named `footnoteXref`. Conversely, links to `#footnoteXref`
+  will be named `footnoteX`. This lets you link to a footnote and back to the
+  reference in the text. You're responsible for keeping the numbers in synch.
+  For example, you could put this in the body of the page:
+  `[[1]](#footnote1)`. Then you could put its mate at the bottom:
+  `[[1]](#footnote1ref)`.
+
+New pages can be converted from reStructured text using the `convert_tutorial.py`
+script.
+
 ## Adding Support For a New Editor
 
 If you want to use live coding with a new editor, you can add basic support

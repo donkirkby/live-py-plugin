@@ -27,6 +27,14 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <p>Lorem ipsum dolores sit amet.</p>
+    <div class="highlight">
+      <pre class="highlight">
+        <code># Some example code
+print('Hello, World!')
+        </code>
+      </pre>
+    </div>
     <div id="root"></div>
     <!--
       This HTML file is a template.
@@ -38,20 +46,24 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-    <script src="pyodide/pyodide.js"></script>
+    <script src="./pyodide/pyodide.js"></script>
     <script type="text/javascript">
       async function main(){
         self.analyze = function(source) {
           // This gets replaced with a ReactJS method from the App class.
           return [source, "output\n" + source];
         }
-        self.pyodidePromise = loadPyodide({
-          indexURL: self.location.protocol + "//" +
-                  self.location.host +
-                  self.location.pathname +
-                  "pyodide/"
-        });
-        self.pyodide = await self.pyodidePromise;
+        if (typeof loadPyodide !== 'undefined') {
+            const pyodidePath = self.location.pathname.replace(
+                /\/demo\/.*$/,
+                '/demo/pyodide/');
+            self.pyodidePromise = loadPyodide({
+                indexURL: self.location.protocol + "//" +
+                    self.location.host +
+                    pyodidePath
+            });
+            self.pyodide = await self.pyodidePromise;
+        }
       }
       main();
     </script>

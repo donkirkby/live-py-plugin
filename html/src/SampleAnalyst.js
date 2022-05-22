@@ -48,7 +48,7 @@ function unescapeString(value) {
             }
         }
         value = newValue;
-    } else if (value.match(/^[0-9.]+$/)) {
+    } else if (value.match(/^[\d.]+$/)) {
         value = parseFloat(value);
     }
     return value;

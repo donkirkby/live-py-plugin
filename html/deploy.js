@@ -2,10 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 function wrapReact(source) {
-    const absoluteSource = source.replaceAll(
+    const relativeSource = source.replaceAll(
         /"\.\/([^"]+)"/g,
-        `"{{ 'demo/$1' | absolute_url }}"`);
-    return "{% if page.is_react %}\n" + absoluteSource + "\n{% endif %}\n";
+        `"{{ 'demo/$1' | relative_url }}"`);
+    return "{% if page.is_react %}\n" + relativeSource + "\n{% endif %}\n";
 }
 
 function copyIndex(indexSrcPath, destFolderPath) {

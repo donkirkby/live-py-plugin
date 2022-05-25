@@ -564,23 +564,6 @@ class App extends Component {
                 spaceTracerPromise={spaceTracerPromise}
             />);
         }
-
-        const pageURL = new URL(window.location);
-        pageURL.hash = '';
-        const pageLocation = pageURL.toString();
-        const anchors = document.getElementsByTagName('a');
-
-        for (const anchor of anchors) {
-            let match = /^(.*)#(footnote\d+)$/i.exec(anchor.href);
-            if (match !== null && match[1] === pageLocation) {
-                anchor.id = match[2] + "ref";
-            } else {
-                match = /^(.*)#(footnote\d+)ref$/i.exec(anchor.href);
-                if (match !== null && match[1] === pageLocation) {
-                    anchor.id = match[2];
-                }
-            }
-        }
     }
 
     render() {

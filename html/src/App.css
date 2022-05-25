@@ -30,6 +30,10 @@
   position: absolute;
 }
 
+div.is-warning {
+  background-color: #ffe08a;
+}
+
 .reset-wrapper {
   position: relative;
 }

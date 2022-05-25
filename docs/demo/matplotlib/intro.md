@@ -7,14 +7,23 @@ hero_image: ../../images/index_hero.jpg
 There are a few plotting libraries to choose from in Python, but matplotlib
 seems the most common. Once you know the basics of Matplotlib, you might find
 Seaborn helpful, and it's built on top of Matplotlib, so it's helpful to know
-both.
+both. This tutorial is an introduction to the basic features of Matplotlib, and
+all the examples run right in your browser. You can try playing with the
+features to see how they affect the plot.
 
-This tutorial is an introduction to the basic features of Matplotlib, and all
-the examples run right in your browser. You can try playing with the features to
-see how they affect the plot. This first example shows the default presentation
-of a sine curve and a cosine curve. Try adjusting the data range in `linspace()`
-or multiplying one of the curves by a coefficient. The plot updates immediately
-as you make your changes.
+## Table of Contents
+* [Line Style](#line-style)
+* [Limits](#limits)
+* [Tick Positions](#tick-positions)
+* [Tick Labels](#tick-labels)
+* [Spine Positions](#spine-positions)
+* [Legendary Plot](#legendary-plot)
+* [Highlight Features](#highlight-features)
+* [Readability](#readability)
+
+This first example shows the default presentation of a sine curve and a cosine
+curve. Try adjusting the data range in `linspace()` or multiplying one of the
+curves by a coefficient. The plot updates immediately as you make your changes.
 
     ### Canvas ###
     import numpy as np

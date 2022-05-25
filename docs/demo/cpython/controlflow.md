@@ -251,7 +251,7 @@ The actual parameters (arguments) to a function call are introduced in
 the local symbol table of the called function when it is called; thus,
 arguments are passed using *call by value* (where the *value* is always
 an object *reference*, not the value of the
-object).[[1]](#footnote1) When a function
+object).<a id="footnote1ref" href="#footnote1">[1]</a> When a function
 calls another function, a new local symbol table is created for that
 call.
 
@@ -691,6 +691,6 @@ important points extracted for you:
 
 **Footnotes**
 
-[[1]](#footnote1ref) Actually, *call by object reference* would be a better
+<a id="footnote1" href="#footnote1ref">[1]</a> Actually, *call by object reference* would be a better
 description, since if a mutable object is passed, the caller will see any
 changes the callee makes to it (items inserted into a list).

@@ -3,6 +3,7 @@ title: Matplotlib Fill Tutorial
 layout: react
 is_react: True
 hero_image: ../../images/matplotlib/fill.png
+image: ../../images/matplotlib/fill.png
 ---
 The challenge in this tutorial is to learn how to make Matplotlib fill in areas.
 If you're new to Matplotlib, you might want to try the [Matplotlib introduction]

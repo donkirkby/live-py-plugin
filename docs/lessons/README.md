@@ -1,26 +1,9 @@
-# Live Lessons for Matplotlib #
+# Live Lessons for Matplotlib
 
-This folder holds lesson files for a new feature that will soon be added to the
-PyCharm version: Matplotlib lessons with live feedback. Feel free to contribute
-your ideas for new lessons.
+This folder used to hold lesson files for Matplotlib lessons with live feedback.
+This was originally planned as a PyCharm feature, but it is now in the
+[browser version]. The Matplotlib lessons from this folder moved to the
+[Matplotlib introduction].
 
-Each lesson contains two files:
-
-1. A lesson file with instructions in the docstring and the starting version of
-    a Python script. It also has a pointer to the goal file.
-2. A goal file with the final version of the Python script.
-
-The user will open the lesson file and start the live turtle/matplotlib mode.
-PyCharm will notice the link to the goal file and display both versions of the
-plot. When the user makes the starting version match the goal version, they
-will merge into one.
-
-If you have an idea for a lesson, you can describe it in a comment on issue #177,
-or you can create a pull request adding two lesson files to this directory.
-You can copy `example_lesson.py` and `example_goal.py` as a starting point.
-
-Some of the example lessons are based on [Nicolas P. Rougier's] tutorial and
-are licensed under a [Creative Commons Attribution-ShareAlike 4.0] license.
-
-[Nicolas P. Rougier's]: https://github.com/rougier/matplotlib-tutorial
-[Creative Commons Attribution-ShareAlike 4.0]: http://creativecommons.org/licenses/by-sa/4.0
+[browser version]: https://donkirkby.github.io/live-py-plugin/demo/
+[Matplotlib introduction]: https://donkirkby.github.io/live-py-plugin/demo/matplotlib/intro

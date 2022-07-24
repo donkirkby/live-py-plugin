@@ -1,5 +1,5 @@
 ---
-title: Matplotlib Tutorial
+title: Matplotlib Introduction Tutorial
 layout: react
 is_react: True
 hero_image: ../../images/index_hero.jpg
@@ -536,8 +536,9 @@ up out of the paper, perpendicular to the X and Y axes.
 
 Now you've seen some basic features of matplotlib, you might find the
 [matplotlib tutorials] a good place to learn more. You could also try [Seaborn]
-to add more plot types and styles.
+to add more plot types and styles. This tutorial was inspired by the work of
+[Nicolas P. Rougier].
 
 [matplotlib tutorials]: https://matplotlib.org/stable/tutorials/index
 [Seaborn]: https://seaborn.pydata.org/tutorial.html
-
+[Nicolas P. Rougier]: https://github.com/rougier/matplotlib-tutorial

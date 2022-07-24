@@ -12,8 +12,10 @@
   dropdown:
     - name: Examples
       link: /demo/
-    - name: Beginner Matplotlib Tutorial
+    - name: Matplotlib Introduction Tutorial
       link: /demo/matplotlib/intro
+    - name: Matplotlib Fill Tutorial
+      link: /demo/matplotlib/fill
     - name: Beginner Turtle Tutorial
       link: /demo/flags/romania-colombia
     - name: Intermediate Turtle Tutorial

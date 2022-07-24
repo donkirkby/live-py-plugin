@@ -2,7 +2,7 @@
 title: Matplotlib Introduction Tutorial
 layout: react
 is_react: True
-hero_image: ../../images/index_hero.jpg
+hero_image: ../../images/matplotlib/intro.png
 ---
 There are a few plotting libraries to choose from in Python, but matplotlib
 seems the most common. Once you know the basics of Matplotlib, you might find

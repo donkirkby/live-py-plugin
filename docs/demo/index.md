@@ -172,6 +172,117 @@ If anything was broken, please create an [issue]. For any other feedback, please
 send me a message on [twitter] or [e-mail]. I'd love it if you told your friends
 to try it.
 
+# Write your own
+You can fork the whole repository and just edit the markdown files to write your
+own tutorials. There are examples of all the features on this page, plus you
+need to write some headers to trigger the tutorial code:
+
+    ---
+    title: Live Python in the Browser
+    layout: react
+    is_react: True
+    hero_image: ../images/some_topic.jpg
+    image: /images/some_topic.jpg
+    ---
+
+The title just sets the title header, and the React settings turn on the
+tutorial features. The images are a little more tricky. `hero_image` is the
+image at the top of the page, and its path is relative to the page address.
+`image` is the preview image for social media posts, and it's relative to the
+site's home page.
+
+For visual tutorials, I like to use an image of the start display and the end
+display. For example, if I wanted the reader to turn this:
+
+    import matplotlib.pyplot as plt
+    plt.plot([1, 2, 5, 3])
+    plt.show()
+
+Into this:
+
+    import matplotlib.pyplot as plt
+    plt.plot([1, 5, 2, 3])
+    plt.show()
+
+I'd plot the two side by side:
+
+    import matplotlib.pyplot as plt
+    
+    f = plt.figure(figsize=(16, 8), facecolor='ivory')
+    f.dpi = 50
+    plt.subplot(121, aspect=0.5)
+    
+    plt.plot([1, 2, 5, 3])
+    
+    plt.subplot(122, aspect=0.5)
+    
+    plt.plot([1, 5, 2, 3])
+
+    plt.annotate('',
+                 (0.52, 0.5),
+                 xytext=(0.49, 0.5),
+                 xycoords='figure fraction',
+                 arrowprops=dict(width=5, headwidth=15))
+    plt.savefig('hero.png')
+    plt.show()
+
+The DPI setting is good for previewing the result, and then I usually comment it
+out.
+
+For turtle tutorials, you need to install some tools to convert the turtle
+commands to SVG and then to PNG.
+
+    import matplotlib.pyplot as plt
+    from io import StringIO, BytesIO
+    from PIL import Image
+    from reportlab.graphics import renderPM
+    from svg_turtle import SvgTurtle
+    from svglib.svglib import svg2rlg
+    
+    
+    def main():
+        f = plt.figure(figsize=(16, 8), facecolor='ivory')
+        f.dpi = 50
+        t = SvgTurtle(600, 300)
+        plt.subplot(121, aspect=0.5)
+        
+        t.forward(100)
+        t.right(30)
+        t.forward(50)
+    
+        display_turtle(t)
+    
+        t.reset()
+        plt.subplot(122, aspect=0.5)
+    
+        t.forward(50)
+        t.right(45)
+        t.forward(100)
+    
+        display_turtle(t)
+        
+        plt.annotate('',
+                     (0.53, 0.5),
+                     xytext=(0.5, 0.5),
+                     xycoords='figure fraction',
+                     arrowprops=dict(width=5, headwidth=15))
+        plt.savefig('hero.png')
+        plt.show()
+    
+    
+    def display_turtle(t):
+        drawing = svg2rlg(StringIO(t.to_svg()))
+        png_bytes = BytesIO()
+        renderPM.drawToFile(drawing, png_bytes, 'PNG')
+        img = Image.open(png_bytes)
+        plt.imshow(img)
+        plt.xticks([])
+        plt.yticks([])
+    
+    
+    main()
+
+
 [issue]: https://github.com/donkirkby/live-py-plugin/issues
 [twitter]: https://twitter.com/donkirkby
 [e-mail]: mailto:donkirkby@gmail.com

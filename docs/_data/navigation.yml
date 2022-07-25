@@ -13,13 +13,13 @@
     - name: Examples
       link: /demo/
     - name: Matplotlib Introduction Tutorial
-      link: /demo/matplotlib/intro
+      link: /demo/matplotlib/intro.html
     - name: Matplotlib Fill Tutorial
-      link: /demo/matplotlib/fill
+      link: /demo/matplotlib/fill.html
     - name: Beginner Turtle Tutorial
-      link: /demo/flags/romania-colombia
+      link: /demo/flags/romania-colombia.html
     - name: Intermediate Turtle Tutorial
-      link: /demo/flags/japan-burkina-faso
+      link: /demo/flags/japan-burkina-faso.html
 - name: Space Tracer
   link: /space_tracer.html
   dropdown:

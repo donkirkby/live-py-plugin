@@ -2,7 +2,8 @@
 title: "Flag Tutorial: Japan to Burkina Faso"
 layout: react
 is_react: True
-hero_image: ../../images/index_hero.jpg
+hero_image: ../../images/flags/japan-burkina-faso.png
+image: /images/flags/japan-burkina-faso.png
 ---
 This is more challenging than the [Romania to Colombia] exercise: turn the
 Japanese flag into the flag of Burkina Faso. The tricky part is the star in the

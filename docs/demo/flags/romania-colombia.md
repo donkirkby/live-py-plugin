@@ -2,7 +2,8 @@
 title: "Flag Tutorial: Romania to Colombia"
 layout: react
 is_react: True
-hero_image: ../../images/index_hero.jpg
+hero_image: ../../images/flags/romania-colombia.png
+image: /images/flags/romania-colombia.png
 ---
 Beginning Python programmers can use this tutorial to learn basic concepts in
 Python using the visual tools in the turtle module. All the code runs in your

@@ -40,8 +40,6 @@ the start.
     X = np.linspace(-np.pi, np.pi, n, endpoint=True)
     Y = np.sin(2*X)
     
-    plt.axes([0.025, 0.025, 0.95, 0.95])
-    
     plt.plot(X, Y+1, color='blue', alpha=1.00)
     plt.plot(X, Y-1, color='blue', alpha=1.00)
     
@@ -49,6 +47,7 @@ the start.
     plt.xticks([])
     plt.ylim(-2.5, 2.5)
     plt.yticks([])
+    plt.tight_layout()
     plt.show()
     
     ### Goal ###
@@ -58,8 +57,6 @@ the start.
     n = 256
     X = np.linspace(-np.pi, np.pi, n, endpoint=True)
     Y = np.sin(2*X)
-    
-    plt.axes([0.025, 0.025, 0.95, 0.95])
     
     plt.fill_between(X, 1, Y+1, facecolor='blue', alpha=0.25)
     plt.plot(X, Y+1, color='blue', alpha=1.00)
@@ -72,6 +69,7 @@ the start.
     plt.xticks([])
     plt.ylim(-2.5, 2.5)
     plt.yticks([])
+    plt.tight_layout()
     plt.show()
 
 ## How to Fill
@@ -212,4 +210,4 @@ was inspired by the work of [Nicolas P. Rougier].
 
 [the challenge]: #the-challenge
 [documentation]: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.fill_between.html
-[Nicolas P. Rougier]: https://github.com/rougier/matplotlib-tutorial#regular-plots
+[Nicolas P. Rougier]: https://github.com/rougier/matplotlib-tutorial#user-content-regular-plots

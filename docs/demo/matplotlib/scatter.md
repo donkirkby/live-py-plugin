@@ -117,7 +117,7 @@ Can you find the two lines that will match the goal output?
 ## Colour Maps
 By default, low values are displayed as dark blue and high values *map* to light
 green. That's not the only colour map available, though. If you look at the
-[colour map documentation], you'll find some with colours that change evenly
+[colour map documentation](https://matplotlib.org/stable/tutorials/colors/colormaps.html), you'll find some with colours that change evenly
 as the values change, some that use two different colours for positive and
 negative values, and some that cycle through colours to end up back where they
 started. Change this example's colour map to `viridis`, `hsv`, and `seismic` to

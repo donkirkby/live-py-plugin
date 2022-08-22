@@ -46,6 +46,8 @@ given as explicit values. Can you adjust each setting to match the goal plot
 below? The two plots are compared on the bottom right, with differences
 highlighted in red.
 
+The blue line is 2.5 points wide and the striped orange line is 1 point wide.
+
 If you want more details about the settings, read the matplotlib documentation
 on [colours] and [line styles].
 
@@ -113,7 +115,7 @@ the axes. Can you adjust the limits to match the goal plot?
     plt.show()
 
 ## Tick Positions
-The default ticks don't show the important points at multiples of &pi;, like the
+The default ticks don't show the important points at multiples of [&pi;](https://numpy.org/doc/stable/reference/constants.html#numpy.pi), like the
 minimum and maximum points of the curves. `xticks()` and `yticks` let you choose
 exactly where to put the ticks.
 

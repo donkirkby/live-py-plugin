@@ -115,9 +115,11 @@ the axes. Can you adjust the limits to match the goal plot?
     plt.show()
 
 ## Tick Positions
-The default ticks don't show the important points at multiples of [&pi;](https://numpy.org/doc/stable/reference/constants.html#numpy.pi), like the
+The default ticks don't show the important points at multiples of [&pi;], like the
 minimum and maximum points of the curves. `xticks()` and `yticks` let you choose
 exactly where to put the ticks.
+
+[&pi;]: https://numpy.org/doc/stable/reference/constants.html#numpy.pi
 
     ### Canvas ###
     import numpy as np

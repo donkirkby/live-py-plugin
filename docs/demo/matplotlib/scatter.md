@@ -79,7 +79,7 @@ can change the colour of each point by passing in an array of values to the `c`
 parameter. By default, the colour is a gradient from the lowest value to the
 highest value in `c`.
 
-Can you find the two lines that will match the goal output?
+Can you find the value of `c` that will match the goal output?
 
     ### Canvas ###
     import numpy as np
@@ -122,6 +122,8 @@ as the values change, some that use two different colours for positive and
 negative values, and some that cycle through colours to end up back where they
 started. Change this example's colour map to `viridis`, `hsv`, and `seismic` to
 see which is which.
+
+[colour map documentation]: https://matplotlib.org/stable/tutorials/colors/colormaps.html
 
     ### Canvas ###
     import numpy as np

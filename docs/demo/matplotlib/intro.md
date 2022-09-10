@@ -46,6 +46,10 @@ given as explicit values. Can you adjust each setting to match the goal plot
 below? The two plots are compared on the bottom right, with differences
 highlighted in red.
 
+<details><summary>Hint</summary>
+The line widths in the goal plot are whole numbers.
+</details>
+
 If you want more details about the settings, read the matplotlib documentation
 on [colours] and [line styles].
 
@@ -73,7 +77,7 @@ on [colours] and [line styles].
     cos_t = np.cos(t)
     
     plt.plot(t, sin_t, color='tab:orange', linewidth=1, linestyle='--')
-    plt.plot(t, cos_t, color='tab:blue', linewidth=2.5, linestyle='-')
+    plt.plot(t, cos_t, color='tab:blue', linewidth=3, linestyle='-')
     
     plt.show()
 
@@ -113,9 +117,11 @@ the axes. Can you adjust the limits to match the goal plot?
     plt.show()
 
 ## Tick Positions
-The default ticks don't show the important points at multiples of &pi;, like the
+The default ticks don't show the important points at multiples of [&pi;], like the
 minimum and maximum points of the curves. `xticks()` and `yticks` let you choose
 exactly where to put the ticks.
+
+[&pi;]: https://numpy.org/doc/stable/reference/constants.html#numpy.pi
 
     ### Canvas ###
     import numpy as np

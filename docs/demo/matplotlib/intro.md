@@ -46,7 +46,9 @@ given as explicit values. Can you adjust each setting to match the goal plot
 below? The two plots are compared on the bottom right, with differences
 highlighted in red.
 
-The blue line is 2.5 points wide and the striped orange line is 1 point wide.
+<details><summary>Hint</summary>
+The line widths in the goal plot are whole numbers.
+</details>
 
 If you want more details about the settings, read the matplotlib documentation
 on [colours] and [line styles].
@@ -75,7 +77,7 @@ on [colours] and [line styles].
     cos_t = np.cos(t)
     
     plt.plot(t, sin_t, color='tab:orange', linewidth=1, linestyle='--')
-    plt.plot(t, cos_t, color='tab:blue', linewidth=2.5, linestyle='-')
+    plt.plot(t, cos_t, color='tab:blue', linewidth=3, linestyle='-')
     
     plt.show()
 

@@ -13,10 +13,10 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2021.3.3")
-    type.set("PC") // Target IDE Platform
+    version.set("2022.2")
+    type.set("PY") // Target IDE Platform
 
-    plugins.set(listOf("PythonCore"))
+    plugins.set(listOf("Pythonid"))
 }
 
 sourceSets {

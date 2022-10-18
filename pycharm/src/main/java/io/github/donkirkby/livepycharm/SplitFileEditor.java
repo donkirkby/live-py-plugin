@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
-import com.intellij.util.ui.ImageUtil;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
@@ -85,7 +82,6 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             extends JPanel
             implements LiveCodingAnalyst.CanvasPainter {
         private List<CanvasCommand> canvasCommands;
-        private boolean isComparing;
 
         @Override
         public void setCommands(List<CanvasCommand> commands) {
@@ -232,9 +228,6 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 canvasCommands = new ArrayList<>();
                 canvasCommands.add(command);
             }
-            if (isComparing() && paintComparison(graphics)) {
-                return;
-            }
             if (!canvasCommands.get(0).getName().equals(
                     CanvasCommand.BACKGROUND_COLOR)) {
                 CanvasCommand command = new CanvasCommand();
@@ -305,74 +298,6 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             }
         }
 
-        private boolean paintComparison(Graphics graphics) {
-            BufferedImage currentImage = null;
-            BufferedImage targetImage = null;
-            int currentX = 0;
-            int currentY = 0;
-            int targetY = 0;
-            for (CanvasCommand command : canvasCommands) {
-                if (CanvasCommand.CREATE_IMAGE.equals(command.getName())) {
-                    if (currentImage == null) {
-                        currentImage = readImage(command);
-                        currentX = command.getCoordinate(0);
-                        currentY = command.getCoordinate(1);
-                    } else {
-                        targetImage = readImage(command);
-                        targetY = command.getCoordinate(1);
-                    }
-                }
-            }
-            if (targetImage == null) {
-                return false;
-            }
-            int width = Math.max(
-                    currentImage.getWidth(),
-                    targetImage.getWidth());
-            int height = Math.max(
-                    currentImage.getHeight(),
-                    targetImage.getHeight());
-            BufferedImage diffImage = ImageUtil.createImage(
-                    width,
-                    height,
-                    BufferedImage.TYPE_INT_RGB);
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    int currentRGB = getRGB(currentImage, x, y);
-                    int targetRGB = getRGB(targetImage, x, y);
-                    int diff = 0;
-                    for (int byteNum = 0; byteNum < 3; byteNum++) {
-                        int currentByte = currentRGB % 256;
-                        int targetByte = targetRGB % 256;
-                        diff += currentByte < targetByte
-                                ? targetByte - currentByte
-                                : currentByte - targetByte;
-                        currentRGB >>= 8;
-                        targetRGB >>= 8;
-                    }
-                    diff /= 3;  // Average diff of the three channels.
-                    int diffRGB = (((diff << 8) + diff) << 8) + diff;
-                    diffImage.setRGB(x, y, diffRGB);
-                }
-            }
-
-            graphics.drawImage(
-                    diffImage,
-                    currentX,
-                    (currentY + targetY) / 2,
-                    null);
-            return true;
-        }
-
-        private int getRGB(BufferedImage currentImage, int x, int y) {
-            if (x >= currentImage.getWidth() || y >= currentImage.getHeight()) {
-                return 0;
-            }
-            int rgb = currentImage.getRGB(x, y);
-            rgb &= (1 << 24) - 1;
-            return rgb;
-        }
-
         private Font getFontOption(CanvasCommand command) {
             CanvasCommand.FontOptions fontOptions =
                     command.getFontOptions("font");
@@ -386,14 +311,6 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             }
             return new Font(fontOptions.getName(), style, fontOptions.getSize() * 4 / 3 - 1);
 
-        }
-
-        boolean isComparing() {
-            return isComparing;
-        }
-
-        void setComparing(boolean comparing) {
-            isComparing = comparing;
         }
     }
 
@@ -452,21 +369,6 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             public void componentResized(ComponentEvent componentEvent) {
                 super.componentResized(componentEvent);
                 myAnalyst.schedule();
-            }
-        });
-        turtleCanvas.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent mouseEvent) {
-                super.mouseEntered(mouseEvent);
-                turtleCanvas.setComparing(true);
-                turtleCanvas.repaint();
-            }
-
-            @Override
-            public void mouseExited(MouseEvent mouseEvent) {
-                super.mouseExited(mouseEvent);
-                turtleCanvas.setComparing(false);
-                turtleCanvas.repaint();
             }
         });
 
@@ -689,7 +591,9 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         }
 
         @Override
-        public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
+        public boolean canBeMergedWith(
+                @NotNull FileEditorState otherState,
+                @NotNull FileEditorStateLevel level) {
             return otherState instanceof MyFileEditorState
                     && (myFirstState == null || myFirstState.canBeMergedWith(((MyFileEditorState) otherState).myFirstState, level))
                     && (mySecondState == null || mySecondState.canBeMergedWith(((MyFileEditorState) otherState).mySecondState, level));

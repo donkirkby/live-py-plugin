@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -28,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -57,6 +59,8 @@ public class LiveCodingAnalyst implements DocumentListener {
         Rectangle getBounds();
     }
 
+    public static final Key<ArrayList<Integer>> INLAY_LINES_KEY =
+            new Key<>("InlayLines");
     private static final Logger log = Logger.getInstance(LiveCodingAnalyst.class);
     private static final Pattern GOAL_PATTERN =
             Pattern.compile(":lesson goal file:\\s*(\\S*)");
@@ -84,8 +88,7 @@ public class LiveCodingAnalyst implements DocumentListener {
         this.mainFile = mainFile;
         this.displayDocument = displayDocument;
         this.canvasPainter = painter;
-        FileDocumentManager documentManager = FileDocumentManager.getInstance();
-        Document document = documentManager.getDocument(mainFile);
+        Document document = getMainDocument();
         if (document != null) {
             document.addDocumentListener(this, parent);
         }
@@ -248,11 +251,16 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (!isRunning) {
             return;
         }
-        FileDocumentManager documentManager = FileDocumentManager.getInstance();
-        Document document = documentManager.getDocument(mainFile);
+        Document document = getMainDocument();
         if (document != null) {
             schedule(document);
         }
+    }
+
+    @Nullable
+    private Document getMainDocument() {
+        FileDocumentManager documentManager = FileDocumentManager.getInstance();
+        return documentManager.getDocument(mainFile);
     }
 
     private String buildBadDriverMessage(
@@ -371,7 +379,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                 display += "\nLive coding plugin error:\n" + stderr;
             }
         } catch (ExecutionException | IOException ex) {
-            display += "\nLive coding plugin exception:\n" + ex.toString();
+            display += "\nLive coding plugin exception:\n" + ex;
             log.error("Report failed.", ex);
         }
         return display;
@@ -440,9 +448,23 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         final String finalDisplay = display;
         isDisplayUpdating = true;
+        final var inlayLines = new ArrayList<Integer>();
+        var mainDocument = getMainDocument();
+        if (mainDocument != null) {
+            EditorImpl mainEditor = getEditor(mainDocument);
+            @NotNull List<Inlay<?>> mainInlays =
+                    mainEditor.getInlayModel().getBlockElementsInRange(0, Integer.MAX_VALUE);
+            for (var inlay: mainInlays) {
+                int mainLine = mainDocument.getLineNumber(inlay.getOffset());
+                inlayLines.add(mainLine);
+            }
+        }
         ApplicationManager.getApplication().runWriteAction(
-                () -> displayDocument.setText(finalDisplay));
-        EditorImpl editor = getEditor();
+                () -> {
+                    displayDocument.setText(finalDisplay);
+                    displayDocument.putUserData(INLAY_LINES_KEY, inlayLines);
+                });
+        var editor = getEditor();
         if (editor.getSettings().isUseSoftWraps()) {
             AbstractToggleUseSoftWrapsAction.toggleSoftWraps(
                     editor,
@@ -454,8 +476,11 @@ public class LiveCodingAnalyst implements DocumentListener {
     }
 
     EditorImpl getEditor() {
-        Editor[] editors = EditorFactory.getInstance().getEditors(
-                getDisplayDocument());
+        return getEditor(getDisplayDocument());
+    }
+
+    private static EditorImpl getEditor(Document document) {
+        Editor[] editors = EditorFactory.getInstance().getEditors(document);
         if (editors.length >= 1) {
             return (EditorImpl) editors[0];
         }

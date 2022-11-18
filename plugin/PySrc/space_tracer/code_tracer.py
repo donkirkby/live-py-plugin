@@ -787,6 +787,8 @@ class LineNumberCleaner(NodeTransformer):
                 node.lineno = self.max_line
             else:
                 self.max_line = lineno
+            if getattr(node, 'end_lineno', lineno) < node.lineno:
+                node.end_lineno = node.lineno
         return self.generic_visit(node)
 
 

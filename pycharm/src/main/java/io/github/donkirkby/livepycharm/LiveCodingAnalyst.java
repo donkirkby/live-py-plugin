@@ -1,7 +1,6 @@
 package io.github.donkirkby.livepycharm;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -456,8 +455,6 @@ public class LiveCodingAnalyst implements DocumentListener {
         synchronizeInlays();
 
         var editor = getEditor();
-        //noinspection UnstableApiUsage
-        ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
         Project project = editor.getProject();
         if (project != null) {
             DaemonCodeAnalyzer.getInstance(project).restart();

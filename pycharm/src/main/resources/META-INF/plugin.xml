@@ -26,9 +26,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <fileEditorProvider
                 implementation="io.github.donkirkby.livepycharm.SplitFileEditorProvider"/>
-        <codeInsight.inlayProvider
-                language="TEXT"
-                implementationClass="io.github.donkirkby.livepycharm.DisplayInlayHintsProvider"/>
     </extensions>
 
     <actions>

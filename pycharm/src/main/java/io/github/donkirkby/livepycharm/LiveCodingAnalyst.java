@@ -18,10 +18,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -31,7 +28,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -61,8 +57,6 @@ public class LiveCodingAnalyst implements DocumentListener {
         Rectangle getBounds();
     }
 
-    public static final Key<ArrayList<Integer>> INLAY_LINES_KEY =
-            new Key<>("InlayLines");
     private static final Logger log = Logger.getInstance(LiveCodingAnalyst.class);
     private static final Pattern GOAL_PATTERN =
             Pattern.compile(":lesson goal file:\\s*(\\S*)");
@@ -94,6 +88,12 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (document != null) {
             document.addDocumentListener(this, parent);
         }
+        displayDocument.addDocumentListener(new DocumentListener() {
+            @Override
+            public void documentChanged(@NotNull DocumentEvent event) {
+                synchronizeInlays();
+            }
+        });
     }
 
     Document getDisplayDocument() {
@@ -450,22 +450,11 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         final String finalDisplay = display;
         isDisplayUpdating = true;
-        final var inlayLines = new ArrayList<Integer>();
-        var mainDocument = getMainDocument();
-        if (mainDocument != null) {
-            EditorImpl mainEditor = getEditor(mainDocument);
-            @NotNull List<Inlay<?>> mainInlays =
-                    mainEditor.getInlayModel().getBlockElementsInRange(0, Integer.MAX_VALUE);
-            for (var inlay: mainInlays) {
-                int mainLine = mainDocument.getLineNumber(inlay.getOffset());
-                inlayLines.add(mainLine);
-            }
-        }
+
         ApplicationManager.getApplication().runWriteAction(
-                () -> {
-                    displayDocument.setText(finalDisplay);
-                    displayDocument.putUserData(INLAY_LINES_KEY, inlayLines);
-                });
+                () -> displayDocument.setText(finalDisplay));
+        synchronizeInlays();
+
         var editor = getEditor();
         //noinspection UnstableApiUsage
         ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
@@ -481,6 +470,55 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
 
         alarm.addRequest(() -> isDisplayUpdating = false, 300);
+    }
+
+    private void synchronizeInlays() {
+        final var inlayLines = new HashSet<Integer>();
+        var mainDocument = getMainDocument();
+        if (mainDocument != null) {
+            EditorImpl mainEditor = getEditor(mainDocument);
+            @NotNull List<Inlay<?>> mainInlays =
+                    mainEditor.getInlayModel().getBlockElementsInRange(0, Integer.MAX_VALUE);
+            for (var inlay: mainInlays) {
+                int mainLine = mainDocument.getLineNumber(inlay.getOffset());
+                inlayLines.add(mainLine);
+            }
+        }
+        var displayEditor = getEditor();
+        var displayInlayModel = displayEditor.getInlayModel();
+        var displayInlays = displayInlayModel.getBlockElementsInRange(
+                0,
+                Integer.MAX_VALUE);
+        for (var inlay : displayInlays) {
+            int displayLine = displayDocument.getLineNumber(inlay.getOffset());
+            if ( ! inlayLines.remove(displayLine)) {
+                // line no longer has an inlay, so remove the existing one.
+                boolean above = true;
+                var lineInlays = displayInlayModel.getBlockElementsForVisualLine(
+                        displayLine,
+                        above);
+                for (var toRemove : lineInlays) {
+                    toRemove.dispose();
+                }
+            }
+        }
+        for (var lineNum: inlayLines) {
+            int lineOffset;
+            try {
+                lineOffset = displayDocument.getLineStartOffset(lineNum);
+            } catch (IndexOutOfBoundsException ex) {
+                continue;
+            }
+            var relatesToPreceding = true;
+            var showAbove = true;
+            var priority = 1;
+            displayInlayModel.addBlockElement(
+                    lineOffset,
+                    relatesToPreceding,
+                    showAbove,
+                    priority,
+                    inlay -> 0);
+        }
     }
 
     EditorImpl getEditor() {

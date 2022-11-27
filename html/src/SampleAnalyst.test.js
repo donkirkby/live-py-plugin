@@ -174,6 +174,40 @@ out line B
         expect(analyst.output).toBe(expectedOutput);
     });
 
+    it('ignores second header in static sample', () => {
+        let originalSource = `\
+### static ###
+### live ###
+line 1
+line B
+### goal ###
+line 1
+line 2
+`;
+        let analyst = new SampleAnalyst(originalSource, prefixLines);
+
+        expect(analyst.output).toBeUndefined();
+    });
+
+    it('ignores leading blank lines', () => {
+        let originalSource = `\
+
+### live ###
+line 1
+line B
+### goal ###
+line 1
+line 2
+`;
+        let expectedOutput = `\
+out line 1
+out line B
+`;
+        let analyst = new SampleAnalyst(originalSource, prefixLines);
+
+        expect(analyst.output).toBe(expectedOutput);
+    });
+
     it('ignores goal without heading', () => {
         let originalSource = `\
 line 1

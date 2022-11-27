@@ -13,8 +13,16 @@ function copyIndex(indexSrcPath, destFolderPath) {
     let includesPath = path.join(destFolderPath, '../_includes');
 
     let match = indexSource.match(/<script defer="defer".*" rel="stylesheet">/);
+    let modulesSource = `
+        {% if page.modules %}
+            <script>
+                window.liveCodingExtraModules = "{{ page.modules }}";
+            </script>
+        {% endif %}
+        `;
+    let rawSource = match[0];
     let destFilePath = path.join(includesPath, 'head-scripts.html');
-    fs.writeFileSync(destFilePath, wrapReact(match[0]));
+    fs.writeFileSync(destFilePath, wrapReact(modulesSource + rawSource));
 
     match = indexSource.match(/<div id="root"><\/div>(.*)<\/body>/ms);
     destFilePath = path.join(includesPath, 'footer-scripts.html');

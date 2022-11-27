@@ -531,10 +531,18 @@ class App extends Component {
             if (window.pyodidePromise === undefined) {
                 reject('Python is not loaded!');
             } else {
+                let extraModules = window.liveCodingExtraModules;
+                if (extraModules === undefined) {
+                    extraModules = [];
+                } else {
+                    extraModules = extraModules.split(',');
+                }
                 // noinspection JSUnresolvedVariable
                 window.pyodidePromise.then(function() {
-                    // noinspection JSUnresolvedFunction
-                    window.pyodide.loadPackage('matplotlib');
+                    for (const extraModule of extraModules) {
+                        // noinspection JSUnresolvedFunction
+                        window.pyodide.loadPackage(extraModule.trim());
+                    }
                     // noinspection JSUnresolvedFunction
                     window.pyodide.loadPackage('space-tracer').then(() => {
                         // noinspection JSUnresolvedVariable,JSUnresolvedFunction

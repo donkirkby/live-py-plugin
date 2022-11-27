@@ -4,6 +4,7 @@ layout: react
 is_react: True
 hero_image: ../../images/matplotlib/scatter.png
 image: /images/matplotlib/scatter.png
+modules: matplotlib
 ---
 The challenge in this tutorial is to combine x and y positions with other data
 in Matplotlib. If you're new to Matplotlib, you might want to try the

@@ -249,9 +249,26 @@ You can also run the `html/serve.sh` script to do the same thing.
 
 ### Browser Tutorials
 To write a tutorial page, just add a markdown file somewhere under the `docs`
-folder, and include `is_react: True` in the front matter. A plain code block
-will just be displayed with a live coding display next to it. However, there are
-extra features you can include.
+folder, and include `is_react: True` in the front matter.
+
+    ---
+    title: Live Python in the Browser
+    layout: react
+    is_react: True
+    hero_image: ../images/some_topic.jpg
+    image: /images/some_topic.jpg
+    modules: numpy, pillow
+    ---
+
+The title just sets the title header, and the React settings turn on the
+tutorial features. The images are a little more tricky. `hero_image` is the
+image at the top of the page, and its path is relative to the page address.
+`image` is the preview image for social media posts, and it's relative to the
+site's home page. `modules` lets you load optional Python modules for the page.
+Some available modules are Matplotlib, Pillow, and Numpy.
+
+Within a tutorial page, a plain code block will just be displayed with a live
+coding display next to it. However, there are extra features you can include.
 
 * **Goal code** - If you include a `### Goal ###` section in the code block,
   it will be executed and compared to the user's code.
@@ -260,7 +277,7 @@ extra features you can include.
       ### Goal ###
       print('This code is invisible and the output is compared.')
 
-* **Canvas code samples** - If you want to display a turtle canvas instead of
+* **Canvas code samples** - If you want to display graphics instead of
   the live coding display, mark the code block with the `### Canvas ###`
   header. Goal code is also supported for canvas code samples.
 * **Static code samples** - If you don't want a code sample to be a live sample,
@@ -277,8 +294,103 @@ extra features you can include.
   `[[1]](#footnote1)`. Then you could put its mate at the bottom:
   `[[1]](#footnote1ref)`.
 
+For visual tutorials like turtle graphics or Matplotlib, I like to use an image
+of the start display and the end display as the hero image and social media
+preview. For example, if I wanted the reader to turn this:
+
+    import matplotlib.pyplot as plt
+    plt.plot([1, 2, 5, 3])
+    plt.show()
+
+Into this:
+
+    import matplotlib.pyplot as plt
+    plt.plot([1, 5, 2, 3])
+    plt.show()
+
+I'd plot the two side by side:
+
+    import matplotlib.pyplot as plt
+    
+    f = plt.figure(figsize=(16, 8), facecolor='ivory')
+    f.dpi = 40
+    plt.subplot(121, aspect=0.5)
+    
+    plt.plot([1, 2, 5, 3])
+    
+    plt.subplot(122, aspect=0.5)
+    
+    plt.plot([1, 5, 2, 3])
+
+    plt.annotate('',
+                 (0.52, 0.5),
+                 xytext=(0.49, 0.5),
+                 xycoords='figure fraction',
+                 arrowprops=dict(width=5, headwidth=15))
+    plt.savefig('hero.png')
+    plt.show()
+
+The DPI setting is good for previewing the result, and then I usually comment it
+out.
+
+For turtle tutorials, you need to install some tools like [SvgTurtle] and
+[svglib] to convert the turtle commands to SVG and then to PNG.
+
+    import matplotlib.pyplot as plt
+    from io import StringIO, BytesIO
+    from PIL import Image
+    from reportlab.graphics import renderPM
+    from svg_turtle import SvgTurtle
+    from svglib.svglib import svg2rlg
+    
+    
+    def main():
+        f = plt.figure(figsize=(16, 8), facecolor='ivory')
+        # f.dpi = 40
+        t = SvgTurtle(600, 300)
+        plt.subplot(121, aspect=0.5)
+        
+        t.forward(100)
+        t.right(30)
+        t.forward(50)
+    
+        display_turtle(t)
+    
+        t.reset()
+        plt.subplot(122, aspect=0.5)
+    
+        t.forward(50)
+        t.right(45)
+        t.forward(100)
+    
+        display_turtle(t)
+        
+        plt.annotate('',
+                     (0.53, 0.5),
+                     xytext=(0.5, 0.5),
+                     xycoords='figure fraction',
+                     arrowprops=dict(width=5, headwidth=15))
+        plt.savefig('hero.png')
+        plt.show()
+    
+    
+    def display_turtle(t):
+        drawing = svg2rlg(StringIO(t.to_svg()))
+        png_bytes = BytesIO()
+        renderPM.drawToFile(drawing, png_bytes, 'PNG')
+        img = Image.open(png_bytes)
+        plt.imshow(img)
+        plt.xticks([])
+        plt.yticks([])
+    
+    
+    main()
+
 New pages can be converted from reStructured text using the `convert_tutorial.py`
 script.
+
+[SvgTurtle]: https://donkirkby.github.io/svg-turtle/
+[svglib]: https://github.com/deeplook/svglib
 
 ## Adding Support For a New Editor
 

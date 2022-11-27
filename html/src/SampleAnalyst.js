@@ -134,10 +134,10 @@ export default class SampleAnalyst {
             this.isCanvas = isCanvas;
         } else {
             let sourcePieces =
-                /^(.*\n)?( *##+ *((static)|(live)|(canvas))[ #]*\n)(.*)$/is.exec(
+                /^(\s*)(##+ *((static)|(live)|(canvas))[ #]*\n)(.*)$/is.exec(
                     sourceCode);
             if (sourcePieces !== null) {
-                this.sourceCode = (sourcePieces[1] || "") + sourcePieces[7];
+                this.sourceCode = sourcePieces[7];
                 this.isLive = sourcePieces[3].toLowerCase() !== "static";
                 this.isCanvas = sourcePieces[3].toLowerCase() === "canvas";
             } else if (/>>>/.test(sourceCode)) {

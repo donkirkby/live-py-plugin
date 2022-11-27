@@ -17,8 +17,8 @@ function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
             parseInt(backgroundColour.substring(5, 7), 16),
             255
         ],
-        liveContext = liveCanvas.getContext('2d'),
-        goalContext = goalCanvas.getContext('2d'),
+        liveContext = liveCanvas.getContext('2d', {willReadFrequently: true}),
+        goalContext = goalCanvas.getContext('2d', {willReadFrequently: true}),
         diffContext = diffCanvas.getContext('2d'),
         liveData = liveContext.getImageData(0, 0, width, height),
         goalData = goalContext.getImageData(0, 0, width, height),
@@ -360,7 +360,7 @@ class CodeSample extends Component {
             return;
         }
         this.resizeCanvas(canvas);
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', {willReadFrequently: true});
         ctx.translate(0.5, 0.5); // Centre lines on pixels.
         ctx.lineCap = 'round';
         ctx.textBaseline = 'bottom';

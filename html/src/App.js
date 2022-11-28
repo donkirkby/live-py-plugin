@@ -483,13 +483,15 @@ class CodeSample extends Component {
                     <div className="tile is-parent">
                         <div className="editor-wrapper tile is-vertical is-child box">
                             <p className="subtitle">Goal Canvas</p>
-                            <canvas ref={this.goalCanvasRef}/>
+                            <canvas ref={this.goalCanvasRef}
+                                    style={{height: goalHeight + "px"}}/>
                         </div>
                     </div>
                     <div className="tile is-parent">
                         <div className="editor-wrapper tile is-vertical is-child box">
                             <p className="subtitle">Canvas Differences</p>
-                            <canvas ref={this.diffCanvasRef}/>
+                            <canvas ref={this.diffCanvasRef}
+                                    style={{height: goalHeight + "px"}}/>
                         </div>
                     </div>
                 </div>;

@@ -8,6 +8,10 @@
   height: 100%;
   position: relative; }
 
+.codeSample {
+  background-color: white;
+}
+
 .page-header, .editor-header { height: 2em }
 
 .page-footer { height: 3em }

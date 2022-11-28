@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import { createRoot } from 'react-dom/client';
+import {createRoot} from 'react-dom/client';
 import AceEditor from 'react-ace';
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
@@ -330,11 +330,14 @@ class CodeSample extends Component {
 
     calculateCanvasHeight() {
         const aspectHeight = this.editorRef.current.clientWidth * 0.75,
+            minHeight = this.editorRef.current.clientHeight,
             viewHeight = Math.round(window.innerHeight * 0.8);
         if (this.state.goalSourceCode !== undefined) {
-            return Math.min(aspectHeight, Math.floor(viewHeight / 2));
+            return Math.min(
+                Math.max(aspectHeight, minHeight),
+                Math.floor(viewHeight / 2));
         }
-        return Math.min(aspectHeight, viewHeight);
+        return Math.min(Math.max(aspectHeight, minHeight), viewHeight);
     }
 
     calculateGoalHeight() {
@@ -350,8 +353,15 @@ class CodeSample extends Component {
     }
 
     resizeCanvas(canvas) {
-        canvas.width = this.editorRef.current.clientWidth;
-        canvas.height = this.calculateCanvasHeight();
+        let nodeStyle = window.getComputedStyle(canvas.parentElement, null),
+            leftPadding = parseInt(nodeStyle.getPropertyValue('padding-left')),
+            rightPadding = parseInt(nodeStyle.getPropertyValue('padding-right')),
+            topPadding = parseInt(nodeStyle.getPropertyValue('padding-top')),
+            bottomPadding = parseInt(nodeStyle.getPropertyValue('padding-bottom'));
+        canvas.width = (this.editorRef.current.clientWidth -
+            leftPadding - rightPadding);
+        canvas.height = (this.calculateCanvasHeight() -
+            topPadding - bottomPadding);
     }
 
     drawCanvas(commands, canvasRef) {
@@ -430,26 +440,30 @@ class CodeSample extends Component {
         }
         let displayDiv = null,
             progressBar = null,
-            outputHeaders = null,
             outputSection = null,
             resetButton = null,
             editorHeight = this.calculateEditorHeight();
         if (this.state.isLive) {
             if (this.state.isCanvas) {
-                displayDiv = <canvas ref={this.canvasRef}/>;
+                displayDiv = <div className="tile is-parent">
+                    <div className="tile is-child box">
+                        <canvas ref={this.canvasRef}/>
+                    </div>
+                </div>;
             } else {
-                displayDiv = <div
-                    className="editor-pane"
-                    style={{height: editorHeight + "px"}}>
-                    <Editor
-                        value={displayValue}
-                        scrollTop={this.state.scrollTop}
-                        readOnly={true}
-                        selectedLine={this.state.selectedLine}
-                        onChange={this.handleChange}
-                        onScroll={this.handleScroll}
-                        highlightActiveLine={true}
-                        mode="text"/>
+                displayDiv = <div className="tile is-parent">
+                    <div
+                        className="editor-pane tile is-child box">
+                        <Editor
+                            value={displayValue}
+                            scrollTop={this.state.scrollTop}
+                            readOnly={true}
+                            selectedLine={this.state.selectedLine}
+                            onChange={this.handleChange}
+                            onScroll={this.handleScroll}
+                            highlightActiveLine={true}
+                            mode="text"/>
+                    </div>
                 </div>;
             }
         }
@@ -460,64 +474,73 @@ class CodeSample extends Component {
         }
         if (this.state.goalOutput !== undefined) {
             const goalHeight = this.calculateGoalHeight();
-            progressBar = <ProgressBar percentage={this.state.matchPercentage}/>;
+            progressBar = <div className="tile is-parent">
+                <ProgressBar className="tile is-child box"
+                             percentage={this.state.matchPercentage}/>
+            </div>;
             if (this.state.isCanvas) {
-                outputHeaders = <div className="editor-wrapper">
-                    <h4 className="editor-header">Goal Canvas</h4>
-                    <h4 className="editor-header">Canvas Differences</h4>
-                </div>;
-                displayDiv = <canvas ref={this.canvasRef}/>;
-                outputSection = <div className="editor-wrapper">
-                    <canvas ref={this.goalCanvasRef}/>
-                    <canvas ref={this.diffCanvasRef}/>
+                outputSection = <div className="editor-wrapper tile">
+                    <div className="tile is-parent">
+                        <div className="editor-wrapper tile is-vertical is-child box">
+                            <p className="subtitle">Goal Canvas</p>
+                            <canvas ref={this.goalCanvasRef}/>
+                        </div>
+                    </div>
+                    <div className="tile is-parent">
+                        <div className="editor-wrapper tile is-vertical is-child box">
+                            <p className="subtitle">Canvas Differences</p>
+                            <canvas ref={this.diffCanvasRef}/>
+                        </div>
+                    </div>
                 </div>;
             } else {
-                outputHeaders = <div className="editor-wrapper">
-                    <h4 className="editor-header">Goal output</h4>
-                    <h4 className="editor-header">Your output</h4>
-                </div>;
-                outputSection = <div className="editor-wrapper">
-                    <div className="editor-pane"
-                         style={{height: goalHeight + "px"}}>
-                        <Editor
-                            value={this.state.goalOutput}
-                            markers={this.state.goalMarkers}
-                            readOnly={true}
-                            highlightActiveLine={false}
-                            mode="text"/>
+                outputSection = <div className="editor-wrapper tile">
+                    <div className="tile is-parent">
+                        <div className="editor-pane tile is-vertical is-child box">
+                            <p className="subtitle">Goal output</p>
+                            <Editor
+                                value={this.state.goalOutput}
+                                markers={this.state.goalMarkers}
+                                readOnly={true}
+                                highlightActiveLine={false}
+                                mode="text"/>
+                        </div>
                     </div>
-                    <div className="editor-pane"
-                         style={{height: goalHeight + "px"}}>
-                        <Editor
-                            value={this.state.output}
-                            markers={this.state.outputMarkers}
-                            readOnly={true}
-                            highlightActiveLine={false}
-                            mode="text"/>
+                    <div className="tile is-parent">
+                        <div className="editor-pane tile is-vertical is-child box">
+                            <p className="subtitle">Your output</p>
+                            <Editor
+                                value={this.state.output}
+                                markers={this.state.outputMarkers}
+                                readOnly={true}
+                                highlightActiveLine={false}
+                                mode="text"/>
+                        </div>
                     </div>
                 </div>;
             }
         }
         return (
-            <div className="codeSample">
-                <div className="editor-wrapper">
-                    <div className="editor-pane"
-                        ref={this.editorRef}
-                        style={{height: editorHeight + "px"}}>
-                        <Editor
-                            value={this.state.source}
-                            scrollTop={this.state.scrollTop}
-                            onChange={this.handleChange}
-                            onScroll={this.handleScroll}
-                            onCursorChange={this.handleCursorChange}
-                            highlightActiveLine={true}
-                            mode="python"/>
+            <div className="codeSample tile is-ancestor is-vertical">
+                <div className="editor-wrapper tile">
+                    <div className="tile is-parent">
+                        <div className="editor-pane tile is-child box"
+                             ref={this.editorRef}
+                             style={{height: editorHeight + "px"}}>
+                            <Editor
+                                value={this.state.source}
+                                scrollTop={this.state.scrollTop}
+                                onChange={this.handleChange}
+                                onScroll={this.handleScroll}
+                                onCursorChange={this.handleCursorChange}
+                                highlightActiveLine={true}
+                                mode="python"/>
+                        </div>
                     </div>
                     {displayDiv}
                 </div>
                 {resetButton}
                 {progressBar}
-                {outputHeaders}
                 {outputSection}
           </div>
     );

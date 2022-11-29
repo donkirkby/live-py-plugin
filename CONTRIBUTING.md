@@ -55,22 +55,20 @@ through the code after the breakpoint.
 
 ### Publish a new release for the PyCharm plugin
 1. Check that all the Python unit tests pass, by running tox.
-2. Update the version number and change notes in `about.py` and
-    `pycharm/resources/META-INF/plugin.xml`
-3. Right-click the plugin module in the Project view and select Prepare Plugin
-    Module 'livepy' For Deployment in the context menu. It should produce a
-   `livepy.jar` file. If it produces `livepy.zip`, look inside to see what extra
-   jar file it included.
-4. Install the new plugin jar into your IntelliJ or PyCharm. Sometimes it
-    behaves differently as a jar. From the File menu, choose Settings....
+2. Update the version number in `about.py` and `pycharm/build.gradle.kts`, and
+    the change notes in `pycharm/src/main/resources/META-INF/plugin.xml`.
+3. Run the `buildPlugin` Gradle task. It should produce a `livepy-X.Y.Z.zip`
+   file for the new version.
+4. Install the new plugin zip file into your IntelliJ or PyCharm. Sometimes it
+    behaves differently as a zip file. From the File menu, choose Settings....
 5. Navigate down to the plugins section, click on the gear icon at the top,
     and choose Install plugin from disk... from the menu.
-6. Select the jar file you just created, and click the Restart button.
+6. Select the zip file you just created, and click the Restart button.
 7. Once it restarts, open a Python file, and check that live coding works.
 8. Commit the version number changes, push, and create a release on GitHub.
     (Finish the other releases before marking the release on GitHub, if you're
     releasing more.)
-9. Upload the jar file to the plugin repository by clicking the Update plugin
+9. Upload the zip file to the plugin repository by clicking the Update plugin
     button on the [plugin page].
 
 [IDEA]: https://www.jetbrains.com/idea/download
@@ -127,8 +125,8 @@ Manually install the package using symbolic links to the files and
     to trigger a reload, although that doesn't always work.
 
 ### Publish a new release for the Sublime Text plugin
-1. Update the version number in `about.py` and run the `sublime_publish.py`
-    script.
+1. Update the version number in `about.py` and run the
+   `test/PySrc/tools/sublime_publish.py` script.
 2. Commit the version number changes and the new package zip, push, and create a
     release on GitHub. (Finish the other releases before marking the release on
     GitHub, if you're releasing more.)

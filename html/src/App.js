@@ -122,6 +122,7 @@ class Editor extends Component {
     }
 
     render() {
+        const height = this.props.height || "100%";
         // noinspection JSUnresolvedVariable
         return <AceEditor
             ref={this.content}
@@ -134,7 +135,7 @@ class Editor extends Component {
             mode={this.props.mode}
             theme="github"
             width="100%"
-            height="100%"
+            height={height}
             fontSize={18}
             showPrintMargin={true}
             markers={this.props.markers}
@@ -459,6 +460,7 @@ class CodeSample extends Component {
                             scrollTop={this.state.scrollTop}
                             readOnly={true}
                             selectedLine={this.state.selectedLine}
+                            height={editorHeight + "px"}
                             onChange={this.handleChange}
                             onScroll={this.handleScroll}
                             highlightActiveLine={true}
@@ -483,15 +485,13 @@ class CodeSample extends Component {
                     <div className="tile is-parent">
                         <div className="editor-wrapper tile is-vertical is-child box">
                             <p className="subtitle">Goal Canvas</p>
-                            <canvas ref={this.goalCanvasRef}
-                                    style={{height: goalHeight + "px"}}/>
+                            <canvas ref={this.goalCanvasRef}/>
                         </div>
                     </div>
                     <div className="tile is-parent">
                         <div className="editor-wrapper tile is-vertical is-child box">
                             <p className="subtitle">Canvas Differences</p>
-                            <canvas ref={this.diffCanvasRef}
-                                    style={{height: goalHeight + "px"}}/>
+                            <canvas ref={this.diffCanvasRef}/>
                         </div>
                     </div>
                 </div>;
@@ -505,6 +505,7 @@ class CodeSample extends Component {
                                 markers={this.state.goalMarkers}
                                 readOnly={true}
                                 highlightActiveLine={false}
+                                height={goalHeight}
                                 mode="text"/>
                         </div>
                     </div>
@@ -516,6 +517,7 @@ class CodeSample extends Component {
                                 markers={this.state.outputMarkers}
                                 readOnly={true}
                                 highlightActiveLine={false}
+                                height={goalHeight}
                                 mode="text"/>
                         </div>
                     </div>
@@ -527,11 +529,11 @@ class CodeSample extends Component {
                 <div className="editor-wrapper tile">
                     <div className="tile is-parent">
                         <div className="editor-pane tile is-child box"
-                             ref={this.editorRef}
-                             style={{height: editorHeight + "px"}}>
+                             ref={this.editorRef}>
                             <Editor
                                 value={this.state.source}
                                 scrollTop={this.state.scrollTop}
+                                height={editorHeight + "px"}
                                 onChange={this.handleChange}
                                 onScroll={this.handleScroll}
                                 onCursorChange={this.handleCursorChange}

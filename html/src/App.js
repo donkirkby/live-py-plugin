@@ -475,7 +475,8 @@ class CodeSample extends Component {
             </div>;
         }
         if (this.state.goalOutput !== undefined) {
-            const goalHeight = this.calculateGoalHeight();
+            const goalHeight = this.calculateGoalHeight(),
+                diffPercentage = Math.ceil(100 - this.state.matchPercentage);
             progressBar = <div className="tile is-parent">
                 <ProgressBar className="tile is-child box"
                              percentage={this.state.matchPercentage}/>
@@ -490,7 +491,8 @@ class CodeSample extends Component {
                     </div>
                     <div className="tile is-parent">
                         <div className="editor-wrapper tile is-vertical is-child box">
-                            <p className="subtitle">Canvas Differences</p>
+                            <p className="subtitle">Canvas Differences
+                                ({diffPercentage}% of pixels)</p>
                             <canvas ref={this.diffCanvasRef}/>
                         </div>
                     </div>
@@ -511,7 +513,8 @@ class CodeSample extends Component {
                     </div>
                     <div className="tile is-parent">
                         <div className="editor-pane tile is-vertical is-child box">
-                            <p className="subtitle">Your output</p>
+                            <p className="subtitle">Your output
+                                ({diffPercentage}% of characters differ)</p>
                             <Editor
                                 value={this.state.output}
                                 markers={this.state.outputMarkers}

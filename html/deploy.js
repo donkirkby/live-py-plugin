@@ -33,9 +33,11 @@ function copyPyodide(srcPath, destPath) {
     const srcFiles = [
         'cycler-0.11.0-py3-none-any.whl',
         'distutils.tar',
+        'fonttools-4.32.0-py3-none-any.whl',
         'kiwisolver-1.4.2-cp310-cp310-emscripten_wasm32.whl',
         'matplotlib-3.5.1-cp310-cp310-emscripten_wasm32.whl',
         'numpy-1.22.3-cp310-cp310-emscripten_wasm32.whl',
+        'packaging-21.3-py3-none-any.whl',
         'PIL-9.1.0-cp310-cp310-emscripten_wasm32.whl',
         'pyodide.js',
         'pyodide.js.map',

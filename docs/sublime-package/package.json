@@ -6,6 +6,12 @@
       "details": "https://github.com/donkirkby/live-py-plugin",
       "releases": [
         {
+          "version": "4.9.0",
+          "url": "https://donkirkby.github.io/live-py-plugin/sublime-package/python_live_coding_v4.9.0.zip",
+          "date": "2022-11-29 06:48:22",
+          "sublime_text": ">=3000"
+        },
+        {
           "version": "4.8.0",
           "url": "https://donkirkby.github.io/live-py-plugin/sublime-package/python_live_coding_v4.8.0.zip",
           "date": "2022-02-08 01:43:49",

@@ -3,16 +3,16 @@
     <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
     <id>io.github.donkirkby.livepycharm</id>
     <name>Live Coding in Python</name>
-    <version>4.8.0</version>
+    <version>0</version><!-- Replaced by version from build.gradle.kts. -->
     <vendor url="https://donkirkby.github.io/live-py-plugin">Don Kirkby</vendor>
 
     <description><![CDATA[
       Lets you run your Python code as you type it. Displays variable values,
-      matplotlib, Pyglet, or turtle graphics.
+      matplotlib, Pillow, Pyglet, or turtle graphics.
     ]]></description>
 
     <change-notes><![CDATA[
-        Bug fixes in colour handling for turtle graphics.
+        Now compatible with Python 3.11 and Matplotlib 3.5.2.
     ]]>
     </change-notes>
 

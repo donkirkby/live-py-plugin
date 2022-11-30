@@ -1,3 +1,9 @@
 {% if page.is_react %}
-<script defer="defer" src="{{ 'demo/static/js/main.25bb37ca.js' | relative_url }}"></script><link href="{{ 'demo/static/css/main.674cf88c.css' | relative_url }}" rel="stylesheet">
+
+        {% if page.modules %}
+            <script>
+                window.liveCodingExtraModules = "{{ page.modules }}";
+            </script>
+        {% endif %}
+        <script defer="defer" src="{{ 'demo/static/js/main.e3d961e0.js' | relative_url }}"></script><link href="{{ 'demo/static/css/main.2915c2e0.css' | relative_url }}" rel="stylesheet">
 {% endif %}

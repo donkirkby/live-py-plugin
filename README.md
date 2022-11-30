@@ -5,6 +5,7 @@ Live Coding in Python
 [![HTML Build Status]][actions]
 [![Code Coverage]][codecov]
 [![PyCharm downloads]][pycharm plugin]
+[![Emacs downloads]][emacs plugin]
 [![Sublime downloads]][sublime plugin]
 [![space-tracer downloads]][space-tracer]
 [![DOI]][zenodo]
@@ -19,6 +20,8 @@ even your browser.
 [codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
 [PyCharm downloads]: https://img.shields.io/jetbrains/plugin/d/9742?label=PyCharm%20%E2%86%93
 [pycharm plugin]: https://plugins.jetbrains.com/plugin/9742
+[Emacs downloads]: https://img.shields.io/badge/Emacs%20%E2%86%93-362k-brightgreen
+[emacs plugin]: https://melpa.org/#/live-py-mode
 [Sublime downloads]: https://img.shields.io/packagecontrol/dt/Live%20Coding%20in%20Python?label=Sublime%20%E2%86%93
 [sublime plugin]: https://packagecontrol.io/packages/Live%20Coding%20in%20Python
 [space-tracer downloads]: https://static.pepy.tech/personalized-badge/space-tracer?left_color=grey&right_color=brightgreen&left_text=space-tracer%20%E2%86%93

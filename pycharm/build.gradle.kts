@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.donkirkby"
-version = "4.9.0"
+version = "4.9.1"
 
 repositories {
     mavenCentral()
@@ -44,6 +44,7 @@ tasks {
 
     patchPluginXml {
         sinceBuild.set("193")
+        untilBuild.set("")
     }
 
     signPlugin {

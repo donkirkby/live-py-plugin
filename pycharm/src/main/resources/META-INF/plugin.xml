@@ -13,6 +13,7 @@
 
     <change-notes><![CDATA[
         Now compatible with Python 3.11 and Matplotlib 3.5.2.
+        Fix IntelliJ version limits.
     ]]>
     </change-notes>
 

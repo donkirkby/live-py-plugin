@@ -567,8 +567,25 @@ class App extends Component {
                 } else {
                     extraModules = extraModules.split(',');
                 }
+                let extraFiles = window.liveCodingExtraFiles;
+                if (extraFiles === undefined) {
+                    extraFiles = [];
+                } else {
+                    extraFiles = extraFiles.split(',');
+                }
                 // noinspection JSUnresolvedVariable
                 window.pyodidePromise.then(function() {
+                    for (const extraFile of extraFiles) {
+                        fetch(extraFile)
+                            .then((response) => response.blob())
+                            .then((blob) => blob.arrayBuffer())
+                            .then((buffer) => {
+                                const byteArray = new Int8Array(buffer);
+                                window.pyodide.FS.writeFile(
+                                    extraFile,
+                                    byteArray)
+                            });
+                    }
                     for (const extraModule of extraModules) {
                         // noinspection JSUnresolvedFunction
                         window.pyodide.loadPackage(extraModule.trim());

@@ -20,9 +20,18 @@ function copyIndex(indexSrcPath, destFolderPath) {
             </script>
         {% endif %}
         `;
+    let filesSource = `
+        {% if page.files %}
+            <script>
+                window.liveCodingExtraFiles = "{{ page.files }}";
+            </script>
+        {% endif %}
+        `;
     let rawSource = match[0];
     let destFilePath = path.join(includesPath, 'head-scripts.html');
-    fs.writeFileSync(destFilePath, wrapReact(modulesSource + rawSource));
+    fs.writeFileSync(
+        destFilePath,
+        wrapReact(modulesSource + filesSource + rawSource));
 
     match = indexSource.match(/<div id="root"><\/div>(.*)<\/body>/ms);
     destFilePath = path.join(includesPath, 'footer-scripts.html');
@@ -75,10 +84,6 @@ function main() {
             if (entry.name === 'static' || entry.name === 'pyodide') {
                 fs.rmSync(destFilePath, {recursive: true});
             }
-        } else if (entry.name.endsWith('.md')) {
-            // Leave markdown files alone.
-        } else {
-            fs.unlinkSync(destFilePath);
         }
     }
     const entries = fs.readdirSync(src);

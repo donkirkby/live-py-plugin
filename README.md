@@ -20,7 +20,7 @@ even your browser.
 [codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
 [PyCharm downloads]: https://img.shields.io/jetbrains/plugin/d/9742?label=PyCharm%20%E2%86%93
 [pycharm plugin]: https://plugins.jetbrains.com/plugin/9742
-[Emacs downloads]: https://img.shields.io/badge/Emacs%20%E2%86%93-362k-brightgreen
+[Emacs downloads]: https://img.shields.io/badge/Emacs%20%E2%86%93-371k-brightgreen
 [emacs plugin]: https://melpa.org/#/live-py-mode
 [Sublime downloads]: https://img.shields.io/packagecontrol/dt/Live%20Coding%20in%20Python?label=Sublime%20%E2%86%93
 [sublime plugin]: https://packagecontrol.io/packages/Live%20Coding%20in%20Python
@@ -120,7 +120,8 @@ section, but the next section gives instructions for installing without MELPA.
 2. [Install MELPA][melpa]. You probably want to follow the instructions
     for the stable version, instead of the default bleeding-edge version.
 3. Launch the package installer with `M-x package-list-packages`.
-4. Find the package with `C-s live-py-mode`.
+4. Find the package with `C-s live-py-mode`. If you can't find it, run
+   `M-x package-refresh-contents`, and try again.
 5. Mark the package to install with `i`, then execute the installation with
     `x`.
 6. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.

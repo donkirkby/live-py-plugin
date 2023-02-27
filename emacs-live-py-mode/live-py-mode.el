@@ -250,8 +250,9 @@ Typical values are 'python' or 'python3'."
   (live-py-update-all))
 
 (defun live-py-set-args()
-  "Prompt user to enter arguments for the python command, with input history support.
-One possible value is '-Q new'."
+  "Prompt user to enter arguments for the python command.
+
+Has input history support."
   (interactive)
   (setq live-py-args (read-shell-command "Type the python arguments:"))
   (live-py-update-all))

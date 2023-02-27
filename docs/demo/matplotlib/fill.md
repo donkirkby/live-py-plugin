@@ -178,7 +178,7 @@ arrays of true and false values.
     Y1 = 5*X**2 - 250
     Y2 = X**3
     
-    plt.fill_between(X, Y1, Y2, where=X < 2)
+    plt.fill_between(X, Y1, Y2, where=X < 2.5)
     plt.xlim(-11, 11)
     
     plt.show()

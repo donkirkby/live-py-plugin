@@ -1,8 +1,9 @@
 # Contributing to the Live Coding in Python Project
 If you like this project and want to make it better, help out. It could be as
-simple as sending [@donkirkby] a nice note on Twitter, you could report a bug,
-or pitch in with some development work. There are usually some issues labeled as
-[good first issues] or [help wanted].
+simple as sending [@donkirkby@hachyderm.io] a nice note on Mastodon, you could
+report a bug, or pitch in with some development work. There are usually some
+small issues labeled as [good first issues] or some larger ones with
+[help wanted].
 
 ## Bug Reports and Enhancement Requests
 Please create issue descriptions [on GitHub][issues]. Be as specific as possible.
@@ -11,19 +12,24 @@ you planning to submit your own fix in a pull request? Please include a small
 code sample and what you would like the live code display to show for that code.
 
 ## PyCharm Development
-You can work on the PyCharm version of the plugin with IntelliJ [IDEA], and
-follow the [plugin development guidelines][idea-dev].
+There are two levels of PyCharm development. It's probably best to start with
+the Python code that runs in all versions of the Live Coding in Python project.
+The second level is to work on the Java code of the PyCharm extension. For
+either level, you'll need IntelliJ [IDEA], and follow the
+[plugin development guidelines][idea-dev].
 
-If you're trying to find the code for some feature of PyCharm, put a breakpoint
-in `ActionUtil.performActionDumbAware()`, then use the feature and step
-through the code after the breakpoint.
+For the second level, follow the optional instructions for downloading the IDEA
+source code. If you're trying to find the Java code for some feature of PyCharm,
+put a breakpoint in `ActionUtil.performActionDumbAware()`, then use the feature
+and step through the code after the breakpoint.
 
 ### Running from Source Code
 1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm`
    project.
 2. Install the [Python plugin][idea-py]. It will probably prompt you when you
    open the project.
-3. Use Git to clone the IDEA source code. (It takes a while.)
+3. If you're working on the Java code, use Git to clone the IDEA source code.
+   (It takes a while.)
 
         git clone git://git.jetbrains.org/idea/community.git idea
 
@@ -182,7 +188,14 @@ The details are at [packaging.python.org], but the main steps are:
 
 ## Browser Development
 The browser version uses the [Pyodide] project to run Python code in the
-browser. To start working on the Javascript code, [install nvm].
+browser. There are two levels of browser development. The easiest to start on
+is writing tutorials in markdown files. Any text editor will do, you can even
+edit in your browser on GitHub. See the section below on how to test GitHub
+Pages locally, and the section below that lists all the features of browser
+tutorials.
+
+If you're more ambitious and interested in working on the Javascript code,
+[install nvm].
 
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
     nvm install 16
@@ -427,7 +440,7 @@ The driver command and arguments let you use another script or unit tests to
 call the live coding file.
 
 [issues]: https://github.com/donkirkby/live-py-plugin/issues?state=open
-[@donkirkby]: https://twitter.com/donkirkby
+[@donkirkby@hachyderm.io]: https://hachyderm.io/@donkirkby
 [melpa.org]: https://melpa.org
 [good first issues]: https://github.com/donkirkby/live-py-plugin/labels/good%20first%20issue
 [help wanted]: https://github.com/donkirkby/live-py-plugin/labels/help%20wanted

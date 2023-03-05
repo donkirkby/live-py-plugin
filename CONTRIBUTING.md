@@ -16,7 +16,8 @@ There are two levels of PyCharm development. It's probably best to start with
 the Python code that runs in all versions of the Live Coding in Python project.
 The second level is to work on the Java code of the PyCharm extension. For
 either level, you'll need IntelliJ [IDEA], and follow the
-[plugin development guidelines][idea-dev].
+[plugin development guidelines][idea-dev]. You'll also need the
+[git download instructions] if you don't already have it.
 
 For the second level, follow the optional instructions for downloading the IDEA
 source code. If you're trying to find the Java code for some feature of PyCharm,
@@ -86,6 +87,7 @@ and step through the code after the breakpoint.
 ## Emacs Development
 Install the `live-py-mode` package as described in the README file, then replace all the files in
 `~/.emacs.d/elpa/live-py-mode-X.Y` with symbolic links to your git repository.
+You'll also need the [git download instructions] if you don't already have it.
 
 ### Publish a new release for the Emacs package
 Releases are built automatically on each commit, and published at [melpa.org].
@@ -108,6 +110,7 @@ Run the commands listed in `.github/workflows/python-package.yml` in the section
 ## Sublime Text Development
 Manually install the package using symbolic links to the files and
 `space_tracer` folder, so changes will be loaded when you restart Sublime Text.
+You'll also need the [git download instructions] if you don't already have it.
 
 1. Open Sublime Text 3.
 2. Navigate to Preferences -> Browse packages...
@@ -145,7 +148,8 @@ Manually install the package using symbolic links to the files and
 
 ## Space Tracer Development
 `space_tracer` is the command-line version that you can install with `pip`. It
-doesn't require any special development tools.
+doesn't require any special development tools, beyond Python and the
+[git download instructions] if you don't already have it.
 
 ### Deploying a new release of Space Tracer
 The details are at [packaging.python.org], but the main steps are:
@@ -207,7 +211,8 @@ If you're more ambitious and interested in working on the Javascript code,
 This lets you test the basic Javascript without Pyodide or the theme. See the
 next section for how to run the full site. The web site uses the
 [Bulma Clean theme], which is based on [Bulma]. The [Bulma colours] can be
-particularly helpful to learn about.
+particularly helpful to learn about. You'll also need the
+[git download instructions] if you don't already have it.
 
 ### Updating and Testing
 To deploy the latest version to the web site, you'll need the `space-tracer`
@@ -445,3 +450,4 @@ call the live coding file.
 [good first issues]: https://github.com/donkirkby/live-py-plugin/labels/good%20first%20issue
 [help wanted]: https://github.com/donkirkby/live-py-plugin/labels/help%20wanted
 [milestone]: https://github.com/donkirkby/live-py-plugin/milestones
+[git download instructions]: https://git-scm.com/downloads

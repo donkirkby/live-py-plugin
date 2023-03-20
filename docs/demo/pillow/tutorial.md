@@ -16,8 +16,8 @@ is monkey patched, use the `LivePillowImage` workaround.
     image = Image.open('hopper.jpg')
     scale = 0.75
     image = image.resize((
-    round(image.width*scale),
-    round(image.height*scale)))
+        round(image.width*scale),
+        round(image.height*scale)))
     
     live_image = LivePillowImage(image)
     live_image.display((-image.width/2, image.height/2))

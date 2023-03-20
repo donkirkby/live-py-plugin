@@ -1,5 +1,4 @@
 import pytest
-import sys
 
 from space_tracer.main import TraceRunner, replace_input
 from test_live_image import replace_image

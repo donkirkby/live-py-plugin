@@ -285,6 +285,17 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
                       | AssertionError: ['fail', 'badly']                    |
                       | ---------------------------------------------------- |
 """
+        expected_report_311 = """\
+foo = 'Hello, World!' | ---------------------------------------------------- |
+                      | Traceback (most recent call last):                   |
+                      |   File "path/example_driver.py", line 6, in <module> |
+                      |     assert 'fail' not in sys.argv, sys.argv[1:]      |
+                      |            ^^^^^^^^^^^^^^^^^^^^^^                    |
+                      | AssertionError: ['fail', 'badly']                    |
+                      | ---------------------------------------------------- |
+"""
+        if sys.version_info >= (3, 11, 0):
+            expected_report = expected_report_311
 
         stdin.read.return_value = source
 
@@ -330,6 +341,20 @@ def bar():                      | ----------------------------------------------
 def foo(x):                     | x = 1
     # This is shown, as normal. |
     return x                    | return 1"""
+
+        expected_report_311 = """\
+def bar():                      | ---------------------------------------------------- |
+    # This would normally       | Traceback (most recent call last):                   |
+    # be hidden because of      |   File "path/example_driver.py", line 6, in <module> |
+    # --traced, but the start   |     assert 'fail' not in sys.argv, sys.argv[1:]      |
+    # is shown so you can see   |            ^^^^^^^^^^^^^^^^^^^^^^                    |
+    # the error.                | AssertionError: ['fail', 'badly']                    |
+    return 42                   | ---------------------------------------------------- |
+def foo(x):                     | x = 1
+    # This is shown, as normal. |
+    return x                    | return 1"""
+        if sys.version_info >= (3, 11, 0):
+            expected_report = expected_report_311
 
         stdin.read.return_value = source
 

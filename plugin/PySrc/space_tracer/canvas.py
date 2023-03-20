@@ -99,6 +99,9 @@ class Canvas(object):
             return item_details['coords']
         item_details['coords'] = coords
 
+    def find_all(self):
+        return tuple(i for i in range(len(self.items)))
+
     def itemconfigure(self, item, **kwargs):
         item_details = self.items[item]
         item_details.update(kwargs)

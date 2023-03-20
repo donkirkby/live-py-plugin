@@ -405,12 +405,8 @@ class PatchedModuleLoader(Loader):
             module.use('Agg')
         elif self.fullname == 'matplotlib.pyplot':
             self.plt = module
-            # noinspection PyProtectedMember
-            turtle_screen = MockTurtle._screen
-            screen_width = turtle_screen.cv.cget('width')
-            screen_height = turtle_screen.cv.cget('height')
             module.show = partial(self.mock_show_matplotlib)  # Lets it accept a signature.
-            module.live_coding_size = (screen_width, screen_height)
+            module.live_coding_size = self._screen_size()
             module.live_coding_zoom = self.live_coding_zoom_matplotlib
             if self.is_zoomed:
                 self.live_coding_zoom_matplotlib()
@@ -420,50 +416,16 @@ class PatchedModuleLoader(Loader):
         elif self.fullname == 'PIL.ImageShow':
             module.show = partial(self.mock_show_pillow)
 
-    def mock_show_pillow(self, image, title=None, *args, **kwargs):
-        # noinspection PyProtectedMember
-        turtle_screen = MockTurtle._screen
-        screen_width = turtle_screen.cv.cget('width')
-        screen_height = turtle_screen.cv.cget('height')
-        figure_width, figure_height = image.size
-
-        if figure_width < screen_width:
-            x = (screen_width - figure_width) // 2
-        else:
-            x = 0
-        if figure_height < screen_height:
-            y = (screen_height - figure_height) // 2
-        else:
-            y = 0
-
-        # Adjust to turtle coordinates.
-        x -= screen_width // 2
-        y = screen_height // 2 - y
-
-        LivePillowImage(image).display((x, y))
+    def mock_show_pillow(self, image, title=None, **options):
+        position = self._center_position(*image.size)
+        LivePillowImage(image).display(position)
 
     def mock_show_matplotlib(self, *_args, **_kwargs):
         figure = self.plt.gcf()
-        # noinspection PyProtectedMember
-        turtle_screen = MockTurtle._screen
-        screen_width = turtle_screen.cv.cget('width')
-        screen_height = turtle_screen.cv.cget('height')
-        figure_width = figure.get_figwidth()*figure.dpi
-        figure_height = figure.get_figheight()*figure.dpi
-        if figure_width < screen_width:
-            x = (screen_width - figure_width) // 2
-        else:
-            x = 0
-        if figure_height < screen_height:
-            y = (screen_height - figure_height) // 2
-        else:
-            y = 0
-
-        # Adjust to turtle coordinates.
-        x -= screen_width // 2
-        y = screen_height // 2 - y
-
-        LiveFigure(figure).display((x, y))
+        figure_width = figure.get_figwidth() * figure.dpi
+        figure_height = figure.get_figheight() * figure.dpi
+        position = self._center_position(figure_width, figure_height)
+        LiveFigure(figure).display(position)
 
     def live_coding_zoom_matplotlib(self):
         screen_width, screen_height = self.plt.live_coding_size
@@ -472,3 +434,26 @@ class PatchedModuleLoader(Loader):
         x_dpi = screen_width/fig_width
         y_dpi = screen_height/fig_height
         fig.dpi = min(x_dpi, y_dpi)
+
+    def _screen_size(self):
+        # noinspection PyProtectedMember
+        turtle_screen = MockTurtle._screen
+        screen_width = turtle_screen.cv.cget('width')
+        screen_height = turtle_screen.cv.cget('height')
+        return screen_width, screen_height
+
+    def _center_position(self, figure_width, figure_height):
+        screen_width, screen_height = self._screen_size()
+        if figure_width < screen_width:
+            x = (screen_width - figure_width) // 2
+        else:
+            x = 0
+        if figure_height < screen_height:
+            y = (screen_height - figure_height) // 2
+        else:
+            y = 0
+
+        # Adjust to turtle coordinates.
+        x -= screen_width // 2
+        y = screen_height // 2 - y
+        return x, y

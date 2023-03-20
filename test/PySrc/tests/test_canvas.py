@@ -95,6 +95,18 @@ create_text
         # VERIFY
         self.assertEqual(expected_report.splitlines(), report)
 
+    def test_find_all(self):
+        # SETUP
+        canvas = Canvas()
+        canvas.items = [{'coords': [0.0, 0.0]}, {'coords': [1.0, 1.0]}, {'coords': [2.0, 2.0]}]
+
+        # EXEC
+        index_tuple = canvas.find_all()
+
+        # VERIFY
+        self.assertEqual(index_tuple, (0, 1, 2))
+
+
 
 if __name__ == '__main__':
     unittest.main()

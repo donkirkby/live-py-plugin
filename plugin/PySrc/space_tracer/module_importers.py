@@ -16,9 +16,9 @@ from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
 
 try:
     from .mock_turtle import MockTurtle
-    from .live_image import LiveFigure, monkey_patch_pyglet
+    from .live_image import LiveFigure, LivePillowImage, monkey_patch_pyglet
 except ImportError:
-    MockTurtle = monkey_patch_pyglet = LiveFigure = None
+    MockTurtle = monkey_patch_pyglet = LiveFigure = LivePillowImage = None
 
 
 class DelegatingModuleFinder(MetaPathFinder):
@@ -375,7 +375,8 @@ class PatchedModuleFinder(DelegatingModuleFinder):
                             'matplotlib.pyplot',
                             'numpy.random',
                             'random',
-                            'pyglet'):
+                            'pyglet',
+                            'PIL.ImageShow'):
             return None
         spec = super(PatchedModuleFinder, self).find_spec(fullname, path, target)
         if spec is not None:
@@ -408,16 +409,40 @@ class PatchedModuleLoader(Loader):
             turtle_screen = MockTurtle._screen
             screen_width = turtle_screen.cv.cget('width')
             screen_height = turtle_screen.cv.cget('height')
-            module.show = partial(self.mock_show)  # Lets it accept a signature.
+            module.show = partial(self.mock_show_matplotlib)  # Lets it accept a signature.
             module.live_coding_size = (screen_width, screen_height)
-            module.live_coding_zoom = self.live_coding_zoom
+            module.live_coding_zoom = self.live_coding_zoom_matplotlib
             if self.is_zoomed:
-                self.live_coding_zoom()
+                self.live_coding_zoom_matplotlib()
         elif self.fullname == 'pyglet':
             # noinspection PyProtectedMember
             monkey_patch_pyglet(MockTurtle._screen.cv)
+        elif self.fullname == 'PIL.ImageShow':
+            module.show = partial(self.mock_show_pillow)
 
-    def mock_show(self, *_args, **_kwargs):
+    def mock_show_pillow(self, image, title=None, *args, **kwargs):
+        # noinspection PyProtectedMember
+        turtle_screen = MockTurtle._screen
+        screen_width = turtle_screen.cv.cget('width')
+        screen_height = turtle_screen.cv.cget('height')
+        figure_width, figure_height = image.size
+
+        if figure_width < screen_width:
+            x = (screen_width - figure_width) // 2
+        else:
+            x = 0
+        if figure_height < screen_height:
+            y = (screen_height - figure_height) // 2
+        else:
+            y = 0
+
+        # Adjust to turtle coordinates.
+        x -= screen_width // 2
+        y = screen_height // 2 - y
+
+        LivePillowImage(image).display((x, y))
+
+    def mock_show_matplotlib(self, *_args, **_kwargs):
         figure = self.plt.gcf()
         # noinspection PyProtectedMember
         turtle_screen = MockTurtle._screen
@@ -440,7 +465,7 @@ class PatchedModuleLoader(Loader):
 
         LiveFigure(figure).display((x, y))
 
-    def live_coding_zoom(self):
+    def live_coding_zoom_matplotlib(self):
         screen_width, screen_height = self.plt.live_coding_size
         fig = self.plt.gcf()
         fig_width, fig_height = fig.get_figwidth(), fig.get_figheight()

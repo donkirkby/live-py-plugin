@@ -19,42 +19,41 @@ either level, you'll need IntelliJ [IDEA], and follow the
 [plugin development guidelines][idea-dev]. You'll also need the
 [git download instructions] if you don't already have it.
 
-For the second level, follow the optional instructions for downloading the IDEA
-source code. If you're trying to find the Java code for some feature of PyCharm,
+For the second level, also follow the optional instructions below, labelled with
+(Java only). If you're trying to find the Java code for some feature of PyCharm,
 put a breakpoint in `ActionUtil.performActionDumbAware()`, then use the feature
 and step through the code after the breakpoint.
 
 ### Running from Source Code
 1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm`
    project.
-2. Install the [Python plugin][idea-py]. It will probably prompt you when you
-   open the project.
-3. If you're working on the Java code, use Git to clone the IDEA source code.
-   (It takes a while.)
+2. Install the Python plugin. It will probably prompt you when you open the
+   project. Note that there's a [full version][idea-py] of the Python plugin for
+   IDEA Ultimate and [community edition][idea-py-ce] for IDEA Community Edition.
+3. (Java only) Use Git to clone the IDEA source code. (It takes a while.)
 
         git clone git://git.jetbrains.org/idea/community.git idea
 
-4. Check out the Git label that matches the version of IDEA you are using. Find
-   the build number in the Help: About dialog. List the available tags, then
-   check out the one that matches.
+4. (Java only) Check out the Git label that matches the version of IDEA you are
+   using. Find the build number in the Help: About dialog. List the available
+   tags, then check out the one that matches.
 
         cd idea
         git tag
         git checkout tags/x.y
 
-5. Back in IDEA, [configure] the IntelliJ platform plugin SDK. Don't forget to
-   add a source path for the IDEA source code that you downloaded.
-6. In that SDK's classpath, add an entry for the Python plugin. Look in the IDEA
-   configuration folder, something like this:
-
-        /home/user/.IdeaIC2016.3/config/plugins/python/lib/python.jar
-
-7. You might have to add a Python SDK as well. One good way to get a useful
+5. (Java only) Back in IDEA, [configure] the IntelliJ platform plugin SDK. Don't
+   forget to add a source path for the IDEA source code that you downloaded.
+6. You might have to add a Python SDK as well. One good way to get a useful
    Python configuration is to run tox in the `live-py-plugin` folder. Then
    configure a Python SDK using `live-py-plugin/.tox/py36/bin/python3.6`, for
    example.
-8. From the Run menu, choose Run..., and configure a Plugin launch. Then launch
-   it. It will prompt you to set up a new project.
+7. If the Gradle window isn't already open, from the Help menu, choose Find
+   Action... and search for Gradle with the elephant icon. Click on it to open
+   the Gradle window.
+8. In the Gradle window, double-click on livepy: Tasks: intellij: runIde to
+   launch a second copy with your plugin. It will prompt you to set up a new
+   project.
 9. In the new project, create a `.py` file. Then install the Python plugin when
    it prompts you. That will make you restart IDEA.
 10. Configure a Python SDK in the new project. It's in the File menu under
@@ -81,6 +80,7 @@ and step through the code after the breakpoint.
 [IDEA]: https://www.jetbrains.com/idea/download
 [idea-dev]: https://www.jetbrains.com/help/idea/2016.3/plugin-development-guidelines.html
 [idea-py]: https://plugins.jetbrains.com/idea/plugin/631-python
+[idea-py-ce]: https://plugins.jetbrains.com/plugin/7322-python-community-edition
 [configure]: https://www.jetbrains.com/help/idea/2016.3/configuring-intellij-platform-plugin-sdk.html
 [plugin page]: https://plugins.jetbrains.com/plugin/9742
 

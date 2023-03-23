@@ -128,16 +128,21 @@ public class LiveCodingAnalyst implements DocumentListener {
      *
      * @param project     the project for the current action
      * @param dataContext the data context for the current action
-     * @return true if the analysis successfully started
+     * @return true if the display should be opened.
      */
     boolean start(@Nullable Project project, @NotNull DataContext dataContext) {
+        isRunning = false;
+
         if (project == null || project.isDisposed()) {
             return false;
         }
 
-        RunnerAndConfigurationSettings configuration = RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
+        RunnerAndConfigurationSettings configuration =
+                RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
         if (configuration == null) {
-            return false;
+            displayResultLater(
+                    "Please choose a run configuration other than Current File.");
+            return true;
         }
         RunConfiguration runConfiguration = configuration.getConfiguration();
         PythonRunConfiguration pythonRunConfiguration;
@@ -153,17 +158,20 @@ public class LiveCodingAnalyst implements DocumentListener {
         DefaultRunExecutor executor = new DefaultRunExecutor();
         ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, configuration);
         if (builder == null) {
-            return false;
+            displayResultLater("Cannot launch run configuration.");
+            return true;
         }
         ExecutionEnvironment environment = builder.activeTarget().dataContext(dataContext).build();
         try {
             RunProfileState state = environment.getState();
             if (!(state instanceof PythonCommandLineState)) {
-                return false;
+                displayResultLater("Please choose a Python run configuration.");
+                return true;
             }
             commandLineState = (PythonCommandLineState) state;
         } catch (com.intellij.execution.ExecutionException e1) {
-            return false;
+            displayResultLater("Invalid run configuration.");
+            return true;
         }
         File plugins = new File(PathManager.getPluginsPath());
         File livePyPath = new File(plugins, "livepy");
@@ -303,8 +311,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             if (progressIndicator.isCanceled()) {
                 return;
             }
-            final String finalDisplay = display;
-            ApplicationManager.getApplication().invokeLater(() -> displayResult(finalDisplay));
+            displayResultLater(display);
         } finally {
             progressIndicator.stop();
         }
@@ -392,6 +399,11 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         alarm.cancelAllRequests();
         alarm.addRequest(() -> pool.submit(() -> analyse(document)), 300);
+    }
+
+    private void displayResultLater(String display) {
+        ApplicationManager.getApplication().invokeLater(
+                () -> displayResult(display));
     }
 
     private void displayResult(String display) {

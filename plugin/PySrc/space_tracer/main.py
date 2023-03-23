@@ -332,42 +332,8 @@ def replace_input(stdin_text=None):
 def display_error_on_canvas():
     if MockTurtle is None:
         return
-    tb = traceback.TracebackException(*sys.exc_info())
-    tb_stack = tb.stack
-    library_path = os.path.dirname(__file__)
-    while tb_stack and tb_stack[0].filename.startswith(library_path):
-        tb_stack.pop(0)
-    del tb_stack[10:]
-    message = ''.join(tb.format(chain=False))
-    message_lines = message.splitlines(keepends=False)
-    split_lines = []
-    for line in message_lines:
-        while line:
-            split_lines.append(line[:80])
-            line = line[80:]
-    max_length = max(len(line) for line in split_lines)
     t = MockTurtle()
-    t.up()
-    screen = t.getscreen()
-    window_width = screen.window_width()
-    window_height = screen.window_height()
-    line_height = min(window_height / len(split_lines),
-                      window_width * 2 / max_length)
-    font_size = round(line_height * 0.75)
-    font = ('Arial', font_size, 'normal')
-    t.goto(-window_width // 2, window_height // 2)
-    t.setheading(-90)
-    t.fillcolor('white')
-    t.begin_fill()
-    for _ in range(2):
-        t.forward(line_height * len(split_lines))
-        t.left(90)
-        t.forward(window_width)
-        t.left(90)
-    t.end_fill()
-    for line in split_lines:
-        t.forward(line_height)
-        t.write(line, font=font)
+    t.display_error()
 
 
 class TraceRunner(object):

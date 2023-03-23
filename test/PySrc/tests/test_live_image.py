@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from space_tracer import LivePng, LivePillowImage
+from space_tracer import LivePng, LivePillowImage, LivePainter
 from space_tracer.canvas import Canvas
 from space_tracer.live_image import LiveImageDiffer
 from space_tracer.mock_turtle import MockTurtle
@@ -501,3 +501,31 @@ def test_differ_assert_fails():
 
     with pytest.raises(AssertionError, match=r'Images differ by 2 pixels.'):
         differ.assert_equal(image1, image2)
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_create_painters_fails():
+    differ = LiveImageDiffer()
+    expected: LivePainter
+    actual: LivePainter
+
+    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel.'):
+        with differ.create_painters((100, 100)) as (expected, actual):
+            expected.set_pixel((50, 50), (255, 255, 255, 255))
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_create_painters_error():
+    MockTurtle.monkey_patch()
+    try:
+        t = MockTurtle()
+        differ = LiveImageDiffer()
+        expected: LivePainter
+        actual: LivePainter
+
+        with pytest.raises(ZeroDivisionError):
+            with differ.create_painters((100, 100)) as (expected, actual):
+                1/0
+
+        report_lines = t.report
+        assert report_lines[-1] == "    text='ZeroDivisionError: division by zero'"
+    finally:
+        MockTurtle.remove_monkey_patch()

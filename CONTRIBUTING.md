@@ -13,7 +13,8 @@ code sample and what you would like the live code display to show for that code.
 
 ## PyCharm Development
 There are two levels of PyCharm development. It's probably best to start with
-the Python code that runs in all versions of the Live Coding in Python project.
+the [Python code] that runs in all versions of the Live Coding in Python project
+as well as the [Python tests].
 The second level is to work on the Java code of the PyCharm extension. For
 either level, you'll need IntelliJ [IDEA], and follow the
 [plugin development guidelines][idea-dev]. You'll also need the
@@ -77,6 +78,8 @@ and step through the code after the breakpoint.
 9. Upload the zip file to the plugin repository by clicking the Update plugin
     button on the [plugin page].
 
+[Python code]: plugin/PySrc/space_tracer
+[Python tests]: test/PySrc/tests
 [IDEA]: https://www.jetbrains.com/idea/download
 [idea-dev]: https://www.jetbrains.com/help/idea/2016.3/plugin-development-guidelines.html
 [idea-py]: https://plugins.jetbrains.com/idea/plugin/631-python

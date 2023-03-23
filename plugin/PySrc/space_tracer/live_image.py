@@ -5,6 +5,7 @@ import sys
 import typing
 from abc import ABC, abstractmethod
 from base64 import standard_b64encode
+from contextlib import contextmanager
 from pathlib import Path
 
 from space_tracer.mock_turtle import MockTurtle
@@ -157,8 +158,7 @@ class LiveImageDiffer:
         ''' Initialize the object and clean out the diffs path.
 
         This class requires Pillow to be installed, but you can remove that
-        dependency with a subclass that overrides the start_diff() and
-        end_diff() methods.
+        dependency with a subclass that overrides the create_painter() method.
 
         A good way to use this class is to create a session fixture and regular
         fixture like this:
@@ -204,13 +204,39 @@ class LiveImageDiffer:
 
         self.clean_diffs()
 
+    def create_painter(self, size: LiveImage.Size) -> LivePainter:
+        """ Create a painter to use for comparison.
+
+        :param size: the size of painter to create.
+        """
+        return LivePillowImage(Image.new('RGBA', size))
+
+    @contextmanager
+    def create_painters(self, size: LiveImage.Size) -> typing.ContextManager[
+            typing.Tuple[LivePainter, LivePainter]]:
+        """ Create two painters, then compare them when the context closes.
+
+        Also display the first painter as the Actual image, the second painter
+        as the Expected image, and a difference between them.
+        :param size: the size of the painters to create
+        """
+        actual = self.create_painter(size)
+        expected = self.create_painter(size)
+        try:
+            yield actual, expected
+        except:
+            t = MockTurtle()
+            t.display_error()
+            raise
+        self.assert_equal(actual, expected)
+
     def start_diff(self, size: LiveImage.Size):
         """ Start the comparison by creating a diff painter.
 
         Overrides must set self.diff to a LivePainter object.
         :param size: the size of painter to put in self.diff.
         """
-        self.diff = LivePillowImage(Image.new('RGBA', size))
+        self.diff = self.create_painter(size)
 
     def end_diff(self) -> LiveImage:
         """ End the comparison by cleaning up.

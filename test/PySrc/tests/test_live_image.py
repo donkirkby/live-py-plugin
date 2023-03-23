@@ -236,6 +236,18 @@ def test_differ_compare():
     assert diff_pixel2 == expected_diff
     assert differ.diff_count == 1
 
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_compare_pixel_alpha_channel_missing():
+
+    image1 = LivePillowImage(Image.new('RGB', (100, 200)))
+    image2 = LivePillowImage(Image.new('RGB', (100, 200)))
+
+    differ = LiveImageDiffer()
+    try:
+        differ.compare(image1, image2)
+    except Exception as e:
+        assert False, f"Raised an exception: {e}"
+
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_compare_display(patched_turtle):

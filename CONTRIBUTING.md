@@ -20,45 +20,31 @@ either level, you'll need IntelliJ [IDEA], and follow the
 [plugin development guidelines][idea-dev]. You'll also need the
 [git download instructions] if you don't already have it.
 
-For the second level, also follow the optional instructions below, labelled with
-(Java only). If you're trying to find the Java code for some feature of PyCharm,
-put a breakpoint in `ActionUtil.performActionDumbAware()`, then use the feature
-and step through the code after the breakpoint.
+If you're trying to find the Java code for some feature of PyCharm,
+put a breakpoint in `ActionUtil.performDumbAwareWithCallbacks()`, then use the
+feature and step through the code after the breakpoint.
 
 ### Running from Source Code
-1. Download and install IntelliJ IDEA, then open the `live-py-plugin/pycharm`
-   project.
+1. Download and install IntelliJ IDEA, then open the `live-py-plugin`
+   project. Wait a while for IDEA to download all the tools for the Gradle
+   project. 
 2. Install the Python plugin. It will probably prompt you when you open the
    project. Note that there's a [full version][idea-py] of the Python plugin for
    IDEA Ultimate and [community edition][idea-py-ce] for IDEA Community Edition.
-3. (Java only) Use Git to clone the IDEA source code. (It takes a while.)
-
-        git clone git://git.jetbrains.org/idea/community.git idea
-
-4. (Java only) Check out the Git label that matches the version of IDEA you are
-   using. Find the build number in the Help: About dialog. List the available
-   tags, then check out the one that matches.
-
-        cd idea
-        git tag
-        git checkout tags/x.y
-
-5. (Java only) Back in IDEA, [configure] the IntelliJ platform plugin SDK. Don't
-   forget to add a source path for the IDEA source code that you downloaded.
-6. You might have to add a Python SDK as well. One good way to get a useful
+3. You might have to add a Python SDK as well. One good way to get a useful
    Python configuration is to run tox in the `live-py-plugin` folder. Then
    configure a Python SDK using `live-py-plugin/.tox/py36/bin/python3.6`, for
    example.
-7. If the Gradle window isn't already open, from the Help menu, choose Find
+4. If the Gradle window isn't already open, from the Help menu, choose Find
    Action... and search for Gradle with the elephant icon. Click on it to open
    the Gradle window.
-8. In the Gradle window, double-click on livepy: Tasks: intellij: runIde to
+5. In the Gradle window, double-click on livepy: Tasks: intellij: runIde to
    launch a second copy with your plugin. It will prompt you to set up a new
    project.
-9. In the new project, create a `.py` file. Then install the Python plugin when
+6. In the new project, create a `.py` file. Then install the Python plugin when
    it prompts you. That will make you restart IDEA.
-10. Configure a Python SDK in the new project. It's in the File menu under
-    Project Structure.
+7. Configure a Python SDK in the new project. It's in the File menu under
+   Project Structure.
 
 ### Publish a new release for the PyCharm plugin
 1. Check that all the Python unit tests pass, by running tox.

@@ -512,6 +512,7 @@ def test_differ_create_painters_fails():
         with differ.create_painters((100, 100)) as (expected, actual):
             expected.set_pixel((50, 50), (255, 255, 255, 255))
 
+
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_create_painters_error():
     MockTurtle.monkey_patch()

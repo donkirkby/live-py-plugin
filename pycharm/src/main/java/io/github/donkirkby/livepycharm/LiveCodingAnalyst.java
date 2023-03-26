@@ -176,7 +176,8 @@ public class LiveCodingAnalyst implements DocumentListener {
         File plugins = new File(PathManager.getPluginsPath());
         File livePyPath = new File(plugins, "livepy");
         FilenameFilter jarFilter = (file, s) ->
-                s.startsWith("livepy-") && s.endsWith(".jar");
+                (s.startsWith("livepy-") || s.startsWith("instrumented-livepy-"))
+                        && s.endsWith(".jar");
         File jarParentPath;
         if (livePyPath.isDirectory()) {
             jarParentPath = new File(livePyPath, "lib");

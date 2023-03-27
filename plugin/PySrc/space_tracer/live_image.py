@@ -12,9 +12,13 @@ from space_tracer.mock_turtle import MockTurtle
 
 try:
     from PIL import Image
+    new_image = Image.new
+    open_image = Image.open
 except ImportError:
     class Image:
         Image = None
+
+    new_image = open_image = None
 
 
 class LiveImage(ABC):
@@ -40,8 +44,11 @@ class LiveImage(ABC):
 
         Override this method if you don't want to depend on Pillow.
         """
+        if open_image is None:
+            raise RuntimeError('Pillow is not installed. Install it, or '
+                               'override LivePng.convert_to_painter().')
         png_file = io.BytesIO(self.convert_to_png())
-        image = Image.open(png_file)
+        image = open_image(png_file)
         image.load()
         return LivePillowImage(image)
 
@@ -204,12 +211,26 @@ class LiveImageDiffer:
 
         self.clean_diffs()
 
-    def create_painter(self, size: LiveImage.Size) -> LivePainter:
+    @staticmethod
+    def start_painter(size: LiveImage.Size) -> LivePainter:
         """ Create a painter to use for comparison.
+
+        If Pillow is not installed, subclass LiveImageDiffer, and override this
+        method to create a subclass of LivePainter. If you need to clean up
+        painters, override end_painters().
 
         :param size: the size of painter to create.
         """
-        return LivePillowImage(Image.new('RGBA', size))
+        if new_image is None:
+            raise RuntimeError('Pillow is not installed. Install it, or '
+                               'override LiveImageDiffer.start_painter().')
+        return LivePillowImage(new_image('RGBA', size))
+
+    def end_painters(self, *painters: LivePainter):
+        """ Clean up painters created by start_painter.
+
+        :param painters: painters to clean up.
+        """
 
     @contextmanager
     def create_painters(self, size: LiveImage.Size) -> typing.ContextManager[
@@ -217,18 +238,23 @@ class LiveImageDiffer:
         """ Create two painters, then compare them when the context closes.
 
         Also display the first painter as the Actual image, the second painter
-        as the Expected image, and a difference between them.
+        as the Expected image, and a difference between them. If Pillow isn't
+        installed, you must override the helper method, create_painter().
         :param size: the size of the painters to create
         """
-        actual = self.create_painter(size)
-        expected = self.create_painter(size)
+        painters =[self.start_painter(size)]
         try:
-            yield actual, expected
-        except:
-            t = MockTurtle()
-            t.display_error()
-            raise
-        self.assert_equal(actual, expected)
+            painters.append(self.start_painter(size))
+            actual, expected = painters
+            try:
+                yield actual, expected
+            except Exception:
+                t = MockTurtle()
+                t.display_error()
+                raise
+            self.assert_equal(actual, expected)
+        finally:
+            self.end_painters(*painters)
 
     def start_diff(self, size: LiveImage.Size):
         """ Start the comparison by creating a diff painter.
@@ -236,7 +262,7 @@ class LiveImageDiffer:
         Overrides must set self.diff to a LivePainter object.
         :param size: the size of painter to put in self.diff.
         """
-        self.diff = self.create_painter(size)
+        self.diff = self.start_painter(size)
 
     def end_diff(self) -> LiveImage:
         """ End the comparison by cleaning up.
@@ -245,6 +271,7 @@ class LiveImageDiffer:
         """
         diff = self.diff
         self.diff = None
+        self.end_painters(diff)
         return diff
 
     def compare(self,

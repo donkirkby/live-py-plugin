@@ -11,7 +11,8 @@ import turtle
 @pytest.fixture
 def patched_turtle():
     MockTurtle.monkey_patch()
-    yield
+    is_patched = True
+    yield is_patched
     MockTurtle.remove_monkey_patch()
 
 

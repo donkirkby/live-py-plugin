@@ -204,6 +204,7 @@ class LiveImageDiffer:
         self.tolerance = 3
         self.blur_radius = 1
         self.diff_count = 0  # number of mismatched pixels
+        self.max_diff = 0  # maximum difference seen between pixel values
 
         # for all calls to compare
         self.file_prefixes = set()  # type: typing.Set[str]
@@ -214,7 +215,7 @@ class LiveImageDiffer:
         self.clean_diffs()
 
     @staticmethod
-    def start_painter(size: LiveImage.Size) -> LivePainter:
+    def start_painter(size: LiveImage.Size, fill: str = None) -> LivePainter:
         """ Create a painter to use for comparison.
 
         If Pillow is not installed, subclass LiveImageDiffer, and override this
@@ -222,11 +223,12 @@ class LiveImageDiffer:
         painters, override end_painters().
 
         :param size: the size of painter to create.
+        :param fill: the background colour, defaults to transparent black.
         """
         if new_image is None:
             raise RuntimeError('Pillow is not installed. Install it, or '
                                'override LiveImageDiffer.start_painter().')
-        return LivePillowImage(new_image('RGBA', size))
+        return LivePillowImage(new_image('RGBA', size, fill))
 
     def end_painters(self, *painters: LivePainter):
         """ Clean up painters created by start_painter.
@@ -235,7 +237,9 @@ class LiveImageDiffer:
         """
 
     @contextmanager
-    def create_painters(self, size: LiveImage.Size) -> typing.ContextManager[
+    def create_painters(self,
+                        size: LiveImage.Size,
+                        fill: str = None) -> typing.ContextManager[
             typing.Tuple[LivePainter, LivePainter]]:
         """ Create two painters, then compare them when the context closes.
 
@@ -243,10 +247,11 @@ class LiveImageDiffer:
         as the Expected image, and a difference between them. If Pillow isn't
         installed, you must override the helper method, create_painter().
         :param size: the size of the painters to create
+        :param fill: the background colour, defaults to transparent black.
         """
-        painters = [self.start_painter(size)]
+        painters = [self.start_painter(size, fill)]
         try:
-            painters.append(self.start_painter(size))
+            painters.append(self.start_painter(size, fill))
             actual, expected = painters
             try:
                 yield actual, expected
@@ -362,7 +367,9 @@ class LiveImageDiffer:
             suffix = ''
         else:
             suffix = 's'
-        raise AssertionError('Images differ by {} pixel{}.'.format(self.diff_count, suffix))
+        raise AssertionError(f'Images differ by {self.diff_count} '
+                             f'pixel{suffix} with a maximum difference of '
+                             f'{self.max_diff}.')
 
     def remove_common_prefix(self):
         common_prefix = os.path.commonprefix(self.file_names)
@@ -416,7 +423,13 @@ class LiveImageDiffer:
                       is_missing: bool = False) -> LiveImage.Fill:
         ar, ag, ab, aa = actual_pixel
         er, eg, eb, ea = expected_pixel
+
+        # maximum difference for this pixel's four channels
         max_diff = max(abs(a - b) for a, b in zip(actual_pixel, expected_pixel))
+
+        # maximum difference across the whole image
+        self.max_diff = max(self.max_diff, max_diff)
+
         if max_diff > self.tolerance or is_missing:
             self.diff_count += 1
             # Colour

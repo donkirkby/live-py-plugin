@@ -586,20 +586,23 @@ def test_differ_assert_passes():
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_assert_fails():
+    light_blue = (0, 0, 127, 255)
     blue = (0, 0, 255, 255)
 
-    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
-    image1.set_pixel((5, 10), blue)
-    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20), 'black'))
+    image1.set_pixel((5, 10), light_blue)
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20), 'black'))
 
     differ = LiveImageDiffer()
 
-    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel.'):
+    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel with '
+                                             r'a maximum difference of 127\.'):
         differ.assert_equal(image1, image2)
 
     image1.set_pixel((5, 11), blue)
 
-    with pytest.raises(AssertionError, match=r'Images differ by 2 pixels.'):
+    with pytest.raises(AssertionError, match=r'Images differ by 2 pixels with '
+                                             r'a maximum difference of 255\.'):
         differ.assert_equal(image1, image2)
 
 
@@ -609,7 +612,7 @@ def test_differ_create_painters_fails():
     expected: LivePainter
     actual: LivePainter
 
-    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel.'):
+    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel'):
         with differ.create_painters((100, 100)) as (expected, actual):
             expected.set_pixel((50, 50), (255, 255, 255, 255))
 

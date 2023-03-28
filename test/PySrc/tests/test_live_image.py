@@ -247,6 +247,92 @@ def test_differ_compare():
     assert differ.diff_count == 1
 
 
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_no_offset():
+    differ = LiveImageDiffer()
+    offset = 0
+    differ.tolerance = 20
+
+    image1 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw1 = ImageDraw.Draw(image1.image)
+    draw1.rectangle((50, 50, 100, 100), fill='blue')
+    image2 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw2 = ImageDraw.Draw(image2.image)
+    draw2.rectangle((50+offset, 50, 100, 100), fill='blue')
+
+    differ.compare(image1, image2)
+
+    assert differ.diff_count == 0
+
+
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_offset():
+    differ = LiveImageDiffer()
+    offset = 1
+    differ.tolerance = 20
+
+    image1 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw1 = ImageDraw.Draw(image1.image)
+    draw1.rectangle((50, 50, 100, 100), fill='blue')
+    image2 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw2 = ImageDraw.Draw(image2.image)
+    draw2.rectangle((50+offset, 50, 100, 100), fill='blue')
+
+    differ.compare(image1, image2)
+
+    assert differ.diff_count == 51
+
+
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_offset_blurred():
+    differ = LiveImageDiffer()
+    offset = 1
+    differ.tolerance = 20
+    differ.blur_radius = 5
+
+    image1 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw1 = ImageDraw.Draw(image1.image)
+    draw1.rectangle((50, 50, 100, 100), fill='blue')
+    image2 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw2 = ImageDraw.Draw(image2.image)
+    draw2.rectangle((50+offset, 50, 100, 100), fill='blue')
+
+    differ.compare(image1, image2)
+
+    assert differ.diff_count == 0
+
+
+# noinspection DuplicatedCode
+def test_differ_blurred_not_pillow():
+    differ = LiveImageDiffer()
+    differ.blur_radius = 5
+
+    image = LivePng(b'PNG_BYTES1')
+
+    with pytest.raises(RuntimeError,
+                       match=r'LivePng cannot be blurred\. Override '
+                             r'LiveImageDiffer\.blur\(\)\.'):
+        # noinspection PyTypeChecker
+        differ.blur(image)
+
+
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is not None, reason='Pillow not installed.')
+def test_differ_blurred_pillow_not_installed():
+    differ = LiveImageDiffer()
+    differ.blur_radius = 5
+
+    image = LivePillowImage(None)
+
+    with pytest.raises(RuntimeError,
+                       match=r'Pillow is not installed\. Install or override '
+                             r'LiveImageDiffer\.blur\(\)\.'):
+        differ.blur(image)
+
+
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_compare_display(patched_turtle):
     assert patched_turtle

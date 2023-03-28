@@ -12,13 +12,14 @@ from space_tracer.mock_turtle import MockTurtle
 
 try:
     from PIL import Image
+    from PIL.ImageFilter import GaussianBlur
     new_image = Image.new
     open_image = Image.open
 except ImportError:
     class Image:
         Image = None
 
-    new_image = open_image = None
+    new_image = open_image = GaussianBlur = None
 
 
 class LiveImage(ABC):
@@ -201,6 +202,7 @@ class LiveImageDiffer:
         self.diff = None  # type: typing.Optional[LivePainter]
         self.diff_files = set()  # type: typing.Set[Path]
         self.tolerance = 3
+        self.blur_radius = 1
         self.diff_count = 0  # number of mismatched pixels
 
         # for all calls to compare
@@ -242,7 +244,7 @@ class LiveImageDiffer:
         installed, you must override the helper method, create_painter().
         :param size: the size of the painters to create
         """
-        painters =[self.start_painter(size)]
+        painters = [self.start_painter(size)]
         try:
             painters.append(self.start_painter(size))
             actual, expected = painters
@@ -302,8 +304,10 @@ class LiveImageDiffer:
                 self.file_prefixes.add(file_prefix)
         painter1 = actual.convert_to_painter()
         painter2 = expected.convert_to_painter()
-        width1, height1 = painter1.get_size()
-        width2, height2 = painter2.get_size()
+        blurred1 = self.blur(painter1)
+        blurred2 = self.blur(painter2)
+        width1, height1 = blurred1.get_size()
+        width2, height2 = blurred2.get_size()
         width = max(width1, width2)
         height = max(height1, height2)
         self.diff_count = 0
@@ -315,12 +319,12 @@ class LiveImageDiffer:
                     position = (x, y)
                     is_missing = False
                     if x < width1 and y < height1:
-                        fill1 = painter1.get_pixel(position)
+                        fill1 = blurred1.get_pixel(position)
                     else:
                         is_missing = True
                         fill1 = default_colour
                     if x < width2 and y < height2:
-                        fill2 = painter2.get_pixel(position)
+                        fill2 = blurred2.get_pixel(position)
                     else:
                         is_missing = True
                         fill2 = default_colour
@@ -381,6 +385,20 @@ class LiveImageDiffer:
         path = self.diffs_path / name
         file_path = image.save(path)
         self.file_names.append(str(file_path.relative_to(self.diffs_path)))
+
+    def blur(self, painter: LivePainter) -> LivePainter:
+        if self.blur_radius <= 1:
+            return painter
+        if not isinstance(painter, LivePillowImage):
+            raise RuntimeError(f'{painter.__class__.__name__} cannot be '
+                               f'blurred. Override LiveImageDiffer.blur().')
+        if GaussianBlur is None:
+            raise RuntimeError('Pillow is not installed. Install or override '
+                               'LiveImageDiffer.blur().')
+
+        # noinspection PyCallingNonCallable
+        blurred = painter.image.filter(GaussianBlur(self.blur_radius))
+        return LivePillowImage(blurred)
 
     def clean_diffs(self):
         if self.diffs_path is None:

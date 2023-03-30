@@ -318,7 +318,7 @@ class LiveImageDiffer:
         self.diff_count = 0
         self.start_diff((width, height))
         try:
-            default_colour = (0, 0, 0, 0)
+            default_colour = (0, 0, 0, 255)
             for x in range(width):
                 for y in range(height):
                     position = (x, y)
@@ -433,12 +433,26 @@ class LiveImageDiffer:
         if max_diff > self.tolerance or is_missing:
             self.diff_count += 1
             # Colour
-            dr = 0xff
-            dg = (ag + eg) // 5
+            actual_norm = list(actual_pixel)
+            expected_norm = list(expected_pixel)
+
+            # reverse alpha, for consistent brightness comparison
+            actual_norm[-1] = 255 - actual_norm[-1]
+            expected_norm[-1] = 255 - expected_norm[-1]
+
+            actual_dist = sum(a*a for a in actual_norm)
+            expected_dist = sum(b*b for b in expected_norm)
+            dr = 255
+            if actual_dist <= expected_dist:
+                # actual is darker, highlight in red.
+                dg = (ag + eg) // 5
+            else:
+                # actual is brighter, highlight in yellow.
+                dg = 255
             db = (ab + eb) // 5
 
             # Opacity
-            da = 0xff
+            da = (aa + ea) // 2
         else:
             # Colour
             dr, dg, db = ar, ag, ab

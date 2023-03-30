@@ -31,7 +31,8 @@ except ImportError:
 
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers
-from .module_importers import TracedModuleImporter, PatchedModuleFinder
+from .module_importers import TracedModuleImporter, PatchedModuleFinder, \
+    SourceLoadError
 from .report_builder import ReportBuilder
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME
@@ -210,6 +211,7 @@ def analyze(source_code, canvas_size=None):
             tracer_args.append('--zoomed')
         tracer_args.append(PSEUDO_FILENAME)
         code_report = tracer.trace_command(tracer_args)
+    # noinspection PyUnresolvedReferences
     stdout = tracer.standard_files.old_files['stderr'].getvalue()
     return code_report, stdout
 
@@ -458,6 +460,9 @@ class TraceRunner(object):
             builder.add_message(message, line_number)
             if args.canvas:
                 display_error_on_canvas()
+        except SourceLoadError as ex:
+            builder.add_message(str(ex), 1)
+            self.return_code = 1
         except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()

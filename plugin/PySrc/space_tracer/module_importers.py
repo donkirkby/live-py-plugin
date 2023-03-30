@@ -21,6 +21,10 @@ except ImportError:
     MockTurtle = monkey_patch_pyglet = LiveFigure = LivePillowImage = None
 
 
+class SourceLoadError(IOError):
+    pass
+
+
 class DelegatingModuleFinder(MetaPathFinder):
     # noinspection PyMethodOverriding
     def find_spec(self, fullname, path, target):
@@ -151,8 +155,12 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                     self.source_code = source_file.read()
             source_code = self.source_code
         else:
-            with open(module_file) as source_file:
-                source_code = source_file.read()
+            try:
+                with open(module_file) as source_file:
+                    source_code = source_file.read()
+            except Exception as ex:
+                message = f'Cannot read Python source from {module_file}.'
+                raise SourceLoadError(message) from ex
         module_name = module.__name__
         is_module_traced = False
         source_tree = None
@@ -416,6 +424,7 @@ class PatchedModuleLoader(Loader):
         elif self.fullname == 'PIL.ImageShow':
             module.show = partial(self.mock_show_pillow)
 
+    # noinspection PyUnusedLocal
     def mock_show_pillow(self, image, title=None, **options):
         position = self._center_position(*image.size)
         LivePillowImage(image).display(position)
@@ -435,7 +444,8 @@ class PatchedModuleLoader(Loader):
         y_dpi = screen_height/fig_height
         fig.dpi = min(x_dpi, y_dpi)
 
-    def _screen_size(self):
+    @staticmethod
+    def _screen_size():
         # noinspection PyProtectedMember
         turtle_screen = MockTurtle._screen
         screen_width = turtle_screen.cv.cget('width')

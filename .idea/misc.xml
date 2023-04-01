@@ -4,7 +4,7 @@
   <component name="FrameworkDetectionExcludesConfiguration">
     <file type="web" url="file://$PROJECT_DIR$/pycharm" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="IntelliJ IDEA IU-221.5591.52" project-jdk-type="IDEA JDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="IntelliJ IDEA IU-231.8109.175" project-jdk-type="IDEA JDK">
     <output url="file://$PROJECT_DIR$/pycharm/out" />
   </component>
 </project>

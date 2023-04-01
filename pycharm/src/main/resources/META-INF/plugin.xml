@@ -35,14 +35,28 @@
                 icon="LivePythonIcons.MEDIA_PLAY">
             <add-to-group group-id="RunnerActions" anchor="last"/>
         </action>
+        <action id="livepy.StartNewUI" class="io.github.donkirkby.livepycharm.StartActionNewUI" text="Start Live Coding"
+                description="Run Python code as you type it, and show variable values."
+                icon="LivePythonIcons.MEDIA_PLAY_DARK">
+            <add-to-group group-id="RunToolbarMainActionGroup" anchor="last"/>
+        </action>
         <action id="livepy.Turtle" class="io.github.donkirkby.livepycharm.TurtleAction" text="Start Live Turtle"
-                description="Run Python code as you type it, and show turtle graphics."
+                description="Run Python code as you type it, and show a canvas for turtle graphics and more."
                 icon="LivePythonIcons.TURTLE">
             <add-to-group group-id="RunnerActions" anchor="last"/>
+        </action>
+        <action id="livepy.TurtleNewUI" class="io.github.donkirkby.livepycharm.TurtleActionNewUI" text="Start Live Turtle"
+                description="Run Python code as you type it, and show a canvas for turtle graphics and more."
+                icon="LivePythonIcons.TURTLE_DARK">
+            <add-to-group group-id="RunToolbarMainActionGroup" anchor="last"/>
         </action>
         <action id="livepy.Stop" class="io.github.donkirkby.livepycharm.StopAction" text="Stop Live Coding"
                 icon="LivePythonIcons.MEDIA_STOP">
             <add-to-group group-id="RunnerActions" anchor="last"/>
+        </action>
+        <action id="livepy.StopNewUI" class="io.github.donkirkby.livepycharm.StopActionNewUI" text="Stop Live Coding"
+                icon="LivePythonIcons.MEDIA_STOP_DARK">
+            <add-to-group group-id="RunToolbarMainActionGroup" anchor="last"/>
         </action>
     </actions>
 

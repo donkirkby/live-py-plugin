@@ -46,6 +46,19 @@ feature and step through the code after the breakpoint.
 7. Configure a Python SDK in the new project. It's in the File menu under
    Project Structure.
 
+Once you've got everything working with the current IDEA version selected in
+`build.gradle.kts`, you might want to use different versions to reproduce a bug
+or test compatibility with new features. To do that, find the exact build
+number you want to use. Start with the [IDEA build number ranges], then go to
+the [IDEA source code], and filter the tag names for the release you want.
+Finally, go to the Python plugin page, and find which version is compatible
+with the IDEA version you want. Remember the Python plugin has a
+[full version][idea-py] and a [community edition][idea-py-ce] to go with the
+two types of IDEA release.
+
+[IDEA build number ranges]: https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html
+[IDEA source code]: https://github.com/JetBrains/intellij-community
+
 ### Publish a new release for the PyCharm plugin
 1. Check that all the Python unit tests pass, by running tox.
 2. Update the version number in `about.py` and `pycharm/build.gradle.kts`, and

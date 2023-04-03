@@ -12,13 +12,14 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Now compatible with Python 3.11 and Matplotlib 3.5.2.
-        Fix IntelliJ version limits.
+        Add Pillow support, and improve image diffs.
+        Fix error in PyCharm 2023.1.
     ]]>
     </change-notes>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
-    <idea-version since-build="193.4778.7"/>
+    <!-- Replaced by version from build.gradle.kts. -->
+    <idea-version since-build="0.0.0"/>
 
     <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
          on how to target different products -->

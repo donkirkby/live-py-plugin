@@ -2,6 +2,7 @@ import doctest
 import os
 import re
 import sys
+from pathlib import Path
 
 import pytest
 from unittest.mock import DEFAULT, patch
@@ -28,8 +29,7 @@ EXAMPLE_PYCHARM_FAILURES_PATH = os.path.join(os.path.dirname(__file__),
 EXAMPLE_SILENT_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                           'example_silent_driver.py')
 CALLS_ZIPPED_PATH = os.path.join(os.path.dirname(__file__), 'calls_zipped.py')
-ZIPPED_EXAMPLE_PATH = os.path.join(os.path.dirname(__file__),
-                                   'zipped_example.zip')
+ZIPPED_EXAMPLE_PATH = Path(__file__).parent / 'zipped_example.zip'
 patch.multiple = patch.multiple  # Avoids PyCharm warnings.
 
 
@@ -871,21 +871,20 @@ def test_unable_to_read_source(stdin, stdout, argv):
         '--traced', 'zipped_example',
         CALLS_ZIPPED_PATH])
     expected_report = f"""\
-Cannot read Python source from {ZIPPED_EXAMPLE_PATH}/zipped_example.py.
+Cannot read Python source from {ZIPPED_EXAMPLE_PATH/'zipped_example.py'}.
 
 
 """
     stdin.read.return_value = ""
 
     with pytest.raises(SystemExit) as ctx:
-        sys.path.append(ZIPPED_EXAMPLE_PATH)
+        sys.path.append(str(ZIPPED_EXAMPLE_PATH))
         try:
             main()
         finally:
             sys.path.pop()
 
-    linux_report = stdout.getvalue().replace("\\", "/")
-    assert linux_report == expected_report
+    assert stdout.getvalue() == expected_report
     assert ctx.value.code == 1
 
 

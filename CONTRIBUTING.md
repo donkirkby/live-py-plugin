@@ -11,6 +11,11 @@ Which version are you using? What did you do? What did you expect to happen? Are
 you planning to submit your own fix in a pull request? Please include a small
 code sample and what you would like the live code display to show for that code.
 
+## Coding Guidelines
+The Python code should follow PEP8 guidelines, and the Java code should be
+compatible with Java 11. The plugin verifier will check for Java compatibility
+with the different versions of the IntelliJ platform.
+
 ## PyCharm Development
 There are two levels of PyCharm development. It's probably best to start with
 the [Python code] that runs in all versions of the Live Coding in Python project

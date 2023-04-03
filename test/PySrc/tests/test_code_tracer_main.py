@@ -884,7 +884,8 @@ Cannot read Python source from {ZIPPED_EXAMPLE_PATH}/zipped_example.py.
         finally:
             sys.path.pop()
 
-    assert stdout.getvalue() == expected_report
+    linux_report = stdout.getvalue().replace("\\", "/")
+    assert linux_report == expected_report
     assert ctx.value.code == 1
 
 

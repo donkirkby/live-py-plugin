@@ -75,6 +75,8 @@ jobs:
 
   build-python2:
     runs-on: ubuntu-latest
+    env:
+      PYTHON: "2.7"
     if: >
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name !=
@@ -88,3 +90,7 @@ jobs:
       - name: Test Python2 warning
         run: |
           python test/PySrc/tests/validate_legacy_python.py
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          env_vars: PYTHON

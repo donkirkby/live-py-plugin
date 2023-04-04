@@ -92,7 +92,7 @@ jobs:
           python -m pip install coverage==5.5
       - name: Test Python2 warning
         run: |
-          python -m coverage run test/PySrc/tests/validate_legacy_python.py
+          python -m coverage run --source=plugin/PySrc test/PySrc/tests/validate_legacy_python.py
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:

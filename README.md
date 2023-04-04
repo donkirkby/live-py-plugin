@@ -16,8 +16,8 @@ even your browser.
 [Python Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/py-build.yml/badge.svg?branch=master
 [HTML Build Status]: https://github.com/donkirkby/live-py-plugin/actions/workflows/html-build.yml/badge.svg?branch=master
 [actions]: https://github.com/donkirkby/live-py-plugin/actions
-[Code Coverage]: https://codecov.io/github/donkirkby/live-py-plugin/coverage.svg?branch=master
-[codecov]: https://codecov.io/github/donkirkby/live-py-plugin?branch=master
+[Code Coverage]: https://codecov.io/gh/donkirkby/live-py-plugin/coverage.svg
+[codecov]: https://app.codecov.io/gh/donkirkby/live-py-plugin
 [PyCharm downloads]: https://img.shields.io/jetbrains/plugin/d/9742?label=PyCharm%20%E2%86%93
 [pycharm plugin]: https://plugins.jetbrains.com/plugin/9742
 [Emacs downloads]: https://img.shields.io/badge/Emacs%20%E2%86%93-371k-brightgreen

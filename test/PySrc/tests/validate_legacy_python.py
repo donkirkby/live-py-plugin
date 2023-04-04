@@ -8,7 +8,14 @@ if sys.version_info >= (3, 0):
 
 source_path = os.path.abspath(os.path.join(__file__, '../example_printing.py'))
 lib_path = os.path.abspath(os.path.join(__file__, '../../../../plugin/PySrc'))
-args = [sys.executable, '-mspace_tracer', source_path]
+args = [sys.executable,
+        '-m',
+        'coverage',
+        'run',
+        '--source=' + lib_path,
+        '-m',
+        'space_tracer',
+        source_path]
 
 try:
     check_output(args, cwd=lib_path).decode('utf8')

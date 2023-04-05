@@ -71,12 +71,10 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          env_vars: PYTHON
+          env_vars: OS,PYTHON
 
   build-python2:
     runs-on: ubuntu-latest
-    env:
-      PYTHON: "2.7"
     if: >
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name !=
@@ -87,14 +85,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 2.7
-      - name: Install coverage.py
-        run: |
-          python -m pip install coverage==5.5
       - name: Test Python2 warning
         run: |
           python test/PySrc/tests/validate_legacy_python.py
-          mv plugin/PySrc/.coverage .
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          env_vars: PYTHON

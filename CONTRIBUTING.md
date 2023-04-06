@@ -16,6 +16,11 @@ The Python code should follow PEP8 guidelines, and the Java code should be
 compatible with Java 11. The plugin verifier will check for Java compatibility
 with the different versions of the IntelliJ platform.
 
+If you're adding features, please make sure to add tests as well. PyCharm tests
+are at `test/PySrc/tests`, Javascript tests are at `html/src`, and Java tests
+are at `pycharm/src/test`. See the `.github/workflows` folder for details on how
+each set of tests gets run.
+
 ## PyCharm Development
 There are two levels of PyCharm development. It's probably best to start with
 the [Python code] that runs in all versions of the Live Coding in Python project

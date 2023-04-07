@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/test/PySrc/python-tests/python-tests.iml" filepath="$PROJECT_DIR$/test/PySrc/python-tests/python-tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/test/PySrc/python-tests.iml" filepath="$PROJECT_DIR$/test/PySrc/python-tests.iml" />
     </modules>
   </component>
 </project>

@@ -142,8 +142,9 @@ def parse_args(command_args=None):
                         help='include line numbers with source code')
     parser.add_argument('--live',
                         action='store_true',
-                        help='load main module as %s instead of %s.' %
-                             (LIVE_MODULE_NAME, DEFAULT_MODULE_NAME))
+                        help=f'load main module as {LIVE_MODULE_NAME} instead '
+                             f'of {DEFAULT_MODULE_NAME} and show all source '
+                             f'code lines.')
     parser.add_argument('-m',
                         dest='is_module',
                         action='store_true',

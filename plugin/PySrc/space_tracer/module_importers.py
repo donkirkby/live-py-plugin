@@ -331,6 +331,8 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             elif traced.startswith(LIVE_MODULE_NAME):
                 traced = traced[len(LIVE_MODULE_NAME)+1:]
                 self.is_traced_module_imported = True
+            if self.is_traced_module_imported and self.source_code is None:
+                self.source_code = source
             parsed_file = PSEUDO_FILENAME if traced == '' else filename
             self.driver_finder = TracedFinder(source,
                                               traced,

@@ -1042,6 +1042,15 @@ print(40+2) | print('42')"""
     assert report == expected_report
 
 
+def test_main_empty(stdin):
+    stdin.read.return_value = ""
+    expected_report = ""
+
+    report = TraceRunner().trace_command(['space_tracer', '-'])
+
+    assert report == expected_report
+
+
 def test_traced_file_without_traced():
     code = '''\
 def foo(n):

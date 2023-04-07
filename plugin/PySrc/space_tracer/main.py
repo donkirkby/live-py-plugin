@@ -501,7 +501,7 @@ class TraceRunner(object):
             total_lines = 0
         report = builder.report(total_lines)
         source_width = args.source_width
-        if source_code is None or source_width == 0:
+        if source_code is None or source_width == 0 or not source_lines:
             reported_source_lines = []
             indent = 0
         else:

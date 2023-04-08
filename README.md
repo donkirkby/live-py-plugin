@@ -23,7 +23,7 @@ even your browser.
 [openssf]: https://bestpractices.coreinfrastructure.org/projects/7182
 [PyCharm downloads]: https://img.shields.io/jetbrains/plugin/d/9742?label=PyCharm%20%E2%86%93
 [pycharm plugin]: https://plugins.jetbrains.com/plugin/9742
-[Emacs downloads]: https://img.shields.io/badge/Emacs%20%E2%86%93-371k-brightgreen
+[Emacs downloads]: https://img.shields.io/badge/Emacs%20%E2%86%93-377k-brightgreen
 [emacs plugin]: https://melpa.org/#/live-py-mode
 [Sublime downloads]: https://img.shields.io/packagecontrol/dt/Live%20Coding%20in%20Python?label=Sublime%20%E2%86%93
 [sublime plugin]: https://packagecontrol.io/packages/Live%20Coding%20in%20Python

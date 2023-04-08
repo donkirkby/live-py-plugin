@@ -2,7 +2,8 @@ The Eclipse plugin is currently unsupported. I stopped using it a few years ago,
 and when I went to build version 3, I couldn't get it to work.
 
 The Python source code is still the core of this project, and it lives in the
-`PySrc` folder.
+`plugin/PySrc` folder. If you want to resurrect support, you'll have to recreate
+`docs/update` where the Eclipse jars were posted for download.
 
 ## Installing the Eclipse plugin
 

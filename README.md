@@ -4,6 +4,7 @@ Live Coding in Python
 [![Python Build Status]][actions]
 [![HTML Build Status]][actions]
 [![Code Coverage]][codecov]
+[![OpenSSF Best Practices]][openssf]
 [![PyCharm downloads]][pycharm plugin]
 [![Emacs downloads]][emacs plugin]
 [![Sublime downloads]][sublime plugin]
@@ -18,6 +19,8 @@ even your browser.
 [actions]: https://github.com/donkirkby/live-py-plugin/actions
 [Code Coverage]: https://codecov.io/gh/donkirkby/live-py-plugin/coverage.svg
 [codecov]: https://app.codecov.io/gh/donkirkby/live-py-plugin
+[OpenSSF Best Practices]: https://bestpractices.coreinfrastructure.org/projects/7182/badge
+[openssf]: https://bestpractices.coreinfrastructure.org/projects/7182
 [PyCharm downloads]: https://img.shields.io/jetbrains/plugin/d/9742?label=PyCharm%20%E2%86%93
 [pycharm plugin]: https://plugins.jetbrains.com/plugin/9742
 [Emacs downloads]: https://img.shields.io/badge/Emacs%20%E2%86%93-371k-brightgreen

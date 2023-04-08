@@ -6,8 +6,8 @@ modules: pillow
 files: hopper.jpg
 ---
 
-This is a starting point for a Pillow tutorial. Until the `Image.show()` method
-is monkey patched, use the `LivePillowImage` workaround.
+This is a starting point for a Pillow tutorial. See the [Pillow docs] for
+inspiration.
 
     ### Canvas
     from PIL import Image
@@ -19,5 +19,6 @@ is monkey patched, use the `LivePillowImage` workaround.
         round(image.width*scale),
         round(image.height*scale)))
     
-    live_image = LivePillowImage(image)
-    live_image.display((-image.width/2, image.height/2))
+    image.show()
+
+[Pillow docs]: https://pillow.readthedocs.io/en/stable/handbook/tutorial.html

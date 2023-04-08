@@ -421,12 +421,16 @@ class LiveImageDiffer:
                       actual_pixel: LiveImage.Fill,
                       expected_pixel: LiveImage.Fill,
                       is_missing: bool = False) -> LiveImage.Fill:
-        ar, ag, ab, *aa = actual_pixel
-        er, eg, eb, *ea = expected_pixel
-        if aa:
-            aa = aa[0]
+        ar, ag, ab, *ao = actual_pixel
+        er, eg, eb, *eo = expected_pixel
+        if ao:
+            aa = ao[0]
         else:
             aa = 0xff
+        if eo:
+            ea = eo[0]
+        else:
+            ea = 0xff
 
         # maximum difference for this pixel's four channels
         max_diff = max(abs(a - b) for a, b in zip(actual_pixel, expected_pixel))

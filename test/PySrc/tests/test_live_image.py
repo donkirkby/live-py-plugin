@@ -223,17 +223,21 @@ def test_live_png_as_painter(tmp_path):
 # noinspection DuplicatedCode
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_compare():
-    blue = (0, 0, 255, 255)
-    white = (255, 255, 255, 255)
-    expected_match = (0, 0, 255, 255//3)
-    expected_diff = (255, 255//5, 255*2//5, 255)
+    dark_blue = (0, 0, 150, 255)
+    medium_blue = (0, 0, 200, 255)
+    bright_blue = (0, 0, 250, 255)
+    expected_dark_diff = (255, 0, (150+200)//5, 255)
+    expected_match = (0, 0, 200, 255//3)
+    expected_bright_diff = (255, 255, (250+200)//5, 255)
 
     image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
-    image1.set_pixel((5, 10), blue)
-    image1.set_pixel((6, 10), blue)
+    image1.set_pixel((5, 10), dark_blue)
+    image1.set_pixel((6, 10), medium_blue)
+    image1.set_pixel((7, 10), bright_blue)
     image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
-    image2.set_pixel((5, 10), blue)
-    image2.set_pixel((6, 10), white)
+    image2.set_pixel((5, 10), medium_blue)
+    image2.set_pixel((6, 10), medium_blue)
+    image2.set_pixel((7, 10), medium_blue)
 
     differ = LiveImageDiffer()
 
@@ -241,10 +245,12 @@ def test_differ_compare():
 
     diff_pixel1 = diff.get_pixel((5, 10))
     diff_pixel2 = diff.get_pixel((6, 10))
+    diff_pixel3 = diff.get_pixel((7, 10))
 
-    assert diff_pixel1 == expected_match
-    assert diff_pixel2 == expected_diff
-    assert differ.diff_count == 1
+    assert diff_pixel1 == expected_dark_diff
+    assert diff_pixel2 == expected_match
+    assert diff_pixel3 == expected_bright_diff
+    assert differ.diff_count == 2
 
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
@@ -498,7 +504,7 @@ def test_differ_compare_two_sets(tmp_path):
 def test_differ_compare_two_sizes():
     blue = (0, 0, 255, 255)
     green = (0, 255, 0, 255)
-    missing_blue = (255, 0, 51, 255)
+    missing_blue = (255, 255, 51, 255)
     missing_green = (255, 51, 0, 255)
     image1 = LivePillowImage(Image.new('RGBA', (2, 3)))
     image1.set_pixel((0, 2), blue)

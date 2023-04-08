@@ -68,9 +68,30 @@ function comparePixel(colour1, colour2, tolerance) {
             Math.abs(b1-b2));  // ignore alpha differences
     if (tolerance < maxDiff) {
         // Highlight difference
+        // Colour
+        const actual_norm = [r1, g1, b1, a1],
+            expected_norm = [r2, g2, b2, a2];
+
+        // reverse alpha, for consistent brightness comparison
+        actual_norm[-1] = 255 - actual_norm[-1]
+        expected_norm[-1] = 255 - expected_norm[-1]
+
+        // sum squares to calculate distance squared from origin
+        const actual_dist = actual_norm.reduce((acc, v) => (acc + v*v), 0),
+            expected_dist = expected_norm.reduce((acc, v) => (acc + v*v), 0);
+
+        const dr = 255,
+            dg = (actual_dist <= expected_dist)
+                ? Math.floor((g1+g2) / 5) // actual is darker, highlight in red.
+                : 255, // actual is brighter, highlight in yellow.
+            db = Math.floor((b1+b2) / 5);
+
+        // Opacity
+        const da = Math.floor((a1 + a2)/2);
+
         return [
             false,
-            [255, Math.floor((g1+g2) / 5), Math.floor((b1+b2) / 5), 255]
+            [dr, dg, db, da]
         ];
     }
     return [true, [r1, g1, b1, Math.floor((a1 + a2)/6)]];
@@ -187,6 +208,8 @@ class CodeSample extends Component {
 
         props.spaceTracerPromise.then(() => {
             this.setState({isPythonLoaded: true})
+        }).catch((err) => {
+            console.error(`Space Tracer could not load: ${err}`);
         });
 
         this.editorRef = React.createRef();
@@ -596,8 +619,8 @@ class App extends Component {
                         window.pyodide.runPython(
                             'from space_tracer.main import web_main; web_main()');
                         resolve();
-                    }).catch(() => reject('Space Tracer failed.'));
-                }).catch(() => reject('Pyodide failed.'));
+                    }).catch((err) => reject(`Space Tracer failed: ${err}`));
+                }).catch((err) => reject(`Pyodide failed: ${err}`));
             }
         });
 

@@ -253,7 +253,7 @@ GitHub, and install Docker. After that, follow these steps for each release.
    the Pyodide project for full instructions. Sometimes, I've had to remove all
    build products and rebuild. Either `make clean` or `git clean -f -Xd`.
 
-       sudo ./run_docker --pre-built PYODIDE_PACKAGES=core,space-tracer,matplotlib make
+       sudo ./run_docker PYODIDE_PACKAGES=core,space-tracer,matplotlib make
 
 To update the ReactJS files, change to the `html` folder, and run
 `npm run build`. You can also use `npm start` to test the ReactJS files without
@@ -262,6 +262,29 @@ Pyodide.
 After updating the files, test them locally with GitHub pages (next section).
 Then commit the file changes, push, and create a release on GitHub. (Finish the
 other releases before marking the release on GitHub, if you're releasing more.) 
+
+If you want to debug some of the unit tests in Chrome, set a break point and
+launch them in debug mode.
+
+1. Pick one of your unit tests, and add a `debugger;` statement where you want
+   to pause the debugger.
+2. Instead of `npm test`, launch the tests like this:
+
+       npm run test:debug
+
+3. That will print out a message like, "Debugger listening on
+   ws://127.0.0.1:9229/..." You might need to know the port number 9229 in a
+   later step.
+4. Open your browser, go to `chrome://inspect` and click on "Open Dedicated
+   DevTools for Node".
+5. You may see a list of available node instances you can connect to, or it
+   might automatically open one. If you see a list, click on the address
+   that you saw in the terminal.
+6. You should see the Chrome developer tools, and it should be paused at the
+   first line. Click the Resume button in the top right. When the tests get to
+   the `debugger;` statement you just added, execution will pause.
+7. Step through your test, look at variables, and use all the regular debugging
+   tools.
 
 [Pyodide]: https://github.com/iodide-project/pyodide
 [install nvm]: https://github.com/nvm-sh/nvm#installing-and-updating

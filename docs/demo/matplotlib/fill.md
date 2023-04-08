@@ -12,7 +12,8 @@ first. If you already know the basics, then change the code below to make your
 plot look like the goal plot by filling in different areas with different
 colours. You can experiment on your own, or read the rest of the tutorial to
 learn the concepts you need. The progress bar shows how close you are to the
-goal, and the canvas differences, below right, highlight the differences in red.
+goal, and the canvas differences, below right, highlight the differences in red
+(too dark) or yellow (too bright).
 
 If you really mess up the script, you can click the reset button to go back to
 the start.

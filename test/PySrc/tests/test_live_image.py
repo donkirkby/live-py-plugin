@@ -3,7 +3,7 @@ import typing
 
 import pytest
 
-from space_tracer import LivePng, LivePillowImage
+from space_tracer import LivePng, LivePillowImage, LivePainter
 from space_tracer.canvas import Canvas
 from space_tracer.live_image import LiveImageDiffer
 from space_tracer.mock_turtle import MockTurtle
@@ -26,6 +26,8 @@ def replace_image(report):
 
 
 def test_display(patched_turtle):
+    assert patched_turtle
+
     expected_report = """\
 create_image
     0
@@ -44,6 +46,8 @@ create_image
 
 
 def test_display_position(patched_turtle):
+    assert patched_turtle
+
     expected_report = """\
 create_image
     100
@@ -120,6 +124,8 @@ def test_display_not_patched():
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_display_pillow_image(patched_turtle):
+    assert patched_turtle
+
     image = Image.new('RGB', (2, 2))
     expected_report = """\
 create_image
@@ -149,6 +155,8 @@ create_image
 def test_display_image_bottom_left(patched_turtle,
                                    align: str,
                                    position: typing.Tuple[int, int]):
+    assert patched_turtle
+
     image = Image.new('RGB', (10, 20))
     expected_report = """\
 create_image
@@ -168,6 +176,8 @@ create_image
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_display_image_bad_align(patched_turtle):
+    assert patched_turtle
+
     image = Image.new('RGB', (10, 20))
 
     with pytest.raises(ValueError, match="Invalid align: 'topfloop'."):
@@ -249,8 +259,96 @@ def test_compare_pixel_alpha_channel_missing():
         assert False, f"Raised an exception: {e}"
 
 
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_no_offset():
+    differ = LiveImageDiffer()
+    offset = 0
+    differ.tolerance = 20
+
+    image1 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw1 = ImageDraw.Draw(image1.image)
+    draw1.rectangle((50, 50, 100, 100), fill='blue')
+    image2 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw2 = ImageDraw.Draw(image2.image)
+    draw2.rectangle((50+offset, 50, 100, 100), fill='blue')
+
+    differ.compare(image1, image2)
+
+    assert differ.diff_count == 0
+
+
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_offset():
+    differ = LiveImageDiffer()
+    offset = 1
+    differ.tolerance = 20
+
+    image1 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw1 = ImageDraw.Draw(image1.image)
+    draw1.rectangle((50, 50, 100, 100), fill='blue')
+    image2 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw2 = ImageDraw.Draw(image2.image)
+    draw2.rectangle((50+offset, 50, 100, 100), fill='blue')
+
+    differ.compare(image1, image2)
+
+    assert differ.diff_count == 51
+
+
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_offset_blurred():
+    differ = LiveImageDiffer()
+    offset = 1
+    differ.tolerance = 20
+    differ.blur_radius = 5
+
+    image1 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw1 = ImageDraw.Draw(image1.image)
+    draw1.rectangle((50, 50, 100, 100), fill='blue')
+    image2 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw2 = ImageDraw.Draw(image2.image)
+    draw2.rectangle((50+offset, 50, 100, 100), fill='blue')
+
+    differ.compare(image1, image2)
+
+    assert differ.diff_count == 0
+
+
+# noinspection DuplicatedCode
+def test_differ_blurred_not_pillow():
+    differ = LiveImageDiffer()
+    differ.blur_radius = 5
+
+    image = LivePng(b'PNG_BYTES1')
+
+    with pytest.raises(RuntimeError,
+                       match=r'LivePng cannot be blurred\. Override '
+                             r'LiveImageDiffer\.blur\(\)\.'):
+        # noinspection PyTypeChecker
+        differ.blur(image)
+
+
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is not None, reason='Pillow not installed.')
+def test_differ_blurred_pillow_not_installed():
+    differ = LiveImageDiffer()
+    differ.blur_radius = 5
+
+    image = LivePillowImage(None)
+
+    with pytest.raises(RuntimeError,
+                       match=r'Pillow is not installed\. Install or override '
+                             r'LiveImageDiffer\.blur\(\)\.'):
+        differ.blur(image)
+
+
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_compare_display(patched_turtle):
+    assert patched_turtle
+
     expected_report = """\
 create_text
     -1
@@ -303,6 +401,8 @@ create_image
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_compare_display_disabled(patched_turtle):
+    assert patched_turtle
+
     expected_report = '\n'
 
     t = MockTurtle()
@@ -498,18 +598,74 @@ def test_differ_assert_passes():
 
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_assert_fails():
+    light_blue = (0, 0, 127, 255)
     blue = (0, 0, 255, 255)
 
-    image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
-    image1.set_pixel((5, 10), blue)
-    image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
+    image1 = LivePillowImage(Image.new('RGBA', (10, 20), 'black'))
+    image1.set_pixel((5, 10), light_blue)
+    image2 = LivePillowImage(Image.new('RGBA', (10, 20), 'black'))
 
     differ = LiveImageDiffer()
 
-    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel.'):
+    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel with '
+                                             r'a maximum difference of 127\.'):
         differ.assert_equal(image1, image2)
 
     image1.set_pixel((5, 11), blue)
 
-    with pytest.raises(AssertionError, match=r'Images differ by 2 pixels.'):
+    with pytest.raises(AssertionError, match=r'Images differ by 2 pixels with '
+                                             r'a maximum difference of 255\.'):
         differ.assert_equal(image1, image2)
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_create_painters_fails():
+    differ = LiveImageDiffer()
+    expected: LivePainter
+    actual: LivePainter
+
+    with pytest.raises(AssertionError, match=r'Images differ by 1 pixel'):
+        with differ.create_painters((100, 100)) as (expected, actual):
+            expected.set_pixel((50, 50), (255, 255, 255, 255))
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_create_painters_error(patched_turtle):
+    assert patched_turtle
+
+    t = MockTurtle()
+    differ = LiveImageDiffer()
+
+    with pytest.raises(ZeroDivisionError):
+        with differ.create_painters((100, 100)):
+            print('This will raise an error:', 1/0)
+
+    report_lines = t.report
+    assert report_lines[-1] == "    text='ZeroDivisionError: division by zero'"
+
+
+@pytest.mark.skipif(Image is not None, reason='Pillow is installed.')
+def test_differ_create_painters_without_pillow(patched_turtle):
+    assert patched_turtle
+
+    differ = LiveImageDiffer()
+
+    expected_error = (r'Pillow is not installed\. Install it, or '
+                      r'override LiveImageDiffer\.start_painter\(\)\.')
+    with pytest.raises(RuntimeError, match=expected_error):
+        with differ.create_painters((100, 100)):
+            pass
+
+
+@pytest.mark.skipif(Image is not None, reason='Pillow is installed.')
+def test_convert_to_painter_without_pillow(patched_turtle):
+    assert patched_turtle
+
+    image_data = b'PNG_IMAGE_DATA'
+
+    image = LivePng(image_data)
+
+    expected_error = (r'Pillow is not installed\. Install it, or '
+                      r'override LivePng\.convert_to_painter\(\)\.')
+    with pytest.raises(RuntimeError, match=expected_error):
+        image.convert_to_painter()

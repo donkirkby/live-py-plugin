@@ -5,15 +5,21 @@ import sys
 import typing
 from abc import ABC, abstractmethod
 from base64 import standard_b64encode
+from contextlib import contextmanager
 from pathlib import Path
 
 from space_tracer.mock_turtle import MockTurtle
 
 try:
     from PIL import Image
+    from PIL.ImageFilter import GaussianBlur
+    new_image = Image.new
+    open_image = Image.open
 except ImportError:
     class Image:
         Image = None
+
+    new_image = open_image = GaussianBlur = None
 
 
 class LiveImage(ABC):
@@ -39,8 +45,11 @@ class LiveImage(ABC):
 
         Override this method if you don't want to depend on Pillow.
         """
+        if open_image is None:
+            raise RuntimeError('Pillow is not installed. Install it, or '
+                               'override LivePng.convert_to_painter().')
         png_file = io.BytesIO(self.convert_to_png())
-        image = Image.open(png_file)
+        image = open_image(png_file)
         image.load()
         return LivePillowImage(image)
 
@@ -157,8 +166,7 @@ class LiveImageDiffer:
         ''' Initialize the object and clean out the diffs path.
 
         This class requires Pillow to be installed, but you can remove that
-        dependency with a subclass that overrides the start_diff() and
-        end_diff() methods.
+        dependency with a subclass that overrides the create_painter() method.
 
         A good way to use this class is to create a session fixture and regular
         fixture like this:
@@ -194,7 +202,9 @@ class LiveImageDiffer:
         self.diff = None  # type: typing.Optional[LivePainter]
         self.diff_files = set()  # type: typing.Set[Path]
         self.tolerance = 3
+        self.blur_radius = 1
         self.diff_count = 0  # number of mismatched pixels
+        self.max_diff = 0  # maximum difference seen between pixel values
 
         # for all calls to compare
         self.file_prefixes = set()  # type: typing.Set[str]
@@ -204,13 +214,62 @@ class LiveImageDiffer:
 
         self.clean_diffs()
 
+    @staticmethod
+    def start_painter(size: LiveImage.Size, fill: str = None) -> LivePainter:
+        """ Create a painter to use for comparison.
+
+        If Pillow is not installed, subclass LiveImageDiffer, and override this
+        method to create a subclass of LivePainter. If you need to clean up
+        painters, override end_painters().
+
+        :param size: the size of painter to create.
+        :param fill: the background colour, defaults to transparent black.
+        """
+        if new_image is None:
+            raise RuntimeError('Pillow is not installed. Install it, or '
+                               'override LiveImageDiffer.start_painter().')
+        return LivePillowImage(new_image('RGBA', size, fill))
+
+    def end_painters(self, *painters: LivePainter):
+        """ Clean up painters created by start_painter.
+
+        :param painters: painters to clean up.
+        """
+
+    @contextmanager
+    def create_painters(self,
+                        size: LiveImage.Size,
+                        fill: str = None) -> typing.ContextManager[
+            typing.Tuple[LivePainter, LivePainter]]:
+        """ Create two painters, then compare them when the context closes.
+
+        Also display the first painter as the Actual image, the second painter
+        as the Expected image, and a difference between them. If Pillow isn't
+        installed, you must override the helper method, create_painter().
+        :param size: the size of the painters to create
+        :param fill: the background colour, defaults to transparent black.
+        """
+        painters = [self.start_painter(size, fill)]
+        try:
+            painters.append(self.start_painter(size, fill))
+            actual, expected = painters
+            try:
+                yield actual, expected
+            except Exception:
+                t = MockTurtle()
+                t.display_error()
+                raise
+            self.assert_equal(actual, expected)
+        finally:
+            self.end_painters(*painters)
+
     def start_diff(self, size: LiveImage.Size):
         """ Start the comparison by creating a diff painter.
 
         Overrides must set self.diff to a LivePainter object.
         :param size: the size of painter to put in self.diff.
         """
-        self.diff = LivePillowImage(Image.new('RGBA', size))
+        self.diff = self.start_painter(size)
 
     def end_diff(self) -> LiveImage:
         """ End the comparison by cleaning up.
@@ -219,6 +278,7 @@ class LiveImageDiffer:
         """
         diff = self.diff
         self.diff = None
+        self.end_painters(diff)
         return diff
 
     def compare(self,
@@ -249,8 +309,10 @@ class LiveImageDiffer:
                 self.file_prefixes.add(file_prefix)
         painter1 = actual.convert_to_painter()
         painter2 = expected.convert_to_painter()
-        width1, height1 = painter1.get_size()
-        width2, height2 = painter2.get_size()
+        blurred1 = self.blur(painter1)
+        blurred2 = self.blur(painter2)
+        width1, height1 = blurred1.get_size()
+        width2, height2 = blurred2.get_size()
         width = max(width1, width2)
         height = max(height1, height2)
         self.diff_count = 0
@@ -262,12 +324,12 @@ class LiveImageDiffer:
                     position = (x, y)
                     is_missing = False
                     if x < width1 and y < height1:
-                        fill1 = painter1.get_pixel(position)
+                        fill1 = blurred1.get_pixel(position)
                     else:
                         is_missing = True
                         fill1 = default_colour
                     if x < width2 and y < height2:
-                        fill2 = painter2.get_pixel(position)
+                        fill2 = blurred2.get_pixel(position)
                     else:
                         is_missing = True
                         fill2 = default_colour
@@ -305,7 +367,9 @@ class LiveImageDiffer:
             suffix = ''
         else:
             suffix = 's'
-        raise AssertionError('Images differ by {} pixel{}.'.format(self.diff_count, suffix))
+        raise AssertionError(f'Images differ by {self.diff_count} '
+                             f'pixel{suffix} with a maximum difference of '
+                             f'{self.max_diff}.')
 
     def remove_common_prefix(self):
         common_prefix = os.path.commonprefix(self.file_names)
@@ -329,6 +393,20 @@ class LiveImageDiffer:
         file_path = image.save(path)
         self.file_names.append(str(file_path.relative_to(self.diffs_path)))
 
+    def blur(self, painter: LivePainter) -> LivePainter:
+        if self.blur_radius <= 1:
+            return painter
+        if not isinstance(painter, LivePillowImage):
+            raise RuntimeError(f'{painter.__class__.__name__} cannot be '
+                               f'blurred. Override LiveImageDiffer.blur().')
+        if GaussianBlur is None:
+            raise RuntimeError('Pillow is not installed. Install or override '
+                               'LiveImageDiffer.blur().')
+
+        # noinspection PyCallingNonCallable
+        blurred = painter.image.filter(GaussianBlur(self.blur_radius))
+        return LivePillowImage(blurred)
+
     def clean_diffs(self):
         if self.diffs_path is None:
             return
@@ -349,7 +427,13 @@ class LiveImageDiffer:
             aa = aa[0]
         else:
             aa = 0xff
+
+        # maximum difference for this pixel's four channels
         max_diff = max(abs(a - b) for a, b in zip(actual_pixel, expected_pixel))
+
+        # maximum difference across the whole image
+        self.max_diff = max(self.max_diff, max_diff)
+
         if max_diff > self.tolerance or is_missing:
             self.diff_count += 1
             # Colour

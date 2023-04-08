@@ -35,6 +35,7 @@ setuptools.setup(
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console"
     ],
+    license="MIT",
     project_urls={
         'Bug Reports': 'https://github.com/donkirkby/live-py-plugin/issues',
         'Source': 'https://github.com/donkirkby/live-py-plugin'}

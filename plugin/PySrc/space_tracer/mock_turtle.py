@@ -1,8 +1,10 @@
 from base64 import standard_b64decode
 import binascii
+import os
 import re
 import struct
 import sys
+import traceback
 import types
 import typing
 
@@ -291,6 +293,43 @@ class MockTurtle(RawTurtle):
 
     def _drawturtle(self):
         pass
+
+    def display_error(self):
+        tb = traceback.TracebackException(*sys.exc_info())
+        tb_stack = tb.stack
+        library_path = os.path.dirname(__file__)
+        while tb_stack and tb_stack[0].filename.startswith(library_path):
+            tb_stack.pop(0)
+        del tb_stack[10:]
+        message = ''.join(tb.format(chain=False))
+        message_lines = message.splitlines(keepends=False)
+        split_lines = []
+        for line in message_lines:
+            while line:
+                split_lines.append(line[:80])
+                line = line[80:]
+        max_length = max(len(line) for line in split_lines)
+        self.up()
+        screen = self.getscreen()
+        window_width = screen.window_width()
+        window_height = screen.window_height()
+        line_height = min(window_height / len(split_lines),
+                          window_width * 2 / max_length)
+        font_size = round(line_height * 0.75)
+        font = ('Arial', font_size, 'normal')
+        self.goto(-window_width // 2, window_height // 2)
+        self.setheading(-90)
+        self.fillcolor('white')
+        self.begin_fill()
+        for _ in range(2):
+            self.forward(line_height * len(split_lines))
+            self.left(90)
+            self.forward(window_width)
+            self.left(90)
+        self.end_fill()
+        for line in split_lines:
+            self.forward(line_height)
+            self.write(line, font=font)
 
 
 # Normally, Tkinter will look up these colour names for you, but we don't

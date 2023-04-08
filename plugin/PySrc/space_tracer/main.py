@@ -31,7 +31,8 @@ except ImportError:
 
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers
-from .module_importers import TracedModuleImporter, PatchedModuleFinder
+from .module_importers import TracedModuleImporter, PatchedModuleFinder, \
+    SourceLoadError
 from .report_builder import ReportBuilder
 from .traced_finder import DEFAULT_MODULE_NAME, LIVE_MODULE_NAME, \
     PSEUDO_FILENAME
@@ -141,8 +142,9 @@ def parse_args(command_args=None):
                         help='include line numbers with source code')
     parser.add_argument('--live',
                         action='store_true',
-                        help='load main module as %s instead of %s.' %
-                             (LIVE_MODULE_NAME, DEFAULT_MODULE_NAME))
+                        help=f'load main module as {LIVE_MODULE_NAME} instead '
+                             f'of {DEFAULT_MODULE_NAME} and show all source '
+                             f'code lines.')
     parser.add_argument('-m',
                         dest='is_module',
                         action='store_true',
@@ -210,6 +212,7 @@ def analyze(source_code, canvas_size=None):
             tracer_args.append('--zoomed')
         tracer_args.append(PSEUDO_FILENAME)
         code_report = tracer.trace_command(tracer_args)
+    # noinspection PyUnresolvedReferences
     stdout = tracer.standard_files.old_files['stderr'].getvalue()
     return code_report, stdout
 
@@ -332,42 +335,8 @@ def replace_input(stdin_text=None):
 def display_error_on_canvas():
     if MockTurtle is None:
         return
-    tb = traceback.TracebackException(*sys.exc_info())
-    tb_stack = tb.stack
-    library_path = os.path.dirname(__file__)
-    while tb_stack and tb_stack[0].filename.startswith(library_path):
-        tb_stack.pop(0)
-    del tb_stack[10:]
-    message = ''.join(tb.format(chain=False))
-    message_lines = message.splitlines(keepends=False)
-    split_lines = []
-    for line in message_lines:
-        while line:
-            split_lines.append(line[:80])
-            line = line[80:]
-    max_length = max(len(line) for line in split_lines)
     t = MockTurtle()
-    t.up()
-    screen = t.getscreen()
-    window_width = screen.window_width()
-    window_height = screen.window_height()
-    line_height = min(window_height / len(split_lines),
-                      window_width * 2 / max_length)
-    font_size = round(line_height * 0.75)
-    font = ('Arial', font_size, 'normal')
-    t.goto(-window_width // 2, window_height // 2)
-    t.setheading(-90)
-    t.fillcolor('white')
-    t.begin_fill()
-    for _ in range(2):
-        t.forward(line_height * len(split_lines))
-        t.left(90)
-        t.forward(window_width)
-        t.left(90)
-    t.end_fill()
-    for line in split_lines:
-        t.forward(line_height)
-        t.write(line, font=font)
+    t.display_error()
 
 
 class TraceRunner(object):
@@ -492,6 +461,9 @@ class TraceRunner(object):
             builder.add_message(message, line_number)
             if args.canvas:
                 display_error_on_canvas()
+        except SourceLoadError as ex:
+            builder.add_message(str(ex), 1)
+            self.return_code = 1
         except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()
@@ -520,9 +492,14 @@ class TraceRunner(object):
                        traced_importer.driver_finder)
         is_traced = (traced_importer.is_traced_module_imported or
                      (used_finder and used_finder.is_tracing))
-        source_code = (is_traced and
-                       used_finder and
-                       used_finder.source_code) or ''
+        if not is_traced:
+            source_code = ''
+        elif used_finder and used_finder.source_code:
+            source_code = used_finder.source_code
+        elif traced_importer and traced_importer.source_code:
+            source_code = traced_importer.source_code
+        else:
+            source_code = ''
         source_lines = source_code.splitlines()
         if source_lines and traced_importer.is_live:
             total_lines = len(source_lines)
@@ -530,7 +507,7 @@ class TraceRunner(object):
             total_lines = 0
         report = builder.report(total_lines)
         source_width = args.source_width
-        if source_code is None or source_width == 0:
+        if source_code is None or source_width == 0 or not source_lines:
             reported_source_lines = []
             indent = 0
         else:

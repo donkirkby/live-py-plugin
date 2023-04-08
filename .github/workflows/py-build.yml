@@ -71,7 +71,7 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
-          env_vars: PYTHON
+          env_vars: OS,PYTHON
 
   build-python2:
     runs-on: ubuntu-latest

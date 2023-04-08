@@ -1,6 +1,7 @@
 package io.github.donkirkby.livepycharm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.*;
@@ -8,6 +9,7 @@ import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -65,8 +67,10 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
                 FileTypes.PLAIN_TEXT,
                 "created for " + file.getName() + "\n");
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
-        Document mainDocument = documentManager.getDocument(file);
-        Document displayDocument = documentManager.getDocument(displayFile);
+        Document mainDocument = ApplicationManager.getApplication().runReadAction(
+                (Computable<Document>) () -> documentManager.getDocument(file));
+        Document displayDocument = ApplicationManager.getApplication().runReadAction(
+                (Computable<Document>) () -> documentManager.getDocument(displayFile));
         final Builder firstBuilder =
                 getBuilderFromEditorProvider(myFirstProvider, project, file);
         final Builder secondBuilder =

@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.8.0"
+    id("org.jetbrains.intellij") version "1.13.3"
 }
 
 group = "io.github.donkirkby"
@@ -13,10 +13,11 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("2022.2.4")
-    type.set("IC") // Target IDE Platform
+    version.set("212.4746.92")
+    type.set("IC") // Target IDE Platform: IU for Ultimate, IC for community
 
-    plugins.set(listOf("PythonCore:222.4459.24"))
+    // Pythonid for Ultimate, PythonCore for community
+    plugins.set(listOf("PythonCore:212.4746.92"))
 }
 
 sourceSets {
@@ -43,8 +44,13 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("193")
+        sinceBuild.set("212.4746.92")
         untilBuild.set("")
+    }
+
+    runPluginVerifier {
+        // Verify against sinceBuild version and current version.
+        ideVersions.set(listOf<String>("212.4746.92", "231.8109.175"))
     }
 
     signPlugin {

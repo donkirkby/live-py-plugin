@@ -5,6 +5,12 @@ hero_link_text: Get Started in PyCharm
 hero_link: /starting_pycharm.html
 callouts: index_callouts
 ---
+Live coding tightens the feedback loop between making a change to your code
+and seeing the change in behaviour. As you type your code, it will run over and
+over, showing a visualization of the program state, a matplotlib graph, a
+Pillow image, or turtle graphics. If you make a mistake, you'll immediately see
+the problem and where it went wrong.
+
 To see how to use one of the Live Coding in Python plugins, watch the
 [demo video][video] or read the getting started pages for [PyCharm], [Emacs],
 or [Sublime Text]. Want to try it without installing anything? Try the
@@ -97,7 +103,8 @@ section, but the next section gives instructions for installing without MELPA.
 2. [Install MELPA][melpa]. You probably want to follow the instructions
    for the stable version, instead of the default bleeding-edge version.
 3. Launch the package installer with `M-x package-list-packages`.
-4. Find the package with `C-s live-py-mode`.
+4. Find the package with `C-s live-py-mode`. If you can't find it, run
+   `M-x package-refresh-contents`, and try again.
 5. Mark the package to install with `i`, then execute the installation with
    `x`.
 6. Open any Python file, and activate live-py-mode with `M-x live-py-mode`.

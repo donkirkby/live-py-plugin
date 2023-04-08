@@ -2,6 +2,7 @@ import doctest
 import os
 import re
 import sys
+from pathlib import Path
 
 import pytest
 from unittest.mock import DEFAULT, patch
@@ -27,6 +28,8 @@ EXAMPLE_PYCHARM_FAILURES_PATH = os.path.join(os.path.dirname(__file__),
                                              'example_pycharm_failures.py')
 EXAMPLE_SILENT_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                           'example_silent_driver.py')
+CALLS_ZIPPED_PATH = os.path.join(os.path.dirname(__file__), 'calls_zipped.py')
+ZIPPED_EXAMPLE_PATH = Path(__file__).parent / 'zipped_example.zip'
 patch.multiple = patch.multiple  # Avoids PyCharm warnings.
 
 
@@ -862,6 +865,29 @@ SystemExit: Bad stuff. | SystemExit: Bad stuff.
     assert ctx.value.code == 1
 
 
+def test_unable_to_read_source(stdin, stdout, argv):
+    argv.extend([
+        'space_tracer',
+        '--traced', 'zipped_example',
+        CALLS_ZIPPED_PATH])
+    expected_report = f"""\
+Cannot read Python source from {ZIPPED_EXAMPLE_PATH/'zipped_example.py'}.
+
+
+"""
+    stdin.read.return_value = ""
+
+    with pytest.raises(SystemExit) as ctx:
+        sys.path.append(str(ZIPPED_EXAMPLE_PATH))
+        try:
+            main()
+        finally:
+            sys.path.pop()
+
+    assert stdout.getvalue() == expected_report
+    assert ctx.value.code == 1
+
+
 def test_exit_return_code(stdin, stdout, argv):
     argv.extend([
         'dummy.py',
@@ -1010,6 +1036,52 @@ print(40+2)
 """
     expected_report = """\
 print(40+2) | print('42')"""
+
+    report = TraceRunner().trace_command(['space_tracer', '-'])
+
+    assert report == expected_report
+
+
+def test_main_indentation_error_stdin(stdin):
+    stdin.read.return_value = """\
+x = 1
+for y in range(10):
+z = 2
+"""
+    expected_report = """\
+x = 1               |
+for y in range(10): |
+z = 2               | IndentationError: expected an indented block"""
+    if sys.version_info >= (3, 10):
+        expected_report += " after 'for' statement on line 2"
+
+    report = TraceRunner().trace_command(['space_tracer', '-'])
+
+    assert report == expected_report
+
+
+def test_main_indentation_error(tmp_path):
+    source_path = tmp_path / "example.py"
+    source_path.write_text("""\
+x = 1
+for y in range(10):
+z = 2
+""")
+    expected_report = """\
+x = 1               |
+for y in range(10): |
+z = 2               | IndentationError: expected an indented block"""
+    if sys.version_info >= (3, 10):
+        expected_report += " after 'for' statement on line 2"
+
+    report = TraceRunner().trace_command(['space_tracer', str(source_path)])
+
+    assert report == expected_report
+
+
+def test_main_empty(stdin):
+    stdin.read.return_value = ""
+    expected_report = ""
 
     report = TraceRunner().trace_command(['space_tracer', '-'])
 

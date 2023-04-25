@@ -1,3 +1,4 @@
+import typing
 from operator import itemgetter
 
 
@@ -7,11 +8,11 @@ class DummyWindow:
 
 
 class Canvas(object):
-    def __init__(self, width=0, height=0):
+    def __init__(self, width=0, height=0) -> None:
         self.options = {'width': width,
                         'height': height,
                         'bg': 'white'}
-        self.items = []
+        self.items: typing.List[dict] = []
         self.max_zorder = 0
 
         def make_call(method_name):
@@ -93,11 +94,12 @@ class Canvas(object):
     def config(self, **kwargs):
         self.options.update(kwargs)
 
-    def coords(self, item, *coords):
-        item_details = self.items[item]  # type: dict
+    def coords(self, item, *coords) -> typing.Optional[typing.List[int]]:
+        item_details: dict = self.items[item]
         if len(coords) == 0:
             return item_details['coords']
         item_details['coords'] = coords
+        return None
 
     def find_all(self):
         return tuple(i for i in range(len(self.items)))
@@ -106,11 +108,11 @@ class Canvas(object):
         item_details = self.items[item]
         item_details.update(kwargs)
 
-    def delete(self, item):
+    def delete(self, item) -> None:
         if item == 'all':
             self.items.clear()
         else:
-            item_details = self.items[item]  # type: dict
+            item_details: dict = self.items[item]
             item_details['deleted'] = True
 
     @staticmethod
@@ -138,18 +140,18 @@ class Canvas(object):
     def after(self, *args, **kwargs):
         pass
 
-    def tag_raise(self, item):
-        item_details = self.items[item]  # type: dict
+    def tag_raise(self, item) -> None:
+        item_details: dict = self.items[item]
         self.max_zorder += 1
         item_details['zorder'] = self.max_zorder
 
-    def bbox(self, item):
-        item_details = self.items[item]  # type: dict
+    def bbox(self, item) -> typing.Tuple[int, int, int, int]:
+        item_details: dict = self.items[item]
         x, y = item_details['coords']
         return x, y, x, y
 
-    def type(self, item):
-        item_details = self.items[item]  # type: dict
+    def type(self, item) -> str:
+        item_details: dict = self.items[item]
         return item_details['method_name'][7:]
 
 

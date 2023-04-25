@@ -17,6 +17,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url=about['__url__'],
     packages=setuptools.find_packages('plugin/PySrc/'),
+    package_data={'space_tracer': ['py.typed']},
     package_dir={'': 'plugin/PySrc/'},
     entry_points=dict(console_scripts=[
         'space_tracer = space_tracer:main']),

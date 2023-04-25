@@ -16,15 +16,23 @@ except ImportError:
     tkinter_name = 'tkinter'
     tk = sys.modules[tkinter_name] = types.ModuleType(tkinter_name)
 
-    tk.Frame = tk.Canvas = tk.Tk = tk.ROUND = object
-    class TkMisc: pass
-    tk.Misc = TkMisc()
-    class TclError(Exception): pass
-    tk.TclError = TclError
-    tk.mainloop = tk.Misc.mainloop = lambda *args, **kwargs: None
+    tk.Frame = tk.Canvas = tk.Tk = tk.ROUND = object  # type: ignore
+
+    class TkMisc:
+        pass
+
+    tk.Misc = TkMisc()  # type: ignore
+
+    class TclError(Exception):
+        pass
+
+    tk.TclError = TclError  # type: ignore
+    tk.mainloop = lambda *args, **kwargs: None
+    tk.Misc.mainloop = lambda *args, **kwargs: None  # type: ignore
 
     dialog_name = tkinter_name + '.simpledialog'
-    tk.simpledialog = sys.modules[dialog_name] = types.ModuleType(dialog_name)
+    tk.simpledialog = types.ModuleType(dialog_name)  # type: ignore
+    sys.modules[dialog_name] = tk.simpledialog  # type: ignore
 
 from turtle import RawTurtle, TurtleScreen, TurtleGraphicsError
 
@@ -166,7 +174,7 @@ class MockTurtle(RawTurtle):
     @classmethod
     def display_image(cls,
                       image: str,
-                      position: typing.Tuple[int, int] = None,
+                      position: typing.Optional[typing.Tuple[float, float]] = None,
                       align: str = 'topleft'):
         """ Display an image on the mock turtle's canvas.
 
@@ -180,6 +188,7 @@ class MockTurtle(RawTurtle):
         if not cls.is_patched():
             return
         screen = cls._screen
+        assert screen is not None
         t = cls._pen
         if position is None or t is None:
             x = y = 0

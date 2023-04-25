@@ -5,18 +5,13 @@ from ast import (arg, fix_missing_locations, iter_fields, Add, Assign,
                  Pow, Raise, Return, RShift, Slice, Starred, Store, Str, Sub,
                  Subscript, Try, Tuple, Yield)
 from copy import deepcopy
+from ast import FormattedValue, Constant
 
 try:
-    from ast import FormattedValue, Constant
-except ImportError:
-    # Not available in Python 3.5
-    FormattedValue = Constant = None
-
-try:
-    from ast import MatchAs, MatchSequence, MatchStar
+    from ast import MatchAs, MatchSequence, MatchStar  # type: ignore
 except ImportError:
     # Not available before Python 3.10
-    MatchAs = MatchSequence = MatchStar = None
+    MatchAs = MatchSequence = MatchStar = None  # type: ignore
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
@@ -41,7 +36,7 @@ def find_line_numbers(node, line_numbers):
     :param node: AST node to scan
     :param set line_numbers: all the line numbers will be added to it.
     """
-    if FormattedValue is not None and isinstance(node, FormattedValue):
+    if isinstance(node, FormattedValue):
         # FormattedValue is a separate code block with its own line nums.
         return
 
@@ -632,10 +627,7 @@ class Tracer(NodeTransformer):
         existing_node = self.generic_visit(node)
         value = existing_node.value
         if value is None:
-            if Constant is None:
-                value = Name(id='None', ctx=Load())
-            else:
-                value = Constant(value=None)
+            value = Constant(value=None)
 
         return Yield(value=self._create_bare_context_call(
                     'yield_value',
@@ -678,7 +670,7 @@ class Tracer(NodeTransformer):
         # name, value, line number
         if isinstance(target, Name):
             arg_name = target.id
-        elif arg and isinstance(target, arg):
+        elif isinstance(target, arg):
             arg_name = target.arg
         elif isinstance(target, Starred):
             arg_name = target.value.id

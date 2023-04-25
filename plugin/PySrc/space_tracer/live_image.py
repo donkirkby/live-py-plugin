@@ -16,10 +16,10 @@ try:
     new_image = Image.new
     open_image = Image.open
 except ImportError:
-    class Image:
+    class Image:  # type: ignore
         Image = None
 
-    new_image = open_image = GaussianBlur = None
+    new_image = open_image = GaussianBlur = None  # type: ignore
 
 
 class LiveImage(ABC):
@@ -32,6 +32,15 @@ class LiveImage(ABC):
     Position = typing.Tuple[float, float]  # (x, y)
     Size = typing.Tuple[int, int]  # (width, height)
     Fill = typing.Tuple[int, int, int, int]  # (r, g, b, alpha)
+
+    # See Pillow docs for all the possible types of colour definition.
+    FlexibleFill = typing.Union[
+        int,
+        float,
+        typing.Tuple[int, int, int],
+        typing.Tuple[int, int, int, int],
+        str
+    ]
 
     @abstractmethod
     def convert_to_png(self) -> bytes:
@@ -63,7 +72,9 @@ class LiveImage(ABC):
         extended_path.write_bytes(self.convert_to_png())
         return extended_path
 
-    def display(self, position: Position = None, align: str = 'topleft'):
+    def display(self,
+                position: typing.Optional[Position] = None,
+                align: str = 'topleft'):
         """ Display this image on the mock turtle's canvas.
 
         :param position: (x, y) coordinates on the canvas, or None for the
@@ -138,11 +149,16 @@ class LivePillowImage(LivePainter):
 
         return data.getvalue()
 
+    @staticmethod
+    def rounded_position(position: LiveImage.Position) -> typing.Tuple[int, int]:
+        x, y = position
+        return round(x), round(y)
+
     def get_pixel(self, position: LiveImage.Position) -> LiveImage.Fill:
-        return self.image.getpixel(position)
+        return self.image.getpixel(self.rounded_position(position))
 
     def set_pixel(self, position: LiveImage.Position, fill: LiveImage.Fill):
-        self.image.putpixel(position, fill)
+        self.image.putpixel(self.rounded_position(position), fill)
 
     def get_size(self) -> LiveImage.Size:
         return self.image.size
@@ -161,7 +177,10 @@ class LiveFigure(LiveImage):
 
 
 class LiveImageDiffer:
-    def __init__(self, diffs_path: Path = None, request=None, is_displayed=True):
+    def __init__(self,
+                 diffs_path: typing.Optional[Path] = None,
+                 request=None,
+                 is_displayed=True):
         # noinspection PySingleQuotedDocstring
         ''' Initialize the object and clean out the diffs path.
 
@@ -215,7 +234,8 @@ class LiveImageDiffer:
         self.clean_diffs()
 
     @staticmethod
-    def start_painter(size: LiveImage.Size, fill: str = None) -> LivePainter:
+    def start_painter(size: LiveImage.Size,
+                      fill: LiveImage.FlexibleFill = 0) -> LivePainter:
         """ Create a painter to use for comparison.
 
         If Pillow is not installed, subclass LiveImageDiffer, and override this
@@ -239,7 +259,7 @@ class LiveImageDiffer:
     @contextmanager
     def create_painters(self,
                         size: LiveImage.Size,
-                        fill: str = None) -> typing.ContextManager[
+                        fill: LiveImage.FlexibleFill = 0) -> typing.Iterator[
             typing.Tuple[LivePainter, LivePainter]]:
         """ Create two painters, then compare them when the context closes.
 
@@ -276,6 +296,7 @@ class LiveImageDiffer:
 
         :return: the final version of the diff image
         """
+        assert self.diff is not None
         diff = self.diff
         self.diff = None
         self.end_painters(diff)
@@ -284,7 +305,7 @@ class LiveImageDiffer:
     def compare(self,
                 actual: LiveImage,
                 expected: LiveImage,
-                file_prefix: str = None) -> LiveImage:
+                file_prefix: typing.Optional[str] = None) -> LiveImage:
         """ Build an image to highlight the differences between two images.
 
         Also display this image as the Actual image, the other image as the
@@ -317,6 +338,7 @@ class LiveImageDiffer:
         height = max(height1, height2)
         self.diff_count = 0
         self.start_diff((width, height))
+        assert self.diff is not None
         try:
             default_colour = (0, 0, 0, 255)
             for x in range(width):
@@ -336,7 +358,7 @@ class LiveImageDiffer:
                     diff_fill = self.compare_pixel(fill1, fill2, is_missing)
                     self.diff.set_pixel(position, diff_fill)
             self.display_diff(painter1, painter2)
-            if self.diff_count:
+            if self.diff_count and file_prefix is not None:
                 self.write_image(actual, file_prefix, 'actual')
                 self.write_image(self.diff, file_prefix, 'diff')
                 self.write_image(expected, file_prefix, 'expected')
@@ -347,7 +369,7 @@ class LiveImageDiffer:
     def assert_equal(self,
                      actual: LiveImage,
                      expected: LiveImage,
-                     file_prefix: str = None):
+                     file_prefix: typing.Optional[str] = None):
         """ Raise an AssertionError if this image doesn't match the expected.
 
         Also display this image as the Actual image, the other image as the
@@ -386,8 +408,7 @@ class LiveImageDiffer:
         self.file_names = new_file_names
 
     def write_image(self, image: LiveImage, file_prefix: str, suffix: str):
-        if file_prefix is None:
-            return
+        assert self.diffs_path is not None
         name = file_prefix + '-' + suffix
         path = self.diffs_path / name
         file_path = image.save(path)
@@ -474,6 +495,7 @@ class LiveImageDiffer:
             return
         if not MockTurtle.is_patched():
             return
+        assert self.diff is not None
         t = MockTurtle()
         w = t.getscreen().window_width()
         h = t.getscreen().window_height()

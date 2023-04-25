@@ -18,7 +18,8 @@ try:
     from .mock_turtle import MockTurtle
     from .live_image import LiveFigure, LivePillowImage, monkey_patch_pyglet
 except ImportError:
-    MockTurtle = monkey_patch_pyglet = LiveFigure = LivePillowImage = None
+    MockTurtle = monkey_patch_pyglet = None  # type: ignore
+    LiveFigure = LivePillowImage = None  # type: ignore
 
 
 class SourceLoadError(IOError):

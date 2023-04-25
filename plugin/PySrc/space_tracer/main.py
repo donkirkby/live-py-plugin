@@ -16,9 +16,11 @@ import types
 
 try:
     # noinspection PyUnresolvedReferences
-    from js import document, window
+    from js import document, window  # type: ignore
     IS_PYODIDE = True
-    get_terminal_size = None
+
+    def get_terminal_size(_=None):
+        return 0, 0
 except ImportError:
     IS_PYODIDE = False
     document = window = None
@@ -27,7 +29,7 @@ except ImportError:
 try:
     from .mock_turtle import MockTurtle
 except ImportError:
-    MockTurtle = None
+    MockTurtle = None  # type: ignore
 
 from .canvas import Canvas
 from .code_tracer import CONTEXT_NAME, find_line_numbers
@@ -45,15 +47,11 @@ def parse_args(command_args=None):
     if launcher.endswith("__main__.py"):
         executable = os.path.basename(sys.executable)
         launcher = executable + " -m " + __package__
-    if get_terminal_size is None:
-        terminal_width = 0
-    else:
-        terminal_width = 0
-        try:
-            if get_terminal_size is not None:
-                terminal_width, _ = get_terminal_size()
-        except OSError:
-            pass
+    terminal_width = 0
+    try:
+        terminal_width, _ = get_terminal_size()
+    except OSError:
+        pass
     # noinspection PyTypeChecker
     parser = argparse.ArgumentParser(
         launcher,
@@ -306,10 +304,11 @@ def swallow_output(standard_files: StandardFiles):
     # noinspection PyUnresolvedReferences
     old_string_io = io.StringIO
     try:
-        sys.stdout = FileSwallower(standard_files['stdout'])
-        sys.stderr = FileSwallower(standard_files['stderr'], target_name='sys.stderr')
+        sys.stdout = FileSwallower(standard_files['stdout'])  # type: ignore
+        sys.stderr = FileSwallower(standard_files['stderr'],  # type: ignore
+                                   target_name='sys.stderr')
         sys.stdin = standard_files['stdin']
-        io.StringIO = TracedStringIO
+        io.StringIO = TracedStringIO  # type: ignore
         yield
     finally:
         if old_main_mod is not None:
@@ -319,7 +318,7 @@ def swallow_output(standard_files: StandardFiles):
         sys.stdout = standard_files.old_files['stdout']
         sys.stderr = standard_files.old_files['stderr']
         sys.stdin = standard_files.old_files['stdin']
-        io.StringIO = old_string_io
+        io.StringIO = old_string_io  # type: ignore
 
 
 @contextmanager

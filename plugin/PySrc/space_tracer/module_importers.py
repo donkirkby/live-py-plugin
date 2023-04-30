@@ -117,6 +117,8 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
                                                            path,
                                                            target)
         if spec is not None:
+            if spec.origin is None:
+                return None
             if spec.origin == self.traced_file:
                 self.record_module(fullname)
                 return ModuleSpec(fullname, self, origin=self.traced_file)

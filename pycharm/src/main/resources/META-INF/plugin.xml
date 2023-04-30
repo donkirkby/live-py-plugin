@@ -12,8 +12,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Add Pillow support, and improve image diffs.
-        Fix read access error in PyCharm 2023.1, and warn about Run Current File.
+        Fix a bug where a pytest run configuration doesn't call the test module.
     ]]>
     </change-notes>
 

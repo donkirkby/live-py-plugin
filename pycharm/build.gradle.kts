@@ -13,11 +13,11 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("212.4746.92")
+    version.set("231.9011.34")
     type.set("IC") // Target IDE Platform: IU for Ultimate, IC for community
 
     // Pythonid for Ultimate, PythonCore for community
-    plugins.set(listOf("PythonCore:212.4746.92"))
+    plugins.set(listOf("PythonCore:231.8770.65"))
 }
 
 sourceSets {
@@ -50,7 +50,7 @@ tasks {
 
     runPluginVerifier {
         // Verify against sinceBuild version and current version.
-        ideVersions.set(listOf<String>("212.4746.92", "231.8109.175"))
+        ideVersions.set(listOf<String>("212.4746.92", "232.6095.10"))
     }
 
     signPlugin {

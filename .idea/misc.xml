@@ -1,10 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ExternalStorageConfigurationManager" enabled="true" />
   <component name="FrameworkDetectionExcludesConfiguration">
     <file type="web" url="file://$PROJECT_DIR$/pycharm" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="IntelliJ IDEA IU-231.8109.175" project-jdk-type="IDEA JDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" default="true" project-jdk-name="IntelliJ IDEA Community Edition IC-231.8109.175" project-jdk-type="IDEA JDK">
     <output url="file://$PROJECT_DIR$/pycharm/out" />
   </component>
 </project>

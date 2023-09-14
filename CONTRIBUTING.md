@@ -230,12 +230,53 @@ The details are at [packaging.python.org], but the main steps are:
 The browser version uses the [Pyodide] project to run Python code in the
 browser. There are two levels of browser development. The easiest to start on
 is writing tutorials in markdown files. Any text editor will do, you can even
-edit in your browser on GitHub. See the section below on how to test GitHub
-Pages locally, and the section below that lists all the features of browser
-tutorials.
+edit in your browser on GitHub. To start writing tutorials without having to
+install any development tools, edit the project in a GitHub codespace.
 
-If you're more ambitious and interested in working on the Javascript code,
-[install nvm].
+1. Go to the [GitHub project page], and click the big green Code button.
+2. In the pop up, click on the Codespaces tab.
+3. Click the "Create codespace on master" button, and wait for it to finish
+   setting up your codespace. Then wait for it to finish up running the
+   `postCreateCommand` to install more development tools.
+4. When the installation is finished, click in the terminal window at the
+   bottom, and launch the web server.
+
+       cd html
+       ./serve.sh
+
+5. That should take a few seconds to generate the web pages, and then launch
+   a web server on port 4000.
+6. You should see a pop up that asks if you want to open port 4000 in your
+   browser. Click the "Open in Browser" button, and you should see a copy of the
+   current web site.
+7. Switch back to the GitHub codespace tab, navigate to the `docs/demo` folder,
+   and make some small changes to an existing markdown file. The file will
+   automatically be saved, and the web server will automatically regenerate the
+   web page.
+8. Go back to the browser tab with the web site, and refresh the page. You
+   should see your changes.
+9. Make some bigger changes, or add a new page. See the [browser tutorials]
+   section for a description of all the available features, and remember to
+   add any new pages to the menu items in the `docs/_data/navigation.yml` file.
+
+After writing tutorials, the next easiest thing to work on is the Javascript.
+The source code is all in the `html` folder, and you can test your changes like
+this:
+
+1. If you're running the web server, stop it with <kbd>Ctrl</kbd>+<kbd>C</kbd>.
+2. Run the tests to check that you haven't broken anything: `npm test`
+3. If tests are broken, edit the application code or the test code to fix them.
+   The tests will automatically rerun after the changes. Type `q` to stop the
+   tests when they're all passing.
+4. Build a new version of the web site, then launch the web server again.
+
+       npm run build
+       ./serve.sh
+
+5. Switch back to the browser tab with the web site, and refresh the page. You
+   should see your changes.
+
+If you're more ambitious and interested in working locally, [install nvm].
 
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
     nvm install 16
@@ -312,6 +353,8 @@ launch them in debug mode.
    tools.
 
 [Pyodide]: https://github.com/iodide-project/pyodide
+[GitHub project page]: https://github.com/donkirkby/live-py-plugin
+[browser tutorials]: #browser-tutorials
 [install nvm]: https://github.com/nvm-sh/nvm#installing-and-updating
 [Bulma Clean theme]: https://github.com/chrisrhymes/bulma-clean-theme
 [Bulma]: https://bulma.io/documentation/

@@ -1,0 +1,6 @@
+{
+  "name": "live-py-plugin-full",
+
+  // For contents, look in .devcontainer-prebuild/full
+  "image": "donkirkby/live-py-plugin-devcontainer-full:v1.0"
+}

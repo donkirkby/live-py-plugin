@@ -15,7 +15,7 @@
   // "forwardPorts": [],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "cd html && npm install --legacy-peer-deps && cd ../docs && bundle install",
+  "postCreateCommand": "cd html && npm install && cd ../docs && bundle install",
 
   // Configure tool-specific properties.
   "customizations": {

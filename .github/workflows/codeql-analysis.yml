@@ -9,6 +9,9 @@ on:
   schedule:
     - cron: '0 21 * * *'  # Daily at 9PM PST
 
+permissions:
+  contents: read
+
 jobs:
   analyse:
     name: Analyse
@@ -18,6 +21,10 @@ jobs:
       github.event.pull_request.head.repo.full_name !=
       github.event.pull_request.base.repo.full_name
 
+    permissions:
+      actions: read  # for github/codeql-action/init to get workflow details
+      contents: read  # for actions/checkout to fetch code
+      security-events: write  # for github/codeql-action/autobuild to send a status report
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3

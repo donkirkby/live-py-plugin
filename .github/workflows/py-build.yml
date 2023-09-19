@@ -19,6 +19,9 @@ on:
       - '*.ini'
       - '.github/**'
 
+permissions:
+  contents: read
+
 jobs:
   py-build:
 

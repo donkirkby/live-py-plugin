@@ -12,6 +12,9 @@ on:
       - 'html/**'
       - '.github/**'
 
+permissions:
+  contents: read
+
 jobs:
   html-build:
     runs-on: ubuntu-latest

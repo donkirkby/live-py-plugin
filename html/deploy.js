@@ -72,7 +72,7 @@ function copyPyodide(srcPath, destPath) {
     }
 }
 
-function rebuildPyodide() {
+function rebuildPyodide(pyodideExists) {
     const metaSource = fs.readFileSync(
         'meta.yaml',
         {encoding: 'utf-8'}),
@@ -99,6 +99,12 @@ function rebuildPyodide() {
         console.log('Space tracer in pyodide is up to date.');
         return;
     }
+    if ( ! pyodideExists) {
+        console.error(
+            'Space tracer Python code has changed, but ../../pyodide was not ' +
+            'found.');
+        return;
+    }
     console.log(`Rebuilding space-tracer ${aboutMatch[1]} in pyodide.`);
     execSync('tox devenv -epy310 .tox/py310', {cwd: '..', encoding: 'utf8'});
     execSync(
@@ -122,14 +128,6 @@ function rebuildPyodide() {
     console.log('Rebuilt space tracer in pyodide.');
 }
 
-function lastModification(searchPath) {
-    return fs.readdirSync(searchPath)
-        .map(f => path.join(searchPath, f))
-        .filter(f => fs.lstatSync(f).isFile())
-        .map(f => fs.lstatSync(f).mtime.getTime())
-        .sort((a, b) => b-a)[0];  // reverse to find most recent time.
-}
-
 function main() {
     const dest = path.resolve('../docs/demo'),
         src = path.resolve('build'),
@@ -142,11 +140,11 @@ function main() {
         let destFilePath = path.join(dest, entry.name);
         if (entry.isDirectory()) {
             if (entry.name === 'pyodide') {
+                rebuildPyodide(pyodideExists);
                 if ( ! pyodideExists) {
                     // No new copy to replace it, so don't delete it.
                     continue;
                 }
-                rebuildPyodide();
             }
             if (entry.name === 'static' || entry.name === 'pyodide') {
                 fs.rmSync(destFilePath, {recursive: true});
@@ -170,6 +168,7 @@ function main() {
     if (pyodideExists) {
         copyPyodide(pyodideSrc, pyodideDest);
     }
+    console.log('Files deployed to ../docs.');
 }
 
 main();

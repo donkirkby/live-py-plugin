@@ -80,8 +80,8 @@ function rebuildPyodide() {
         metaVersion = metaEntries.package.version;
     const aboutSource = fs.readFileSync(
         '../plugin/PySrc/space_tracer/about.py',
-        {encoding: 'utf-8'});
-    const aboutMatch = /^ *__version__ *= *'(.*)' *$/m.exec(aboutSource),
+        {encoding: 'utf-8'}),
+        aboutMatch = /^ *__version__ *= *'(.*)' *$/m.exec(aboutSource),
         aboutVersion = aboutMatch && aboutMatch[1];
     if ( ! aboutMatch) {
         throw "No __version__ found in about.py.";
@@ -89,9 +89,13 @@ function rebuildPyodide() {
     if (aboutVersion !== metaVersion) {
         throw `Found versions ${aboutVersion} in about.py and ${metaVersion} in meta.yaml`;
     }
-    const destTime = lastModification('../docs/demo/pyodide'),
-        srcTime = lastModification('../plugin/PySrc/space_tracer');
-    if (srcTime <= destTime) {
+    const deployedPython = fs.readFileSync(
+            'deployed-python.txt',
+            {encoding: 'utf-8'}),
+        latestPython = execSync(
+            'md5sum *.py',
+            {cwd: '../plugin/PySrc/space_tracer', encoding: 'utf8'});
+    if (latestPython === deployedPython) {
         console.log('Space tracer in pyodide is up to date.');
         return;
     }
@@ -114,6 +118,7 @@ function rebuildPyodide() {
     execSync(
         'sudo ./run_docker --non-interactive PYODIDE_PACKAGES=core,space-tracer,matplotlib make',
         {cwd: '../../pyodide', encoding: 'utf8'});
+    fs.writeFileSync('deployed-python.txt', latestPython);
     console.log('Rebuilt space tracer in pyodide.');
 }
 

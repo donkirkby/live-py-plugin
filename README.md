@@ -9,6 +9,7 @@ Live Coding in Python
 [![Emacs downloads]][emacs plugin]
 [![Sublime downloads]][sublime plugin]
 [![space-tracer downloads]][space-tracer]
+[![Supported Python versions]][space-tracer]
 [![DOI]][zenodo]
 
 Visualize your Python code while you type it in PyCharm, Emacs, Sublime Text, or
@@ -27,10 +28,12 @@ even your browser.
 [emacs plugin]: https://melpa.org/#/live-py-mode
 [Sublime downloads]: https://img.shields.io/packagecontrol/dt/Live%20Coding%20in%20Python?label=Sublime%20%E2%86%93
 [sublime plugin]: https://packagecontrol.io/packages/Live%20Coding%20in%20Python
-[space-tracer downloads]: https://static.pepy.tech/personalized-badge/space-tracer?left_color=grey&right_color=brightgreen&left_text=space-tracer%20%E2%86%93
+[space-tracer downloads]: https://static.pepy.tech/personalized-badge/space-tracer?left_color=grey&right_color=brightgreen&left_text=space-tracer%20%E2%86%93&period=total
 [space-tracer]: https://pypi.org/project/space-tracer/
+[Supported Python versions]: https://img.shields.io/pypi/pyversions/space-tracer.svg
 [DOI]: https://zenodo.org/badge/4332096.svg
 [zenodo]: https://zenodo.org/badge/latestdoi/4332096
+
 Live coding tightens the feedback loop between making a change to your code
 and seeing the change in behaviour. As you type your code, it will run over and
 over, showing a visualization of the program state, a matplotlib graph, a

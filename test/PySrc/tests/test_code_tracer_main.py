@@ -297,7 +297,7 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
                       | AssertionError: ['fail', 'badly']                    |
                       | ---------------------------------------------------- |
 """
-        if sys.version_info >= (3, 11, 0):
+        if (3, 11, 0) <= sys.version_info < (3, 12, 0):
             expected_report = expected_report_311
 
         stdin.read.return_value = source
@@ -356,7 +356,7 @@ def bar():                      | ----------------------------------------------
 def foo(x):                     | x = 1
     # This is shown, as normal. |
     return x                    | return 1"""
-        if sys.version_info >= (3, 11, 0):
+        if (3, 11, 0) <= sys.version_info < (3, 12, 0):
             expected_report = expected_report_311
 
         stdin.read.return_value = source
@@ -597,9 +597,19 @@ SystemExit: True |
 y = 510
 AssertionError: 510
 """
-        if sys.version_info < (3, 0):
-            expected_report = expected_report.replace('(failures=1)',
-                                                      'FAIL        ')
+        expected_report_312 = """\
+------------- |
+SystemExit: 1 |
+------------- | | x = 10
+                | return 510
+
+
+
+y = 510
+AssertionError: 510
+"""
+        if (3, 12, 0) <= sys.version_info:
+            expected_report = expected_report_312
 
         stdin.read.return_value = source
 
@@ -1154,6 +1164,10 @@ sys = None
 
 x = 42
 return 62'''
+    if (3, 12, 0) <= sys.version_info:
+        expected_report = expected_report.replace(
+            "'sys' is not defined",
+            "'sys' is not defined. Did you forget to import 'sys'")
 
     with replace_input(code):
         report = TraceRunner().trace_command([

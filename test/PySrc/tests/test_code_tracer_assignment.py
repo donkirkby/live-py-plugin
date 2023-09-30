@@ -212,7 +212,7 @@ foo[1:10] |= 3 """
 
     report = TraceRunner().trace_code(code)
 
-    assert trim_report(expected_report) == trim_report(report)
+    assert trim_report(report) == trim_report(expected_report)
 
 
 def test_index_expression():

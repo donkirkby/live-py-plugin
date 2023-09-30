@@ -25,12 +25,12 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Debuggers",
         # Synchronize Python versions with py-build.yml workflow and tox.ini.
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Development Status :: 5 - Production/Stable",

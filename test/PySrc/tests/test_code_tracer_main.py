@@ -1318,9 +1318,6 @@ create_line
     pensize=1
 end_canvas
 .
-
-
-x = 100
 """
 
     report, stdout = analyze(code, canvas_size)

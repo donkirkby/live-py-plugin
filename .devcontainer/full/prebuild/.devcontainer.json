@@ -15,7 +15,7 @@
   // "forwardPorts": [],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "cd html && npm install && cd ../docs && bundle install && ln -s /opt/pyodide /workspaces/pyodide",
+  "postCreateCommand": "cd html && npm install && cd ../docs && bundle install && sudo ln -sf /opt/pyodide /workspaces/",
 
   // Configure tool-specific properties.
   "customizations": {

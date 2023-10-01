@@ -67,7 +67,7 @@ def parse_args(command_args=None):
     parser.add_argument('--millisecond_limit',
                         type=int,
                         default=500,
-                        help='time limit in milliseconds')
+                        help='time limit in milliseconds, 0 to disable')
     parser.add_argument('-x',
                         '--width',
                         type=int,
@@ -161,6 +161,8 @@ def parse_args(command_args=None):
     args = parser.parse_args(command_args[1:])
     if args.canvas_only:
         args.canvas = True
+    if args.millisecond_limit == 0:
+        args.millisecond_limit = None
     if args.driver:
         if args.driver[0] == '-m':
             args.is_module = True

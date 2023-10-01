@@ -36,10 +36,11 @@ create_image
 """
     tracer = TraceRunner()
 
+    # Needs a long time on some test runners. Building fonts?
     report = tracer.trace_turtle(code,
                                  0,
                                  0,
-                                 '--millisecond_limit=10000')
+                                 '--millisecond_limit=30000')
 
     assert replace_image(report) == expected_report
 

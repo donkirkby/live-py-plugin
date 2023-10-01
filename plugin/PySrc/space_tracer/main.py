@@ -357,19 +357,23 @@ class TraceRunner(object):
         self.return_code = None
         self.standard_files = StandardFiles()
 
-    def trace_turtle(self, source, width: int = 0, height: int = 0):
+    def trace_turtle(self, source, width: int = 0, height: int = 0, *extra_args):
         MockTurtle.monkey_patch()
         try:
             with replace_input(source):
-                self.trace_command(['space_tracer',
-                                    '--traced_file', PSEUDO_FILENAME,
-                                    '--source_width', '0',
-                                    '--width', str(width),
-                                    '--height', str(height),
-                                    '--live',
-                                    PSEUDO_FILENAME])
+                report = self.trace_command(['space_tracer',
+                                             '--traced_file', PSEUDO_FILENAME,
+                                             '--source_width', '0',
+                                             '--width', str(width),
+                                             '--height', str(height),
+                                             '--live',
+                                             *extra_args,
+                                             PSEUDO_FILENAME])
 
-            return '\n'.join(MockTurtle.get_all_reports())
+            turtle_report = '\n'.join(MockTurtle.get_all_reports())
+            if turtle_report or not self.return_code:
+                return turtle_report
+            return report
         finally:
             MockTurtle.remove_monkey_patch()
 
@@ -591,7 +595,7 @@ class TraceRunner(object):
             if not was_patched:
                 MockTurtle.remove_monkey_patch()
         if args.canvas_only:
-            report = ''
+            report = report.strip()
         if turtle_report and args.canvas:
             report = ('start_canvas\n' +
                       '\n'.join(turtle_report) +

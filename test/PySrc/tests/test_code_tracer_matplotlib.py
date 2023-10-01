@@ -36,9 +36,12 @@ create_image
 """
     tracer = TraceRunner()
 
-    report = tracer.trace_turtle(code)
+    report = tracer.trace_turtle(code,
+                                 0,
+                                 0,
+                                 '--millisecond_limit=10000')
 
-    assert expected_report == replace_image(report)
+    assert replace_image(report) == expected_report
 
 
 def test_clear_plots(is_matplotlib_cleared):

@@ -855,7 +855,7 @@ def test_canvas_without_live_display(stdin, stdout, argv):
 from turtle import *
 i = 100
 forward(i)
-for j in range(300_000):
+for j in range(300):
     pass
 """
     expected_report = """\

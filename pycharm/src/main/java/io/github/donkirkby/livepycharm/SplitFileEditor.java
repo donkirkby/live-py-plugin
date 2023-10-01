@@ -389,7 +389,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     }
 
     void startAnalysis(@Nullable Project project, @NotNull DataContext dataContext) {
-        if (myAnalyst.start(project, dataContext)) {
+        if (myAnalyst.startAnalysis(project, dataContext)) {
             triggerLayoutChange(SplitEditorLayout.DISPLAY);
         }
     }
@@ -399,7 +399,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     }
 
     void startTurtle(@Nullable Project project, @NotNull DataContext dataContext) {
-        if (myAnalyst.start(project, dataContext)) {
+        if (myAnalyst.startCanvas(project, dataContext)) {
             triggerLayoutChange(SplitEditorLayout.TURTLE);
         }
     }

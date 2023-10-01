@@ -2,6 +2,7 @@ import re
 
 import sys
 import traceback
+from datetime import datetime, timedelta
 from unittest.mock import Mock
 from enum import Enum
 from itertools import groupby
@@ -12,11 +13,17 @@ class ReportBuilder(object):
     is_using_traced_blocks = False
     hide = None
 
-    def __init__(self, message_limit=None):
+    def __init__(self, message_limit=None, millisecond_limit=None):
         self.messages = []
         self.assignments = []
-        self.message_count = self.event_count = 0
+        self.message_count = 0
         self.message_limit = message_limit
+        self.millisecond_limit = millisecond_limit
+        if millisecond_limit is None:
+            self.end_time = None
+        else:
+            self.end_time = datetime.now() + timedelta(
+                milliseconds=millisecond_limit)
         self.stack_block = None  # (first_line, last_line) numbers, not indexes
         self.history = []  # all stack frames that need to be combined
         self.line_widths = {}
@@ -81,8 +88,20 @@ class ReportBuilder(object):
                 self.messages[line_index] = message.ljust(max_width) + '| '
                 self._update_frame_width(max_width + 2, line_index+1)
         else:
-            self._increment_message_count(first_line)
+            self.check_time_limit()
         return max_width
+
+    def check_time_limit(self):
+        if self.end_time is None:
+            return
+        if self.end_time < datetime.now():
+            if self.millisecond_limit < 1000:
+                formatted_limit = '{}ms'.format(self.millisecond_limit)
+            else:
+                formatted_limit = '{}s'.format(round(self.millisecond_limit/1000))
+            raise RuntimeError('live coding exceeded the {} time limit'.format(
+                formatted_limit))
+
 
     def check_tracing(self, first_line, last_line):
         if ReportBuilder.is_tracing_next_block:
@@ -111,7 +130,8 @@ class ReportBuilder(object):
                     self.line_widths[line_index] = line_width
                 self.frame_width = new_width
             if should_throw:
-                raise RuntimeError('live coding message limit exceeded')
+                raise RuntimeError('live coding message width exceeded {}'.format(
+                    self.max_width))
 
     def start_frame(self, first_line, last_line):
         """ Start a new stack frame to support recursive calls.
@@ -130,6 +150,8 @@ class ReportBuilder(object):
             if frame.is_muted:
                 return frame
         new_frame = ReportBuilder(self.message_limit)
+        new_frame.millisecond_limit = self.millisecond_limit
+        new_frame.end_time = self.end_time
         new_frame.root_frame = self
         new_frame.stack_block = (first_line, last_line)
         new_frame.line_widths = self.line_widths
@@ -138,24 +160,20 @@ class ReportBuilder(object):
         return new_frame
 
     def _increment_message_count(self, line_number):
-        """ Keep track of how many traced messages and other events occur.
+        """ Keep track of how many traced messages occur.
 
         :param line_number: the line number where a message could be added.
         :return: True if the message should be added because everything is
             being traced, or that line number is one of the lines being traced.
-        :raise: RuntimeError if the message limit or event limit has been
-            exceeded.
+        :raise: RuntimeError if the message limit has been exceeded.
         """
-        if (self.message_limit is not None and
-                self.event_count >= self.message_limit * 1000):
-            raise RuntimeError('live coding event limit exceeded')
-        self.event_count += 1
         if not self.is_line_traced(line_number):
             return False
         if (self.message_limit is not None and
                 self.message_count >= self.message_limit):
 
-            raise RuntimeError('live coding message limit exceeded')
+            raise RuntimeError('live coding exceeded {} messages'.format(
+                self.message_limit))
         self.message_count += 1
         return True
 
@@ -372,6 +390,7 @@ class ReportBuilder(object):
         return DeletionTarget(name, target, line_number, self)
 
     def report(self, total_lines=None):
+        self.end_time = None  # Avoid raising errors after the run is finished.
         self.check_output()
         self.max_width = None
         self.message_limit = None

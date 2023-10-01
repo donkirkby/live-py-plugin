@@ -1,3 +1,5 @@
+import sys
+
 from space_tracer.main import TraceRunner
 
 
@@ -186,9 +188,9 @@ while True:
     expected_report = """\
 n = 0
       |       |
-n = 1 | n = 2 | RuntimeError: live coding message limit exceeded"""
+n = 1 | n = 2 | RuntimeError: live coding exceeded 3 messages"""
     tracer = TraceRunner()
-    tracer.message_limit = 8
+    tracer.message_limit = 3
 
     report = tracer.trace_code(code)
 
@@ -204,7 +206,7 @@ while True:
     expected_report = """\
 n = 0
       |       |
-n = 1 | n = 2 | RuntimeError: live coding message limit exceeded"""
+n = 1 | n = 2 | RuntimeError: live coding message width exceeded 20"""
     tracer = TraceRunner()
     tracer.max_width = 20
 
@@ -218,14 +220,12 @@ def test_infinite_loop_pass():
 while True:
     pass
 """
-    expected_report = """\
-RuntimeError: live coding message limit exceeded"""
+    expected_report = "RuntimeError: live coding exceeded the 100ms time limit"
     tracer = TraceRunner()
-    tracer.message_limit = 3
 
-    report = tracer.trace_code(code)
+    report = tracer.trace_code(code, '--millisecond_limit=100')
 
-    assert report in (expected_report + '\n', '\n' + expected_report)
+    assert report.strip() == expected_report
 
 
 def test_infinite_loop_pass_in_function():
@@ -238,19 +238,21 @@ foo()
 """
     expected_report1 = """\
 
-RuntimeError: live coding message limit exceeded
+RuntimeError: live coding exceeded the 300ms time limit
 
 
-RuntimeError: live coding message limit exceeded"""
+RuntimeError: live coding exceeded the 300ms time limit"""
     expected_report2 = """\
 
 
-RuntimeError: live coding message limit exceeded
+RuntimeError: live coding exceeded the 300ms time limit
 
-RuntimeError: live coding message limit exceeded"""
+RuntimeError: live coding exceeded the 300ms time limit"""
     tracer = TraceRunner()
-    tracer.message_limit = 3
 
-    report = tracer.trace_code(code)
+    report = tracer.trace_code(code, '--millisecond_limit=300')
 
-    assert report in (expected_report1, expected_report2)
+    if sys.version_info < (3, 10, 0):
+        assert report == expected_report1
+    else:
+        assert report == expected_report2

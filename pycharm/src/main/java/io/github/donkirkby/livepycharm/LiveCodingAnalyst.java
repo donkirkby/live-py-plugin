@@ -73,6 +73,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private Rectangle goalBounds;
     private CanvasCommand goalImageCommand;
     private boolean isPassing;
+    private boolean isCanvas;
     private boolean isDisplayUpdating = true;
     private String activeConfigurationId;
 
@@ -130,7 +131,24 @@ public class LiveCodingAnalyst implements DocumentListener {
      * @param dataContext the data context for the current action
      * @return true if the display should be opened.
      */
-    boolean start(@Nullable Project project, @NotNull DataContext dataContext) {
+    boolean startAnalysis(@Nullable Project project, @NotNull DataContext dataContext) {
+        this.isCanvas = false;
+        return this.start(project, dataContext);
+    }
+
+    /**
+     * Try to start a new canvas analysis job.
+     *
+     * @param project     the project for the current action
+     * @param dataContext the data context for the current action
+     * @return true if the display should be opened.
+     */
+    boolean startCanvas(@Nullable Project project, @NotNull DataContext dataContext) {
+        this.isCanvas = true;
+        return this.start(project, dataContext);
+    }
+
+    private boolean start(@Nullable Project project, @NotNull DataContext dataContext) {
         isRunning = false;
 
         if (project == null || project.isDisposed()) {
@@ -234,7 +252,10 @@ public class LiveCodingAnalyst implements DocumentListener {
             String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
             paramsGroup.addParameterAt(i++, "--bad_driver");
             paramsGroup.addParameterAt(i++, badDriverMessage);
-            paramsGroup.addParameterAt(i++, "--canvas");
+            if (this.isCanvas) {
+                paramsGroup.addParameterAt(i++, "--canvas_only");
+            }
+            paramsGroup.addParameterAt(i++, "--millisecond_limit=10000");
             paramsGroup.addParameterAt(i++, "--width");
             paramsGroup.addParameterAt(i++, Integer.toString(bounds.width));
             paramsGroup.addParameterAt(i++, "--height");

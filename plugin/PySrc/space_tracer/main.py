@@ -61,6 +61,13 @@ def parse_args(command_args=None):
                         '--canvas',
                         action='store_true',
                         help='Should canvas commands be printed?')
+    parser.add_argument('--canvas_only',
+                        action='store_true',
+                        help='Should canvas commands be printed without live display?')
+    parser.add_argument('--millisecond_limit',
+                        type=int,
+                        default=500,
+                        help='time limit in milliseconds')
     parser.add_argument('-x',
                         '--width',
                         type=int,
@@ -152,6 +159,8 @@ def parse_args(command_args=None):
                         help='script to call traced code, plus any arguments. '
                              'Default: %(default)s to use --traced_file.')
     args = parser.parse_args(command_args[1:])
+    if args.canvas_only:
+        args.canvas = True
     if args.driver:
         if args.driver[0] == '-m':
             args.is_module = True
@@ -204,9 +213,10 @@ def analyze(source_code, canvas_size=None):
                        '--stderr', '!']
         if canvas_size is not None:
             canvas_width, canvas_height = canvas_size
-            tracer_args.append('--canvas')
+            tracer_args.append('--canvas_only')
             tracer_args.append('-x{}'.format(canvas_width))
             tracer_args.append('-y{}'.format(canvas_height))
+            tracer_args.append('--millisecond_limit=10000')
             tracer_args.append('--zoomed')
         tracer_args.append(PSEUDO_FILENAME)
         code_report = tracer.trace_command(tracer_args)
@@ -363,7 +373,7 @@ class TraceRunner(object):
         finally:
             MockTurtle.remove_monkey_patch()
 
-    def trace_code(self, source):
+    def trace_code(self, source, *extra_args):
         """ Trace a module of source code.
 
         :param str source: source code to trace and run.
@@ -373,6 +383,7 @@ class TraceRunner(object):
                                        '--traced_file', PSEUDO_FILENAME,
                                        '--source_width', '0',
                                        '--live',
+                                       *extra_args,
                                        PSEUDO_FILENAME])
 
     def trace_command(self, command_args=None):
@@ -404,8 +415,11 @@ class TraceRunner(object):
 
         ReportBuilder.hide = args.hide
         ReportBuilder.is_using_traced_blocks = False
-        builder = ReportBuilder(self.message_limit)
+        builder = ReportBuilder(self.message_limit, args.millisecond_limit)
         builder.max_width = self.max_width
+        if args.canvas_only:
+            ReportBuilder.is_using_traced_blocks = True
+            builder.trace_block(-1, -2)  # Disable tracing.
         if args.start_line or args.end_line:
             builder.trace_block(args.start_line, args.end_line)
 
@@ -576,6 +590,8 @@ class TraceRunner(object):
             turtle_report = MockTurtle.get_all_reports()
             if not was_patched:
                 MockTurtle.remove_monkey_patch()
+        if args.canvas_only:
+            report = ''
         if turtle_report and args.canvas:
             report = ('start_canvas\n' +
                       '\n'.join(turtle_report) +

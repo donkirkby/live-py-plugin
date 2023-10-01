@@ -809,6 +809,75 @@ end_canvas
     assert stdout.getvalue() == expected_report
 
 
+def test_canvas_with_live_display(stdin, stdout, argv):
+    argv.extend([
+        'dummy.py',
+        '--source_width', '0',
+        '--traced_file', EXAMPLE_SOURCE_PATH,
+        '--canvas'])
+    source = """\
+from turtle import *
+i = 100
+forward(i)
+j = 0
+"""
+    expected_report = """\
+start_canvas
+create_line
+    400
+    300
+    500
+    300
+    fill='black'
+    pensize=1
+end_canvas
+.
+
+i = 100
+
+j = 0
+"""
+    stdin.read.return_value = source
+
+    main()
+
+    assert stdout.getvalue() == expected_report
+
+
+def test_canvas_without_live_display(stdin, stdout, argv):
+    argv.extend([
+        'dummy.py',
+        '--source_width', '0',
+        '--traced_file', EXAMPLE_SOURCE_PATH,
+        '--canvas_only',
+        '--millisecond_limit', '10000'])
+    source = """\
+from turtle import *
+i = 100
+forward(i)
+for j in range(300_000):
+    pass
+"""
+    expected_report = """\
+start_canvas
+create_line
+    400
+    300
+    500
+    300
+    fill='black'
+    pensize=1
+end_canvas
+.
+
+"""
+    stdin.read.return_value = source
+
+    main()
+
+    assert stdout.getvalue() == expected_report
+
+
 def test_canvas_error(stdin, stdout, argv):
     argv.extend([
         'dummy.py',

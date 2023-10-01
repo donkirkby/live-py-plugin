@@ -143,10 +143,10 @@ def foo(n):
 foo(0)
 """
         expected_report = """\
-n = 0                                            | n = 1                                            |
-RuntimeError: live coding message limit exceeded | RuntimeError: live coding message limit exceeded |
+n = 0                                               | n = 1                                               |
+RuntimeError: live coding message width exceeded 13 | RuntimeError: live coding message width exceeded 13 |
 
-RuntimeError: live coding message limit exceeded
+RuntimeError: live coding message width exceeded 13
 """
         tracer = TraceRunner()
         tracer.max_width = 13

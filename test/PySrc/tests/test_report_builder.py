@@ -1,3 +1,6 @@
+import pytest
+from datetime import datetime, timedelta
+
 import unittest
 
 from space_tracer.report_builder import ReportBuilder
@@ -204,10 +207,10 @@ b = 20
 """
 
         # EXEC
-        builder = ReportBuilder(message_limit=4)
+        builder = ReportBuilder(message_limit=2)
         builder.assign('a', 10, 1)
         builder.assign('b', 20, 2)
-        with self.assertRaisesRegex(RuntimeError, r'message limit exceeded'):
+        with self.assertRaisesRegex(RuntimeError, r'exceeded 2 messages'):
             builder.assign('c', 30, 3)
         report = builder.report()
 
@@ -660,5 +663,17 @@ sys.stderr.write('a\\n')
         self.assertReportEqual(expected_report, builder.report())
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_time_limit_errors():
+    report_builder = ReportBuilder()
+    now = datetime.now()
+    report_builder.end_time = now - timedelta(milliseconds=10)
+
+    scenarios = [(100, 'exceeded the 100ms time limit'),
+                 (999, 'exceeded the 999ms time limit'),
+                 (1000, 'exceeded the 1s time limit'),
+                 (1499, 'exceeded the 1s time limit'),
+                 (1500, 'exceeded the 2s time limit')]
+    for millisecond_limit, expected_error in scenarios:
+        report_builder.millisecond_limit = millisecond_limit
+        with pytest.raises(expected_exception=RuntimeError, match=expected_error):
+            report_builder.check_time_limit()

@@ -2,7 +2,7 @@
 title: Pillow Tutorial
 layout: react
 is_react: True
-modules: pillow
+modules: pillow,numpy
 files: hopper.jpg
 ---
 

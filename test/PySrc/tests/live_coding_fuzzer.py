@@ -1,18 +1,16 @@
+#!/usr/bin/python3.9
+
 import re
+import sys
 import typing
 from ast import Assign, Call, Constant, Expr, fix_missing_locations, For, \
     Load, Module, Name, stmt, Store, unparse
 from random import choice
 
-try:
-    from pythonfuzz.main import PythonFuzz
-except ImportError as ex:
-    raise ImportError(
-        "pythonfuzz not installed. Run "
-        "pip install --extra-index-url https://gitlab.com/api/v4/projects/"
-        "19904939/packages/pypi/simple pythonfuzz") from ex
+import atheris
 
-from space_tracer.main import TraceRunner, replace_input
+with atheris.instrument_imports():
+    from space_tracer.main import TraceRunner, replace_input
 
 
 class CodeContext:
@@ -82,9 +80,7 @@ class CodeContext:
                       body=children,
                       orelse=[])
 
-
-@PythonFuzz
-def fuzz(data):
+def TestOneInput(data):
     """ This gets called over and over with a random bytes object.
 
     To see the options, run `python fuzz.py -h`. Some options are ignored, like
@@ -98,6 +94,7 @@ def fuzz(data):
         report = runner.trace_command(['space_tracer',
                                        '--live',
                                        '--trace_offset=1000000',
+                                       '--trace_width=0',  # no limit
                                        '-'])
     trimmed_report = re.sub(r'\s*\|\s*$', '', report, flags=re.MULTILINE)
     if source != trimmed_report:
@@ -113,4 +110,6 @@ def fuzz(data):
         raise RuntimeError("Source and report differ.")
 
 
-fuzz()
+
+atheris.Setup(sys.argv, TestOneInput)
+atheris.Fuzz()

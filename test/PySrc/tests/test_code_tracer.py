@@ -6,7 +6,6 @@ from unittest import skipIf
 from unittest.mock import patch
 
 from space_tracer.main import TraceRunner, FileSwallower, replace_input
-from space_tracer.mock_turtle import MockTurtle
 from space_tracer.report_builder import ReportBuilder
 from test_code_tracer_main import EXAMPLE_LIB_PATH
 from test_report_builder import ReportTestCase
@@ -182,10 +181,12 @@ s2 = 'x'
         tracer = TraceRunner()
 
         # EXEC
-        report = tracer.trace_code(code)
+        report = tracer.trace_code(
+            code,
+            '--millisecond_limit=0')  # No time limit.
 
         # VERIFY
-        self.assertReportEqual(expected_report, report)
+        self.assertReportEqual(report, expected_report)
 
     def test_infinite_recursion_in_repr(self):
         # SETUP

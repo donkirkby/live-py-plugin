@@ -44,6 +44,21 @@ def test_remove_patch_too_soon():
         MockTurtle.remove_monkey_patch()
 
 
+def test_remove_patch_clears_screens():
+    dummy_screen = 'Dummy screen'
+
+    # noinspection PyTypeChecker
+    MockTurtle.screens.append(dummy_screen)
+    try:
+
+        MockTurtle.monkey_patch()
+        MockTurtle.remove_monkey_patch()
+
+        assert MockTurtle.screens == [dummy_screen]
+    finally:
+        MockTurtle.screens.clear()
+
+
 def test_forward(patched_turtle):
     expected_report = """\
 create_line

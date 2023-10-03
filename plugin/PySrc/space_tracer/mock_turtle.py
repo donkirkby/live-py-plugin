@@ -160,6 +160,10 @@ class MockTurtle(RawTurtle):
             turtle_module.Turtle = cls.OriginalTurtle
             MockTurtle._pen = cls.OriginalTurtle = None
             MockTurtle._screen = None
+            MockTurtle.screens[:] = [
+                screen
+                for screen in MockTurtle.screens
+                if not isinstance(screen, MockTurtle._Screen)]
 
     @classmethod
     def is_patched(cls):

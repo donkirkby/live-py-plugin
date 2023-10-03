@@ -1,16 +1,49 @@
 #!/usr/bin/python3.9
 
+""" Run a fuzz test on randomly generated source code.
+
+Check that the source code display matches the original source code, and you
+haven't hit some weird failure.
+
+This gets run by the OSS-Fuzz project at https://github.com/google/oss-fuzz
+It gets pulled from GitHub into the projects/live-py-plugin folder in that repo.
+To test it locally, you can clone oss-fuzz, then copy this file into that
+folder, build the docker image, and run the fuzzer.
+
+    git clone https://github.com/donkirkby/oss-fuzz.git
+    git checkout live-py-plugin
+    cd oss-fuzz
+    cp /path/to/live-py-plugin/test/PySrc/tests/live_coding_fuzzer.py projects/live-py-plugin/
+    python3 infra/helper.py build_image live-py-plugin
+    python3 infra/helper.py build_fuzzers --sanitizer address live-py-plugin
+    python3 infra/helper.py check_build live-py-plugin
+    python3 infra/helper.py run_fuzzer --corpus-dir build/corpus/live-py-plugin/ live-py-plugin live_coding_fuzzer -- -runs=10000
+
+Then you can repeat the steps with --sanitizer undefined. Add -help=1 to the
+last command, if you want to see libfuzzer options.
+"""
+
 import re
 import sys
 import typing
 from ast import Assign, Call, Constant, Expr, fix_missing_locations, For, \
     Load, Module, Name, stmt, Store, unparse
 from random import choice
+import linecache
+import os
+import tracemalloc
 
-import atheris
+try:
+    import atheris
+except ImportError:
+    atheris = None
 
-with atheris.instrument_imports():
+if atheris is None:
     from space_tracer.main import TraceRunner, replace_input
+else:
+    # noinspection PyUnresolvedReferences
+    with atheris.instrument_imports():
+        from space_tracer.main import TraceRunner, replace_input
 
 
 class CodeContext:
@@ -80,17 +113,13 @@ class CodeContext:
                       body=children,
                       orelse=[])
 
-def TestOneInput(data):
-    """ This gets called over and over with a random bytes object.
-
-    To see the options, run `python fuzz.py -h`. Some options are ignored, like
-    `--dict` and `--regression`.
-    """
+def test_one_input(data):
+    """ This gets called over and over with a random bytes object. """
     context = CodeContext(iter(data))
     source = context.generate_source()
 
-    runner = TraceRunner()
     with replace_input(source):
+        runner = TraceRunner()
         report = runner.trace_command(['space_tracer',
                                        '--live',
                                        '--trace_offset=1000000',
@@ -99,6 +128,7 @@ def TestOneInput(data):
     trimmed_report = re.sub(r'\s*\|\s*$', '', report, flags=re.MULTILINE)
     if source != trimmed_report:
         with replace_input(source):
+            runner = TraceRunner()
             report2 = runner.trace_command(['space_tracer',
                                             '--live',
                                             '-'])
@@ -110,6 +140,56 @@ def TestOneInput(data):
         raise RuntimeError("Source and report differ.")
 
 
+def display_top(snapshot, key_type='lineno', limit=3):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
 
-atheris.Setup(sys.argv, TestOneInput)
-atheris.Fuzz()
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace "/path/to/module/file.py" with "module/file.py"
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+
+def demo():
+    data = b'lorem ipsum'
+    tracemalloc.start()
+
+    for i in range(1_000):
+        if i % 100 == 0:
+            print('.', end='', flush=True)
+        test_one_input(data)
+
+    snapshot = tracemalloc.take_snapshot()
+    display_top(snapshot)
+    print('Done.')
+
+
+# noinspection PyUnresolvedReferences
+def main():
+    if '--demo' in sys.argv:
+        demo()
+    else:
+        if atheris is None:
+            raise ImportError(
+                'Atheris not found. Did you want to run with --demo?')
+        atheris.Setup(sys.argv, test_one_input)
+        atheris.Fuzz()
+
+
+main()

@@ -21,6 +21,10 @@ abstract class LayoutAction extends AnAction {
         return getDefaultIcon();
     }
 
+    Icon getDisabledIcon() {
+        return getDefaultIcon();
+    }
+
     boolean isEnabled(
             SplitFileEditor.SplitEditorLayout currentLayout,
             boolean isRunningSelectedConfiguration) {
@@ -49,13 +53,16 @@ abstract class LayoutAction extends AnAction {
                     ? getPassingIcon()
                     : getFailingIcon();
         }
-        e.getPresentation().setIcon(icon);
         boolean isRunningSelectedConfiguration =
                 splitFileEditor != null &&
                         splitFileEditor.isRunningSelectedConfiguration(e.getProject());
-        e.getPresentation().setEnabled(
-                splitFileEditor != null && isEnabled(
-                        currentLayout,
-                        isRunningSelectedConfiguration));
+        boolean enabled = splitFileEditor != null && isEnabled(
+                currentLayout,
+                isRunningSelectedConfiguration);
+        e.getPresentation().setEnabled(enabled);
+        if ( ! enabled) {
+            icon = getDisabledIcon();
+        }
+        e.getPresentation().setIcon(icon);
     }
 }

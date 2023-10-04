@@ -9,6 +9,9 @@ public interface LivePythonIcons {
     Icon MEDIA_PLAY = IconLoader.getIcon(
             "/icons/media-play.svg",
             LivePythonIcons.class);
+    Icon MEDIA_PLAY_DISABLED = IconLoader.getIcon(
+            "/icons/media-play_disabled.svg",
+            LivePythonIcons.class);
     Icon MEDIA_PLAY_DARK = IconLoader.getIcon(
             "/icons/media-play_dark.svg",
             LivePythonIcons.class);
@@ -27,11 +30,17 @@ public interface LivePythonIcons {
     Icon MEDIA_STOP = IconLoader.getIcon(
             "/icons/media-stop.svg",
             LivePythonIcons.class);
+    Icon MEDIA_STOP_DISABLED = IconLoader.getIcon(
+            "/icons/media-stop_disabled.svg",
+            LivePythonIcons.class);
     Icon MEDIA_STOP_DARK = IconLoader.getIcon(
             "/icons/media-stop_dark.svg",
             LivePythonIcons.class);
     Icon TURTLE = IconLoader.getIcon(
             "/icons/turtle.svg",
+            LivePythonIcons.class);
+    Icon TURTLE_DISABLED = IconLoader.getIcon(
+            "/icons/turtle_disabled.svg",
             LivePythonIcons.class);
     Icon TURTLE_DARK = IconLoader.getIcon(
             "/icons/turtle_dark.svg",

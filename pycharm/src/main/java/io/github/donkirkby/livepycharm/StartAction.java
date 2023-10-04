@@ -28,6 +28,11 @@ public class StartAction extends LayoutAction {
     }
 
     @Override
+    Icon getDisabledIcon() {
+        return LivePythonIcons.MEDIA_PLAY_DISABLED;
+    }
+
+    @Override
     Icon getPassingIcon() {
         return LivePythonIcons.MEDIA_PLAY_GREEN;
     }

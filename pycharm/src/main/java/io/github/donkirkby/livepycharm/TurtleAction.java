@@ -28,6 +28,11 @@ public class TurtleAction extends LayoutAction {
     }
 
     @Override
+    Icon getDisabledIcon() {
+        return LivePythonIcons.TURTLE_DISABLED;
+    }
+
+    @Override
     Icon getPassingIcon() {
         return LivePythonIcons.TURTLE_GREEN;
     }

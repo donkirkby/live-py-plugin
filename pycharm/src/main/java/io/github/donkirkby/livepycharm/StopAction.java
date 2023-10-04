@@ -28,6 +28,11 @@ public class StopAction extends LayoutAction {
     }
 
     @Override
+    Icon getDisabledIcon() {
+        return LivePythonIcons.MEDIA_STOP_DISABLED;
+    }
+
+    @Override
     boolean isEnabled(
             SplitFileEditor.SplitEditorLayout currentLayout,
             boolean isRunningSelectedConfiguration) {

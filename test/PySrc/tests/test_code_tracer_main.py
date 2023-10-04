@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import doctest
 import os
 import re
@@ -22,8 +24,6 @@ EXAMPLE_LIB_PATH = os.path.join(os.path.dirname(__file__),
                                 'lib_in_package.py')
 EXAMPLE_PATCHING_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
                                             'example_patching_driver.py')
-EXAMPLE_DRIVER_SYNTAX_ERROR_PATH = os.path.join(os.path.dirname(__file__),
-                                                'example_driver_syntax_error.py')
 EXAMPLE_PYCHARM_FAILURES_PATH = os.path.join(os.path.dirname(__file__),
                                              'example_pycharm_failures.py')
 EXAMPLE_SILENT_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
@@ -1021,19 +1021,26 @@ IndentationError: expected an indented block after function definition on line 1
     assert expected_report == stdout.getvalue()
 
 
-def test_driver_syntax_error(stdin, stdout, argv):
+def test_driver_syntax_error(stdin, stdout, argv, tmp_path):
+    driver_path = tmp_path / "driver.py"
+    driver_path.write_text(dedent("""\
+        # This source file triggers a syntax error.
+        
+        
+        for
+        """))
     argv.extend([
         'dummy.py',
         '--source_width', '0',
         '--traced_file', EXAMPLE_SOURCE_PATH,
         '--traced', 'example_source',
-        EXAMPLE_DRIVER_SYNTAX_ERROR_PATH])
-    source = """\
-x = 'Hello, World!'
-"""
-    expected_report = """\
-{} line 4: SyntaxError: invalid syntax
-""".format(EXAMPLE_DRIVER_SYNTAX_ERROR_PATH)
+        str(driver_path)])
+    source = dedent("""\
+        x = 'Hello, World!'
+        """)
+    expected_report = dedent("""\
+        {} line 4: SyntaxError: invalid syntax
+        """.format(driver_path))
     stdin.read.return_value = source
 
     with pytest.raises(SystemExit):

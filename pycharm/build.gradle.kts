@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.donkirkby"
-version = "4.10.2"
+version = "4.11.0"
 
 repositories {
     mavenCentral()

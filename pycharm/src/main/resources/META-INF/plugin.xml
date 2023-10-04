@@ -12,7 +12,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Fix a bug where a pytest run configuration doesn't call the test module.
+        Support Python 3.12 and update toolbar icons.
     ]]>
     </change-notes>
 

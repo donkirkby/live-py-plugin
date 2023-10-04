@@ -48,29 +48,10 @@ are at `test/PySrc/tests`, Javascript tests are at `html/src`, and Java tests
 are at `pycharm/src/test`. See the `.github/workflows` folder for details on how
 each set of tests gets run.
 
-You can also run the fuzzing test like this:
-
-    $ . .tox/py311/bin/activate
-    (py311) $ pip install --extra-index-url https://gitlab.com/api/v4/projects/19904939/packages/pypi/simple pythonfuzz
-    Looking in indexes: https://pypi.org/simple, https://gitlab.com/api/v4/projects/19904939/packages/pypi/simple
-    [...]
-    Successfully installed pythonfuzz-1.0.10
-    (py311) $ cd test/PySrc/tests/
-    (py311) $ PYTHONPATH=../../../plugin/PySrc/ python fuzz.py --runs 5000 --max-input-size 100
-    #0 READ units: 1
-    #1 NEW     cov: 0 corp: 1 exec/s: 39 rss: 45.2890625 MB
-    #2 NEW     cov: 2742 corp: 2 exec/s: 195 rss: 45.58203125 MB
-    #27 NEW     cov: 2770 corp: 3 exec/s: 224 rss: 45.9609375 MB
-    [...]
-    #4908 NEW     cov: 4114 corp: 187 exec/s: 69 rss: 127.57421875 MB
-    #4948 NEW     cov: 4117 corp: 188 exec/s: 32 rss: 128.6015625 MB
-    #4970 NEW     cov: 4118 corp: 189 exec/s: 67 rss: 128.6015625 MB
-    did 5000 runs, stopping now.
-    (py311) $
-
-It generates random Python source code, runs it through space tracer, then
-strips off the live coding display and compares the stripped report with the
-source code. Any differences trigger a failure.
+See `test/PySrc/tests/live_coding_fuzzer.py` for details on how to run the
+fuzzing test. It generates random Python source code, runs it through space
+tracer, then strips off the live coding display and compares the stripped report
+with the source code. Any differences trigger a failure.
 
 ## Adding Support For a New Editor
 

@@ -814,6 +814,7 @@ def bar(n):            | n = 3
         report = tracer.trace_command([
             'space_tracer',
             '--traced_file', 'example.py',
+            '--millisecond_limit', '0',
             'example.py'])
 
     assert report == expected_report

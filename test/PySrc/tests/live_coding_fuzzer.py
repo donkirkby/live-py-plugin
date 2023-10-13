@@ -5,19 +5,17 @@
 Check that the source code display matches the original source code, and you
 haven't hit some weird failure.
 
-This gets run by the OSS-Fuzz project at https://github.com/google/oss-fuzz
-It gets pulled from GitHub into the projects/live-py-plugin folder in that repo.
-To test it locally, you can clone oss-fuzz, then copy this file into that
-folder, build the docker image, and run the fuzzer.
+This gets run by the ClusterFuzzLite project at
+https://google.github.io/clusterfuzzlite/ To test it locally, you can clone
+oss-fuzz, then build an external fuzzer and run it.
 
-    git clone https://github.com/donkirkby/oss-fuzz.git
-    git checkout live-py-plugin
+    git clone https://github.com/google/oss-fuzz.git
+    git clone https://github.com/donkirkby/live-py-plugin.git
     cd oss-fuzz
-    cp /path/to/live-py-plugin/test/PySrc/tests/live_coding_fuzzer.py projects/live-py-plugin/
-    python3 infra/helper.py build_image live-py-plugin
-    python3 infra/helper.py build_fuzzers --sanitizer address live-py-plugin
-    python3 infra/helper.py check_build live-py-plugin
-    python3 infra/helper.py run_fuzzer --corpus-dir build/corpus/live-py-plugin/ live-py-plugin live_coding_fuzzer -- -runs=10000
+    python3 infra/helper.py build_image --external ../live-py-plugin/
+    python3 infra/helper.py build_fuzzers --external ../live-py-plugin/ --sanitizer address
+    python3 infra/helper.py check_build --external ../live-py-plugin/ --sanitizer address
+    python3 infra/helper.py run_fuzzer --external --corpus-dir=../live-py-plugin/corpus/ ../live-py-plugin/ live_coding_fuzzer -- -runs=10000
 
 Then you can repeat the steps with --sanitizer undefined. Add -help=1 to the
 last command, if you want to see libfuzzer options.
@@ -120,11 +118,16 @@ def test_one_input(data):
 
     with replace_input(source):
         runner = TraceRunner()
-        report = runner.trace_command(['space_tracer',
-                                       '--live',
-                                       '--trace_offset=1000000',
-                                       '--trace_width=0',  # no limit
-                                       '-'])
+        try:
+            report = runner.trace_command(['space_tracer',
+                                           '--live',
+                                           '--trace_offset=1000000',
+                                           '--trace_width=0',  # no limit
+                                           '-'])
+        except BaseException:
+            print("!!! Source !!!")
+            print(source)
+            raise
     trimmed_report = re.sub(r'\s*\|\s*$', '', report, flags=re.MULTILINE)
     if source != trimmed_report:
         with replace_input(source):

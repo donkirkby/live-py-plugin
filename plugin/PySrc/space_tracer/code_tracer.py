@@ -421,6 +421,7 @@ class Tracer(NodeTransformer):
         args = [Constant(min(line_numbers)),
                 Constant(max(line_numbers))]
         new_body = [self._create_context_call('start_block', args)]
+        1/0
         new_body.extend(self._trace_assignment_list(new_node.target))
         new_body.extend(new_node.body)
         new_node.body = new_body

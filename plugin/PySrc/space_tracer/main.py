@@ -484,6 +484,7 @@ class TraceRunner(object):
             builder.add_message(str(ex), 1)
             self.return_code = 1
         except BaseException as ex:
+            raise
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()
             is_reported = False

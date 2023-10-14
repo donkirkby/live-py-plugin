@@ -483,8 +483,9 @@ class TraceRunner(object):
         except SourceLoadError as ex:
             builder.add_message(str(ex), 1)
             self.return_code = 1
-        except BaseException as ex:
+        except FloatingPointError:
             raise
+        except BaseException as ex:
             self.return_code = getattr(ex, 'code', 1)
             etype, value, tb = sys.exc_info()
             is_reported = False

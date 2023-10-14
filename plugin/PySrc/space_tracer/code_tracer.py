@@ -54,6 +54,9 @@ def find_line_numbers(node, line_numbers):
 
 # noinspection PyPep8Naming
 class Tracer(NodeTransformer):
+    def __init__(self):
+        self.for_count = 0
+
     @staticmethod
     def _set_statement_line_numbers(statements,
                                     previous_line_number=None):
@@ -421,7 +424,9 @@ class Tracer(NodeTransformer):
         args = [Constant(min(line_numbers)),
                 Constant(max(line_numbers))]
         new_body = [self._create_context_call('start_block', args)]
-        1/0
+        self.for_count += 1
+        if self.for_count >= 3:
+            raise FloatingPointError('Oops.')
         new_body.extend(self._trace_assignment_list(new_node.target))
         new_body.extend(new_node.body)
         new_node.body = new_body

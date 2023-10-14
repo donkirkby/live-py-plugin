@@ -19,6 +19,13 @@ oss-fuzz, then build an external fuzzer and run it.
 
 Then you can repeat the steps with --sanitizer undefined. Add -help=1 to the
 last command, if you want to see libfuzzer options.
+
+To reproduce a crash, find the crash file and then request it in the reproduce
+command:
+
+    ls build/out/live-py-plugin/crash-*
+    python3 infra/helper.py run_fuzzer --external --corpus-dir=../live-py-plugin/corpus/ ../live-py-plugin/ live_coding_fuzzer -- -runs=10000
+    python3 infra/helper.py reproduce --external ../live-py-plugin/ live_coding_fuzzer build/out/live-py-plugin/crash-1234...
 """
 
 import re

@@ -426,7 +426,7 @@ class Tracer(NodeTransformer):
         new_body = [self._create_context_call('start_block', args)]
         self.for_count += 1
         if self.for_count >= 3:
-            raise FloatingPointError('Oops.')
+            raise FloatingPointError('Oops, I did it again.')
         new_body.extend(self._trace_assignment_list(new_node.target))
         new_body.extend(new_node.body)
         new_node.body = new_body

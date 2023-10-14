@@ -31,6 +31,7 @@ command:
 import re
 import sys
 import typing
+from _ast import If, Compare, Gt
 from ast import Assign, Call, Constant, Expr, fix_missing_locations, For, \
     Load, Module, Name, stmt, Store, unparse
 from random import choice
@@ -79,8 +80,9 @@ class CodeContext:
     def generate_statements(self) -> typing.Iterator[stmt]:
         generators = [self.generate_assignments,
                       self.generate_prints,
-                      self.generate_for_loops]
-        for statement_type in self.generate_ints(3):
+                      self.generate_for_loops,
+                      self.generate_conditionals]
+        for statement_type in self.generate_ints(len(generators)):
             generator = generators[statement_type]
             for statement in generator():
                 yield statement
@@ -118,23 +120,51 @@ class CodeContext:
                       body=children,
                       orelse=[])
 
+    def generate_conditionals(self) -> typing.Iterator[stmt]:
+        for scope_choice in self.generate_ints(100):
+            try:
+                if self.local_names:
+                    name1 = choice(self.local_names)
+                    name2 = choice(self.local_names)
+                else:
+                    name1 = 'x'
+                    name2 = 'y'
+                if scope_choice == 0:
+                    name1 = next(self.generate_names())
+                elif scope_choice == 1:
+                    name2 = next(self.generate_names())
+                if_body = next(self.generate_statements())
+                else_body = next(self.generate_statements())
+                yield If(test=Compare(left=Name(id=name1, ctx=Load()),
+                                      ops=[Gt()],
+                                      comparators=[Name(id=name2, ctx=Load())]),
+                         body=[if_body],
+                         orelse=[else_body])
+            except StopIteration:
+                break
+
 def test_one_input(data):
     """ This gets called over and over with a random bytes object. """
     context = CodeContext(iter(data))
     source = context.generate_source()
 
+    try:
+        check_report_matches_source(source)
+        check_deterministic_report(source)
+    except BaseException:
+        print("### Source ###")
+        print(source)
+        raise
+
+
+def check_report_matches_source(source):
     with replace_input(source):
         runner = TraceRunner()
-        try:
-            report = runner.trace_command(['space_tracer',
-                                           '--live',
-                                           '--trace_offset=1000000',
-                                           '--trace_width=0',  # no limit
-                                           '-'])
-        except BaseException:
-            print("!!! Source !!!")
-            print(source)
-            raise
+        report = runner.trace_command(['space_tracer',
+                                       '--live',
+                                       '--trace_offset=1000000',
+                                       '--trace_width=0',  # no limit
+                                       '-'])
     trimmed_report = re.sub(r'\s*\|\s*$', '', report, flags=re.MULTILINE)
     if source != trimmed_report:
         with replace_input(source):
@@ -142,12 +172,25 @@ def test_one_input(data):
             report2 = runner.trace_command(['space_tracer',
                                             '--live',
                                             '-'])
-        print("### Source ###")
-        print(source)
-        print()
         print("### Report ###")
         print(report2)
         raise RuntimeError("Source and report differ.")
+
+
+def check_deterministic_report(source):
+    reports = set()
+    for i in range(3):
+        with replace_input(source):
+            runner = TraceRunner()
+            report = runner.trace_command(['space_tracer',
+                                           '--live',
+                                           '-'])
+            reports.add(report)
+    if len(reports) != 1:
+        for i, report in enumerate(reports, 1):
+            print(f"### Report {i} ###")
+            print(report)
+        raise RuntimeError("Reports are not deterministic.")
 
 
 def display_top(snapshot, key_type='lineno', limit=3):

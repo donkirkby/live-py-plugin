@@ -35,7 +35,7 @@ even your browser.
 [zenodo]: https://zenodo.org/badge/latestdoi/4332096
 
 Live coding tightens the feedback loop between making a change to your code
-and seeing the change in behaviour. As you type your code, it will run over and
+and seeing the behaviour change. As you type your code, it will run over and
 over, showing a visualization of the program state, a matplotlib graph, a
 Pillow image, or turtle graphics. If you make a mistake, you'll immediately see
 the problem and where it went wrong.

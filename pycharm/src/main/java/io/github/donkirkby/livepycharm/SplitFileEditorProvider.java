@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.progress.CoroutinesKt;
+import com.intellij.openapi.progress.TasksKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -286,20 +288,48 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
         return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
     }
 
+    private static boolean runsInProjectView()
+    {
+        return !(ApplicationManager.getApplication().isDispatchThread());
+    }
+
+    private static boolean runsInEventDispatchThread()
+    {
+        return ApplicationManager.getApplication().isWriteAccessAllowed();
+    }
+
     @NotNull
     private static Builder getBuilderFromEditorProvider(@NotNull final com.intellij.openapi.fileEditor.FileEditorProvider provider,
                                                         @NotNull final Project project,
                                                         @NotNull final VirtualFile file) {
-        if (provider instanceof AsyncFileEditorProvider) {
-            return ((AsyncFileEditorProvider) provider).createEditorAsync(project, file);
-        } else {
+        if ( ! (provider instanceof AsyncFileEditorProvider)) {
             return new Builder() {
                 @Override
-                public FileEditor build() {
+                public @NotNull FileEditor build() {
                     return provider.createEditor(project, file);
                 }
             };
         }
+
+        // called with write context
+        AsyncFileEditorProvider asyncProvider = (AsyncFileEditorProvider) provider;
+        if (runsInProjectView() || runsInEventDispatchThread()) {
+            return CoroutinesKt.runBlockingMaybeCancellable(
+                    (coroutineScope, continuation) -> asyncProvider.createEditorBuilder(
+                            project,
+                            file,
+                            null,
+                            continuation));
+        }
+        return TasksKt.runWithModalProgressBlocking(
+                project,
+                "Opening " + file.getName(),
+                ((coroutineScope, continuation) -> (
+                        asyncProvider.createEditorBuilder(
+                                project,
+                                file,
+                                null,
+                                continuation))));
     }
 }
 

@@ -12,7 +12,8 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Support Python 3.12 and update toolbar icons.
+        Support Python 3.12 and update toolbar icons. Fix a bug that stopped
+        IntelliJ from opening Python files.
     ]]>
     </change-notes>
 

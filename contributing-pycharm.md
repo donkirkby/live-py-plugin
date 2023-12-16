@@ -50,7 +50,8 @@ two types of IDEA release.
 ### Publish a new release for the PyCharm plugin
 1. Check that all the Python unit tests pass, by running tox.
 2. Update the version number in `about.py` and `pycharm/build.gradle.kts`, and
-    the change notes in `pycharm/src/main/resources/META-INF/plugin.xml`.
+    the change notes in `pycharm/src/main/resources/META-INF/plugin.xml`. Keep
+    the version in sync with `html/meta.yaml`.
 3. Run the `runPluginVerifier` and `buildPlugin` Gradle tasks. You should get a
    `livepy-X.Y.Z.zip` file for the new version under
    `pycharm/build/distributions`.

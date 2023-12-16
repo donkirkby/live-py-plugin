@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.donkirkby"
-version = "4.11.1"
+version = "4.11.2"
 
 repositories {
     mavenCentral()
@@ -44,13 +44,13 @@ tasks {
     }
 
     patchPluginXml {
-        sinceBuild.set("212.4746.92")
+        sinceBuild.set("233.11799.241")
         untilBuild.set("")
     }
 
     runPluginVerifier {
         // Verify against sinceBuild version and current version.
-        ideVersions.set(listOf<String>("212.4746.92", "233.11799.241"))
+        ideVersions.set(listOf<String>("233.11799.241", "233.11799.300"))
     }
 
     signPlugin {

@@ -314,7 +314,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
         // called with write context
         AsyncFileEditorProvider asyncProvider = (AsyncFileEditorProvider) provider;
         if (runsInProjectView() || runsInEventDispatchThread()) {
-            return CoroutinesKt.runBlockingMaybeCancellable(
+            return CoroutinesKt.runBlockingCancellable(
                     (coroutineScope, continuation) -> asyncProvider.createEditorBuilder(
                             project,
                             file,

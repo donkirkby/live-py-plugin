@@ -781,6 +781,9 @@ class LineNumberCleaner(NodeTransformer):
                 self.max_line = lineno
             if getattr(node, 'end_lineno', lineno) < node.lineno:
                 node.end_lineno = node.lineno
+            col_offset = getattr(node, 'col_offset', 0)
+            if getattr(node, 'end_col_offset', 1_000_000) < col_offset:
+                node.end_col_offset = col_offset
         return self.generic_visit(node)
 
 

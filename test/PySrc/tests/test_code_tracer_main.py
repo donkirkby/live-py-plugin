@@ -1331,3 +1331,32 @@ end_canvas
 
     assert report == expected_report
     assert stdout == ''
+
+
+def test_long_sig():
+    code = """\
+import typing
+
+
+def nok() -> typing.Tuple[
+        int]:
+    pass
+
+
+x = 1
+"""
+    expected_report = """\
+
+
+
+
+
+
+
+
+x = 1"""
+
+    report, stdout = analyze(code)
+
+    assert report == expected_report
+    assert stdout == ''

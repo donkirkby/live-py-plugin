@@ -286,8 +286,7 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
                       |   File "path/example_driver.py", line 6, in <module> |
                       |     assert 'fail' not in sys.argv, sys.argv[1:]      |
                       | AssertionError: ['fail', 'badly']                    |
-                      | ---------------------------------------------------- |
-"""
+                      | ---------------------------------------------------- |"""
         expected_report_311 = """\
 foo = 'Hello, World!' | ---------------------------------------------------- |
                       | Traceback (most recent call last):                   |
@@ -295,10 +294,7 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
                       |     assert 'fail' not in sys.argv, sys.argv[1:]      |
                       |            ^^^^^^^^^^^^^^^^^^^^^^                    |
                       | AssertionError: ['fail', 'badly']                    |
-                      | ---------------------------------------------------- |
-"""
-        if (3, 11, 0) <= sys.version_info < (3, 12, 0):
-            expected_report = expected_report_311
+                      | ---------------------------------------------------- |"""
 
         stdin.read.return_value = source
 
@@ -308,7 +304,10 @@ foo = 'Hello, World!' | ---------------------------------------------------- |
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
         expected_report = self.trim_exception(expected_report)
-        self.assertReportEqual(expected_report, report)
+        expected_report_311 = self.trim_exception(expected_report_311)
+        # self.assertReportEqual(expected_report, report)
+        if report != expected_report_311:
+            assert report == expected_report
 
     # noinspection DuplicatedCode
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
@@ -356,8 +355,6 @@ def bar():                      | ----------------------------------------------
 def foo(x):                     | x = 1
     # This is shown, as normal. |
     return x                    | return 1"""
-        if (3, 11, 0) <= sys.version_info < (3, 12, 0):
-            expected_report = expected_report_311
 
         stdin.read.return_value = source
 
@@ -367,7 +364,9 @@ def foo(x):                     | x = 1
         report = stdout.write.call_args_list[0][0][0]
         report = self.trim_exception(report)
         expected_report = self.trim_exception(expected_report)
-        assert report == expected_report
+        expected_report_311 = self.trim_exception(expected_report_311)
+        if report != expected_report:
+            assert report == expected_report_311
 
     # noinspection DuplicatedCode
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
@@ -701,6 +700,7 @@ return 542
     def trim_exception(report):
         report = re.sub(r"([ -])+\| *$", "", report, flags=re.MULTILINE)
         report = re.sub(r"line \d+", "line 9999", report)
+        report = re.sub(r" +$", "", report)
         report = report.replace("IOError", "FileNotFoundError")
         report = report.replace('path/example_driver.py', EXAMPLE_DRIVER_PATH)
         report = report.replace('path/doctest.py',

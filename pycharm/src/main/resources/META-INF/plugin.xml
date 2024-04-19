@@ -13,7 +13,8 @@
 
     <change-notes><![CDATA[
         Support Python 3.12 and update toolbar icons. Fix a bug that stopped
-        IntelliJ from opening Python files.
+        IntelliJ from opening Python files. Stop PyCharm complaining about
+        ActionUpdateThread.OLD_EDT.
     ]]>
     </change-notes>
 

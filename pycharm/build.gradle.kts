@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "io.github.donkirkby"
-version = "4.11.3"
+version = "4.11.4"
 
 repositories {
     mavenCentral()
@@ -13,11 +13,11 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
 intellij {
-    version.set("233.11799.241")
+    version.set("241.14494.240")
     type.set("IC") // Target IDE Platform: IU for Ultimate, IC for community
 
     // Pythonid for Ultimate, PythonCore for community
-    plugins.set(listOf("PythonCore:233.11799.241"))
+    plugins.set(listOf("PythonCore:241.14494.240"))
 }
 
 sourceSets {
@@ -50,7 +50,7 @@ tasks {
 
     runPluginVerifier {
         // Verify against sinceBuild version and current version.
-        ideVersions.set(listOf<String>("233.11799.241", "233.11799.300"))
+        ideVersions.set(listOf<String>("233.11799.241", "241.14494.240"))
     }
 
     signPlugin {

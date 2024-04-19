@@ -1,5 +1,6 @@
 package io.github.donkirkby.livepycharm;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -23,6 +24,11 @@ abstract class LayoutAction extends AnAction {
 
     Icon getDisabledIcon() {
         return getDefaultIcon();
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
     }
 
     boolean isEnabled(

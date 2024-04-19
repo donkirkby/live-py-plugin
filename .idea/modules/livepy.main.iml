@@ -5,4 +5,8 @@
       <configuration sdkName="Python 3.12 (live-py-plugin)" />
     </facet>
   </component>
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
 </module>

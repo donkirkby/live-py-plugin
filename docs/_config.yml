@@ -1,4 +1,4 @@
-remote_theme: chrisrhymes/bulma-clean-theme
+remote_theme: chrisrhymes/bulma-clean-theme:v0.14.0
 title: Live Coding in Python
 google_analytics: UA-4644630-2
 favicon: https://donkirkby.github.io/favicon.png

@@ -1241,9 +1241,12 @@ sys = None
 x = 42
 return 62'''
     if (3, 12, 0) <= sys.version_info:
+        replacement = "'sys' is not defined. Did you forget to import 'sys'"
+        if (3, 13, 0) <= sys.version_info:
+            replacement += '?'
         expected_report = expected_report.replace(
             "'sys' is not defined",
-            "'sys' is not defined. Did you forget to import 'sys'")
+            replacement)
 
     with replace_input(code):
         report = TraceRunner().trace_command([

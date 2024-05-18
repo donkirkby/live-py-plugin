@@ -75,6 +75,7 @@ jobs:
 #          scriptreplay emacs-timing
 #          exit 1
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@6d798873df2b1b8e5846dba6fb86631229fbcb17 # v4.4.0
+        # v4 doesn't support tokenless upload, so wait to see if it gets added.
+        uses: codecov/codecov-action@ab904c41d6ece82784817410c45d8b8c02684457 # v3.1.6
         with:
           env_vars: OS,PYTHON

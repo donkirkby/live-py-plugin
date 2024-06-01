@@ -1,7 +1,7 @@
 # Find new docker tags at https://hub.docker.com/r/pyodide/pyodide-env/tags
-FROM pyodide/pyodide-env:20230612-chrome114-firefox114-py311@sha256:8bcb06afdf9c95599b51ac41e90d8c12eea92adac4c0b8932ab66f50d6bf1267 as pyodide
+FROM pyodide/pyodide-env:20240127-chrome114-firefox122-py312@sha256:44664c3dd2f33183f7f9c8fb07e4eefe77eee004725af10a40b809216ebb31bf as pyodide
 ENV PYODIDE_PACKAGES=core,matplotlib
-ENV PYODIDE_VERSION=0.24.1
+ENV PYODIDE_VERSION=0.26.0
 # Make pyodide checkout accessible to codespace user in final image.
 ENV CODESPACE_USER=1000
 
@@ -9,7 +9,7 @@ RUN cd /opt && \
     git clone https://github.com/pyodide/pyodide.git && \
     cd pyodide && \
     git checkout tags/$PYODIDE_VERSION && \
-    sed -i '/^ *"turtle\.py",$/d' pyodide-build/pyodide_build/pyzip.py && \
+    sed -i '/^\s*turtle\.py\s*\\$/d' Makefile.envs && \
     make && \
     chown -R $CODESPACE_USER:$CODESPACE_USER .
 

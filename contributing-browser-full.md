@@ -20,38 +20,38 @@ storage space than the browser tutorial environment on GitHub's codespaces.
        cd html
        ./serve.sh
 
-5. That should take a few seconds to generate the web pages, and then launch
+8. That should take a few seconds to generate the web pages, and then launch
    a web server on port 4000.
-6. You should see a pop up that asks if you want to open port 4000 in your
+9. You should see a pop up that asks if you want to open port 4000 in your
    browser. Click the "Open in Browser" button, and you should see a copy of the
    current web site.
-7. Switch back to the GitHub codespace tab, navigate to the
-   `plugin/PySrc/space_tracer` folder, and make some changes to the Python
-   source code. You can also change the unit tests under `test/PySrc/tests`.
-8. Stop the web server by clicking in the terminal and typing
-   <kbd>Ctrl</kbd>+<kbd>C</kbd>. Then run the tests by running `tox` in the
-   project's top directory.
+10. Switch back to the GitHub codespace tab, navigate to the
+    `plugin/PySrc/space_tracer` folder, and make some changes to the Python
+    source code. You can also change the unit tests under `test/PySrc/tests`.
+11. Stop the web server by clicking in the terminal and typing
+    <kbd>Ctrl</kbd>+<kbd>C</kbd>. Then run the tests by running `tox` in the
+    project's top directory.
    
-       cd ..
-       tox
+        cd ..
+        tox
 
-   Not all versions of Python are installed by default, so you can run the tests
-   in Python 3.10 with `tox -e py310`. You can install a missing Python version
-   with this:
+    Not all versions of Python are installed by default, so you can run the tests
+    in Python 3.10 with `tox -e py310`. You can install a missing Python version
+    with this:
 
-       sudo apt update
-       sudo apt install python3.9
+        sudo apt update
+        sudo apt install python3.9
     
-   For some versions of Python, you might have to register the [dead snakes]
-   package repository.
-9. Once the tests pass, you can deploy the new Python code on your local copy
-   of the web site.
+    For some versions of Python, you might have to register the [dead snakes]
+    package repository.
+12. Once the tests pass, you can deploy the new Python code on your local copy
+    of the web site.
 
-       cd html
-       npm run build
-       ./serve.sh
+        cd html
+        npm run build
+        ./serve.sh
 
-10. Go back to the browser tab with the web site, and refresh the page. You
+13. Go back to the browser tab with the web site, and refresh the page. You
     should see your changes.
 
 [dead snakes]: https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa

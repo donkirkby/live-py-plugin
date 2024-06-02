@@ -470,7 +470,8 @@ class TraceRunner(object):
             self.return_code = 1
             messages = traceback.format_exception_only(type(ex), ex)
             message = messages[-1].strip()
-            if ex.filename == PSEUDO_FILENAME:
+            if (ex.filename == PSEUDO_FILENAME or
+                    ex.filename == traced_importer.traced_file):
                 line_number = ex.lineno
             else:
                 line_number = 1
@@ -513,7 +514,7 @@ class TraceRunner(object):
                      (used_finder and used_finder.is_tracing))
         if not is_traced:
             source_code = ''
-        elif used_finder and used_finder.source_code:
+        elif used_finder and used_finder.source_code and used_finder.is_tracing:
             source_code = used_finder.source_code
         elif traced_importer and traced_importer.source_code:
             source_code = traced_importer.source_code
@@ -667,6 +668,10 @@ class TraceRunner(object):
                 if used_finder.traced_node:
                     find_line_numbers(used_finder.traced_node, line_numbers)
                     is_minimum = False
+                elif used_finder.source_tree is None:
+                    is_minimum = True
+                elif not used_finder.is_tracing:
+                    is_minimum = True
                 else:
                     find_line_numbers(used_finder.source_tree, line_numbers)
                     is_minimum = True

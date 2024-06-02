@@ -7,18 +7,26 @@ LIVE_MODULE_NAME = '__live_coding__'
 
 class TracedFinder(object):
     """ Find which nodes to trace in a module. """
-    def __init__(self, source_code, traced, filename=None):
+    def __init__(self, source_code, traced, filename=None, parse=True):
         """ Initialize the finder.
 
         :param str source_code: the source code that will be traced, or None if
             the source code should be read from the normal path.
         :param str traced: the module, method, or function name to trace
         :param str filename: the file the source code was read from
+        :param bool parse: True if the source code should be parsed immediately
         """
         self.source_code = source_code
         self.traced = traced
         self.traced_node = None
-        self.source_tree = parse(source_code, filename or PSEUDO_FILENAME)
+        self.filename = filename or PSEUDO_FILENAME
+        self.source_tree = None
+        self.is_tracing = False
+        if parse:
+            self.parse()
+
+    def parse(self):
+        self.source_tree = parse(self.source_code, self.filename)
         visitor = TreeVisitor(self)
         visitor.visit(self.source_tree)
         self.is_tracing = self.traced_node is not None

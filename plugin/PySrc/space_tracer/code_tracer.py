@@ -1,17 +1,23 @@
 from ast import (arg, fix_missing_locations, iter_fields, Add, Assign,
-                 AST, Attribute, BitAnd, BitOr, BitXor, Call, Div, Ellipsis,
+                 AST, Attribute, BitAnd, BitOr, BitXor, Call, Div,
                  ExceptHandler, Expr, ExtSlice, FloorDiv, ImportFrom, Index,
                  List, Load, LShift, Mod, Mult, Name, NodeTransformer,
-                 Pow, Raise, Return, RShift, Slice, Starred, Store, Str, Sub,
+                 Pow, Raise, Return, RShift, Slice, Starred, Store, Sub,
                  Subscript, Try, Tuple, Yield)
 from copy import deepcopy
 from ast import FormattedValue, Constant
+import sys
 
 try:
     from ast import MatchAs, MatchSequence, MatchStar  # type: ignore
 except ImportError:
     # Not available before Python 3.10
     MatchAs = MatchSequence = MatchStar = None  # type: ignore
+
+if sys.version_info < (3, 12):
+    from ast import Ellipsis
+else:
+    Ellipsis = None
 
 CONTEXT_NAME = '__live_coding_context__'
 RESULT_NAME = '__live_coding_result__'
@@ -186,18 +192,20 @@ class Tracer(NodeTransformer):
             format_text = ', '.join(self._wrap_slice(subscript)[0]
                                     for subscript in subscripts)
             slice_node.elts = [subscript.slice for subscript in subscripts]
-        elif isinstance(slice_node, (Index, Ellipsis)):
-            if (isinstance(slice_node, Ellipsis) or
-                    isinstance(slice_node.value, Ellipsis)):
-                index_to_get = None
-                format_text = '...'
-            else:
-                slice_node.value = self._wrap_assignment_index(
-                    slice_node.value,
-                    index_to_get)
-                format_text = '{!r}'
-                if index_to_get is not None:
-                    index_to_get -= 1
+        elif (Ellipsis is not None and isinstance(slice_node, Index) and
+              isinstance(slice_node.value, Ellipsis)):
+            index_to_get = None
+            format_text = '...'
+        elif isinstance(slice_node, Constant) and slice_node.value is ...:
+            index_to_get = None
+            format_text = '...'
+        elif isinstance(slice_node, Index):
+            slice_node.value = self._wrap_assignment_index(
+                slice_node.value,
+                index_to_get)
+            format_text = '{!r}'
+            if index_to_get is not None:
+                index_to_get -= 1
         else:
             # Python 3.9 stopped wrapping many things in an Index object, so
             # subscript_node.slice could be a Constant, BinOp, UnaryOp, or Call.
@@ -494,7 +502,9 @@ class Tracer(NodeTransformer):
         context_assign = Assign(targets=[Name(id=CONTEXT_NAME, ctx=Store())],
                                 value=start_frame_call)
         new_node.body = [context_assign]
-        if isinstance(try_body[0], Expr) and isinstance(try_body[0].value, Str):
+        if (isinstance(try_body[0], Expr) and
+                isinstance(try_body[0].value, Constant) and
+                isinstance(try_body[0].value.value, str)):
             # Move docstring back to top of function.
             # noinspection PyUnresolvedReferences
             new_node.body.insert(0, try_body.pop(0))
@@ -532,7 +542,8 @@ class Tracer(NodeTransformer):
         if isinstance(statement, ImportFrom):
             return statement.module == '__future__'
         if isinstance(statement, Expr):
-            return isinstance(statement.value, Str)
+            return (isinstance(statement.value, Constant) and
+                    isinstance(statement.value.value, str))
         return False
 
     def visit_Module(self, node):

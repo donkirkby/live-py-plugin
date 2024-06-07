@@ -162,6 +162,7 @@ public class LiveCodingAnalyst implements DocumentListener {
                     "Please choose a run configuration other than Current File.");
             return true;
         }
+        saveOtherDocuments();
         RunConfiguration runConfiguration = configuration.getConfiguration();
         PythonRunConfiguration pythonRunConfiguration;
         if (runConfiguration instanceof PythonRunConfiguration) {
@@ -311,16 +312,21 @@ public class LiveCodingAnalyst implements DocumentListener {
     @Override
     public void documentChanged(@NotNull DocumentEvent e) {
         if (isRunning) {
-            FileDocumentManager documentManager =
-                    FileDocumentManager.getInstance();
-            Document[] unsavedDocuments = documentManager.getUnsavedDocuments();
             Document eventDocument = e.getDocument();
-            for (Document unsavedDocument : unsavedDocuments) {
-                if (unsavedDocument != eventDocument) {
-                    documentManager.saveDocument(unsavedDocument);
-                }
-            }
+            saveOtherDocuments();
             schedule(eventDocument);
+        }
+    }
+
+    private void saveOtherDocuments() {
+        var mainDocument = getMainDocument();
+        FileDocumentManager documentManager =
+                FileDocumentManager.getInstance();
+        Document[] unsavedDocuments = documentManager.getUnsavedDocuments();
+        for (Document unsavedDocument : unsavedDocuments) {
+            if (unsavedDocument != mainDocument) {
+                documentManager.saveDocument(unsavedDocument);
+            }
         }
     }
 

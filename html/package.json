@@ -12,7 +12,7 @@
     "react-ace": "^11.0.1",
     "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",
-    "web-vitals": "^4.0.1"
+    "web-vitals": "^4.1.1"
   },
   "scripts": {
     "start": "react-scripts start",

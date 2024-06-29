@@ -9,7 +9,7 @@
     "@testing-library/user-event": "^14.5.2",
     "diff": "^5.2.0",
     "react": "^18.3.1",
-    "react-ace": "^11.0.1",
+    "react-ace": "^12.0.0",
     "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",
     "web-vitals": "^4.2.0"

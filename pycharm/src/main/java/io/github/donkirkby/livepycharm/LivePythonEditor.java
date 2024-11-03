@@ -34,8 +34,8 @@ import java.io.*;
 import java.util.*;
 import java.util.List;
 
-public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
-    private static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
+public class LivePythonEditor extends UserDataHolderBase implements TextEditor {
+    private static final Key<LivePythonEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
 
     private static final String MY_PROPORTION_KEY = "SplitFileEditor.Proportion";
 
@@ -55,10 +55,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
     private JPanel displayCards;
 
-    SplitFileEditor(@NotNull FileEditor mainEditor,
-                    @NotNull FileEditor secondEditor,
-                    VirtualFile file,
-                    Document displayDocument) {
+    LivePythonEditor(@NotNull FileEditor mainEditor,
+                     @NotNull FileEditor secondEditor,
+                     VirtualFile file,
+                     Document displayDocument) {
         myMainEditor = mainEditor;
         mySecondEditor = secondEditor;
         turtleCanvas = new TurtleCanvas();
@@ -315,7 +315,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     }
 
     @Nullable
-    static SplitFileEditor getSplitFileEditor(Editor editor) {
+    static LivePythonEditor getSplitFileEditor(Editor editor) {
         Project project = editor == null ? null : editor.getProject();
         Document doc = editor == null ? null : editor.getDocument();
         VirtualFile file =
@@ -323,14 +323,14 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                         ? null
                         : FileDocumentManager.getInstance().getFile(doc);
 
-        SplitFileEditor splitFileEditor = null;
+        LivePythonEditor livePythonEditor = null;
         if (project != null && file != null) {
             FileEditor selectedEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
-            if (selectedEditor instanceof SplitFileEditor) {
-                splitFileEditor = (SplitFileEditor) selectedEditor;
+            if (selectedEditor instanceof LivePythonEditor) {
+                livePythonEditor = (LivePythonEditor) selectedEditor;
             }
         }
-        return splitFileEditor;
+        return livePythonEditor;
     }
 
     @NotNull
@@ -379,7 +379,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         return result;
     }
 
-    private void triggerLayoutChange(@NotNull SplitFileEditor.SplitEditorLayout newLayout) {
+    private void triggerLayoutChange(@NotNull LivePythonEditor.SplitEditorLayout newLayout) {
         if (mySplitEditorLayout == newLayout) {
             return;
         }
@@ -406,7 +406,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
     void stopAnalysis() {
         myAnalyst.stop();
-        triggerLayoutChange(SplitFileEditor.SplitEditorLayout.SINGLE);
+        triggerLayoutChange(LivePythonEditor.SplitEditorLayout.SINGLE);
     }
 
     private void invalidateLayout() {
@@ -610,7 +610,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-            myDelegate.propertyChange(new PropertyChangeEvent(SplitFileEditor.this, evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
+            myDelegate.propertyChange(new PropertyChangeEvent(LivePythonEditor.this, evt.getPropertyName(), evt.getOldValue(), evt.getNewValue()));
         }
     }
 

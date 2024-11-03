@@ -10,16 +10,16 @@ public class StopAction extends LayoutAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        SplitFileEditor splitFileEditor = getEditor(e);
-        if (splitFileEditor == null) {
+        LivePythonEditor livePythonEditor = getEditor(e);
+        if (livePythonEditor == null) {
             return;
         }
-        splitFileEditor.stopAnalysis();
+        livePythonEditor.stopAnalysis();
     }
 
     @Override
-    SplitFileEditor.SplitEditorLayout getActiveLayout() {
-        return SplitFileEditor.SplitEditorLayout.SINGLE;
+    LivePythonEditor.SplitEditorLayout getActiveLayout() {
+        return LivePythonEditor.SplitEditorLayout.SINGLE;
     }
 
     @Override
@@ -34,8 +34,8 @@ public class StopAction extends LayoutAction {
 
     @Override
     boolean isEnabled(
-            SplitFileEditor.SplitEditorLayout currentLayout,
+            LivePythonEditor.SplitEditorLayout currentLayout,
             boolean isRunningSelectedConfiguration) {
-        return currentLayout != SplitFileEditor.SplitEditorLayout.SINGLE;
+        return currentLayout != LivePythonEditor.SplitEditorLayout.SINGLE;
     }
 }

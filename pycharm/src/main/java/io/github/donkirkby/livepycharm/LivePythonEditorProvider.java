@@ -20,7 +20,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAware {
+public class LivePythonEditorProvider implements AsyncFileEditorProvider, DumbAware {
     private static final String FIRST_EDITOR = "first_editor";
     private static final String SECOND_EDITOR = "second_editor";
     private static final String SPLIT_LAYOUT = "split_layout";
@@ -33,7 +33,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
     @NotNull
     private final String myEditorTypeId;
 
-    public SplitFileEditorProvider() {
+    public LivePythonEditorProvider() {
         myFirstProvider = new PsiAwareTextEditorProvider();
         mySecondProvider = new PsiAwareTextEditorProvider();
 
@@ -133,16 +133,16 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
 
             private void updateScrolling(Editor activeEditor) {
                 // Horizontal scroll remembers manually scrolled position.
-                SplitFileEditor splitFileEditor =
-                        SplitFileEditor.getSplitFileEditor(mainEditor);
+                LivePythonEditor livePythonEditor =
+                        LivePythonEditor.getSplitFileEditor(mainEditor);
                 ScrollingModel displayScroll =
                         displayEditor.getScrollingModel();
 
-                boolean isUpdating = splitFileEditor != null &&
-                        splitFileEditor.isDisplayUpdating();
-                boolean isDisplayHidden = splitFileEditor != null &&
-                        splitFileEditor.getLayout() !=
-                                SplitFileEditor.SplitEditorLayout.DISPLAY;
+                boolean isUpdating = livePythonEditor != null &&
+                        livePythonEditor.isDisplayUpdating();
+                boolean isDisplayHidden = livePythonEditor != null &&
+                        livePythonEditor.getLayout() !=
+                                LivePythonEditor.SplitEditorLayout.DISPLAY;
                 if (isUpdating) {
                     displayScroll.disableAnimation();
                     displayScroll.scrollHorizontally(displayX);
@@ -247,15 +247,15 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
             layoutName = null;
         }
 
-        return new SplitFileEditor.MyFileEditorState(layoutName, firstState, secondState);
+        return new LivePythonEditor.MyFileEditorState(layoutName, firstState, secondState);
     }
 
     @Override
     public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
-        if (!(state instanceof SplitFileEditor.MyFileEditorState)) {
+        if (!(state instanceof LivePythonEditor.MyFileEditorState)) {
             return;
         }
-        final SplitFileEditor.MyFileEditorState compositeState = (SplitFileEditor.MyFileEditorState) state;
+        final LivePythonEditor.MyFileEditorState compositeState = (LivePythonEditor.MyFileEditorState) state;
 
         Element child = new Element(FIRST_EDITOR);
         if (compositeState.getFirstState() != null) {
@@ -279,7 +279,7 @@ public class SplitFileEditorProvider implements AsyncFileEditorProvider, DumbAwa
             @NotNull FileEditor secondEditor,
             VirtualFile file,
             Document displayDocument) {
-        return new SplitFileEditor(firstEditor, secondEditor, file, displayDocument);
+        return new LivePythonEditor(firstEditor, secondEditor, file, displayDocument);
     }
 
     @NotNull

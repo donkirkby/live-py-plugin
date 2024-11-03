@@ -10,16 +10,16 @@ public class TurtleAction extends LayoutAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-        SplitFileEditor splitFileEditor = getEditor(e);
-        if (splitFileEditor == null) {
+        LivePythonEditor livePythonEditor = getEditor(e);
+        if (livePythonEditor == null) {
             return;
         }
-        splitFileEditor.startTurtle(e.getProject(), e.getDataContext());
+        livePythonEditor.startTurtle(e.getProject(), e.getDataContext());
     }
 
     @Override
-    SplitFileEditor.SplitEditorLayout getActiveLayout() {
-        return SplitFileEditor.SplitEditorLayout.TURTLE;
+    LivePythonEditor.SplitEditorLayout getActiveLayout() {
+        return LivePythonEditor.SplitEditorLayout.TURTLE;
     }
 
     @Override
@@ -44,9 +44,9 @@ public class TurtleAction extends LayoutAction {
 
     @Override
     boolean isEnabled(
-            SplitFileEditor.SplitEditorLayout currentLayout,
+            LivePythonEditor.SplitEditorLayout currentLayout,
             boolean isRunningSelectedConfiguration) {
-        if (currentLayout != SplitFileEditor.SplitEditorLayout.DISPLAY) {
+        if (currentLayout != LivePythonEditor.SplitEditorLayout.DISPLAY) {
             return true;
         }
         return isRunningSelectedConfiguration;

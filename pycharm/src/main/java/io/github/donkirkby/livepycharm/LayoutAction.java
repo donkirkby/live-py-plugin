@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 abstract class LayoutAction extends AnAction {
-    abstract SplitFileEditor.SplitEditorLayout getActiveLayout();
+    abstract LivePythonEditor.SplitEditorLayout getActiveLayout();
 
     abstract Icon getDefaultIcon();
 
@@ -32,37 +32,37 @@ abstract class LayoutAction extends AnAction {
     }
 
     boolean isEnabled(
-            SplitFileEditor.SplitEditorLayout currentLayout,
+            LivePythonEditor.SplitEditorLayout currentLayout,
             boolean isRunningSelectedConfiguration) {
         return true;
     }
 
-    SplitFileEditor getEditor(AnActionEvent e) {
+    LivePythonEditor getEditor(AnActionEvent e) {
         Editor editor = e.getData(LangDataKeys.EDITOR);
 
-        return SplitFileEditor.getSplitFileEditor(editor);
+        return LivePythonEditor.getSplitFileEditor(editor);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-        SplitFileEditor splitFileEditor = getEditor(e);
+        LivePythonEditor livePythonEditor = getEditor(e);
         Icon icon = getDefaultIcon();
-        SplitFileEditor.SplitEditorLayout currentLayout =
-                splitFileEditor == null
+        LivePythonEditor.SplitEditorLayout currentLayout =
+                livePythonEditor == null
                         ? null
-                        : splitFileEditor.getLayout();
+                        : livePythonEditor.getLayout();
         boolean isLayoutActive =
-                splitFileEditor != null &&
+                livePythonEditor != null &&
                         currentLayout == getActiveLayout();
         if (isLayoutActive) {
-            icon = splitFileEditor.isAnalysisPassing()
+            icon = livePythonEditor.isAnalysisPassing()
                     ? getPassingIcon()
                     : getFailingIcon();
         }
         boolean isRunningSelectedConfiguration =
-                splitFileEditor != null &&
-                        splitFileEditor.isRunningSelectedConfiguration(e.getProject());
-        boolean enabled = splitFileEditor != null && isEnabled(
+                livePythonEditor != null &&
+                        livePythonEditor.isRunningSelectedConfiguration(e.getProject());
+        boolean enabled = livePythonEditor != null && isEnabled(
                 currentLayout,
                 isRunningSelectedConfiguration);
         e.getPresentation().setEnabled(enabled);

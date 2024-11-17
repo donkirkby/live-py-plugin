@@ -1,15 +1,14 @@
 package io.github.donkirkby.livepycharm;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-abstract class LayoutAction extends AnAction {
+abstract class LayoutAction extends AnAction implements DumbAware, Toggleable, LightEditCompatible {
     abstract SplitFileEditor.SplitEditorLayout getActiveLayout();
 
     abstract Icon getDefaultIcon();

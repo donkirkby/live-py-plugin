@@ -50,12 +50,12 @@ public class SplitFileEditorProvider implements FileEditorProvider, DumbAware {
     @NotNull
     @Override
     public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-        FileEditor first = myFirstProvider.createEditor(project, file);
-        FileEditor second = mySecondProvider.createEditor(project, file);
         LightVirtualFile displayFile = new LightVirtualFile(
                 file.getName(),
                 FileTypes.PLAIN_TEXT,
                 "created for " + file.getName() + "\n");
+        FileEditor first = myFirstProvider.createEditor(project, file);
+        FileEditor second = mySecondProvider.createEditor(project, displayFile);
         FileDocumentManager documentManager = FileDocumentManager.getInstance();
 //        Document mainDocument = ApplicationManager.getApplication().runReadAction(
 //                (Computable<Document>) () -> documentManager.getDocument(file));
@@ -65,7 +65,7 @@ public class SplitFileEditorProvider implements FileEditorProvider, DumbAware {
     }
 
     @NotNull
-    @Override
+                            @Override
     public String getEditorTypeId() {
         return myEditorTypeId;
     }

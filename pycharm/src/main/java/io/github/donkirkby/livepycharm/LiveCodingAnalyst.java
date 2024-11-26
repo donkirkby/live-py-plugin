@@ -224,7 +224,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             String driverPath = paramsGroup.getParametersList().get(0);
             String oldPythonPath = environment1.get("PYTHONPATH");
             String newPythonPath;
-            if (oldPythonPath == null || oldPythonPath.length() == 0) {
+            if (oldPythonPath == null || oldPythonPath.isEmpty()) {
                 oldPythonPath = "";
                 newPythonPath = pythonPath.getAbsolutePath();
             } else {
@@ -246,7 +246,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             String moduleName = hasDriver
                     ? getModuleName(new File(mainFile.getPath()), oldPythonPath)
                     : "__live_coding__";
-            if (inputFilePath != null && inputFilePath.length() > 0) {
+            if (inputFilePath != null && !inputFilePath.isEmpty()) {
                 paramsGroup.addParameterAt(i++, "--stdin");
                 paramsGroup.addParameterAt(i++, inputFilePath);
             }
@@ -411,7 +411,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             display = processOutput.getStdout();
             String stderr = processOutput.getStderr();
             isPassing = processOutput.getExitCode() == 0;
-            if (stderr.length() > 0) {
+            if (!stderr.isEmpty()) {
                 display += "\nLive coding plugin error:\n" + stderr;
             }
         } catch (ExecutionException | IOException ex) {
@@ -625,7 +625,7 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         StringBuilder moduleName = new StringBuilder();
         for (java.nio.file.Path component : shortestPath) {
-            if (moduleName.length() > 0) {
+            if (!moduleName.isEmpty()) {
                 moduleName.append(".");
             }
             moduleName.append(component.getFileName());

@@ -164,17 +164,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             return true;
         }
         saveOtherDocuments();
-        RunConfiguration runConfiguration = configuration.getConfiguration();
-        PythonRunConfiguration pythonRunConfiguration;
-        if (runConfiguration instanceof PythonRunConfiguration) {
-            pythonRunConfiguration = (PythonRunConfiguration) runConfiguration;
-        } else {
-            pythonRunConfiguration = null;
-        }
-        String inputFilePath =
-                (pythonRunConfiguration == null || !pythonRunConfiguration.isRedirectInput())
-                        ? null
-                        : pythonRunConfiguration.getInputFile();
+        String inputFilePath = getInputFilePath(configuration);
         DefaultRunExecutor executor = new DefaultRunExecutor();
         ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, configuration);
         if (builder == null) {
@@ -193,22 +183,7 @@ public class LiveCodingAnalyst implements DocumentListener {
             displayResultLater("Invalid run configuration.");
             return true;
         }
-        File plugins = new File(PathManager.getPluginsPath());
-        File livePyPath = new File(plugins, "livepy");
-        FilenameFilter jarFilter = (file, s) ->
-                (s.startsWith("livepy-") || s.startsWith("instrumented-livepy-"))
-                        && s.endsWith(".jar");
-        File jarParentPath;
-        if (livePyPath.isDirectory()) {
-            jarParentPath = new File(livePyPath, "lib");
-        } else {
-            jarParentPath = plugins;
-        }
-        File[] pluginFiles = jarParentPath.listFiles(jarFilter);
-        if (pluginFiles == null || pluginFiles.length == 0) {
-            throw new RuntimeException("Unable to find livepy-*.jar.");
-        }
-        File pythonPath = pluginFiles[0];
+        File pythonPath = getPythonPath();
         commandLinePatcher = commandLine -> {
             Map<String, String> environment1 = commandLine.getEnvironment();
             commandLine.withInput(null);  // We send source code over stdin.
@@ -278,6 +253,40 @@ public class LiveCodingAnalyst implements DocumentListener {
         isRunning = true;
         schedule();
         return true;
+    }
+
+    private static @Nullable String getInputFilePath(
+            RunnerAndConfigurationSettings configuration) {
+        RunConfiguration runConfiguration = configuration.getConfiguration();
+        PythonRunConfiguration pythonRunConfiguration;
+        if (runConfiguration instanceof PythonRunConfiguration) {
+            pythonRunConfiguration = (PythonRunConfiguration) runConfiguration;
+        } else {
+            pythonRunConfiguration = null;
+        }
+        return (pythonRunConfiguration == null ||
+                !pythonRunConfiguration.isRedirectInput())
+                ? null
+                : pythonRunConfiguration.getInputFile();
+    }
+
+    private static File getPythonPath() {
+        File plugins = new File(PathManager.getPluginsPath());
+        File livePyPath = new File(plugins, "livepy");
+        FilenameFilter jarFilter = (file, s) ->
+                (s.startsWith("livepy-") || s.startsWith("instrumented-livepy-"))
+                        && s.endsWith(".jar");
+        File jarParentPath;
+        if (livePyPath.isDirectory()) {
+            jarParentPath = new File(livePyPath, "lib");
+        } else {
+            jarParentPath = plugins;
+        }
+        File[] pluginFiles = jarParentPath.listFiles(jarFilter);
+        if (pluginFiles == null || pluginFiles.length == 0) {
+            throw new RuntimeException("Unable to find livepy-*.jar.");
+        }
+        return pluginFiles[0];
     }
 
     void schedule() {
@@ -386,12 +395,13 @@ public class LiveCodingAnalyst implements DocumentListener {
                     new BufferedReader(new StringReader(goalDisplay));
             try {
                 reader.readLine();  // Skip first line.
-                CanvasReader canvasReader = new CanvasReader(reader);
-                ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
-                for (CanvasCommand command : canvasCommands) {
-                    if (command.getName().equals(CanvasCommand.CREATE_IMAGE)) {
-                        goalImageCommand = command;
-                        return;
+                try (CanvasReader canvasReader = new CanvasReader(reader)) {
+                    ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
+                    for (CanvasCommand command : canvasCommands) {
+                        if (command.getName().equals(CanvasCommand.CREATE_IMAGE)) {
+                            goalImageCommand = command;
+                            return;
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -459,33 +469,34 @@ public class LiveCodingAnalyst implements DocumentListener {
                 writer.write(line);
                 writer.write('\n');
             } else {
-                CanvasReader canvasReader = new CanvasReader(reader);
-                ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
-                if (goalImageCommand != null) {
-                    boolean isSolved = false;
-                    for (CanvasCommand command : canvasCommands) {
-                        if (command.getName().equals(CanvasCommand.CREATE_IMAGE) &&
-                                command.getOption("image").equals(
-                                        goalImageCommand.getOption("image"))) {
-                            isSolved = true;
-                            break;
+                try (CanvasReader canvasReader = new CanvasReader(reader)) {
+                    ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
+                    if (goalImageCommand != null) {
+                        boolean isSolved = false;
+                        for (CanvasCommand command : canvasCommands) {
+                            if (command.getName().equals(CanvasCommand.CREATE_IMAGE) &&
+                                    command.getOption("image").equals(
+                                            goalImageCommand.getOption("image"))) {
+                                isSolved = true;
+                                break;
+                            }
+                        }
+                        Rectangle canvasBounds = canvasPainter.getBounds();
+                        if (isSolved) {
+                            CanvasCommand message = new CanvasCommand();
+                            message.setName(CanvasCommand.CREATE_TEXT);
+                            message.setOption("text", "Solved!");
+                            message.setOption("font", "('Arial', 16, 'normal')");
+                            message.addCoordinate(canvasBounds.width / 2);
+                            message.addCoordinate(canvasBounds.height * 3 / 4);
+                            canvasCommands.add(message);
+                        } else {
+                            goalImageCommand.setCoordinate(1, canvasBounds.height / 2);
+                            canvasCommands.add(goalImageCommand);
                         }
                     }
-                    Rectangle canvasBounds = canvasPainter.getBounds();
-                    if (isSolved) {
-                        CanvasCommand message = new CanvasCommand();
-                        message.setName(CanvasCommand.CREATE_TEXT);
-                        message.setOption("text", "Solved!");
-                        message.setOption("font", "('Arial', 16, 'normal')");
-                        message.addCoordinate(canvasBounds.width / 2);
-                        message.addCoordinate(canvasBounds.height * 3 / 4);
-                        canvasCommands.add(message);
-                    } else {
-                        goalImageCommand.setCoordinate(1, canvasBounds.height / 2);
-                        canvasCommands.add(goalImageCommand);
-                    }
+                    canvasPainter.setCommands(canvasCommands);
                 }
-                canvasPainter.setCommands(canvasCommands);
             }
             while (true) {
                 line = reader.readLine();

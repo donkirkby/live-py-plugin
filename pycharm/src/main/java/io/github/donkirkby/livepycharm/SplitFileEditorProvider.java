@@ -91,10 +91,9 @@ public class SplitFileEditorProvider implements FileEditorProvider, DumbAware {
 
     @Override
     public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
-        if (!(state instanceof SplitFileEditor.MyFileEditorState)) {
+        if (!(state instanceof SplitFileEditor.MyFileEditorState compositeState)) {
             return;
         }
-        final SplitFileEditor.MyFileEditorState compositeState = (SplitFileEditor.MyFileEditorState) state;
 
         Element child = new Element(FIRST_EDITOR);
         if (compositeState.getFirstState() != null) {
@@ -125,16 +124,6 @@ public class SplitFileEditorProvider implements FileEditorProvider, DumbAware {
     @Override
     public FileEditorPolicy getPolicy() {
         return FileEditorPolicy.HIDE_DEFAULT_EDITOR;
-    }
-
-    private static boolean runsInProjectView()
-    {
-        return !(ApplicationManager.getApplication().isDispatchThread());
-    }
-
-    private static boolean runsInEventDispatchThread()
-    {
-        return ApplicationManager.getApplication().isWriteAccessAllowed();
     }
 }
 

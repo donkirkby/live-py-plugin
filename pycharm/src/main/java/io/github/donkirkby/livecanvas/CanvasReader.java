@@ -1,11 +1,12 @@
 package io.github.donkirkby.livecanvas;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 
-public class CanvasReader {
+public class CanvasReader implements Closeable {
     private static final boolean DEBUG = false;
     private final BufferedReader inputReader;
     private String nextLine;
@@ -95,7 +96,7 @@ public class CanvasReader {
         return value;
     }
 
-    void close() {
+    public void close() {
         try {
             inputReader.close();
         } catch (IOException ex) {

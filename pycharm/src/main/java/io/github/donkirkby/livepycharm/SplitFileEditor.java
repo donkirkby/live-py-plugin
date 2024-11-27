@@ -138,7 +138,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                                 x + width,
                                 y + height + fontMetrics.getAscent());
                     }
-                    width += columnBounds.getWidth();
+                    width += (int) Math.round(columnBounds.getWidth());
                 }
                 height += fontMetrics.getHeight();
                 maxWidth = Math.max(maxWidth, width);
@@ -180,15 +180,15 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             String anchor = command.getOption("anchor");
             anchor = anchor == null ? "center" : anchor;
             if (anchor.startsWith("s")) {
-                y -= textSize.getHeight();
+                y -= (int) Math.round(textSize.getHeight());
             } else if (!anchor.startsWith("n")) {
-                y -= textSize.getHeight() / 2;
+                y -= (int) Math.round(textSize.getHeight() / 2);
             } // else defaults to top
 
             if (anchor.endsWith("e")) {
-                x -= textSize.getWidth();
+                x -= (int) Math.round(textSize.getWidth());
             } else if (!anchor.endsWith("w")) {
-                x -= textSize.getWidth() / 2;
+                x -= (int) Math.round(textSize.getWidth() / 2);
             } // else defaults to left side
 
             drawText(graphics, text, x, y, true);
@@ -215,25 +215,8 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     bounds.width,
                     bounds.height);
 
-            if (canvasCommands == null || canvasCommands.size() == 0) {
-                CanvasCommand command = new CanvasCommand();
-                command.setName(CanvasCommand.CREATE_TEXT);
-                command.addCoordinate(bounds.width / 2);
-                command.addCoordinate(bounds.height / 2);
-                command.setOption("font", "('Arial', 12, 'normal')");
-                command.setOption(
-                        "text",
-                        "No turtle or matplotlib commands found.\n" +
-                                "A turtle example:\n" +
-                                "\n" +
-                                "from turtle import *\n" +
-                                "forward(100)\n" +
-                                "\n" +
-                                "A matplotlib example:\n" +
-                                "\n" +
-                                "import matplotlib.pyplot as plt\n" +
-                                "plt.plot([3, 1, 4])\n" +
-                                "plt.show()");
+            if (canvasCommands == null || canvasCommands.isEmpty()) {
+                CanvasCommand command = getCanvasCommand(bounds);
                 canvasCommands = new ArrayList<>();
                 canvasCommands.add(command);
             }
@@ -305,6 +288,29 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 graphics.setColor(oldColor);
                 gc.setStroke(oldStroke);
             }
+        }
+
+        private static @NotNull CanvasCommand getCanvasCommand(Rectangle bounds) {
+            CanvasCommand command = new CanvasCommand();
+            command.setName(CanvasCommand.CREATE_TEXT);
+            command.addCoordinate(bounds.width / 2);
+            command.addCoordinate(bounds.height / 2);
+            command.setOption("font", "('Arial', 12, 'normal')");
+            command.setOption(
+                    "text",
+                    """
+                            No turtle or matplotlib commands found.
+                            A turtle example:
+                            
+                            from turtle import *
+                            forward(100)
+                            
+                            A matplotlib example:
+                            
+                            import matplotlib.pyplot as plt
+                            plt.plot([3, 1, 4])
+                            plt.show()""");
+            return command;
         }
 
         private Font getFontOption(CanvasCommand command) {
@@ -532,8 +538,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
     @Override
     public void setState(@NotNull FileEditorState state) {
-        if (state instanceof MyFileEditorState) {
-            final MyFileEditorState compositeState = (MyFileEditorState) state;
+        if (state instanceof MyFileEditorState compositeState) {
             if (compositeState.getFirstState() != null) {
                 mainFileEditor.setState(compositeState.getFirstState());
             }
@@ -677,9 +682,17 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         public boolean canBeMergedWith(
                 @NotNull FileEditorState otherState,
                 @NotNull FileEditorStateLevel level) {
-            return otherState instanceof MyFileEditorState
-                    && (myFirstState == null || myFirstState.canBeMergedWith(((MyFileEditorState) otherState).myFirstState, level))
-                    && (mySecondState == null || mySecondState.canBeMergedWith(((MyFileEditorState) otherState).mySecondState, level));
+            if ( ! (otherState instanceof MyFileEditorState) ) {
+                return false;
+            }
+            var otherFirstState = ((MyFileEditorState) otherState).myFirstState;
+            var otherSecondState = ((MyFileEditorState) otherState).mySecondState;
+            return (myFirstState == null ||
+                    otherFirstState == null ||
+                    myFirstState.canBeMergedWith(otherFirstState, level))
+                    && (mySecondState == null ||
+                    otherSecondState == null ||
+                    mySecondState.canBeMergedWith(otherSecondState, level));
         }
     }
 
@@ -706,8 +719,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             if (!myMap.containsKey(listener)) {
                 myMap.put(listener, Pair.create(1, new DoublingEventListenerDelegate(listener)));
             } else {
-                final Pair<Integer, DoublingEventListenerDelegate> oldPair = myMap.get(listener);
-                myMap.put(listener, Pair.create(oldPair.getFirst() + 1, oldPair.getSecond()));
+                myMap.computeIfPresent(listener,
+                        (k,
+                         oldPair) ->
+                                Pair.create(oldPair.getFirst() + 1, oldPair.getSecond()));
             }
 
             return myMap.get(listener).getSecond();

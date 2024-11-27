@@ -3,9 +3,7 @@ package io.github.donkirkby.livepycharm;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollingModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
@@ -14,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
@@ -445,6 +444,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             followingEditor = mainEditor;
         }
         recordScrollingEditor(activeEditor);
+        updateDisplayFolding(mainEditor, displayEditor);
 
         ScrollingModel leadingScroll = activeEditor.getScrollingModel();
         ScrollingModel followingScroll = followingEditor.getScrollingModel();
@@ -452,6 +452,48 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         followingScroll.disableAnimation();
         followingScroll.scrollVertically(scrollOffset);
         followingScroll.enableAnimation();
+    }
+
+    private void updateDisplayFolding(Editor mainEditor, Editor displayEditor) {
+        String mainText = mainEditor.getDocument().getText();
+        String displayText = displayEditor.getDocument().getText();
+        FoldRegion[] mainRegions =
+                mainEditor.getFoldingModel().getAllFoldRegions();
+        FoldingModel displayModel = displayEditor.getFoldingModel();
+        displayModel.runBatchFoldingOperation(() -> {
+            for (FoldRegion region : displayModel.getAllFoldRegions()) {
+                displayModel.removeFoldRegion(region);
+            }
+            for (FoldRegion mainRegion : mainRegions) {
+                if (!mainRegion.isExpanded()) {
+                    int startOffset = mainRegion.getStartOffset();
+                    int endOffset = mainRegion.getEndOffset();
+                    int startLine = StringUtil.offsetToLineNumber(
+                            mainText,
+                            startOffset);
+                    int endLine = StringUtil.offsetToLineNumber(
+                            mainText,
+                            endOffset);
+                    int startFold = StringUtil.lineColToOffset(
+                            displayText,
+                            startLine,
+                            0);
+                    int endFold = StringUtil.lineColToOffset(
+                            displayText,
+                            endLine,
+                            0);
+                    if (startFold < endFold) {
+                        FoldRegion displayRegion = displayModel.addFoldRegion(
+                                startFold,
+                                endFold,
+                                "...");
+                        if (displayRegion != null) {
+                            displayRegion.setExpanded(false);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     private void recordScrollingEditor(Editor activeEditor) {

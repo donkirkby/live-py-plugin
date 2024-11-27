@@ -16,15 +16,15 @@ public class CanvasCommand {
     public static final String CREATE_IMAGE = "create_image";
 
     private String name;
-    private ArrayList<Integer> coordinates =
+    private final ArrayList<Integer> coordinates =
             new ArrayList<>();
-    private Hashtable<String, String> options =
+    private final Hashtable<String, String> options =
             new Hashtable<>();
 
     public static class FontOptions {
-        private String name;
-        private int size;
-        private String[] styleNames;
+        private final String name;
+        private final int size;
+        private final String[] styleNames;
 
         FontOptions(String name, int size, String[] styleNames) {
             this.name = name;
@@ -65,25 +65,12 @@ public class CanvasCommand {
         coordinates.add(value);
     }
 
-    int getCoordinateCount() {
-        return coordinates.size();
-    }
-
     public int getCoordinate(int index) {
         return coordinates.get(index);
     }
 
     public void setCoordinate(int index, int value) {
         coordinates.set(index, value);
-    }
-
-    public int[] getAllCoordinates() {
-        int[] copy = new int[coordinates.size()];
-        Iterator<Integer> itr = coordinates.iterator();
-        for (int i = 0; i < copy.length; i++) {
-            copy[i] = itr.next();
-        }
-        return copy;
     }
 
     public int[] getXCoordinates() {

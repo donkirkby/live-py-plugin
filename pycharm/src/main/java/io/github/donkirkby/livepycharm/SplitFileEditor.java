@@ -5,6 +5,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,7 @@ import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
@@ -40,9 +43,9 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private static final String MY_PROPORTION_KEY = "SplitFileEditor.Proportion";
 
     @NotNull
-    private final FileEditor myMainEditor;
+    private final FileEditor mainFileEditor;
     @NotNull
-    private final FileEditor mySecondEditor;
+    private final FileEditor displayFileEditor;
     @NotNull
     private final JComponent myComponent;
     @NotNull
@@ -50,6 +53,12 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     @NotNull
     private SplitEditorLayout mySplitEditorLayout = SplitEditorLayout.SINGLE;
     private final LiveCodingAnalyst myAnalyst;
+
+    // Scrolling controls
+    private boolean isScrollingRegistered = false;
+    private int displayX;
+    private Editor scrollingEditor;
+    private int scheduleTick;
 
     @NotNull
     private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
@@ -59,8 +68,8 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     @NotNull FileEditor secondEditor,
                     VirtualFile file,
                     Document displayDocument) {
-        myMainEditor = mainEditor;
-        mySecondEditor = secondEditor;
+        mainFileEditor = mainEditor;
+        displayFileEditor = secondEditor;
         turtleCanvas = new TurtleCanvas();
         myAnalyst = new LiveCodingAnalyst(
                 file,
@@ -70,11 +79,11 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
         myComponent = createComponent();
 
-        if (myMainEditor instanceof TextEditor) {
-            myMainEditor.putUserData(PARENT_SPLIT_KEY, this);
+        if (mainFileEditor instanceof TextEditor) {
+            mainFileEditor.putUserData(PARENT_SPLIT_KEY, this);
         }
-        if (mySecondEditor instanceof TextEditor) {
-            mySecondEditor.putUserData(PARENT_SPLIT_KEY, this);
+        if (displayFileEditor instanceof TextEditor) {
+            displayFileEditor.putUserData(PARENT_SPLIT_KEY, this);
         }
     }
 
@@ -129,7 +138,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                                 x + width,
                                 y + height + fontMetrics.getAscent());
                     }
-                    width += columnBounds.getWidth();
+                    width += (int) Math.round(columnBounds.getWidth());
                 }
                 height += fontMetrics.getHeight();
                 maxWidth = Math.max(maxWidth, width);
@@ -171,15 +180,15 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             String anchor = command.getOption("anchor");
             anchor = anchor == null ? "center" : anchor;
             if (anchor.startsWith("s")) {
-                y -= textSize.getHeight();
+                y -= (int) Math.round(textSize.getHeight());
             } else if (!anchor.startsWith("n")) {
-                y -= textSize.getHeight() / 2;
+                y -= (int) Math.round(textSize.getHeight() / 2);
             } // else defaults to top
 
             if (anchor.endsWith("e")) {
-                x -= textSize.getWidth();
+                x -= (int) Math.round(textSize.getWidth());
             } else if (!anchor.endsWith("w")) {
-                x -= textSize.getWidth() / 2;
+                x -= (int) Math.round(textSize.getWidth() / 2);
             } // else defaults to left side
 
             drawText(graphics, text, x, y, true);
@@ -206,25 +215,8 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                     bounds.width,
                     bounds.height);
 
-            if (canvasCommands == null || canvasCommands.size() == 0) {
-                CanvasCommand command = new CanvasCommand();
-                command.setName(CanvasCommand.CREATE_TEXT);
-                command.addCoordinate(bounds.width / 2);
-                command.addCoordinate(bounds.height / 2);
-                command.setOption("font", "('Arial', 12, 'normal')");
-                command.setOption(
-                        "text",
-                        "No turtle or matplotlib commands found.\n" +
-                                "A turtle example:\n" +
-                                "\n" +
-                                "from turtle import *\n" +
-                                "forward(100)\n" +
-                                "\n" +
-                                "A matplotlib example:\n" +
-                                "\n" +
-                                "import matplotlib.pyplot as plt\n" +
-                                "plt.plot([3, 1, 4])\n" +
-                                "plt.show()");
+            if (canvasCommands == null || canvasCommands.isEmpty()) {
+                CanvasCommand command = getCanvasCommand(bounds);
                 canvasCommands = new ArrayList<>();
                 canvasCommands.add(command);
             }
@@ -298,6 +290,29 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             }
         }
 
+        private static @NotNull CanvasCommand getCanvasCommand(Rectangle bounds) {
+            CanvasCommand command = new CanvasCommand();
+            command.setName(CanvasCommand.CREATE_TEXT);
+            command.addCoordinate(bounds.width / 2);
+            command.addCoordinate(bounds.height / 2);
+            command.setOption("font", "('Arial', 12, 'normal')");
+            command.setOption(
+                    "text",
+                    """
+                            No turtle or matplotlib commands found.
+                            A turtle example:
+                            
+                            from turtle import *
+                            forward(100)
+                            
+                            A matplotlib example:
+                            
+                            import matplotlib.pyplot as plt
+                            plt.plot([3, 1, 4])
+                            plt.show()""");
+            return command;
+        }
+
         private Font getFontOption(CanvasCommand command) {
             CanvasCommand.FontOptions fontOptions =
                     command.getFontOptions("font");
@@ -358,9 +373,9 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private JComponent createComponent() {
         final JBSplitter splitter = new JBSplitter(false, 0.5f, 0.15f, 0.85f);
         splitter.setSplitterProportionKey(MY_PROPORTION_KEY);
-        splitter.setFirstComponent(myMainEditor.getComponent());
+        splitter.setFirstComponent(mainFileEditor.getComponent());
         displayCards = new JPanel(new CardLayout());
-        displayCards.add(mySecondEditor.getComponent(), SplitEditorLayout.DISPLAY.toString());
+        displayCards.add(displayFileEditor.getComponent(), SplitEditorLayout.DISPLAY.toString());
         displayCards.add(turtleCanvas, SplitEditorLayout.TURTLE.toString());
         splitter.setSecondComponent(displayCards);
 
@@ -384,8 +399,76 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             return;
         }
 
+        if ( ! isScrollingRegistered) {
+            isScrollingRegistered = true;
+            var mainEditor = getEditor();
+            var displayEditor = getDisplayEditor();
+            mainEditor.getScrollingModel().addVisibleAreaListener(
+                    e -> updateScrolling(mainEditor));
+            displayEditor.getScrollingModel().addVisibleAreaListener(
+                    e -> updateScrolling(displayEditor));
+        }
+
         mySplitEditorLayout = newLayout;
         invalidateLayout();
+    }
+
+    private void updateScrolling(Editor activeEditor) {
+        // Horizontal scroll remembers manually scrolled position.
+        var mainEditor = getEditor();
+        var displayEditor = getDisplayEditor();
+        ScrollingModel displayScroll =
+                displayEditor.getScrollingModel();
+
+        boolean isUpdating = isDisplayUpdating();
+        boolean isDisplayHidden = getLayout() !=
+                        SplitFileEditor.SplitEditorLayout.DISPLAY;
+        if (isUpdating) {
+            displayScroll.disableAnimation();
+            displayScroll.scrollHorizontally(displayX);
+            displayScroll.enableAnimation();
+        } else {
+            displayX = displayScroll.getVisibleArea().x;
+        }
+
+        // Vertical scroll synchronized between two sides.
+        Editor followingEditor;
+        if (scrollingEditor != null) {
+            activeEditor = scrollingEditor;
+            followingEditor = activeEditor == mainEditor
+                    ? displayEditor
+                    : mainEditor;
+        } else if (activeEditor == mainEditor || isUpdating || isDisplayHidden) {
+            activeEditor = mainEditor;
+            followingEditor = displayEditor;
+        } else {
+            followingEditor = mainEditor;
+        }
+        recordScrollingEditor(activeEditor);
+
+        ScrollingModel leadingScroll = activeEditor.getScrollingModel();
+        ScrollingModel followingScroll = followingEditor.getScrollingModel();
+        int scrollOffset = leadingScroll.getVisibleArea().y;
+        followingScroll.disableAnimation();
+        followingScroll.scrollVertically(scrollOffset);
+        followingScroll.enableAnimation();
+    }
+
+    private void recordScrollingEditor(Editor activeEditor) {
+        scrollingEditor = activeEditor;
+        scheduleTick++;  // Ignores any scheduled requests that haven't happened.
+        final int requestTick = scheduleTick;
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+                () -> resetScrollingEditor(requestTick),
+                300,
+                TimeUnit.MILLISECONDS
+        );
+    }
+
+    private void resetScrollingEditor(int requestTick) {
+        if (scheduleTick == requestTick) {
+            scrollingEditor = null;
+        }
     }
 
     void startAnalysis(@Nullable Project project, @NotNull DataContext dataContext) {
@@ -415,7 +498,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     }
 
     private void adjustEditorsVisibility() {
-        myMainEditor.getComponent().setVisible(true);
+        mainFileEditor.getComponent().setVisible(true);
         displayCards.setVisible(mySplitEditorLayout.showCards);
         CardLayout cardLayout = (CardLayout) displayCards.getLayout();
         cardLayout.show(displayCards, mySplitEditorLayout.toString());
@@ -430,7 +513,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     @Nullable
     @Override
     public JComponent getPreferredFocusedComponent() {
-        return myMainEditor.getPreferredFocusedComponent();
+        return mainFileEditor.getPreferredFocusedComponent();
     }
 
     @NotNull
@@ -444,8 +527,8 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                         : null;
         return new MyFileEditorState(
                 splitLayout,
-                myMainEditor.getState(level),
-                mySecondEditor.getState(level));
+                mainFileEditor.getState(level),
+                displayFileEditor.getState(level));
     }
 
     @NotNull
@@ -455,13 +538,12 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
     @Override
     public void setState(@NotNull FileEditorState state) {
-        if (state instanceof MyFileEditorState) {
-            final MyFileEditorState compositeState = (MyFileEditorState) state;
+        if (state instanceof MyFileEditorState compositeState) {
             if (compositeState.getFirstState() != null) {
-                myMainEditor.setState(compositeState.getFirstState());
+                mainFileEditor.setState(compositeState.getFirstState());
             }
             if (compositeState.getSecondState() != null) {
-                mySecondEditor.setState(compositeState.getSecondState());
+                displayFileEditor.setState(compositeState.getSecondState());
             }
             if (compositeState.getSplitLayout() != null) {
                 try {
@@ -476,88 +558,94 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
     @Override
     public boolean isModified() {
-        return myMainEditor.isModified() || mySecondEditor.isModified();
+        return mainFileEditor.isModified() || displayFileEditor.isModified();
     }
 
     @Override
     public boolean isValid() {
-        return myMainEditor.isValid() && mySecondEditor.isValid();
+        return mainFileEditor.isValid() && displayFileEditor.isValid();
     }
 
     @Override
     public void selectNotify() {
-        myMainEditor.selectNotify();
-        mySecondEditor.selectNotify();
+        mainFileEditor.selectNotify();
+        displayFileEditor.selectNotify();
     }
 
     @Override
     public void deselectNotify() {
-        myMainEditor.deselectNotify();
-        mySecondEditor.deselectNotify();
+        mainFileEditor.deselectNotify();
+        displayFileEditor.deselectNotify();
     }
 
     @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-        myMainEditor.addPropertyChangeListener(listener);
-        mySecondEditor.addPropertyChangeListener(listener);
+        mainFileEditor.addPropertyChangeListener(listener);
+        displayFileEditor.addPropertyChangeListener(listener);
 
         final DoublingEventListenerDelegate delegate = myListenersGenerator.addListenerAndGetDelegate(listener);
-        myMainEditor.addPropertyChangeListener(delegate);
-        mySecondEditor.addPropertyChangeListener(delegate);
+        mainFileEditor.addPropertyChangeListener(delegate);
+        displayFileEditor.addPropertyChangeListener(delegate);
     }
 
     @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-        myMainEditor.removePropertyChangeListener(listener);
-        mySecondEditor.removePropertyChangeListener(listener);
+        mainFileEditor.removePropertyChangeListener(listener);
+        displayFileEditor.removePropertyChangeListener(listener);
 
         final DoublingEventListenerDelegate delegate = myListenersGenerator.removeListenerAndGetDelegate(listener);
         if (delegate != null) {
-            myMainEditor.removePropertyChangeListener(delegate);
-            mySecondEditor.removePropertyChangeListener(delegate);
+            mainFileEditor.removePropertyChangeListener(delegate);
+            displayFileEditor.removePropertyChangeListener(delegate);
         }
     }
 
     @Nullable
     @Override
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
-        return myMainEditor.getBackgroundHighlighter();
+        return mainFileEditor.getBackgroundHighlighter();
     }
 
     @Nullable
     @Override
     public FileEditorLocation getCurrentLocation() {
-        return myMainEditor.getCurrentLocation();
+        return mainFileEditor.getCurrentLocation();
     }
 
     @Nullable
     @Override
     public StructureViewBuilder getStructureViewBuilder() {
-        return myMainEditor.getStructureViewBuilder();
+        return mainFileEditor.getStructureViewBuilder();
     }
 
     @Override
     public void dispose() {
-        Disposer.dispose(myMainEditor);
-        Disposer.dispose(mySecondEditor);
+        Disposer.dispose(mainFileEditor);
+        Disposer.dispose(displayFileEditor);
     }
 
     @NotNull
     @Override
     public Editor getEditor() {
-        TextEditor mainTextEditor = (TextEditor) myMainEditor;
+        TextEditor mainTextEditor = (TextEditor) mainFileEditor;
         return mainTextEditor.getEditor();
+    }
+
+    @NotNull
+    private Editor getDisplayEditor() {
+        TextEditor displayTextEditor = (TextEditor) displayFileEditor;
+        return displayTextEditor.getEditor();
     }
 
     @Override
     public boolean canNavigateTo(@NotNull Navigatable navigatable) {
-        TextEditor mainTextEditor = (TextEditor) myMainEditor;
+        TextEditor mainTextEditor = (TextEditor) mainFileEditor;
         return mainTextEditor.canNavigateTo(navigatable);
     }
 
     @Override
     public void navigateTo(@NotNull Navigatable navigatable) {
-        TextEditor mainTextEditor = (TextEditor) myMainEditor;
+        TextEditor mainTextEditor = (TextEditor) mainFileEditor;
         mainTextEditor.navigateTo(navigatable);
     }
 
@@ -594,9 +682,17 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
         public boolean canBeMergedWith(
                 @NotNull FileEditorState otherState,
                 @NotNull FileEditorStateLevel level) {
-            return otherState instanceof MyFileEditorState
-                    && (myFirstState == null || myFirstState.canBeMergedWith(((MyFileEditorState) otherState).myFirstState, level))
-                    && (mySecondState == null || mySecondState.canBeMergedWith(((MyFileEditorState) otherState).mySecondState, level));
+            if ( ! (otherState instanceof MyFileEditorState) ) {
+                return false;
+            }
+            var otherFirstState = ((MyFileEditorState) otherState).myFirstState;
+            var otherSecondState = ((MyFileEditorState) otherState).mySecondState;
+            return (myFirstState == null ||
+                    otherFirstState == null ||
+                    myFirstState.canBeMergedWith(otherFirstState, level))
+                    && (mySecondState == null ||
+                    otherSecondState == null ||
+                    mySecondState.canBeMergedWith(otherSecondState, level));
         }
     }
 
@@ -623,8 +719,10 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
             if (!myMap.containsKey(listener)) {
                 myMap.put(listener, Pair.create(1, new DoublingEventListenerDelegate(listener)));
             } else {
-                final Pair<Integer, DoublingEventListenerDelegate> oldPair = myMap.get(listener);
-                myMap.put(listener, Pair.create(oldPair.getFirst() + 1, oldPair.getSecond()));
+                myMap.computeIfPresent(listener,
+                        (k,
+                         oldPair) ->
+                                Pair.create(oldPair.getFirst() + 1, oldPair.getSecond()));
             }
 
             return myMap.get(listener).getSecond();

@@ -36,14 +36,14 @@ intellijPlatform {
         ides {
             // recommended()
             // Available versions listed at https://www.jetbrains.com/idea/download/other.html
-            ides(listOf("IC-2023.3", "IC-2024.3"))
+            ides(listOf("IC-2022.2", "IC-2023.1", "IC-2024.3"))
         }
     }
 }
 
 tasks {
     patchPluginXml {
-        sinceBuild = "242.22855.74"
+        sinceBuild = "222.3345.118"
         untilBuild = provider { null }
     }
 }

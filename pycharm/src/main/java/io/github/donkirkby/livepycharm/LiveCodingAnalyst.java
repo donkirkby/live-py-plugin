@@ -391,17 +391,15 @@ public class LiveCodingAnalyst implements DocumentListener {
         }
         String goalDisplay = getDisplay(goalSource.toString());
         if (goalDisplay.startsWith(CANVAS_START)) {
-            BufferedReader reader =
-                    new BufferedReader(new StringReader(goalDisplay));
-            try {
+            try (BufferedReader reader =
+                         new BufferedReader(new StringReader(goalDisplay))) {
                 reader.readLine();  // Skip first line.
-                try (CanvasReader canvasReader = new CanvasReader(reader)) {
-                    ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
-                    for (CanvasCommand command : canvasCommands) {
-                        if (command.getName().equals(CanvasCommand.CREATE_IMAGE)) {
-                            goalImageCommand = command;
-                            return;
-                        }
+                CanvasReader canvasReader = new CanvasReader(reader);
+                ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
+                for (CanvasCommand command : canvasCommands) {
+                    if (command.getName().equals(CanvasCommand.CREATE_IMAGE)) {
+                        goalImageCommand = command;
+                        return;
                     }
                 }
             } catch (IOException e) {
@@ -458,8 +456,7 @@ public class LiveCodingAnalyst implements DocumentListener {
 
     private void displayResult(String display) {
         StringWriter writer = new StringWriter();
-        BufferedReader reader = new BufferedReader(new StringReader(display));
-        try {
+        try (BufferedReader reader = new BufferedReader(new StringReader(display))) {
             String line = reader.readLine();  // Skip first line.
             if (line == null) {
                 line = "";
@@ -469,34 +466,33 @@ public class LiveCodingAnalyst implements DocumentListener {
                 writer.write(line);
                 writer.write('\n');
             } else {
-                try (CanvasReader canvasReader = new CanvasReader(reader)) {
-                    ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
-                    if (goalImageCommand != null) {
-                        boolean isSolved = false;
-                        for (CanvasCommand command : canvasCommands) {
-                            if (command.getName().equals(CanvasCommand.CREATE_IMAGE) &&
-                                    command.getOption("image").equals(
-                                            goalImageCommand.getOption("image"))) {
-                                isSolved = true;
-                                break;
-                            }
-                        }
-                        Rectangle canvasBounds = canvasPainter.getBounds();
-                        if (isSolved) {
-                            CanvasCommand message = new CanvasCommand();
-                            message.setName(CanvasCommand.CREATE_TEXT);
-                            message.setOption("text", "Solved!");
-                            message.setOption("font", "('Arial', 16, 'normal')");
-                            message.addCoordinate(canvasBounds.width / 2);
-                            message.addCoordinate(canvasBounds.height * 3 / 4);
-                            canvasCommands.add(message);
-                        } else {
-                            goalImageCommand.setCoordinate(1, canvasBounds.height / 2);
-                            canvasCommands.add(goalImageCommand);
+                CanvasReader canvasReader = new CanvasReader(reader);
+                ArrayList<CanvasCommand> canvasCommands = canvasReader.readCommands();
+                if (goalImageCommand != null) {
+                    boolean isSolved = false;
+                    for (CanvasCommand command : canvasCommands) {
+                        if (command.getName().equals(CanvasCommand.CREATE_IMAGE) &&
+                                command.getOption("image").equals(
+                                        goalImageCommand.getOption("image"))) {
+                            isSolved = true;
+                            break;
                         }
                     }
-                    canvasPainter.setCommands(canvasCommands);
+                    Rectangle canvasBounds = canvasPainter.getBounds();
+                    if (isSolved) {
+                        CanvasCommand message = new CanvasCommand();
+                        message.setName(CanvasCommand.CREATE_TEXT);
+                        message.setOption("text", "Solved!");
+                        message.setOption("font", "('Arial', 16, 'normal')");
+                        message.addCoordinate(canvasBounds.width / 2);
+                        message.addCoordinate(canvasBounds.height * 3 / 4);
+                        canvasCommands.add(message);
+                    } else {
+                        goalImageCommand.setCoordinate(1, canvasBounds.height / 2);
+                        canvasCommands.add(goalImageCommand);
+                    }
                 }
+                canvasPainter.setCommands(canvasCommands);
             }
             while (true) {
                 line = reader.readLine();

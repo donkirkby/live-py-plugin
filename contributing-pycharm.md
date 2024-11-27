@@ -52,9 +52,10 @@ two types of IDEA release.
 2. Update the version number in `about.py` and `pycharm/build.gradle.kts`, and
     the change notes in `pycharm/src/main/resources/META-INF/plugin.xml`. Keep
     the version in sync with `html/meta.yaml`.
-3. Run the `runPluginVerifier` and `buildPlugin` Gradle tasks. You should get a
-   `livepy-X.Y.Z.zip` file for the new version under
-   `pycharm/build/distributions`.
+3. Run the `verifyPlugin` and `buildPlugin` Gradle tasks. Check that you're
+    verifying against the latest release, and that the `sinceBuild` matches
+    the oldest verified release. You should get a `livepy-X.Y.Z.zip` file for
+    the new version under `pycharm/build/distributions`.
 4. Install the new plugin zip file into your IntelliJ or PyCharm. Sometimes it
     behaves differently as a zip file. From the File menu, choose Settings....
 5. Navigate down to the plugins section, click on the gear icon at the top,

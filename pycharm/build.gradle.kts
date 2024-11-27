@@ -18,12 +18,12 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.2.2")
+        intellijIdeaCommunity("2024.3")
 
         // "Pythonid" for ultimate, "PythonCore" for community. Find compatible
         // ultimate versions at https://plugins.jetbrains.com/plugin/631
         // community versions at https://plugins.jetbrains.com/plugin/7322
-        plugin("PythonCore:242.22855.74")
+        plugin("PythonCore:243.21565.211")
 
         instrumentationTools()
         pluginVerifier()
@@ -35,7 +35,8 @@ intellijPlatform {
     pluginVerification {
         ides {
             // recommended()
-            ides(listOf("IC-2023.3", "IC-243.21155.17"))
+            // Available versions listed at https://www.jetbrains.com/idea/download/other.html
+            ides(listOf("IC-2023.3", "IC-2024.3"))
         }
     }
 }

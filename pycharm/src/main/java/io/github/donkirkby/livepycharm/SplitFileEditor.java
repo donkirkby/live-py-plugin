@@ -18,7 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import io.github.donkirkby.livecanvas.CanvasCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +35,7 @@ import java.beans.PropertyChangeListener;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
@@ -57,7 +58,7 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
     private boolean isScrollingRegistered = false;
     private int displayX;
     private Editor scrollingEditor;
-    private final Alarm alarm = new Alarm();
+    private int scheduleTick;
 
     @NotNull
     private final MyListenersMultimap myListenersGenerator = new MyListenersMultimap();
@@ -449,8 +450,19 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
 
     private void recordScrollingEditor(Editor activeEditor) {
         scrollingEditor = activeEditor;
-        alarm.cancelAllRequests();
-        alarm.addRequest(() -> scrollingEditor = null, 300);
+        scheduleTick++;  // Ignores any scheduled requests that haven't happened.
+        final int requestTick = scheduleTick;
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+                () -> resetScrollingEditor(requestTick),
+                300,
+                TimeUnit.MILLISECONDS
+        );
+    }
+
+    private void resetScrollingEditor(int requestTick) {
+        if (scheduleTick == requestTick) {
+            scrollingEditor = null;
+        }
     }
 
     void startAnalysis(@Nullable Project project, @NotNull DataContext dataContext) {

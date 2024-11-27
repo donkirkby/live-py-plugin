@@ -28,7 +28,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
@@ -46,6 +46,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,7 +67,7 @@ public class LiveCodingAnalyst implements DocumentListener {
     private static final ExecutorService pool = Executors.newCachedThreadPool();
     private PythonCommandLineState commandLineState;
     private CommandLinePatcher commandLinePatcher;
-    private final Alarm alarm = new Alarm();
+    private int scheduleTick;
     private final ProgressIndicator progressIndicator = new ProgressIndicatorBase(true);
     private final CanvasPainter canvasPainter;
     private String goalFile;
@@ -425,8 +426,19 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (progressIndicator.isRunning()) {
             progressIndicator.cancel();
         }
-        alarm.cancelAllRequests();
-        alarm.addRequest(() -> pool.submit(() -> analyse(document)), 300);
+        scheduleTick++;  // Ignores any scheduled requests that haven't happened.
+        final int requestTick = scheduleTick;
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+                () -> submit(document, requestTick),
+                300,
+                TimeUnit.MILLISECONDS
+        );
+    }
+
+    private void submit(Document document, int requestTick) {
+        if (requestTick == scheduleTick) {
+            pool.submit(() -> analyse(document));
+        }
     }
 
     private void displayResultLater(String display) {
@@ -506,7 +518,11 @@ public class LiveCodingAnalyst implements DocumentListener {
                     false);
         }
 
-        alarm.addRequest(() -> isDisplayUpdating = false, 300);
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(
+                () -> isDisplayUpdating = false,
+                300,
+                TimeUnit.MILLISECONDS
+        );
     }
 
     private void synchronizeInlays() {

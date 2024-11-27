@@ -66,7 +66,7 @@ GitHub, and install Docker. After that, follow these steps for each release.
 
 1. Update the version number in `html/meta.yaml` and in the `srcFiles` list in
    `html/deploy.js`.
-2. Find the `remove_modules.txt` file in the pyodide project, and remove
+2. Find the `Makefile.envs` file in the pyodide project, and remove
    `turtle.py` from the list.
 3. Run `npm run build`. You should see a message that it rebuilt space tracer
    in pyodide.

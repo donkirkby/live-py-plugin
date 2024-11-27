@@ -61,7 +61,7 @@ function copyPyodide(srcPath, destPath) {
         'pytz-2024.1-py2.py3-none-any.whl',
         'package.json',
         'six-1.16.0-py2.py3-none-any.whl',
-        'space_tracer-4.11.4-py3-none-any.whl'];
+        'space_tracer-4.12.0-py3-none-any.whl'];
     fs.mkdirSync(destPath);
     for (const fileName of srcFiles) {
         const fileSrcPath = path.join(srcPath, fileName),

@@ -5,7 +5,7 @@
 ;; Author: Don Kirkby http://donkirkby.github.io
 ;; Keywords: live coding
 ;; URL: http://donkirkby.github.io/live-py-plugin/
-;; Version: 4.10.0
+;; Version: 4.12.0
 ;; Package-Requires: ((emacs "24.3"))
 
 ;; This program is distributed under the MIT License

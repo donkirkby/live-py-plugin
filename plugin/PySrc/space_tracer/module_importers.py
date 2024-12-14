@@ -169,7 +169,13 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         source_tree = None
         if self.traced == module_name:
             is_module_traced = True
-            self.source_finder = TracedFinder(source_code, '', parsed_filename)
+            self.is_traced_module_imported = True
+            self.source_finder = TracedFinder(source_code,
+                                              '',
+                                              parsed_filename,
+                                              parse=False)
+            self.source_finder.parse()
+            self.source_finder.is_tracing = True
         else:
             if self.traced.startswith(module_name):
                 traced_child = self.traced[len(module_name)+1:]
@@ -178,14 +184,17 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             else:
                 traced_child = None
             if traced_child:
-                source_finder = TracedFinder(source_code,
-                                             traced_child,
-                                             parsed_filename)
-                source_tree = source_finder.source_tree
-                if source_finder.traced_node is not None:
+                self.source_finder = TracedFinder(source_code,
+                                                  traced_child,
+                                                  parsed_filename,
+                                                  parse=False)
+                self.source_finder.parse()
+                source_tree = self.source_finder.source_tree
+                if self.source_finder.traced_node is not None:
                     is_module_traced = True
-                    self.source_finder = source_finder
+                    self.is_traced_module_imported = True
                 else:
+                    self.source_finder = None
                     original_loader = self.original_loaders.get(module.__name__)
                     if original_loader is not None:
                         module_spec.loader = original_loader
@@ -195,7 +204,6 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             source_tree = parse(source_code, parsed_filename)
         if is_module_traced:
             source_tree = trace_source_tree(source_tree)
-            self.is_traced_module_imported = True
         if (module_name in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME) and
                 self.driver_module):
             target_module = self.driver_module
@@ -339,14 +347,20 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
             parsed_file = PSEUDO_FILENAME if traced == '' else filename
             self.driver_finder = TracedFinder(source,
                                               traced,
-                                              parsed_file)
+                                              parsed_file,
+                                              parse=False)
+            self.driver_finder.parse()
             to_compile = self.driver_finder.source_tree
             if (traced == '' or
                     self.driver_finder.traced_node is not None):
                 to_compile = trace_source_tree(to_compile)
                 self.driver_finder.is_tracing = True
         else:
-            self.driver_finder = TracedFinder(source, '', PSEUDO_FILENAME)
+            self.driver_finder = TracedFinder(source,
+                                              '',
+                                              PSEUDO_FILENAME,
+                                              parse=False)
+            self.driver_finder.parse()
             to_compile = self.driver_finder.source_tree
         code = compile(to_compile, filename or PSEUDO_FILENAME, "exec")
 

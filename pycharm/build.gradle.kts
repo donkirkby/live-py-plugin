@@ -1,65 +1,59 @@
 plugins {
     id("java")
-    id("org.jetbrains.intellij") version "1.13.3"
+    id("org.jetbrains.intellij.platform") version "2.0.1"
 }
 
 group = "io.github.donkirkby"
-version = "4.11.4"
+version = "4.12.0"
 
 repositories {
     mavenCentral()
+
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 // Configure Gradle IntelliJ Plugin
-// Read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    version.set("241.14494.240")
-    type.set("IC") // Target IDE Platform: IU for Ultimate, IC for community
+// Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
+dependencies {
+    intellijPlatform {
+        intellijIdeaCommunity("2024.3")
 
-    // Pythonid for Ultimate, PythonCore for community
-    plugins.set(listOf("PythonCore:241.14494.240"))
+        // "Pythonid" for ultimate, "PythonCore" for community. Find compatible
+        // ultimate versions at https://plugins.jetbrains.com/plugin/631
+        // community versions at https://plugins.jetbrains.com/plugin/7322
+        plugin("PythonCore:243.21565.211")
+
+        instrumentationTools()
+        pluginVerifier()
+    }
 }
 
 sourceSets {
     main {
-        java {
-            setSrcDirs(listOf("src/main/java"))
-        }
         resources {
-            setSrcDirs(listOf("src/main/resources", "../plugin/PySrc"))
+            srcDirs("../plugin/PySrc")
+            exclude("**/*.pyc")
+            exclude("*.egg-info")
         }
     }
-    test {
-        java {
-            setSrcDirs(listOf("src/test"))
+}
+
+// Configure IntelliJ Platform Gradle Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-extension.html
+intellijPlatform {
+    pluginVerification {
+        ides {
+            // recommended()
+            // Available versions listed at https://www.jetbrains.com/idea/download/other.html
+            ides(listOf("IC-2022.2", "IC-2023.1", "IC-2024.3"))
         }
     }
 }
 
 tasks {
-    // Set the JVM compatibility versions
-    withType<JavaCompile> {
-        sourceCompatibility = "11"
-        targetCompatibility = "11"
-    }
-
     patchPluginXml {
-        sinceBuild.set("233.11799.241")
-        untilBuild.set("")
-    }
-
-    runPluginVerifier {
-        // Verify against sinceBuild version and current version.
-        ideVersions.set(listOf<String>("233.11799.241", "241.14494.240"))
-    }
-
-    signPlugin {
-        certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-        privateKey.set(System.getenv("PRIVATE_KEY"))
-        password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-    }
-
-    publishPlugin {
-        token.set(System.getenv("PUBLISH_TOKEN"))
+        sinceBuild = "222.3345.118"
+        untilBuild = provider { null }
     }
 }

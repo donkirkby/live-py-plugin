@@ -42,27 +42,26 @@ function copyIndex(indexSrcPath, destFolderPath) {
 
 function copyPyodide(srcPath, destPath) {
     const srcFiles = [
-        'cycler-0.11.0-py3-none-any.whl',
-        'distutils-1.0.0.zip',
-        'fonttools-4.42.1-py3-none-any.whl',
-        'kiwisolver-1.4.4-cp311-cp311-emscripten_3_1_45_wasm32.whl',
-        'matplotlib-3.5.2-cp311-cp311-emscripten_3_1_45_wasm32.whl',
-        'matplotlib_pyodide-0.2.0-py3-none-any.whl',
-        'numpy-1.25.2-cp311-cp311-emscripten_3_1_45_wasm32.whl',
-        'packaging-23.1-py3-none-any.whl',
-        'Pillow-10.0.0-cp311-cp311-emscripten_3_1_45_wasm32.whl',
+        'cycler-0.12.1-py3-none-any.whl',
+        'fonttools-4.51.0-py3-none-any.whl',
+        'kiwisolver-1.4.5-cp312-cp312-pyodide_2024_0_wasm32.whl',
+        'matplotlib-3.5.2-cp312-cp312-pyodide_2024_0_wasm32.whl',
+        'matplotlib_pyodide-0.2.2-py3-none-any.whl',
+        'numpy-1.26.4-cp312-cp312-pyodide_2024_0_wasm32.whl',
+        'packaging-23.2-py3-none-any.whl',
+        'pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl',
         'pyodide.js',
         'pyodide.js.map',
         'pyodide.asm.wasm',
         'pyodide.asm.js',
         'pyodide-lock.json',
-        'pyparsing-3.1.1-py3-none-any.whl',
-        'python_dateutil-2.8.2-py2.py3-none-any.whl',
+        'pyparsing-3.1.2-py3-none-any.whl',
+        'python_dateutil-2.9.0.post0-py2.py3-none-any.whl',
         'python_stdlib.zip',
-        'pytz-2023.3-py2.py3-none-any.whl',
+        'pytz-2024.1-py2.py3-none-any.whl',
         'package.json',
         'six-1.16.0-py2.py3-none-any.whl',
-        'space_tracer-4.11.0-py3-none-any.whl'];
+        'space_tracer-4.12.0-py3-none-any.whl'];
     fs.mkdirSync(destPath);
     for (const fileName of srcFiles) {
         const fileSrcPath = path.join(srcPath, fileName),

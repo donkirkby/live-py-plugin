@@ -95,14 +95,6 @@ public class CanvasReader {
         return value;
     }
 
-    void close() {
-        try {
-            inputReader.close();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     public ArrayList<CanvasCommand> readCommands() {
         ArrayList<CanvasCommand> newCommands = new ArrayList<>();
         CanvasCommand command;

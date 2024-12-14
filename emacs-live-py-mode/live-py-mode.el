@@ -5,7 +5,7 @@
 ;; Author: Don Kirkby http://donkirkby.github.io
 ;; Keywords: live coding
 ;; URL: http://donkirkby.github.io/live-py-plugin/
-;; Version: 4.10.0
+;; Version: 4.12.0
 ;; Package-Requires: ((emacs "24.3"))
 
 ;; This program is distributed under the MIT License
@@ -101,7 +101,7 @@ START, STOP and LEN are required by `after-change-functions' but unused."
 			      (shell-quote-argument live-py-version)
 			      " "
                               live-py-args
-                              " -m space_tracer --live --source_width 0 --traced_file "
+                              " -m space_tracer --live --source_width 0 --millisecond_limit 10000 --traced_file "
                               (shell-quote-argument buffer-file-name)))
 	 (command-line (if live-py-driver
 			   (concat

@@ -146,6 +146,40 @@ return 43
 
     @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
         'dummy.py',
+        '--traced_file', EXAMPLE_SOURCE_PATH,
+        '--traced', 'example_source',
+        EXAMPLE_DRIVER_PATH])
+    def test_driver_with_syntax_error(self, stdin, stdout):
+        source = dedent("""\
+            class A:
+                pass
+            
+            class B
+            """)
+        if sys.version_info < (3, 10):
+            expected_report = dedent("""\
+                class A: |
+                    pass |
+                         |
+                class B  | SyntaxError: invalid syntax
+                """)
+        else:
+            expected_report = dedent("""\
+                class A: |
+                    pass |
+                         |
+                class B  | SyntaxError: expected ':'
+                """)
+        stdin.read.return_value = source
+
+        with pytest.raises(SystemExit):
+            main()
+
+        report = stdout.write.call_args_list[0][0][0]
+        self.assertReportEqual(expected_report, report)
+
+    @patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+        'dummy.py',
         '--source_width', '0',
         '--traced_file', EXAMPLE_SOURCE_PATH,
         '--traced', 'example_source',
@@ -441,13 +475,6 @@ BAR = 'baz'
 ----------------------------------------------------------------------------------- |
 example_driver.py doesn't call the different_source module. Try a different driver. |
 ----------------------------------------------------------------------------------- |
-
-
-
-
-
-
-
 """
         stdin.read.return_value = source
 
@@ -510,13 +537,6 @@ BAR = 'baz'
 ------------------------------------------------ |
 Run config 'example' is bad, try something else. |
 ------------------------------------------------ |
-
-
-
-
-
-
-
 """
         stdin.read.return_value = source
 
@@ -951,8 +971,6 @@ def test_unable_to_read_source(stdin, stdout, argv):
         CALLS_ZIPPED_PATH])
     expected_report = f"""\
 Cannot read Python source from {ZIPPED_EXAMPLE_PATH/'zipped_example.py'}.
-
-
 """
     stdin.read.return_value = ""
 
@@ -1201,15 +1219,7 @@ def foo(n):
     expected_report = '''\
 --------------------------------------------------------------------------- |
 example_driver.py doesn't call example_printing.py. Try a different driver. |
---------------------------------------------------------------------------- |
-
-
-
-
-
-
-
-'''
+--------------------------------------------------------------------------- |'''
 
     with replace_input(code):
         report = TraceRunner().trace_command([

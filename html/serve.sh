@@ -1,1 +1,1 @@
-bash -lc "cd ../docs && rvm use 3.2.2 && bundler exec jekyll serve"
+bash -lc "cd ../docs && rvm use 3.2.3 && bundler exec jekyll serve"

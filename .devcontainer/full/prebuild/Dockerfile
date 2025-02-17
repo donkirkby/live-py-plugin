@@ -14,7 +14,8 @@ RUN cd /opt && \
     chown -R $CODESPACE_USER:$CODESPACE_USER .
 
 
-FROM mcr.microsoft.com/devcontainers/universal:2-linux@sha256:3fc1428ea2feaca384a6f16e0d55d780c621d895ef7a06cb1edc4e2a77078024
+# Find versions and hashes at https://github.com/devcontainers/images/tree/main/src/universal/history
+FROM mcr.microsoft.com/devcontainers/universal:2.9.0-linux@sha256:a8ce3c42dbdca5cafc6af8474de57b358115505a4aca6d3bd964bd2c312da03e
 COPY --from=pyodide /opt/pyodide /opt/pyodide
 RUN python -m pip install tox && \
     mkdir /workspaces && \

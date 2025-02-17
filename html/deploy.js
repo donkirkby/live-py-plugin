@@ -70,6 +70,19 @@ function copyPyodide(srcPath, destPath) {
     }
 }
 
+function isSpaceTracerDeployed() {
+    const distPath = path.resolve('../../pyodide/dist'),
+        d = fs.opendirSync(distPath);
+    let entry;
+    while ((entry = d.readSync()) !== null) {
+        if (entry.name.startsWith('space_tracer-') &&
+            entry.name.endsWith('.whl')) {
+                return true;
+        }
+    }
+    return false;
+}
+
 function rebuildPyodide(pyodideExists) {
     const metaSource = fs.readFileSync(
         'meta.yaml',
@@ -88,12 +101,15 @@ function rebuildPyodide(pyodideExists) {
         throw `Found versions ${aboutVersion} in about.py and ${metaVersion} in meta.yaml`;
     }
     const deployedPython = fs.readFileSync(
-            'deployed-python.txt',
-            {encoding: 'utf-8'}),
+                'deployed-python.txt',
+                {encoding: 'utf-8'}),
         latestPython = execSync(
             'md5sum *.py',
             {cwd: '../plugin/PySrc/space_tracer', encoding: 'utf8'});
-    if (latestPython === deployedPython) {
+    if (pyodideExists && ! isSpaceTracerDeployed()) {
+        console.log('Deploying space tracer in pyodide for the first time.');
+    }
+    else if (latestPython === deployedPython) {
         console.log('Space tracer in pyodide is up to date.');
         return;
     }

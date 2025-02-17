@@ -100,15 +100,16 @@ function rebuildPyodide(pyodideExists) {
     if (aboutVersion !== metaVersion) {
         throw `Found versions ${aboutVersion} in about.py and ${metaVersion} in meta.yaml`;
     }
-    const deployedPython = ! isSpaceTracerDeployed()
-            ? ''
-            : fs.readFileSync(
+    const deployedPython = fs.readFileSync(
                 'deployed-python.txt',
                 {encoding: 'utf-8'}),
         latestPython = execSync(
             'md5sum *.py',
             {cwd: '../plugin/PySrc/space_tracer', encoding: 'utf8'});
-    if (latestPython === deployedPython) {
+    if (pyodideExists && ! isSpaceTracerDeployed()) {
+        console.log('Deploying space tracer in pyodide for the first time.');
+    }
+    else if (latestPython === deployedPython) {
         console.log('Space tracer in pyodide is up to date.');
         return;
     }

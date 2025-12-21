@@ -89,12 +89,13 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (document != null) {
             document.addDocumentListener(this, parent);
         }
-        displayDocument.addDocumentListener(new DocumentListener() {
+        DocumentListener displayListener = new DocumentListener() {
             @Override
             public void documentChanged(@NotNull DocumentEvent event) {
                 synchronizeInlays();
             }
-        });
+        };
+        displayDocument.addDocumentListener(displayListener, parent);
     }
 
     Document getDisplayDocument() {
@@ -516,6 +517,7 @@ public class LiveCodingAnalyst implements DocumentListener {
         var editor = getEditor();
         Project project = editor.getProject();
         if (project != null) {
+            // TODO: After IDEA 2025.3 is old enough, pass in reason "Synchronize inlays".
             DaemonCodeAnalyzer.getInstance(project).restart();
         }
         if (editor.getSettings().isUseSoftWraps()) {

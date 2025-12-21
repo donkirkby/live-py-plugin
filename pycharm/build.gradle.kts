@@ -1,6 +1,8 @@
+import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
+
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.0.1"
+    id("org.jetbrains.intellij.platform") version "2.10.5"
 }
 
 group = "io.github.donkirkby"
@@ -18,14 +20,13 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity("2024.3")
+        intellijIdeaUltimate("2025.3")
 
         // "Pythonid" for ultimate, "PythonCore" for community. Find compatible
         // ultimate versions at https://plugins.jetbrains.com/plugin/631
         // community versions at https://plugins.jetbrains.com/plugin/7322
-        plugin("PythonCore:243.21565.211")
+        plugin("PythonCore:253.28294.334")
 
-        instrumentationTools()
         pluginVerifier()
     }
 }
@@ -46,7 +47,8 @@ intellijPlatform {
         ides {
             // recommended()
             // Available versions listed at https://www.jetbrains.com/idea/download/other.html
-            ides(listOf("IC-2022.2", "IC-2023.1", "IC-2024.3"))
+            create(IntelliJPlatformType.IntellijIdeaCommunity, "2022.2")
+            create(IntelliJPlatformType.IntellijIdea, "2025.3")
         }
     }
 }

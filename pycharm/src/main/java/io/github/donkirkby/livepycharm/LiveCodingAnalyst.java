@@ -294,7 +294,9 @@ public class LiveCodingAnalyst implements DocumentListener {
         if (!isRunning) {
             return;
         }
-        Document document = getMainDocument();
+        final Document document =
+                ApplicationManager.getApplication().runReadAction(
+                        (Computable<Document>) this::getMainDocument);
         if (document != null) {
             schedule(document);
         }

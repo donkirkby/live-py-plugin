@@ -219,12 +219,12 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 canvasCommands = new ArrayList<>();
                 canvasCommands.add(command);
             }
-            if (!canvasCommands.get(0).getName().equals(
+            if (!canvasCommands.getFirst().getName().equals(
                     CanvasCommand.BACKGROUND_COLOR)) {
                 CanvasCommand command = new CanvasCommand();
                 command.setName(CanvasCommand.BACKGROUND_COLOR);
                 command.setOption("fill", "#FFFFFF");
-                canvasCommands.add(0, command);
+                canvasCommands.addFirst(command);
             }
             for (CanvasCommand command : canvasCommands) {
                 String method = command.getName();
@@ -585,6 +585,13 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 mainFileEditor.setState(compositeState.getFirstState());
             }
             if (compositeState.getSecondState() != null) {
+                var editorPosition =
+                        getEditor().getCaretModel().getLogicalPosition();
+                var displayModel = getDisplayEditor().getCaretModel();
+                var displayPosition = displayModel.getLogicalPosition();
+                displayModel.moveToLogicalPosition(new LogicalPosition(
+                        editorPosition.line,
+                        displayPosition.column));
                 displayFileEditor.setState(compositeState.getSecondState());
             }
             if (compositeState.getSplitLayout() != null) {

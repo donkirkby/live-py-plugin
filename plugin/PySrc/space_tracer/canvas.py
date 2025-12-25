@@ -1,4 +1,5 @@
 import typing
+from math import floor
 from operator import itemgetter
 
 
@@ -175,7 +176,7 @@ def build_item_report(item_details: dict, report: list):
     del item_details['deleted']
     report.append(item_details.pop('method_name'))
     for arg in item_details.pop('coords'):
-        report.append("    %r" % int(round(arg)))
+        report.append("    %r" % floor(arg + 0.5))
     for key, value in sorted(item_details.items()):
         value = item_details[key]
         report.append("    %s=%r" % (key, value))

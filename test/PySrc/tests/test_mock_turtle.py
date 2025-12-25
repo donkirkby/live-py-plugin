@@ -185,6 +185,44 @@ create_line
     assert report == expected_report.splitlines()
 
 
+def test_dot_rounding(patched_turtle):
+    """ Draw dot with the rounded ends of a zero-length line. """
+    expected_report = """\
+create_line
+    0
+    0
+    0
+    0
+    fill='black'
+    pensize=1
+create_line
+    1
+    0
+    1
+    0
+    fill='black'
+    pensize=1
+create_line
+    2
+    0
+    2
+    0
+    fill='black'
+    pensize=1"""
+
+    t = MockTurtle()
+    t.up()
+    t.back(0.5)
+    t.dot(1)
+    t.forward(1)
+    t.dot(1)
+    t.forward(1)
+    t.dot(1)
+    report = t.report
+
+    assert '\n'.join(report) == expected_report
+
+
 @pytest.mark.parametrize('image',
                          ['NotAMultipleOf4',
                           'NowAMultipleOf4=',

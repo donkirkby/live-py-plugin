@@ -5,8 +5,9 @@ import pytest
 
 from space_tracer import LivePng, LivePillowImage, LivePainter
 from space_tracer.canvas import Canvas
-from space_tracer.live_image import LiveImageDiffer
+from space_tracer.live_image import LiveImageDiffer, LiveTextImage
 from space_tracer.mock_turtle import MockTurtle
+from textwrap import dedent
 
 # noinspection PyUnresolvedReferences
 from test_mock_turtle import patched_turtle
@@ -223,21 +224,21 @@ def test_live_png_as_painter(tmp_path):
 # noinspection DuplicatedCode
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_differ_compare():
-    dark_blue = (0, 0, 150, 255)
-    medium_blue = (0, 0, 200, 255)
-    bright_blue = (0, 0, 250, 255)
-    expected_dark_diff = (255, 0, (150+200)//5, 255)
-    expected_match = (0, 0, 200, 255//3)
-    expected_bright_diff = (255, 255, (250+200)//5, 255)
+    dark_green = (0, 150, 0, 255)
+    medium_green = (0, 200, 0, 255)
+    bright_green = (0, 250, 0, 255)
+    expected_dark_diff = (0, (150+200)//5, 255, 255)
+    expected_match = (0, 200, 0, 255//3)
+    expected_bright_diff = (255, (250+200)//5, 0, 255)
 
     image1 = LivePillowImage(Image.new('RGBA', (10, 20)))
-    image1.set_pixel((5, 10), dark_blue)
-    image1.set_pixel((6, 10), medium_blue)
-    image1.set_pixel((7, 10), bright_blue)
+    image1.set_pixel((5, 10), dark_green)
+    image1.set_pixel((6, 10), medium_green)
+    image1.set_pixel((7, 10), bright_green)
     image2 = LivePillowImage(Image.new('RGBA', (10, 20)))
-    image2.set_pixel((5, 10), medium_blue)
-    image2.set_pixel((6, 10), medium_blue)
-    image2.set_pixel((7, 10), medium_blue)
+    image2.set_pixel((5, 10), medium_green)
+    image2.set_pixel((6, 10), medium_green)
+    image2.set_pixel((7, 10), medium_green)
 
     differ = LiveImageDiffer()
 
@@ -504,8 +505,8 @@ def test_differ_compare_two_sets(tmp_path):
 def test_differ_compare_two_sizes():
     blue = (0, 0, 255, 255)
     green = (0, 255, 0, 255)
-    missing_blue = (255, 255, 51, 255)
-    missing_green = (255, 51, 0, 255)
+    missing_blue = (255, 0, 51, 255)
+    missing_green = (0, 51, 255, 255)
     image1 = LivePillowImage(Image.new('RGBA', (2, 3)))
     image1.set_pixel((0, 2), blue)
     image2 = LivePillowImage(Image.new('RGBA', (3, 2)))
@@ -670,6 +671,64 @@ def test_convert_to_painter_without_pillow(patched_turtle):
     image = LivePng(image_data)
 
     expected_error = (r'Pillow is not installed\. Install it, or '
-                      r'override LivePng\.convert_to_painter\(\)\.')
+                      r'override LiveImage\.convert_to_painter\(\)\.')
     with pytest.raises(RuntimeError, match=expected_error):
         image.convert_to_painter()
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_live_text_image():
+    image = Image.new('RGB', (10, 5))
+    image.putpixel((1, 3), 0xffffff)
+    image.putpixel((5, 3), 0xffffff)
+    expected_text = dedent("""\
+        000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000ffffff000000000000000000ffffff000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000""")
+
+    live_pillow_image = LivePillowImage(image)
+    live_text_image = LiveTextImage(live_pillow_image)
+
+    text = live_text_image.convert_to_text()
+
+    assert text == expected_text
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_live_text_image_parse():
+    source_text = dedent("""\
+        000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000ffffff000000000000000000ffffff000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000""")
+
+    live_text_image = LiveTextImage(source_text)
+
+    text = live_text_image.convert_to_text()
+
+    assert text == source_text
+
+
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_live_text_image_parse_padded():
+    source_text = dedent("""\
+        000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000ffffff000000000000000000ffffff000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000""")
+    expected_text = dedent("""\
+        000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000
+        000000ffffff000000000000000000ffffff000000000000000000000000
+        000000000000000000000000000000000000000000000000000000000000""")
+
+    live_text_image = LiveTextImage(source_text)
+
+    text = live_text_image.convert_to_text()
+
+    assert text == expected_text

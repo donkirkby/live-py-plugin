@@ -1,3 +1,9 @@
+from collections import defaultdict
+from itertools import count
+from math import sqrt
+
+from io import BytesIO
+
 import io
 import os
 import re
@@ -56,11 +62,8 @@ class LiveImage(ABC):
         """
         if open_image is None:
             raise RuntimeError('Pillow is not installed. Install it, or '
-                               'override LivePng.convert_to_painter().')
-        png_file = io.BytesIO(self.convert_to_png())
-        image = open_image(png_file)
-        image.load()
-        return LivePillowImage(image)
+                               'override LiveImage.convert_to_painter().')
+        return LivePillowImage.from_live_image(self)
 
     def save(self, file_path: Path) -> Path:
         """ Save the image to a file.
@@ -91,6 +94,7 @@ class LiveImage(ABC):
 
 
 class LivePainter(LiveImage):
+    """ Adds pixel reading and writing to LiveImage. """
     @abstractmethod
     def set_pixel(self, position: LiveImage.Position, fill: LiveImage.Fill):
         """ Set the colour of a pixel.
@@ -134,6 +138,13 @@ class LivePng(LiveImage):
 
 
 class LivePillowImage(LivePainter):
+    @classmethod
+    def from_live_image(cls, live_image: LiveImage) -> 'LivePillowImage':
+        png_file = io.BytesIO(live_image.convert_to_png())
+        image = open_image(png_file)
+        image.load()
+        return LivePillowImage(image)
+
     def __init__(self, image: Image.Image):
         """ Initialize from a Pillow Image.
 
@@ -166,6 +177,7 @@ class LivePillowImage(LivePainter):
 
 class LiveFigure(LiveImage):
     def __init__(self, figure):
+        """ Initialize from a matplotlib Figure object. """
         super().__init__()
         self.figure = figure
 
@@ -175,6 +187,35 @@ class LiveFigure(LiveImage):
 
         return data.getvalue()
 
+
+class LiveTextImage(LivePillowImage):
+    def __init__(self, source: typing.Union[str, LiveImage]) -> None:
+        if isinstance(source, LiveImage):
+            live_image = LivePillowImage.from_live_image(source)
+            pillow_image = live_image.image
+        else:
+            lines = source.splitlines()
+            height = len(lines)
+            width = max(len(line) for line in lines) // 6
+            pillow_image = Image.new('RGB', (width, height))
+            pixels_text = ([line[x*6 + channel*2:x*6 + (channel+1)*2]
+                            for channel in range(3)]
+                           for line in lines
+                           for x in range(width))
+            pixel_data = [tuple(channel_text and int(channel_text, 16) or 0
+                                for channel_text in pixel_text)
+                          for pixel_text in pixels_text]
+            pillow_image.putdata(pixel_data)  # type: ignore
+        super().__init__(pillow_image)
+
+    def convert_to_text(self) -> str:
+        image = self.image
+        width = image.width
+        height = image.height
+        raw_text = ''.join(f'{n:02x}' for p in image.getdata() for n in p)
+        lines = (raw_text[row_num*width*6:(row_num+1)*width*6]
+                 for row_num in range(height))
+        return '\n'.join(lines)
 
 class LiveImageDiffer:
     def __init__(self,
@@ -224,6 +265,11 @@ class LiveImageDiffer:
         self.blur_radius = 1
         self.diff_count = 0  # number of mismatched pixels
         self.max_diff = 0  # maximum difference seen between pixel values
+        self.min_diff_count = 100  # Add surrounding highlights if fewer diffs.
+
+        # Capped at min_diff_count.
+        self.darker_positions: typing.List[typing.Tuple[int, int]] = []
+        self.lighter_positions: typing.List[typing.Tuple[int, int]] = []
 
         # for all calls to compare
         self.file_prefixes = set()  # type: typing.Set[str]
@@ -355,8 +401,12 @@ class LiveImageDiffer:
                     else:
                         is_missing = True
                         fill2 = default_colour
-                    diff_fill = self.compare_pixel(fill1, fill2, is_missing)
+                    diff_fill = self.compare_pixel(fill1,
+                                                   fill2,
+                                                   is_missing,
+                                                   position)
                     self.diff.set_pixel(position, diff_fill)
+            self.add_highlights()
             self.display_diff(painter1, painter2)
             if self.diff_count and file_prefix is not None:
                 self.write_image(actual, file_prefix, 'actual')
@@ -441,7 +491,8 @@ class LiveImageDiffer:
     def compare_pixel(self,
                       actual_pixel: LiveImage.Fill,
                       expected_pixel: LiveImage.Fill,
-                      is_missing: bool = False) -> LiveImage.Fill:
+                      is_missing: bool,
+                      position: typing.Tuple[int, int]) -> LiveImage.Fill:
         ar, ag, ab, *ao = actual_pixel
         er, eg, eb, *eo = expected_pixel
         if ao:
@@ -471,14 +522,19 @@ class LiveImageDiffer:
 
             actual_dist = sum(a*a for a in actual_norm)
             expected_dist = sum(b*b for b in expected_norm)
-            dr = 255
             if actual_dist <= expected_dist:
-                # actual is darker, highlight in red.
-                dg = (ag + eg) // 5
+                # actual is darker, highlight in blue.
+                dr = (ar + er) // 5
+                db = 255
+                if self.diff_count < self.min_diff_count:
+                    self.darker_positions.append(position)
             else:
-                # actual is brighter, highlight in yellow.
-                dg = 255
-            db = (ab + eb) // 5
+                # actual is brighter, highlight in red.
+                dr = 255
+                db = (ab + eb) // 5
+                if self.diff_count < self.min_diff_count:
+                    self.lighter_positions.append(position)
+            dg = (ag + eg) // 5
 
             # Opacity
             da = (aa + ea) // 2
@@ -489,6 +545,50 @@ class LiveImageDiffer:
             # Opacity
             da = aa // 3
         return dr, dg, db, da
+
+    def add_highlights(self):
+        if self.diff_count == 0 or self.diff_count >= self.min_diff_count:
+            return
+        lighter_bins = defaultdict(list)
+        darker_bins = defaultdict(list)
+        equal_bins = defaultdict(list)
+        diff_image = self.diff
+        width, height = diff_image.get_size()
+        if not self.darker_positions:
+            self.darker_positions.append((width*2, height*2))
+        if not self.lighter_positions:
+            self.lighter_positions.append((width*2, height*2))
+        for x in range(width):
+            for y in range(height):
+                min_lighter_dist = round(min(sqrt((x - x0)**2 + (y - y0)**2)
+                                             for x0, y0 in self.lighter_positions))
+                min_darker_dist = round(min(sqrt((x - x0)**2 + (y - y0)**2)
+                                            for x0, y0 in self.darker_positions))
+                if min_lighter_dist < min_darker_dist:
+                    lighter_bins[min_lighter_dist].append((x, y))
+                elif min_darker_dist < min_lighter_dist:
+                    darker_bins[min_darker_dist].append((x, y))
+                else:
+                    equal_bins[min_darker_dist].append((x, y))
+
+        skipped_count = 0
+        marked_count = 0
+        pixel_count = width * height
+        for distance in count():
+            for distance_bin, colour in ((lighter_bins[distance], (255, 0, 0, 255)),
+                                         (darker_bins[distance], (0, 0, 255, 255)),
+                                         (equal_bins[distance], (255, 0, 255, 255))):
+                distance_count = len(distance_bin)
+                if distance > 0 and skipped_count < self.min_diff_count:
+                    skipped_count += distance_count
+                else:
+                    marked_count += distance_count
+                    if distance > 0:
+                        for position in distance_bin:
+                            diff_image.set_pixel(position, colour)
+            if (marked_count >= self.min_diff_count or
+                    (marked_count + skipped_count) >= pixel_count):
+                break
 
     def display_diff(self, actual: LivePainter, expected: LivePainter):
         if not self.is_displayed:

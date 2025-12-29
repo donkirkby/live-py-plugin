@@ -22,39 +22,146 @@ function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
         diffContext = diffCanvas.getContext('2d'),
         liveData = liveContext.getImageData(0, 0, width, height),
         goalData = goalContext.getImageData(0, 0, width, height),
-        diffData = diffContext.createImageData(width, height);
+        diffData = diffContext.createImageData(width, height),
+        darkerPositions = [],
+        lighterPositions = [],
+        minDiffCount = 100; // Add surrounding highlights if fewer diffs.
     let diffCount = 0,
         foregroundCount = 0;
     for (let x=0; x < width; x++) {
         for (let y=0; y < height; y++) {
             const livePixel = slicePixel(liveData, x, y),
                 goalPixel = slicePixel(goalData, x, y),
-                [isMatch, diffPixel] = comparePixel(livePixel, goalPixel),
-                isLiveBackground = comparePixel(livePixel, backgroundPixel)[0],
-                isGoalBackground = comparePixel(goalPixel, backgroundPixel)[0],
+                [diffSign, diffPixel] = comparePixel(livePixel, goalPixel),
+                isLiveBackground = comparePixel(livePixel, backgroundPixel)[0] === 0,
+                isGoalBackground = comparePixel(goalPixel, backgroundPixel)[0] === 0,
                 start = pixelStart(diffData, x, y);
             if ( ! (isLiveBackground && isGoalBackground)) {
                 foregroundCount += 1;
             }
-            if ( ! isMatch) {
-                diffCount += 1
+            if (diffSign !== 0) {
+                diffCount += 1;
+                if (diffCount > minDiffCount) {
+                    // Stop tracking positions.
+                }
+                else if (diffSign < 0) {
+                    lighterPositions.push([x, y]);
+                }
+                else {
+                    darkerPositions.push([x, y]);
+                }
             }
             diffData.data.set(diffPixel, start);
         }
     }
+    addHighlights(minDiffCount, diffData, lighterPositions, darkerPositions);
     diffContext.putImageData(diffData, 0, 0);
     return 100*(1 - (diffCount / foregroundCount));
 }
 
+/** Draw an outline around changed pixels, if there aren't many.
+ * @param minDiffCount minimum number of pixels that must be highlighted.
+ * @param imageData diff display
+ * @param lighterPositions x and y values for pixels where live canvas is
+ * lighter than expected.
+ * @param darkerPositions x and y values for pixels where live canvas is
+ * darker than expected.
+ */
+function addHighlights(
+        minDiffCount,
+        imageData,
+        lighterPositions,
+        darkerPositions) {
+    const diffCount = lighterPositions.length + darkerPositions.length;
+    if (diffCount === 0 || diffCount >= minDiffCount) {
+        return;
+    }
+    const lighterBins = [],
+        darkerBins = [],
+        equalBins = [],
+        width = imageData.width,
+        height = imageData.height,
+        maxDist = Math.ceil(Math.sqrt(8 * minDiffCount / Math.pi)) + 1;
+
+    // Add sentinel values to empty arrays.
+    if (darkerPositions.length === 0) {
+        darkerPositions.push([width*2, height*2])
+    }
+    if (lighterPositions.length === 0) {
+        lighterPositions.push([width*2, height*2])
+    }
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
+            const lighterDists = lighterPositions.map(
+                    ([x0, y0]) => Math.sqrt((x - x0)**2 + (y - y0)**2)),
+                darkerDists = darkerPositions.map(
+                    ([x0, y0]) => Math.sqrt((x - x0)**2 + (y - y0)**2)),
+                minLighterDist = Math.round(Math.min(...lighterDists)),
+                minDarkerDist = Math.round(Math.min(...darkerDists)),
+                minDist = Math.min(minLighterDist, minDarkerDist),
+                targetBins = minLighterDist < minDarkerDist
+                    ? lighterBins
+                    : minDarkerDist < minLighterDist
+                    ? darkerBins
+                    : equalBins;
+            if (minDist > maxDist) {
+                continue;
+            }
+            while (targetBins.length <= minDist) {
+                targetBins.push([]);
+            }
+            targetBins[minDist].push([x, y]);
+        }
+    }
+
+    const red = [255, 0, 0, 255],
+        blue = [0, 0, 255, 255],
+        purple = [255, 0, 255, 255];
+    let skippedCount = 0,
+        markedCount = 0,
+        pixelCount = width * height;
+    for (let distance = 0;
+            markedCount < minDiffCount
+            && (markedCount + skippedCount < pixelCount);
+            distance++) {
+        for (const [distanceBin, colour] of [
+                [lighterBins[distance], red],
+                [darkerBins[distance], blue],
+                [equalBins[distance], purple]]) {
+            if (distanceBin === undefined) {
+                continue;
+            }
+            const distanceCount = distanceBin.length;
+            if (distance > 0 && skippedCount < minDiffCount) {
+                skippedCount += distanceCount;
+            }
+            else {
+                markedCount += distanceCount;
+                if (distance > 0) {
+                    for (const position of distanceBin) {
+                        const startOffset = pixelStart(imageData, ...position);
+                        imageData.data.set(colour, startOffset);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 /** Compare two pixels
  *
  * If the two colours are within the tolerance, choose a faded version of the
- * colour, otherwise add red to highlight the difference.
+ * colour, otherwise add red or blue to highlight the difference.
  * @param colour1 first colour to compare
  * @param colour2 other colour to compare to
  * @param [tolerance] maximum difference between r, g, b components
  *  of the two colours.
- * @return Array [isMatch, [r, g, b, alpha]]
+ * @return Array [diff, [r, g, b, alpha]] where diff is -1 when colour1 is
+ *  darker than colour2, +1 when colour1 is lighter, and 0 when they match. The
+ *  returned colour has a lower opacity when colour1 and colour2 match. It has
+ *  maximum red if colour1 is lighter than colour2 or maximum blue if it's
+ *  darker.
  */
 function comparePixel(colour1, colour2, tolerance) {
     if (tolerance === undefined) {
@@ -80,21 +187,23 @@ function comparePixel(colour1, colour2, tolerance) {
         const actual_dist = actual_norm.reduce((acc, v) => (acc + v*v), 0),
             expected_dist = expected_norm.reduce((acc, v) => (acc + v*v), 0);
 
-        const dr = 255,
-            dg = (actual_dist <= expected_dist)
-                ? Math.floor((g1+g2) / 5) // actual is darker, highlight in red.
-                : 255, // actual is brighter, highlight in yellow.
-            db = Math.floor((b1+b2) / 5);
+        const dr = (actual_dist <= expected_dist)
+                ? Math.floor((r1+r2) / 5) // actual is darker, highlight in blue.
+                : 255, // actual is brighter, highlight in red.
+            dg = Math.floor((g1+g2) / 5),
+            db = (actual_dist <= expected_dist)
+                ? 255 // actual is darker, highlight in blue.
+                : Math.floor((b1+b2) / 5); // actual is brighter, highlight in red.
 
         // Opacity
         const da = Math.floor((a1 + a2)/2);
 
         return [
-            false,
+            Math.sign(actual_dist - expected_dist),
             [dr, dg, db, da]
         ];
     }
-    return [true, [r1, g1, b1, Math.floor((a1 + a2)/6)]];
+    return [0, [r1, g1, b1, Math.floor((a1 + a2)/6)]];
 }
 
 function pixelStart(imageData, x, y) {
@@ -236,7 +345,9 @@ class CodeSample extends Component {
         if (this.updateTimer !== undefined) {
             clearInterval(this.updateTimer);
         }
-        let codeRunner = this.state.isPythonLoaded ? window.analyze : undefined,
+        let codeRunner = this.state.isPythonLoaded
+                ? window.analyzeLivePython
+                : undefined,
             canvas = this.canvasRef.current,
             canvasSize,
             isResized = false,

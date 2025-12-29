@@ -169,7 +169,7 @@ Did the live coding display make sense? Did anything not work in your browser?
 Was the page slow to load?
 
 If anything was broken, please create an [issue]. For any other feedback, please
-send me a message on [twitter] or [e-mail]. I'd love it if you told your friends
+send me a message on [Mastodon] or [e-mail]. I'd love it if you told your friends
 to try it.
 
 # Write your own
@@ -178,5 +178,5 @@ own tutorials. Look at the existing tutorials for examples of all the features,
 or read about them in the `CONTRIBUTING.md` file.
 
 [issue]: https://github.com/donkirkby/live-py-plugin/issues
-[twitter]: https://twitter.com/donkirkby
+[Mastodon]: https://hachyderm.io/@donkirkby
 [e-mail]: mailto:donkirkby@gmail.com

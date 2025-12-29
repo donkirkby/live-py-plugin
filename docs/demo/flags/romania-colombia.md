@@ -15,7 +15,8 @@ vertical bars. Then change it to draw the Colombian flag shown in the goal
 canvas below, with the same colours in a different order and in horizontal bars.
 You can experiment on your own, or read the rest of the tutorial to learn the
 concepts you need. The progress bar shows how close you are to the goal, and the
-canvas differences, below right, highlight the differences in red.
+canvas differences, below right, highlight the differences in red (too light) or
+blue (too dark).
 
 If you really mess up the script, you can click the reset button to go back to
 the start. If you want more challenge, try the next tutorial with the flags of

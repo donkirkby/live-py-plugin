@@ -1,8 +1,6 @@
 from collections import defaultdict
 from itertools import count
-from math import sqrt
-
-from io import BytesIO
+from math import sqrt, ceil, pi
 
 import io
 import os
@@ -187,35 +185,6 @@ class LiveFigure(LiveImage):
 
         return data.getvalue()
 
-
-class LiveTextImage(LivePillowImage):
-    def __init__(self, source: typing.Union[str, LiveImage]) -> None:
-        if isinstance(source, LiveImage):
-            live_image = LivePillowImage.from_live_image(source)
-            pillow_image = live_image.image
-        else:
-            lines = source.splitlines()
-            height = len(lines)
-            width = max(len(line) for line in lines) // 6
-            pillow_image = Image.new('RGB', (width, height))
-            pixels_text = ([line[x*6 + channel*2:x*6 + (channel+1)*2]
-                            for channel in range(3)]
-                           for line in lines
-                           for x in range(width))
-            pixel_data = [tuple(channel_text and int(channel_text, 16) or 0
-                                for channel_text in pixel_text)
-                          for pixel_text in pixels_text]
-            pillow_image.putdata(pixel_data)  # type: ignore
-        super().__init__(pillow_image)
-
-    def convert_to_text(self) -> str:
-        image = self.image
-        width = image.width
-        height = image.height
-        raw_text = ''.join(f'{n:02x}' for p in image.getdata() for n in p)
-        lines = (raw_text[row_num*width*6:(row_num+1)*width*6]
-                 for row_num in range(height))
-        return '\n'.join(lines)
 
 class LiveImageDiffer:
     def __init__(self,
@@ -547,6 +516,7 @@ class LiveImageDiffer:
         return dr, dg, db, da
 
     def add_highlights(self):
+        """ Draw an outline around changed pixels, if there aren't many. """
         if self.diff_count == 0 or self.diff_count >= self.min_diff_count:
             return
         lighter_bins = defaultdict(list)
@@ -554,17 +524,23 @@ class LiveImageDiffer:
         equal_bins = defaultdict(list)
         diff_image = self.diff
         width, height = diff_image.get_size()
+        max_dist = ceil(sqrt(8 * self.min_diff_count / pi)) + 1
+
+        # Add sentinel values to empty lists
         if not self.darker_positions:
             self.darker_positions.append((width*2, height*2))
         if not self.lighter_positions:
             self.lighter_positions.append((width*2, height*2))
+
         for x in range(width):
             for y in range(height):
                 min_lighter_dist = round(min(sqrt((x - x0)**2 + (y - y0)**2)
                                              for x0, y0 in self.lighter_positions))
                 min_darker_dist = round(min(sqrt((x - x0)**2 + (y - y0)**2)
                                             for x0, y0 in self.darker_positions))
-                if min_lighter_dist < min_darker_dist:
+                if min(min_lighter_dist, min_darker_dist) > max_dist:
+                    pass
+                elif min_lighter_dist < min_darker_dist:
                     lighter_bins[min_lighter_dist].append((x, y))
                 elif min_darker_dist < min_lighter_dist:
                     darker_bins[min_darker_dist].append((x, y))
@@ -611,15 +587,15 @@ class LiveImageDiffer:
         t.right(90)
         t.forward(text_height)
         t.write('Actual', font=font)
-        actual.display(t.pos())
+        actual.display(t.pos())  # type: ignore
         t.forward(actual_height)
         t.forward(text_height)
         t.write('Diff ({} pixels)'.format(self.diff_count), font=font)
-        self.diff.display(t.pos())
+        self.diff.display(t.pos())  # type: ignore
         t.forward(diff_height)
         t.forward(text_height)
         t.write('Expected', font=font)
-        expected.display(t.pos())
+        expected.display(t.pos())  # type: ignore
 
 
 def monkey_patch_pyglet(canvas):

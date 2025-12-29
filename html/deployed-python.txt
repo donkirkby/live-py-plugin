@@ -3,8 +3,8 @@ e1cd3a9f4ad04f52737d4803847789fc  __init__.py
 322217c9c24c4485f7ad541541f28b91  about.py
 c334ad0e0634569b92d1294db2cde688  canvas.py
 8c2d8d980e5e438880f55baa180184f2  code_tracer.py
-b52ba25f1fff70d25db7a86787148eef  live_image.py
-915d45c797ef002353c47e68c8b50025  main.py
+8d0ffab4eef170514957899611b27b7f  live_image.py
+cb904720890f2ee1c40570dd7b1fce9a  main.py
 c80270af2825f8fed7f258d3ffa6a9f7  mock_turtle.py
 48cd5694fa2ede74da3627c56886f335  module_importers.py
 be79efa8724e483bd480ce1034accf8c  report_builder.py

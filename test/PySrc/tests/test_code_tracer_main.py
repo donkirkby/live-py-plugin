@@ -10,7 +10,7 @@ import pytest
 from unittest.mock import DEFAULT, patch
 
 from space_tracer import main
-from space_tracer.main import replace_input, TraceRunner, analyze
+from space_tracer.main import replace_input, TraceRunner, analyze_live_python
 from test_report_builder import ReportTestCase
 
 EXAMPLE_DRIVER_PATH = os.path.join(os.path.dirname(__file__),
@@ -1313,7 +1313,7 @@ t.forward(x)
 x = 100
 """
 
-    report, stdout = analyze(code)
+    report, stdout = analyze_live_python(code)
 
     assert report == expected_report
     assert stdout == ''
@@ -1340,7 +1340,7 @@ end_canvas
 .
 """
 
-    report, stdout = analyze(code, canvas_size)
+    report, stdout = analyze_live_python(code, canvas_size)
 
     assert report == expected_report
     assert stdout == ''
@@ -1369,7 +1369,7 @@ x = 1
 
 x = 1"""
 
-    report, stdout = analyze(code)
+    report, stdout = analyze_live_python(code)
 
     assert report == expected_report
     assert stdout == ''

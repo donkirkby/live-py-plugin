@@ -195,7 +195,7 @@ def main():
         exit(return_code)
 
 
-def analyze(source_code, canvas_size=None):
+def analyze_live_python(source_code, canvas_size=None):
     """ Trace the source code for display in the browser.
 
     :param source_code: Source code to trace.
@@ -228,7 +228,7 @@ def analyze(source_code, canvas_size=None):
 
 
 def web_main():
-    window.analyze = analyze
+    window.analyzeLivePython = analyze_live_python
 
 
 class StandardFiles(dict):

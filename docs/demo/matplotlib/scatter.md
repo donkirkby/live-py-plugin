@@ -16,7 +16,7 @@ through yellow and green at -90°, cyan at 0°, blue then purple at 90°, and
 finally back to red at 180°. You can experiment on your own, or read the rest of
 the tutorial to learn the concepts you need. The progress bar shows how close
 you are to the goal, and the canvas differences, below right, highlight the
-differences in red.
+differences in red (too light) or blue (too dark).
 
 If you really mess up the script, you can click the reset button to go back to
 the start.

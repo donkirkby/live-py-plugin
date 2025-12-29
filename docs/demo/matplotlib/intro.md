@@ -45,7 +45,7 @@ That example was very short, because we just used all the default settings. The
 next example should look exactly the same, but it now has all those settings
 given as explicit values. Can you adjust each setting to match the goal plot
 below? The two plots are compared on the bottom right, with differences
-highlighted in red.
+highlighted in red (lighter than goal) or blue (darker than goal).
 
 <details><summary>Hint</summary>
 The line widths in the goal plot are whole numbers.
@@ -113,7 +113,7 @@ the axes. Can you adjust the limits to match the goal plot?
     plt.plot(t, cos_t, color='orange', linewidth=2.5)
     
     plt.xlim(t.min(), t.max())
-    plt.ylim(sin_t.min()*1.5, sin_t.max()*1.5)
+    plt.ylim(-1.5, 1.5)
     
     plt.show()
 
@@ -542,11 +542,13 @@ up out of the paper, perpendicular to the X and Y axes.
     
     plt.show()
 
-Now you've seen some basic features of matplotlib, you might find the
-[matplotlib tutorials] a good place to learn more. You could also try [Seaborn]
-to add more plot types and styles. This tutorial was inspired by the work of
-[Nicolas P. Rougier].
+Now you've seen some basic features of matplotlib, you could try my [fill] and
+[scatter] tutorials. The [matplotlib project's tutorials] are another a good
+place to learn more. You could also try [Seaborn] to add more plot types and
+styles. This tutorial was inspired by the work of [Nicolas P. Rougier].
 
-[matplotlib tutorials]: https://matplotlib.org/stable/tutorials/index
+[fill]: fill.md
+[scatter]: scatter.md
+[matplotlib project's tutorials]: https://matplotlib.org/stable/tutorials/index
 [Seaborn]: https://seaborn.pydata.org/tutorial.html
 [Nicolas P. Rougier]: https://github.com/rougier/matplotlib-tutorial

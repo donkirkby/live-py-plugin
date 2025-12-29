@@ -5,7 +5,7 @@ import pytest
 
 from space_tracer import LivePng, LivePillowImage, LivePainter
 from space_tracer.canvas import Canvas
-from space_tracer.live_image import LiveImageDiffer, LiveTextImage
+from space_tracer.live_image import LiveImageDiffer
 from space_tracer.mock_turtle import MockTurtle
 from textwrap import dedent
 
@@ -674,61 +674,3 @@ def test_convert_to_painter_without_pillow(patched_turtle):
                       r'override LiveImage\.convert_to_painter\(\)\.')
     with pytest.raises(RuntimeError, match=expected_error):
         image.convert_to_painter()
-
-
-@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
-def test_live_text_image():
-    image = Image.new('RGB', (10, 5))
-    image.putpixel((1, 3), 0xffffff)
-    image.putpixel((5, 3), 0xffffff)
-    expected_text = dedent("""\
-        000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000ffffff000000000000000000ffffff000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000""")
-
-    live_pillow_image = LivePillowImage(image)
-    live_text_image = LiveTextImage(live_pillow_image)
-
-    text = live_text_image.convert_to_text()
-
-    assert text == expected_text
-
-
-@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
-def test_live_text_image_parse():
-    source_text = dedent("""\
-        000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000ffffff000000000000000000ffffff000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000""")
-
-    live_text_image = LiveTextImage(source_text)
-
-    text = live_text_image.convert_to_text()
-
-    assert text == source_text
-
-
-@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
-def test_live_text_image_parse_padded():
-    source_text = dedent("""\
-        000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000ffffff000000000000000000ffffff000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000""")
-    expected_text = dedent("""\
-        000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000
-        000000ffffff000000000000000000ffffff000000000000000000000000
-        000000000000000000000000000000000000000000000000000000000000""")
-
-    live_text_image = LiveTextImage(source_text)
-
-    text = live_text_image.convert_to_text()
-
-    assert text == expected_text

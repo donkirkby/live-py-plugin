@@ -45,10 +45,10 @@ function compareCanvases(liveCanvas, goalCanvas, diffCanvas, backgroundColour) {
                     // Stop tracking positions.
                 }
                 else if (diffSign < 0) {
-                    lighterPositions.push([x, y]);
+                    darkerPositions.push([x, y]);
                 }
                 else {
-                    darkerPositions.push([x, y]);
+                    lighterPositions.push([x, y]);
                 }
             }
             diffData.data.set(diffPixel, start);
@@ -180,8 +180,8 @@ function comparePixel(colour1, colour2, tolerance) {
             expected_norm = [r2, g2, b2, a2];
 
         // reverse alpha, for consistent brightness comparison
-        actual_norm[-1] = 255 - actual_norm[-1]
-        expected_norm[-1] = 255 - expected_norm[-1]
+        actual_norm[3] = 255 - actual_norm[3]
+        expected_norm[3] = 255 - expected_norm[3]
 
         // sum squares to calculate distance squared from origin
         const actual_dist = actual_norm.reduce((acc, v) => (acc + v*v), 0),

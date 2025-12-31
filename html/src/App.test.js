@@ -39,9 +39,9 @@ it('compares two canvases', () => {
       0, 0,
       400, 300);
   expect(Array.from(slicePixel(diffData, 50, 50))).toEqual(
-      [255, 0, Math.floor((150+200)/5), 255]); // dark diff
+      [0, 0, 255, 255]); // dark diff
   expect(Array.from(slicePixel(diffData, 150, 50))).toEqual(
       [0, 0, 198, Math.floor(255/3)]); // medium match: why 198 instead of 200?
   expect(Array.from(slicePixel(diffData, 250, 50))).toEqual(
-      [255, 255, Math.floor((250+200)/5), 255]); // bright diff
+      [255, 0, Math.floor((250+200)/5), 255]); // bright diff
 });

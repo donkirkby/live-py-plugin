@@ -352,6 +352,7 @@ class LiveImageDiffer:
         width = max(width1, width2)
         height = max(height1, height2)
         self.diff_count = 0
+        self.max_diff = 0
         self.start_diff((width, height))
         assert self.diff is not None
         try:

@@ -256,7 +256,7 @@ class StandardFiles(dict):
             file_key = (filename, mode)
             file = self.new_files.get(file_key)
             if file is None:
-                file = argparse.FileType(mode)(filename)
+                file = open(filename, mode)
                 self.new_files[file_key] = file
         super().__setitem__(key, file)
 

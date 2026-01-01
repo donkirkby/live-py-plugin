@@ -49,6 +49,9 @@ class Canvas(object):
             copy_details = item_details.copy()
             method_name = item_details['method_name']
             coords = list(item_details['coords'])
+            if coords and coords[0] == 'delete':
+                # Garbage collection that we can ignore.
+                continue
             if method_name == 'create_polygon':
                 copy_details['outline'] = ''
                 try:

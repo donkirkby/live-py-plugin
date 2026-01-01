@@ -187,7 +187,7 @@ class Tracer(NodeTransformer):
         elif isinstance(slice_node, Tuple):
             # Python 3.9 replaced ExtSlice with a Tuple.
             index_to_get = None
-            subscripts = [Subscript(slice=element)
+            subscripts = [Subscript(value=subscript_node, slice=element)
                           for element in slice_node.elts]
             format_text = ', '.join(self._wrap_slice(subscript)[0]
                                     for subscript in subscripts)
@@ -308,9 +308,7 @@ class Tracer(NodeTransformer):
                 isinstance(targets[0], Tuple)):
             existing_node.value = Call(func=Name(id='tuple', ctx=Load()),
                                        args=[existing_node.value],
-                                       keywords=[],
-                                       starargs=None,
-                                       kwargs=None)
+                                       keywords=[])
         existing_node.value = self._create_bare_context_call(
             'set_assignment_value',
             [existing_node.value])
@@ -486,9 +484,7 @@ class Tracer(NodeTransformer):
         try_body = new_node.body
         globals_call = Call(func=Name(id='globals', ctx=Load()),
                             args=[],
-                            keywords=[],
-                            starargs=None,
-                            kwargs=None)
+                            keywords=[])
         global_context = Subscript(value=globals_call,
                                    slice=Index(value=Constant(CONTEXT_NAME)),
                                    ctx=Load())
@@ -496,9 +492,7 @@ class Tracer(NodeTransformer):
                                                attr='start_frame',
                                                ctx=Load()),
                                 args=args,
-                                keywords=[],
-                                starargs=None,
-                                kwargs=None)
+                                keywords=[])
         context_assign = Assign(targets=[Name(id=CONTEXT_NAME, ctx=Store())],
                                 value=start_frame_call)
         new_node.body = [context_assign]
@@ -774,9 +768,7 @@ class Tracer(NodeTransformer):
                          ctx=Load())
         return Call(func=func,
                     args=args,
-                    keywords=[],
-                    starargs=None,
-                    kwargs=None)
+                    keywords=[])
 
 
 class LineNumberCleaner(NodeTransformer):

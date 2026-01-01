@@ -12,7 +12,9 @@ from .canvas import Canvas
 
 try:
     import tkinter as tk
+    has_tk = True
 except ImportError:
+    has_tk = False
     tkinter_name = 'tkinter'
     tk = sys.modules[tkinter_name] = types.ModuleType(tkinter_name)
 
@@ -51,7 +53,9 @@ class MockTurtle(RawTurtle):
             self._config = {'bgcolor': None}
 
         def _blankimage(self):
-            pass
+            if has_tk:
+                return super()._blankimage()
+            return None
 
         @staticmethod
         def _rgb_value(rgbstr):

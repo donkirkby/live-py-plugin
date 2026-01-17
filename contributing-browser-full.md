@@ -59,10 +59,42 @@ storage space than the browser tutorial environment on GitHub's codespaces.
 
 ### Building locally
 If you don't want to work in a dev container, you can set up all the tools to
-build the web site on your workstation.
+build the website on your workstation.
 
-The first time you build, you'll need to clone the [Pyodide] project from
-GitHub, and install Docker. After that, follow these steps for each release.
+The first time you build, you'll need to install docker, then clone the
+[Pyodide] and [Pyodide Recipes] projects from GitHub.
+
+1. Clone Pyodide into the folder where you keep your git repositories.
+
+       cd ~/git
+       git clone --recursive https://github.com/pyodide/pyodide
+       cd pyodide
+       git tag  # Lists all tags. Choose a recent one to checkout.
+       git checkout tags/0.XX.0
+       git submodule update
+
+2. Also clone Pyodide Recipes into the pyodide folder.
+
+       git clone https://github.com/pyodide/pyodide-recipes
+       cd pyodide-recipes
+       git tag
+       git checkout tags/0.XX-YYYYMMDD
+       cd ..
+
+4. Make a patch to the pyodide project. Remove `turtle.py` from
+   `PYZIP_EXCLUDE_FILES` in `Makefile.envs`.
+5. Run the build. Setting `RUSTUP_HOME` and `CARGO_HOME` might not be needed.
+
+       sudo ./run_docker
+       RUSTUP_HOME=/usr CARGO_HOME=/usr PYODIDE_PACKAGES=tag:core make
+       pyodide build-recipes "matplotlib,space-tracer" --recipe-dir pyodide-recipes/packages --install
+
+6. Once pyodide has been built, you can rebuild the packages like this:
+
+       sudo ./run_docker --non-interactive "pip install ./pyodide-build && pyodide build-recipes "matplotlib,space-tracer" --recipe-dir pyodide-recipes/packages --install"
+
+
+After that, follow these steps for each release.
 
 1. Update the version number in `html/meta.yaml` and in the `srcFiles` list in
    `html/deploy.js`.
@@ -71,4 +103,5 @@ GitHub, and install Docker. After that, follow these steps for each release.
 3. Run `npm run build`. You should see a message that it rebuilt space tracer
    in pyodide.
 
-[Pyodide]: https://github.com/iodide-project/pyodide
+[Pyodide]: https://github.com/pyodide/pyodide
+[Pyodide Recipes]: https://github.com/pyodide/pyodide-recipes

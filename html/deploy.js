@@ -1,7 +1,7 @@
-const fs = require('fs');
-const { execSync } = require('child_process');
-const path = require('path');
-const yaml = require('yaml');
+const fs = require('fs'),
+    { execSync } = require('child_process'),
+    path = require('path'),
+    yaml = require('yaml');
 
 function wrapReact(source) {
     const relativeSource = source.replaceAll(
@@ -40,28 +40,26 @@ function copyIndex(indexSrcPath, destFolderPath) {
     fs.writeFileSync(destFilePath, wrapReact(match[1]));
 }
 
-function copyPyodide(srcPath, destPath) {
+function copyPyodide(srcPath, destPath, spaceTracerVersion) {
     const srcFiles = [
+        'contourpy-1.3.1-cp313-cp313-pyodide_2025_0_wasm32.whl',
         'cycler-0.12.1-py3-none-any.whl',
-        'fonttools-4.51.0-py3-none-any.whl',
-        'kiwisolver-1.4.5-cp312-cp312-pyodide_2024_0_wasm32.whl',
-        'matplotlib-3.5.2-cp312-cp312-pyodide_2024_0_wasm32.whl',
-        'matplotlib_pyodide-0.2.2-py3-none-any.whl',
-        'numpy-1.26.4-cp312-cp312-pyodide_2024_0_wasm32.whl',
-        'packaging-23.2-py3-none-any.whl',
-        'pillow-10.2.0-cp312-cp312-pyodide_2024_0_wasm32.whl',
-        'pyodide.js',
-        'pyodide.js.map',
-        'pyodide.asm.wasm',
+        'fonttools-4.56.0-py3-none-any.whl',
+        'kiwisolver-1.4.8-cp313-cp313-pyodide_2025_0_wasm32.whl',
+        'matplotlib-3.8.4-cp313-cp313-pyodide_2025_0_wasm32.whl',
+        'numpy-2.2.5-cp313-cp313-pyodide_2025_0_wasm32.whl',
+        'packaging-24.2-py3-none-any.whl',
+        'pillow-11.3.0-cp313-cp313-pyodide_2025_0_wasm32.whl',
         'pyodide.asm.js',
+        'pyodide.asm.wasm',
+        'pyodide.js',
         'pyodide-lock.json',
-        'pyparsing-3.1.2-py3-none-any.whl',
+        'pyparsing-3.2.1-py3-none-any.whl',
         'python_dateutil-2.9.0.post0-py2.py3-none-any.whl',
         'python_stdlib.zip',
-        'pytz-2024.1-py2.py3-none-any.whl',
-        'package.json',
-        'six-1.16.0-py2.py3-none-any.whl',
-        'space_tracer-4.12.0-py3-none-any.whl'];
+        'pytz-2025.2-py2.py3-none-any.whl',
+        'six-1.17.0-py2.py3-none-any.whl',
+        `space_tracer-${spaceTracerVersion}-py3-none-any.whl`];
     fs.mkdirSync(destPath);
     for (const fileName of srcFiles) {
         const fileSrcPath = path.join(srcPath, fileName),
@@ -111,13 +109,13 @@ function rebuildPyodide(pyodideExists) {
     }
     else if (latestPython === deployedPython) {
         console.log('Space tracer in pyodide is up to date.');
-        return;
+        return aboutVersion;
     }
     if ( ! pyodideExists) {
         console.error(
             'Space tracer Python code has changed, but ../../pyodide was not ' +
             'found.');
-        return;
+        return aboutVersion;
     }
     console.log(`Rebuilding space-tracer ${aboutMatch[1]} in pyodide.`);
     execSync('tox devenv -epy310 .tox/py310', {cwd: '..', encoding: 'utf8'});
@@ -133,13 +131,17 @@ function rebuildPyodide(pyodideExists) {
     fs.mkdirSync('../../pyodide/packages/space-tracer');
     fs.cpSync('meta.yaml', '../../pyodide/packages/space-tracer/meta.yaml');
     execSync(
-        `tar xzf ../../../live-py-plugin/dist/space_tracer-${aboutVersion}.tar.gz`,
-        {cwd: '../../pyodide/packages/space-tracer', encoding: 'utf8'});
+        `tar xzf ../../../../live-py-plugin/dist/space_tracer-${aboutVersion}.tar.gz`,
+        {cwd: '../../pyodide/pyodide-recipes/packages/space-tracer', encoding: 'utf8'});
     execSync(
-        'sudo ./run_docker --non-interactive PYODIDE_PACKAGES=core,space-tracer,matplotlib make',
+        'sudo ./run_docker --non-interactive ' +
+        '"pip install ./pyodide-build && ' +
+        'pyodide build-recipes matplotlib,space-tracer ' +
+        '--recipe-dir pyodide-recipes/packages --install"',
         {cwd: '../../pyodide', encoding: 'utf8'});
     fs.writeFileSync('deployed-python.txt', latestPython);
     console.log('Rebuilt space tracer in pyodide.');
+    return aboutVersion;
 }
 
 function main() {
@@ -149,12 +151,12 @@ function main() {
         pyodideSrc = path.resolve('../../pyodide/dist'),
         pyodideExists = fs.existsSync(pyodideSrc),
         d = fs.opendirSync(dest);
-    let entry;
+    let entry, spaceTracerVersion;
     while ((entry = d.readSync()) !== null) {
         let destFilePath = path.join(dest, entry.name);
         if (entry.isDirectory()) {
             if (entry.name === 'pyodide') {
-                rebuildPyodide(pyodideExists);
+                spaceTracerVersion = rebuildPyodide(pyodideExists);
                 if ( ! pyodideExists) {
                     // No new copy to replace it, so don't delete it.
                     continue;
@@ -180,7 +182,7 @@ function main() {
     }
 
     if (pyodideExists) {
-        copyPyodide(pyodideSrc, pyodideDest);
+        copyPyodide(pyodideSrc, pyodideDest, spaceTracerVersion);
     }
     console.log('Files deployed to ../docs.');
 }

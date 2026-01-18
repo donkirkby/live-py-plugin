@@ -118,18 +118,18 @@ function rebuildPyodide(pyodideExists) {
         return aboutVersion;
     }
     console.log(`Rebuilding space-tracer ${aboutMatch[1]} in pyodide.`);
-    execSync('tox devenv -epy310 .tox/py310', {cwd: '..', encoding: 'utf8'});
+    execSync('tox devenv -epy312 .tox/py312', {cwd: '..', encoding: 'utf8'});
     execSync(
-        '.tox/py310/bin/python -m pip install --upgrade setuptools wheel twine',
+        '.tox/py312/bin/python -m pip install --upgrade setuptools wheel twine',
         {cwd: '..', encoding: 'utf8'});
-    execSync('.tox/py310/bin/python setup.py sdist', {cwd: '..', encoding: 'utf8'});
-    execSync('tox devenv -repy310 .tox/py310', {cwd: '..', encoding: 'utf8'});
+    execSync('.tox/py312/bin/python setup.py sdist', {cwd: '..', encoding: 'utf8'});
+    execSync('tox devenv -repy312 .tox/py312', {cwd: '..', encoding: 'utf8'});
     console.log('Requesting sudo to repackage pyodide.');
     execSync(
-        'sudo rm -rf pyodide/packages/space-tracer',
+        'sudo rm -rf pyodide/pyodide-recipes/packages/space-tracer',
         {cwd: '../..', encoding: 'utf8'});
-    fs.mkdirSync('../../pyodide/packages/space-tracer');
-    fs.cpSync('meta.yaml', '../../pyodide/packages/space-tracer/meta.yaml');
+    fs.mkdirSync('../../pyodide/pyodide-recipes/packages/space-tracer');
+    fs.cpSync('meta.yaml', '../../pyodide/pyodide-recipes/packages/space-tracer/meta.yaml');
     execSync(
         `tar xzf ../../../../live-py-plugin/dist/space_tracer-${aboutVersion}.tar.gz`,
         {cwd: '../../pyodide/pyodide-recipes/packages/space-tracer', encoding: 'utf8'});

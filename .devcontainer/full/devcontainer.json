@@ -4,6 +4,6 @@
   // For contents, look in .devcontainer/full/prebuild
   "image": "donkirkby/live-py-plugin-devcontainer-full:v1.5",
 
-  // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "cd html && npm install && cd ../docs && bash -lc 'rvm use 3.2.3 && bundle install'"
+  // Use 'onCreateCommand' to run commands when the container is created.
+  "onCreateCommand": "cd html && npm install && cd ../docs && bash -lc 'rvm use 3.2.3 && bundle install'"
 }

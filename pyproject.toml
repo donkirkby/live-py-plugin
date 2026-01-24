@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta:__legacy__"
+
+[project]
+name = 'space_tracer'
+dynamic = ['version', 'authors', 'description']
+dependencies = ['svgwrite']
+readme = 'README.md'
+license = "MIT"
+license-files = ["license.txt"]
+
+# Synchronize Python versions with py-build.yml workflow and tox.ini.
+# Classifiers are from https://pypi.org/classifiers/
+classifiers=[
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Debuggers",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console"
+]
+
+[project.urls]
+Source = "https://github.com/donkirkby/live-py-plugin"
+Issues = "https://github.com/donkirkby/live-py-plugin/issues"
+
+[project.scripts]
+space_tracer = "space_tracer:main"

@@ -35,7 +35,7 @@ jobs:
         platform: [ubuntu-latest, macos-latest, windows-latest]
 
         # List at https://github.com/actions/python-versions/blob/main/versions-manifest.json
-        # Keep synchronized with setup.py and tox.ini
+        # Keep synchronized with pyproject.toml and tox.ini
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
     runs-on: ${{ matrix.platform }}
     env:

@@ -8,7 +8,8 @@ doesn't require any special development tools, beyond Python and the
 ### Deploying a new release of Space Tracer
 The details are at [packaging.python.org], but the main steps are:
 
-1. Update the version number in `about.py` and development status in `setup.py`.
+1. Update the version number in `about.py` and development status in
+   `pyproject.toml`.
 2. Activate the latest Python's virtual environment.
 
         source .tox/py39/bin/activate

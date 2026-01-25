@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "io.github.donkirkby"
-version = "4.12.0"
+version = "4.13.0"
 
 repositories {
     mavenCentral()
@@ -48,7 +48,7 @@ intellijPlatform {
             // recommended()
             // Available versions listed at https://www.jetbrains.com/idea/download/other.html
             create(IntelliJPlatformType.IntellijIdeaCommunity, "2022.2")
-            create(IntelliJPlatformType.IntellijIdea, "2025.3")
+            create(IntelliJPlatformType.IntellijIdea, "2025.3.2")
         }
     }
 }

@@ -12,7 +12,13 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        Support PyCharm 2024.2 and higher.
+        Support PyCharm 2025.1.2 and higher.
+        Stop the window from scrolling away after you undo in live coding mode.
+        Fix Read access error in PyCharm.
+        Highlight small differences in LiveImageDiffer.
+        Fix rounding error in live turtle coordinates.
+        Improve Pytest support.
+        Support Python 3.14.
     ]]>
     </change-notes>
 

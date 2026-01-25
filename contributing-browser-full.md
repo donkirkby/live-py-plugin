@@ -36,7 +36,7 @@ storage space than the browser tutorial environment on GitHub's codespaces.
         tox
 
     Not all versions of Python are installed by default, so you can run the tests
-    in Python 3.10 with `tox -e py310`. You can install a missing Python version
+    in Python 3.12 with `tox -e py312`. You can install a missing Python version
     with this:
 
         sudo apt update

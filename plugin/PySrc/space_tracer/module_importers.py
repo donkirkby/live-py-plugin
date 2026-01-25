@@ -370,6 +370,7 @@ class TracedModuleImporter(DelegatingModuleFinder, Loader):
         if self.traced in (DEFAULT_MODULE_NAME, LIVE_MODULE_NAME):
             # Error is already visible, no extra display needed.
             return
+        self.report_builder.end_time = None  # Avoid extra timeout errors.
         messages = list(split_lines(messages))
         block_size = len(messages) + 2
         self.report_builder.start_block(1, block_size)

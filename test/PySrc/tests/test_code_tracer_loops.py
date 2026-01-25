@@ -1,6 +1,11 @@
 import sys
+from textwrap import dedent
+from unittest.mock import DEFAULT, patch
+import pytest
 
+from space_tracer import main
 from space_tracer.main import TraceRunner
+from test_code_tracer_main import EXAMPLE_DRIVER_PATH, EXAMPLE_SOURCE_PATH
 
 
 def test_loop():
@@ -256,3 +261,40 @@ RuntimeError: live coding exceeded the 300ms time limit"""
         assert report == expected_report1
     else:
         assert report == expected_report2
+
+def test_infinite_loop_with_driver_exit():
+    # Make sure we haven't left a weird version of this library loaded.
+    try:
+        del sys.modules['example_package.lib_in_package']
+    except KeyError:
+        pass
+
+    with patch.multiple('sys', stdin=DEFAULT, stdout=DEFAULT, argv=[
+            'dummy.py',
+            '--source_width', '0',
+            '--traced_file', EXAMPLE_SOURCE_PATH,
+            '--traced', 'example_source',
+            EXAMPLE_DRIVER_PATH,
+            'driver-exit']) as mocks:
+        source = dedent("""\
+            def foo(x):
+                while True:
+                    pass
+            """)
+        expected_report = dedent("""\
+--------------------------- | x = 42
+SystemExit: Exit requested. |
+--------------------------- | RuntimeError: live coding exceeded the 500ms time limit""")
+        expected_report_before_3_10 = dedent("""\
+--------------------------- | x = 42
+SystemExit: Exit requested. | RuntimeError: live coding exceeded the 500ms time limit
+--------------------------- |""")
+
+        mocks['stdin'].read.return_value = source
+
+        with pytest.raises(SystemExit):
+            main()
+
+        report = mocks['stdout'].write.call_args_list[0][0][0]
+        if report != expected_report_before_3_10:
+            assert report == expected_report

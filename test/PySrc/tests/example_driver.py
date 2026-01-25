@@ -5,7 +5,11 @@ from example_source import foo
 
 assert 'fail' not in sys.argv, sys.argv[1:]
 
-foo(42)
+try:
+    foo(42)
+finally:
+    if 'driver-exit' in sys.argv:
+        exit('Exit requested.')
 add_message('from driver')
 
 sys.exit(0)  # Some drivers exit successfully like this.

@@ -4,10 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -198,7 +195,11 @@ public class LiveCodingAnalyst implements DocumentListener {
             if (paramsGroup == null) {
                 return;
             }
-            String driverPath = paramsGroup.getParametersList().get(0);
+            ParametersList paramsList = paramsGroup.getParametersList();
+            String driverPath = paramsList.get(0);
+            String driverName = new File(driverPath).getName();
+            boolean isCaptureDisabled = paramsList.hasParameter("-s");
+            boolean hasCaptureBug = (driverName.equals("_jb_pytest_runner.py") && isCaptureDisabled);
             String oldPythonPath = environment1.get("PYTHONPATH");
             String newPythonPath;
             if (oldPythonPath == null || oldPythonPath.isEmpty()) {
@@ -227,7 +228,10 @@ public class LiveCodingAnalyst implements DocumentListener {
                 paramsGroup.addParameterAt(i++, "--stdin");
                 paramsGroup.addParameterAt(i++, inputFilePath);
             }
-            String badDriverMessage = buildBadDriverMessage(configuration, moduleName);
+            String badDriverMessage = buildBadDriverMessage(
+                    configuration,
+                    moduleName,
+                    hasCaptureBug);
             paramsGroup.addParameterAt(i++, "--bad_driver");
             paramsGroup.addParameterAt(i++, badDriverMessage);
             if (this.isCanvas) {
@@ -310,12 +314,18 @@ public class LiveCodingAnalyst implements DocumentListener {
 
     private String buildBadDriverMessage(
             RunnerAndConfigurationSettings runConfiguration,
-            String moduleName) {
+            String moduleName,
+            boolean hasCaptureBug) {
+        String suggestion =
+                hasCaptureBug
+                ? "Try removing the -s argument and setting environment " +
+                        "variable JB_DISABLE_BUFFERING=1."
+                : "Try a different run configuration.";
         return String.format(
-                "%s doesn't call the %s module." +
-                        " Try a different run configuration.",
+                "%s doesn't call the %s module. %s",
                 runConfiguration.getName(),
-                moduleName);
+                moduleName,
+                suggestion);
     }
 
     void stop() {

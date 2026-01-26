@@ -219,12 +219,12 @@ public class SplitFileEditor extends UserDataHolderBase implements TextEditor {
                 canvasCommands = new ArrayList<>();
                 canvasCommands.add(command);
             }
-            if (!canvasCommands.getFirst().getName().equals(
+            if (!canvasCommands.get(0).getName().equals(
                     CanvasCommand.BACKGROUND_COLOR)) {
                 CanvasCommand command = new CanvasCommand();
                 command.setName(CanvasCommand.BACKGROUND_COLOR);
                 command.setOption("fill", "#FFFFFF");
-                canvasCommands.addFirst(command);
+                canvasCommands.add(0, command);
             }
             for (CanvasCommand command : canvasCommands) {
                 String method = command.getName();

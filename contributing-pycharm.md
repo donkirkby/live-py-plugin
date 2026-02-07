@@ -47,6 +47,15 @@ two types of IDEA release.
 [IDEA build number ranges]: https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html
 [IDEA source code]: https://github.com/JetBrains/intellij-community
 
+Writing an IDEA plugin is complicated, so start with the
+[JetBrains documentation]. When you run into trouble, try searching or posting
+on the [JetBrains Platform forum]. There are more useful links in the
+[Plugin template].
+
+[JetBrains documentation]: https://plugins.jetbrains.com/docs/intellij/developing-plugins.html
+[JetBrains Platform forum]: https://platform.jetbrains.com/
+[Plugin template]: https://github.com/JetBrains/intellij-platform-plugin-template#useful-links
+
 ### Publish a new release for the PyCharm plugin
 1. Check that all the Python unit tests pass, by running tox.
 2. Update the version number in `about.py` and `pycharm/build.gradle.kts`, and

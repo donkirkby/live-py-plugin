@@ -2,11 +2,11 @@ import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 
 plugins {
     id("java")
-    id("org.jetbrains.intellij.platform") version "2.10.5"
+    id("org.jetbrains.intellij.platform") version "2.11.0"
 }
 
 group = "io.github.donkirkby"
-version = "4.13.1"
+version = "4.13.2"
 
 repositories {
     mavenCentral()
@@ -20,12 +20,12 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        intellijIdeaUltimate("2025.3")
+        intellijIdeaUltimate("2025.3.2")
 
         // "Pythonid" for ultimate, "PythonCore" for community. Find compatible
         // ultimate versions at https://plugins.jetbrains.com/plugin/631
         // community versions at https://plugins.jetbrains.com/plugin/7322
-        plugin("PythonCore:253.28294.334")
+        plugin("PythonCore:253.30387.90")
 
         pluginVerifier()
     }

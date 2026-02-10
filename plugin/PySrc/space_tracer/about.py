@@ -3,7 +3,7 @@
 Don't put any code in here, because it must be safe to execute in setup.py. """
 
 __title__ = 'space_tracer'  # => name in setup.py
-__version__ = '4.13.2'
+__version__ = '4.13.3'
 __author__ = "Don Kirkby"
 __author_email__ = "donkirkby@gmail.com"
 __description__ = "Trade time for space when debugging your code."

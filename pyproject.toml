@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta:__legacy__"
 [project]
 name = 'space_tracer'
 dynamic = ['version', 'authors', 'description']
-dependencies = ['svgwrite']
+dependencies = []
 readme = 'README.md'
 license = "MIT"
 license-files = ["license.txt"]

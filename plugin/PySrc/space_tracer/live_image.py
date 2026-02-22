@@ -195,7 +195,7 @@ class LiveImageDiffer:
         ''' Initialize the object and clean out the diffs path.
 
         This class requires Pillow to be installed, but you can remove that
-        dependency with a subclass that overrides the create_painter() method.
+        dependency with a subclass that overrides the create_painters() method.
 
         A good way to use this class is to create a session fixture and regular
         fixture like this:

@@ -254,6 +254,48 @@ def test_differ_compare():
     assert differ.diff_count == 2
 
 
+# noinspection DuplicatedCode
+@pytest.mark.skipif(Image is None, reason='Pillow not installed.')
+def test_differ_compare_highlights():
+    # expected colours:
+    background = (0, 0, 0, 0)
+    darker_highlight = (0, 0, 255, 255)
+    darker_diff = (0, 0, 255, 127)
+    match = (0, 0, 0, 85)
+    lighter_highlight = (255, 0, 0, 255)
+    lighter_diff = (255, 0, 0, 127)
+
+    differ = LiveImageDiffer()
+    offset = 1
+    size = 12
+    x = y = 20
+
+    image1 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw1 = ImageDraw.Draw(image1.image)
+    draw1.rectangle((x, y, x + size, y + size), fill='black')
+    image2 = LivePillowImage(Image.new('RGBA', (200, 200)))
+    draw2 = ImageDraw.Draw(image2.image)
+    draw2.rectangle((x + offset, y, x + offset + size, y + size), fill='black')
+
+    diff = differ.compare(image1, image2)
+
+    diff_pixels = [diff.get_pixel((x, 26)) for x in range(15, 39)]
+    expected_pixels = ([background] * 2 +
+                       [darker_highlight] +
+                       [background] * 2 +
+                       [darker_diff] +
+                       [match] * 2 +
+                       [darker_highlight] +
+                       [match] * 6 +
+                       [lighter_highlight] +
+                       [match] * 2 +
+                       [lighter_diff] +
+                       [background] * 2 +
+                       [lighter_highlight] +
+                       [background] * 2)
+    assert diff_pixels == expected_pixels
+
+
 @pytest.mark.skipif(Image is None, reason='Pillow not installed.')
 def test_compare_pixel_alpha_channel_missing():
 

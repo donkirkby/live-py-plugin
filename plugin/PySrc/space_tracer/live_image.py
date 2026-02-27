@@ -552,17 +552,18 @@ class LiveImageDiffer:
         marked_count = 0
         pixel_count = width * height
         for distance in count():
+            distance_count = 0
             for distance_bin, colour in ((lighter_bins[distance], (255, 0, 0, 255)),
                                          (darker_bins[distance], (0, 0, 255, 255)),
                                          (equal_bins[distance], (255, 0, 255, 255))):
-                distance_count = len(distance_bin)
-                if distance > 0 and skipped_count < self.min_diff_count:
-                    skipped_count += distance_count
-                else:
-                    marked_count += distance_count
-                    if distance > 0:
-                        for position in distance_bin:
-                            diff_image.set_pixel(position, colour)
+                distance_count += len(distance_bin)
+                if skipped_count >= self.min_diff_count:
+                    for position in distance_bin:
+                        diff_image.set_pixel(position, colour)
+            if distance == 0 or skipped_count >= self.min_diff_count:
+                marked_count += distance_count
+            else:
+                skipped_count += distance_count
             if (marked_count >= self.min_diff_count or
                     (marked_count + skipped_count) >= pixel_count):
                 break

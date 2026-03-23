@@ -18,7 +18,7 @@ except ImportError:
     tkinter_name = 'tkinter'
     tk = sys.modules[tkinter_name] = types.ModuleType(tkinter_name)
 
-    tk.Frame = tk.Canvas = tk.Tk = tk.ROUND = object  # type: ignore
+    tk.Frame = tk.Canvas = tk.Tk = tk.ROUND = tk.PhotoImage = object  # type: ignore
 
     class TkMisc:
         pass

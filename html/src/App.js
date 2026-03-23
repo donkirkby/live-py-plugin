@@ -280,7 +280,11 @@ class Editor extends Component {
             }}/>;
     }
 }
-
+/* 
+Render the code sample in the code editor.
+The default code rendered is retrieved from the Markdown files (e.g. `/docs/demo/flags/romania-colombia.md`). Each code block is demarcated by an indentation in the Markdown file.
+When the user edits the code editor (an `AceEditor` component), the new value is saved to localStorage.
+*/
 class CodeSample extends Component {
     constructor(props) {
         super(props);
@@ -745,7 +749,8 @@ class App extends Component {
             window.location = new URL(tutorialName, window.location);
         }
 
-        const codeBlocks = document.getElementsByTagName('pre');
+        const codeBlocks = document.getElementsByTagName('pre'); 
+        // The content that is initially rendered as <pre> elements are indicated by groups of indented lines in the source Markdown file. The `CodeSample` react component then replaces the <pre> elements with an instance of `AceEditor`.
         const pageTitle = document.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
 
         for (let i = 0; i < codeBlocks.length; i++) {

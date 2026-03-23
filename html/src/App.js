@@ -215,6 +215,16 @@ function slicePixel(imageData, x, y) {
     return imageData.data.slice(start, start+4);
 }
 
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36); // Return as base-36 string for shorter keys
+}
+
 class ProgressBar extends Component {
     render() {
         let stateClass = (this.props.percentage < 50) ?
@@ -284,15 +294,17 @@ class Editor extends Component {
 class CodeSample extends Component {
     constructor(props) {
         super(props);
-        const sourceCode = props.source,
-            analyst = new SampleAnalyst(sourceCode);
+        const persistedSource = props.storageKey ? localStorage.getItem(props.storageKey) : null;
+        const initialSource = props.source;
+        const sourceCode = persistedSource || initialSource;
+        const analyst = new SampleAnalyst(initialSource);
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
             isPythonLoaded: false,
             hasDisplayed: false,
-            source: analyst.sourceCode,
-            originalSource: analyst.sourceCode,
+            source: sourceCode,
+            originalSource: initialSource,
             goalSourceCode: analyst.goalSourceCode,
             display: analyst.display,
             goalOutput: analyst.goalOutput,
@@ -330,6 +342,9 @@ class CodeSample extends Component {
     handleChange(newSource) {
         if (newSource !== undefined) {
             this.setState({source: newSource});
+            if (this.props.storageKey) {
+                localStorage.setItem(this.props.storageKey, newSource);
+            }
         }
         this.scheduleUpdate();
     }
@@ -425,6 +440,9 @@ class CodeSample extends Component {
     }
 
     handleReset() {
+        if (this.props.storageKey) {
+            localStorage.removeItem(this.props.storageKey);
+        }
         this.handleChange(this.state.originalSource);
     }
 
@@ -746,11 +764,15 @@ class App extends Component {
 
         for (const codeBlock of codeBlocks) {
             const parent = codeBlock.parentNode;
+            const originalSource = codeBlock.innerText;
+            const hash = simpleHash(originalSource);
+            const storageKey = `${window.location.pathname}-codeblock-${hash}`;
             // noinspection JSCheckFunctionSignatures
             const root = createRoot(parent);
             root.render(<CodeSample
                 source={codeBlock.innerText}
                 spaceTracerPromise={spaceTracerPromise}
+                storageKey={storageKey}
             />);
         }
     }

@@ -291,7 +291,7 @@ class CodeSample extends Component {
         const sourceCode = props.source,
             analyst = new SampleAnalyst(sourceCode);
         this.localStorageKey = props.localStorageKey;
-        const codeToShow = localStorage.getItem(this.localStorageKey) ?? sourceCode;
+        const codeToShow = localStorage.getItem(this.localStorageKey) ?? analyst.sourceCode;
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,

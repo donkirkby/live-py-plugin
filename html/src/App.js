@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {createRoot} from 'react-dom/client';
-import AceEditor from 'react-ace';
+import AceEditor from 'react-ace'; // https://github.com/securingsincity/react-ace/blob/master/docs/Ace.md
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
 
@@ -215,6 +215,16 @@ function slicePixel(imageData, x, y) {
     return imageData.data.slice(start, start+4);
 }
 
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36); // Return as base-36 string for shorter keys
+}
+
 class ProgressBar extends Component {
     render() {
         let stateClass = (this.props.percentage < 50) ?
@@ -280,18 +290,24 @@ class Editor extends Component {
             }}/>;
     }
 }
-
+/*
+Render the code sample in the code editor.
+The default code rendered is retrieved from the Markdown files (e.g. `/docs/demo/flags/romania-colombia.md`). Each code block is demarcated by an indentation in the Markdown file.
+When the user edits the code editor (an `AceEditor` component), the new value is saved to localStorage.
+*/
 class CodeSample extends Component {
     constructor(props) {
         super(props);
-        const sourceCode = props.source,
-            analyst = new SampleAnalyst(sourceCode);
+        const persistedSource = props.storageKey ? localStorage.getItem(props.storageKey) : null;
+        const initialSource = props.source;
+        const analyst = new SampleAnalyst(initialSource);
+        const sourceCode = persistedSource || analyst.sourceCode;
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
             isPythonLoaded: false,
             hasDisplayed: false,
-            source: analyst.sourceCode,
+            source: sourceCode,
             originalSource: analyst.sourceCode,
             goalSourceCode: analyst.goalSourceCode,
             display: analyst.display,
@@ -330,6 +346,9 @@ class CodeSample extends Component {
     handleChange(newSource) {
         if (newSource !== undefined) {
             this.setState({source: newSource});
+            if (this.props.storageKey) {
+                localStorage.setItem(this.props.storageKey, newSource);
+            }
         }
         this.scheduleUpdate();
     }
@@ -425,6 +444,9 @@ class CodeSample extends Component {
     }
 
     handleReset() {
+        if (this.props.storageKey) {
+            localStorage.removeItem(this.props.storageKey);
+        }
         this.handleChange(this.state.originalSource);
     }
 
@@ -743,14 +765,18 @@ class App extends Component {
         }
 
         const codeBlocks = document.getElementsByTagName('pre');
-
+        // The content that is initially rendered as <pre> elements are indicated by groups of indented lines in the source Markdown file. The `CodeSample` react component then replaces the <pre> elements with an instance of `AceEditor`.
         for (const codeBlock of codeBlocks) {
             const parent = codeBlock.parentNode;
+            const originalSource = codeBlock.innerText;
+            const hash = simpleHash(originalSource);
+            const storageKey = `${window.location.pathname}-codeblock-${hash}`;
             // noinspection JSCheckFunctionSignatures
             const root = createRoot(parent);
             root.render(<CodeSample
                 source={codeBlock.innerText}
                 spaceTracerPromise={spaceTracerPromise}
+                storageKey={storageKey}
             />);
         }
     }

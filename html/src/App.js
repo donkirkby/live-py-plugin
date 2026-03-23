@@ -215,6 +215,16 @@ function slicePixel(imageData, x, y) {
     return imageData.data.slice(start, start+4);
 }
 
+function simpleHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36); // Return as base-36 string for shorter keys
+}
+
 class ProgressBar extends Component {
     render() {
         let stateClass = (this.props.percentage < 50) ?
@@ -280,7 +290,7 @@ class Editor extends Component {
             }}/>;
     }
 }
-/* 
+/*
 Render the code sample in the code editor.
 The default code rendered is retrieved from the Markdown files (e.g. `/docs/demo/flags/romania-colombia.md`). Each code block is demarcated by an indentation in the Markdown file.
 When the user edits the code editor (an `AceEditor` component), the new value is saved to localStorage.
@@ -288,16 +298,16 @@ When the user edits the code editor (an `AceEditor` component), the new value is
 class CodeSample extends Component {
     constructor(props) {
         super(props);
-        const sourceCode = props.source,
-            analyst = new SampleAnalyst(sourceCode);
-        this.localStorageKey = props.localStorageKey;
-        const codeToShow = localStorage.getItem(this.localStorageKey) ?? analyst.sourceCode;
+        const persistedSource = props.storageKey ? localStorage.getItem(props.storageKey) : null;
+        const initialSource = props.source;
+        const analyst = new SampleAnalyst(initialSource);
+        const sourceCode = persistedSource || analyst.sourceCode;
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
             isPythonLoaded: false,
             hasDisplayed: false,
-            source: codeToShow,
+            source: sourceCode,
             originalSource: analyst.sourceCode,
             goalSourceCode: analyst.goalSourceCode,
             display: analyst.display,
@@ -336,7 +346,9 @@ class CodeSample extends Component {
     handleChange(newSource) {
         if (newSource !== undefined) {
             this.setState({source: newSource});
-            localStorage.setItem(this.localStorageKey, newSource);
+            if (this.props.storageKey) {
+                localStorage.setItem(this.props.storageKey, newSource);
+            }
         }
         this.scheduleUpdate();
     }
@@ -432,6 +444,9 @@ class CodeSample extends Component {
     }
 
     handleReset() {
+        if (this.props.storageKey) {
+            localStorage.removeItem(this.props.storageKey);
+        }
         this.handleChange(this.state.originalSource);
     }
 
@@ -749,19 +764,19 @@ class App extends Component {
             window.location = new URL(tutorialName, window.location);
         }
 
-        const codeBlocks = document.getElementsByTagName('pre'); 
+        const codeBlocks = document.getElementsByTagName('pre');
         // The content that is initially rendered as <pre> elements are indicated by groups of indented lines in the source Markdown file. The `CodeSample` react component then replaces the <pre> elements with an instance of `AceEditor`.
-        const pageTitle = document.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
-
-        for (let i = 0; i < codeBlocks.length; i++) {
-            const codeBlock = codeBlocks[i];
+        for (const codeBlock of codeBlocks) {
             const parent = codeBlock.parentNode;
+            const originalSource = codeBlock.innerText;
+            const hash = simpleHash(originalSource);
+            const storageKey = `${window.location.pathname}-codeblock-${hash}`;
             // noinspection JSCheckFunctionSignatures
             const root = createRoot(parent);
             root.render(<CodeSample
                 source={codeBlock.innerText}
                 spaceTracerPromise={spaceTracerPromise}
-                localStorageKey={`${pageTitle}-${i}`}
+                storageKey={storageKey}
             />);
         }
     }

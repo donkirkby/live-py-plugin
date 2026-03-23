@@ -20,3 +20,7 @@
 /plugin/PySrc/space_tracer.egg-info
 /docs/_site
 /test/PySrc/tests/crashes
+# Build artifacts from React app
+/docs/demo/static/
+/docs/demo/asset-manifest.json
+/docs/demo/manifest.json

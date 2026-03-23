@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {createRoot} from 'react-dom/client';
-import AceEditor from 'react-ace';
+import AceEditor from 'react-ace'; // https://github.com/securingsincity/react-ace/blob/master/docs/Ace.md
 import SampleAnalyst from './SampleAnalyst.js';
 import './App.css';
 
@@ -286,12 +286,14 @@ class CodeSample extends Component {
         super(props);
         const sourceCode = props.source,
             analyst = new SampleAnalyst(sourceCode);
+        this.localStorageKey = props.localStorageKey;
+        const codeToShow = localStorage.getItem(this.localStorageKey) ?? sourceCode;
         this.state = {
             scrollTop: 0,
             selectedLine: undefined,
             isPythonLoaded: false,
             hasDisplayed: false,
-            source: analyst.sourceCode,
+            source: codeToShow,
             originalSource: analyst.sourceCode,
             goalSourceCode: analyst.goalSourceCode,
             display: analyst.display,
@@ -330,6 +332,7 @@ class CodeSample extends Component {
     handleChange(newSource) {
         if (newSource !== undefined) {
             this.setState({source: newSource});
+            localStorage.setItem(this.localStorageKey, newSource);
         }
         this.scheduleUpdate();
     }
@@ -743,14 +746,17 @@ class App extends Component {
         }
 
         const codeBlocks = document.getElementsByTagName('pre');
+        const pageTitle = document.title.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
 
-        for (const codeBlock of codeBlocks) {
+        for (let i = 0; i < codeBlocks.length; i++) {
+            const codeBlock = codeBlocks[i];
             const parent = codeBlock.parentNode;
             // noinspection JSCheckFunctionSignatures
             const root = createRoot(parent);
             root.render(<CodeSample
                 source={codeBlock.innerText}
                 spaceTracerPromise={spaceTracerPromise}
+                localStorageKey={`${pageTitle}-${i}`}
             />);
         }
     }

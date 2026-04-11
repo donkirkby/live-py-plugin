@@ -34,6 +34,8 @@ in its own `contributing-*.md` file.
   details.
 * SublimeText - lets you edit the SublimeText plugin. See
   `contributing-sublime.md` for details.
+* VS Code - lets you edit the VS Code extension. See
+  `contributing-vscode.md` for details.
 * Space Tracer - the command-line version that you can edit in any Python
   environment. See `contributing-space-tracer.md` for details of how to publish
   a new release on PyPI.

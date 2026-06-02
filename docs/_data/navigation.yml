@@ -18,6 +18,8 @@
       link: /demo/matplotlib/fill.html
     - name: Matplotlib Scatter Tutorial
       link: /demo/matplotlib/scatter.html
+    - name: Matplotlib Multi Plot Tutorial
+      link: /demo/matplotlib/multiplot.html
     - name: Beginner Turtle Tutorial
       link: /demo/flags/romania-colombia.html
     - name: Intermediate Turtle Tutorial

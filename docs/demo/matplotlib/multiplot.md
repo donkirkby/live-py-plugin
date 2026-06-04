@@ -1,12 +1,12 @@
 ---
-title: Matplotlib Multi Plots Tutorial
+title: Matplotlib Multiplot Tutorial
 layout: react
 is_react: True
-#hero_image: ../../images/matplotlib/scatter.png
-#image: /images/matplotlib/scatter.png
+hero_image: ../../images/matplotlib/multiplot.png
+image: /images/matplotlib/multiplot.png
 modules: matplotlib
 ---
-The challenge of this tutorial is to create a grid with subplots in Matplotlib. 
+The challenge of this tutorial is to create and arrange subplots in Matplotlib. 
 If you are new to Matplotlib, start with the [Matplotlib introduction] first. If 
 you already know the basics, revise the challenge plot code below to match the 
 goal plot: add a subplot, configure the grid, remove the axes ticks, and adjust 
@@ -76,22 +76,20 @@ position of each index in a three-by-three grid. Note that each subplot uses
     plt.suptitle('3 x 3 Grid')
 
     axes = []
-    index = 1
-    for rows in range(3):
-        for cols in range(3):
+    for index in range(1, 10):
 
-            # Only the index changes for each subplot
-            sub = plt.subplot(3, 3, index)
+        # Note: Only the value of the index argument
+        # changes as each of the 9 subplots are created
+        sub = plt.subplot(3, 3, index)
 
-            label = f"index: {index}"
-            sub.annotate(label, xy=(0.5, 0.5), xycoords='axes fraction', va='center', ha='center')
-            axes.append(sub)
-            index += 1
-            
+        label = f"index: {index}"
+        sub.annotate(label, xy=(0.5, 0.5), xycoords='axes fraction', va='center', ha='center')
+        axes.append(sub)
+
     for ax in axes:
         ax.set_xticks([])
         ax.set_yticks([])
-    
+
     plt.show()
 
 ## Adding Subplots
@@ -165,14 +163,13 @@ will remove all ticks?
     ### Canvas ###
     import matplotlib.pyplot as plt
 
+    # First subplot
     plt.subplot(1, 2, 1)
-
-    # Adding data to the first subplot
     x, y = [0, 1, 2, 3, 4], [1.5, 4, 3.5, 8, 6.8]
     plt.plot(x, y)
-
     plt.xticks([0, 1, 2, 3, 4], [0, 1, 2, 3, 4])
 
+    # Second subplot
     plt.subplot(1, 2, 2)
 
     plt.show()
@@ -204,7 +201,7 @@ of the height from the canvas's _bottom edge_. Remember that each setting must
 be a float value between 0.0 and 1.0, inclusive.
 
 Try using `subplots_adjust` to recreate the layout of the Goal plot. A blue
-background colour is provided to make the figure canvas stand out. Adjust the
+background is provided to make the figure canvas stand out. Adjust the
 `subplots_adjust` parameters until your plot matches the Goal.
 
 [subplots_adjust documentation]: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots_adjust.html

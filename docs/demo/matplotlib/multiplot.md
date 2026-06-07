@@ -75,20 +75,16 @@ position of each index in a three-by-three grid. Note that each subplot uses
 
     plt.suptitle('3 x 3 Grid')
 
-    axes = []
     for index in range(1, 10):
 
         # Note: Only the value of the index argument
         # changes as each of the 9 subplots are created
-        sub = plt.subplot(3, 3, index)
+        plt.subplot(3, 3, index)
 
         label = f"index: {index}"
-        sub.annotate(label, xy=(0.5, 0.5), xycoords='axes fraction', va='center', ha='center')
-        axes.append(sub)
-
-    for ax in axes:
-        ax.set_xticks([])
-        ax.set_yticks([])
+        plt.annotate(label, xy=(0.5, 0.5), va='center', ha='center')
+        plt.xticks([])
+        plt.yticks([])
 
     plt.show()
 
@@ -117,9 +113,10 @@ Can you use `subplot(nrows, ncols, index)` to change this 2 x 2 grid into a 2 x 
     plt.show()
 
 ## Spanning Rows and Columns
-A `subplot` can also span multiple indices. To span more than one `index` on the grid, 
-pass the `index` parameter as a tuple `(start-index, end-index)`. For instance, 
-`subplot(2, 2, (1,2)` will span the first two indices of a 2 x 2 grid.
+A `subplot` can also span multiple indices. To span more than one `index` on the
+grid, pass the `index` parameter as a tuple `(top_left_index, bottom_right_index)`.
+For instance, `subplot(2, 2, (1,2)` will span the first two indices of a 2 x 2
+grid.
 
 Change the `index` parameter on each of these 4 subplots to match the goal.
 
@@ -149,7 +146,7 @@ If no data is present, ticks span from 0.0 to 1.0. Change ticks by using the `xt
 
 To update tick labels, each function takes a `ticks` parameter, a list for label positions, 
 and a `labels` parameter, a list of the corresponding labels: 
-`xticks(ticks='position_list', labels='label_list')`. 
+`xticks(ticks=position_list, labels=label_list)`. 
 
 **Note**: If you are not saving the subplot to a variable to update later, update ticks 
 before generating the next `subplot`. See [xticks documentation] for modifying tick positions 
@@ -191,8 +188,10 @@ To adjust the layout boundaries, use the `subplots_adjust()` function, which
 takes up to six parameters:
 * `left` and `right` position the subplots as a fraction of the canvas _width_
 * `bottom` and `top` position the subplots as a fraction of the canvas _height_
-* `wspace` adjusts the _width_ padding between subplots
-* `hspace` adjusts the _height_ padding between subplots
+* `wspace` adjusts the _width_ padding between subplots as a fraction of the
+  average subplot width
+* `hspace` adjusts the _height_ padding between subplots as a fraction of the
+  average subplot height
 
 For a complete overview and visual guide, refer to the [subplots_adjust documentation]. 
 Pay close attention to how the `left` and `right` are measured as a fraction of 
@@ -277,4 +276,4 @@ was inspired by the work of [Nicolas P. Rougier].
 
 [the challenge]: #the-challenge
 [documentation]: https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplot.html
-[Nicolas P. Rougier]: https://github.com/rougier/matplotlib-tutorial#user-content-scatter-plots
+[Nicolas P. Rougier]: https://github.com/rougier/matplotlib-tutorial#multi-plots

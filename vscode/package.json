@@ -1,0 +1,142 @@
+{
+  "name": "live-py",
+  "displayName": "Live Coding in Python",
+  "description": "Live coding display for Python, with turtle and matplotlib support",
+  "version": "0.1.0",
+  "publisher": "donkirkby",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "extensionPack": [
+    "ms-python.python"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "livePy.start",
+        "title": "Live Py: Start Live Coding",
+        "icon": {
+          "light": "icons/live-py-start.svg",
+          "dark": "icons/live-py-start-dark.svg"
+        }
+      },
+      {
+        "command": "livePy.stop",
+        "title": "Live Py: Stop Live Coding",
+        "icon": {
+          "light": "icons/live-py-stop.svg",
+          "dark": "icons/live-py-stop-dark.svg"
+        }
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "livePy.start",
+          "when": "editorLangId == python && !livePy.isRunning",
+          "group": "navigation"
+        },
+        {
+          "command": "livePy.stop",
+          "when": "editorLangId == python && livePy.isRunning",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Live Coding in Python",
+      "properties": {
+        "livePy.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Path to Python executable"
+        },
+        "livePy.spacetracerPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to space_tracer module (leave empty to use bundled)"
+        },
+        "livePy.debounceMs": {
+          "type": "number",
+          "default": 300,
+          "description": "Delay in ms before re-running tracer after edit"
+        },
+        "livePy.canvasWidth": {
+          "type": "number",
+          "default": 800,
+          "description": "Canvas width in pixels"
+        },
+        "livePy.canvasHeight": {
+          "type": "number",
+          "default": 600,
+          "description": "Canvas height in pixels"
+        },
+        "livePy.stdinFile": {
+          "type": "string",
+          "default": "",
+          "description": "File to use as stdin for the traced program (leave empty for no stdin)"
+        },
+        "livePy.traced": {
+          "type": "string",
+          "default": "",
+          "description": "Module name to trace (leave empty for default behavior)"
+        },
+        "livePy.driver": {
+          "type": "string",
+          "default": "",
+          "description": "Driver script to call the traced code (e.g., a test runner)"
+        },
+        "livePy.millisecondLimit": {
+          "type": "number",
+          "default": 10000,
+          "description": "Time limit in milliseconds for code execution (0 to disable)"
+        }
+      }
+    },
+    "languages": [
+      {
+        "id": "python",
+        "extensions": [
+          ".py"
+        ]
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "livePy.start",
+        "key": "ctrl+shift+l",
+        "mac": "cmd+shift+l",
+        "when": "editorTextFocus && editorLangId == python"
+      },
+      {
+        "command": "livePy.stop",
+        "key": "ctrl+shift+k",
+        "mac": "cmd+shift+k",
+        "when": "editorTextFocus && editorLangId == python"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "node out/test/runTest.js",
+    "bundle-tracer": "bash scripts/bundle-space-tracer.sh",
+    "package": "npm run bundle-tracer && npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^2.32.0",
+    "glob": "^13.0.6",
+    "mocha": "^11.7.5",
+    "typescript": "^5.3.0"
+  }
+}

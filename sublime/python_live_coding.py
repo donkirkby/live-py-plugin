@@ -40,12 +40,19 @@ def trace_code(input_view):
     tracer_path = settings.get('space_tracer', default_space_tracer)
     tracer_path = os.path.abspath(os.path.dirname(tracer_path))
     raw_driver = settings.get('driver')
+    file_name = input_view.file_name()
     if raw_driver is None:
-        driver = [input_view.file_name()]
+        driver = [file_name] if file_name else []
     else:
         driver = shlex.split(raw_driver)
-    working_path = settings.get('working_path',
-                                os.path.dirname(input_view.file_name()))
+    if settings.has('working_path'):
+        working_path = settings.get('working_path')
+    else:
+        working_path = os.path.dirname(file_name) if file_name else None
+
+    if not file_name and not working_path:
+        return ('', 'Error: Cannot trace an unsaved file. '
+                'Please save the file first, or set a working_path in settings.')
 
     # You don't want the current PYTHONPATH/sys.path, because it refers to
     # SublimeText's bundled Python interpreter.
@@ -54,8 +61,9 @@ def trace_code(input_view):
     args = [executable,
             '-m', 'space_tracer',
             '--live',
-            '--source_width', '0',
-            '--traced_file', input_view.file_name()]
+            '--source_width', '0']
+    if file_name:
+        args.extend(['--traced_file', file_name])
     if tracer_args:
         args.extend(tracer_args)
     args.append('--')
